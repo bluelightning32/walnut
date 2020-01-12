@@ -3,7 +3,6 @@
 
 #include <algorithm>
 #include <cassert>
-#include <cstdint>
 #include <type_traits>
 
 #include "walnut/big_uint_word.h"

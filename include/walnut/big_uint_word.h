@@ -1,8 +1,6 @@
 #ifndef WALNUT_BIG_UINT_WORD_H__
 #define WALNUT_BIG_UINT_WORD_H__
 
-#include <algorithm>
-#include <cassert>
 #include <cstdint>
 #include <type_traits>
 
