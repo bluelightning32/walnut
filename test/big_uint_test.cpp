@@ -445,4 +445,23 @@ TEST(BigUInt, ModDoublePower2Plus1) {
   }
 }
 
+TEST(BigUInt, Gcd15And50) {
+  BigUInt<64> a{15};
+  BigUInt<64> b{50};
+  BigUInt<64> result = a.GetGreatestCommonDivisor(b);
+  BigUInt<64> expected{5};
+  EXPECT_EQ(result, expected);
+}
+
+TEST(BigUInt, GcdLargePrimeMultiple) {
+  // 338327950288419716939 split into the upper and lower 64 bits.
+  BigUInt<128> prime = (BigUInt<128>{18} << 64) +
+      BigUInt<128>{static_cast<uint64_t>(6286556961647787851)};
+
+  BigUInt<128> a = BigUInt<128>{2} * prime;
+  BigUInt<128> b = BigUInt<128>{3} * prime;
+  BigUInt<128> result = a.GetGreatestCommonDivisor(b);
+  EXPECT_EQ(result, prime);
+}
+
 }  // walnut

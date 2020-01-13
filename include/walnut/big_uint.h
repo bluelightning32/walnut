@@ -336,21 +336,25 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImpl<max_words>>
     return result;
   }
 
-  template <int result_words = 0,
-            int rw = result_words == 0 ?
-              max_words + 1 : result_words>
-  constexpr BigUIntImpl<rw> Multiply(BigUIntWord other) const {
+  template <int other_words>
+  constexpr BigUIntImpl<max_words + other_words>
+  operator*(const BigUIntImpl<other_words>& other) const {
+    return Multiply(other);
+  }
+
+  template <int result_words = max_words + 1>
+  constexpr BigUIntImpl<result_words> Multiply(BigUIntWord other) const {
     if (used_ == sizeof(BigUIntHalfWord) &&
         other <= std::numeric_limits<BigUIntHalfWord>::max()) {
-      return BigUIntImpl<rw>(words_[0].MultiplyAsHalfWord(other));
+      return BigUIntImpl<result_words>(words_[0].MultiplyAsHalfWord(other));
     }
-    BigUIntImpl<rw> result;
+    BigUIntImpl<result_words> result;
     int k = 0;
     BigUIntWord add;
     for (int i = 0; i < used_ / bytes_per_word; ++i, ++k) {
       result.words_[k] = other.MultiplyAdd(words_[i], add, /*carry_in=*/false, &add);
     }
-    if (k < rw) {
+    if (k < result_words) {
       result.words_[k] = add;
       k++;
     }
@@ -528,6 +532,16 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImpl<max_words>>
     }
     Trim();
     return *this;
+  }
+
+  template <int other_words>
+  constexpr BigUIntImpl<std::max(max_words, other_words)>
+  GetGreatestCommonDivisor(BigUIntImpl<other_words> &other) {
+    if (other == BigUIntImpl<1>{0})
+      return *this;
+
+    BigUIntImpl<std::max(max_words, other_words)> mod = *this % other;
+    return other.GetGreatestCommonDivisor(mod);
   }
 
  protected:
