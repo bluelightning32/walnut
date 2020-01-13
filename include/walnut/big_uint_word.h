@@ -6,7 +6,10 @@
 
 namespace walnut {
 
+using BigIntHalfWord = int32_t;
 using BigUIntHalfWord = uint32_t;
+
+using BigIntWord = int64_t;
 
 template <typename Descendent, typename Default>
 using GetImplType =
@@ -23,12 +26,12 @@ class BigUIntWordBase {
  protected:
   using ImplType = GetImplType<Descendent, BigUIntWordBase>;
   // Get the most derived version of this class.
-  constexpr const ImplType* Impl() const {
+  constexpr const ImplType* impl() const {
     static_cast<const ImplType*>(this);
   }
 
   // Get the most derived version of this class.
-  constexpr ImplType* Impl() {
+  constexpr ImplType* impl() {
     return static_cast<ImplType*>(this);
   }
 
@@ -43,24 +46,35 @@ class BigUIntWordBase {
 
   explicit constexpr BigUIntWordBase(uint64_t i) : i_(i) { }
 
+  explicit constexpr BigUIntWordBase(BigIntWord i) : i_(i) { }
+
   explicit constexpr BigUIntWordBase(uint32_t i) : i_(i) { }
 
   constexpr ImplType& operator = (int v) {
     i_ = v;
-    return *Impl();
+    return *impl();
   }
 
   constexpr ImplType& operator = (uint32_t v) {
     i_ = v;
-    return *Impl();
+    return *impl();
   }
 
   constexpr ImplType& operator = (uint64_t v) {
     i_ = v;
-    return *Impl();
+    return *impl();
+  }
+
+  constexpr ImplType& operator = (BigIntWord v) {
+    i_ = v;
+    return *impl();
   }
 
   constexpr BigUIntWordBase& operator = (const BigUIntWordBase& other) = default;
+
+  explicit constexpr operator BigIntWord() const {
+    return i_;
+  }
 
   constexpr uint32_t low_uint32() const {
     return i_;
@@ -110,6 +124,19 @@ class BigUIntWordBase {
     return i_ < other;
   }
 
+  constexpr ImplType operator^(const ImplType& other) const {
+    return ImplType(i_ ^ other.i_);
+  }
+
+  constexpr ImplType operator&(const ImplType& other) const {
+    return ImplType(i_ & other.i_);
+  }
+
+  constexpr ImplType& operator-=(const ImplType& other) {
+    i_ -= other.i_;
+    return *impl();
+  }
+
   constexpr ImplType Add(const ImplType& other, bool* carry_out) const {
     uint64_t result = i_ + other.i_;
     *carry_out = result < i_;
@@ -129,16 +156,12 @@ class BigUIntWordBase {
     return ImplType(result);
   }
 
-  // Add two BigIntWords together. The result is undefined if either is outside
-  // the range of uint32_t.
-  constexpr ImplType AddAsUInt32(const ImplType& other) const {
+  constexpr ImplType Add(const ImplType& other) const {
     return ImplType(i_ + other.i_);
   }
 
-  // Subtract two BigIntWords. The result is undefined if either is outside
-  // the range of uint32_t, or if `other` is larger than *this.
-  constexpr ImplType SubtractAsUInt32(const ImplType& other) const {
-    return ImplType(low_uint32() - other.low_uint32());
+  constexpr ImplType Subtract(const ImplType& other) const {
+    return ImplType(i_ - other.i_);
   }
 
   constexpr ImplType Subtract(const ImplType& other, bool carry_in, bool* carry_out) const {
@@ -227,6 +250,10 @@ class BigUIntWordBase {
     return ImplType(i_ | other.i_);
   }
 
+  constexpr ImplType operator~() const {
+    return ImplType(~i_);
+  }
+
   // Return the 1 based index of the highest set bit, or 0 if no bits are set.
   constexpr unsigned GetHighestSetBit() const {
     const uint64_t test[] = {
@@ -254,7 +281,7 @@ class BigUIntWordBase {
   // Prefix overload
   constexpr ImplType& operator++() {
     ++i_;
-    return *Impl();
+    return *impl();
   }
 
   constexpr ImplType operator/(const ImplType& other) const {
@@ -267,7 +294,11 @@ class BigUIntWordBase {
 
   constexpr ImplType& operator|=(const ImplType& other) {
     i_ |= other.i_;
-    return *Impl();
+    return *impl();
+  }
+
+  constexpr ImplType SignExtension() const {
+    return ImplType{BigIntWord(i_) >> 63};
   }
 
  protected:
