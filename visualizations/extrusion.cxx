@@ -18,6 +18,6 @@ vtkSmartPointer<vtkPolyDataAlgorithm> GenerateShape() {
 }
 
 int main(int argc, char *argv[]) {
-  Render(GenerateShape(), "extrusion");
+  Render(GenerateShape());
   return 0;
 }

@@ -1,13 +1,17 @@
 #include <iostream>
 
 #include <vtkActor.h>
+#include <vtkArrowSource.h>
 #include <vtkApplyColors.h>
 #include <vtkCamera.h>
+#include <vtkCellCenters.h>
 #include <vtkCubeAxesActor.h>
+#include <vtkGlyph3D.h>
 #include <vtkInteractorStyleSwitch.h>
 #include <vtkNamedColors.h>
 #include <vtkPNGWriter.h>
 #include <vtkPolyDataMapper.h>
+#include <vtkPolyDataNormals.h>
 #include <vtkProperty.h>
 #include <vtkRenderer.h>
 #include <vtkRenderWindow.h>
@@ -85,7 +89,43 @@ vtkSmartPointer<vtkCubeAxesActor> GetAxisActor(double content_bounds[6], double 
   return actor;
 }
 
-inline void Render(vtkSmartPointer<vtkAlgorithm> shape, const char* output) {
+vtkSmartPointer<vtkGlyph3D> GetNormalsGlyph(vtkSmartPointer<vtkAlgorithm> shape) {
+  auto normals = vtkSmartPointer<vtkPolyDataNormals>::New();
+  normals->SetInputConnection(shape->GetOutputPort());
+
+  normals->ComputePointNormalsOff();
+  normals->ComputeCellNormalsOn();
+
+  auto centers = vtkSmartPointer<vtkCellCenters>::New();
+  centers->SetInputConnection(normals->GetOutputPort());
+
+  auto arrow = vtkSmartPointer<vtkArrowSource>::New();
+  arrow->Update();
+
+  auto glyph = vtkSmartPointer<vtkGlyph3D>::New();
+
+  glyph->SetInputConnection(centers->GetOutputPort());
+  glyph->SetSourceData(arrow->GetOutput());
+  glyph->SetVectorModeToUseNormal();
+  glyph->SetScaleModeToScaleByVector();
+  glyph->SetScaleFactor(3);
+  glyph->OrientOn();
+
+  return glyph;
+}
+
+vtkSmartPointer<vtkActor> GetNormalsActor(vtkSmartPointer<vtkAlgorithm> shape) {
+  auto mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+  mapper->SetInputConnection(GetNormalsGlyph(shape)->GetOutputPort());
+
+  auto actor = vtkSmartPointer<vtkActor>::New();
+  actor->SetMapper(mapper);
+  actor->GetProperty()->SetColor(0,0.5,1);
+
+  return actor;
+}
+
+inline void Render(vtkSmartPointer<vtkAlgorithm> shape) {
   auto mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   mapper->SetInputConnection(Color(shape, 1, 0.8, 0.8, 0.5)->GetOutputPort());
   mapper->SetScalarModeToUseCellFieldData();
@@ -107,6 +147,7 @@ inline void Render(vtkSmartPointer<vtkAlgorithm> shape, const char* output) {
   auto renderer = vtkSmartPointer<vtkRenderer>::New();
   renderer->AddActor(actor);
   renderer->AddActor(wireframe_actor);
+  renderer->AddActor(GetNormalsActor(shape));
   renderer->ResetCamera();
   renderer->AddActor(GetAxisActor(actor->GetBounds(), 5, renderer->GetActiveCamera()));
   renderer->ResetCamera();
