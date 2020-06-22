@@ -52,6 +52,7 @@ class BigIntBase {
   constexpr BigIntBase(int used) : used_(used) { }
 
   constexpr BigIntBase(const BigUIntWord* words, int used) : used_(used) {
+    assert(("overflow", used_ <= max_bytes));
     for (int i = 0; i < (used + bytes_per_word - 1) / bytes_per_word; ++i) {
       words_[i] = words[i];
     }
@@ -60,6 +61,7 @@ class BigIntBase {
 
   template <int other_max_words, typename OtherImpl>
   constexpr BigIntBase(const BigIntBase<other_max_words, OtherImpl>& other) {
+    assert(("overflow", other.used_ <= max_bytes));
     int copy_bytes = max_words < other_max_words ?
                      std::min(other.used_, int(max_words * bytes_per_word)) :
                      other.used_;
@@ -75,6 +77,13 @@ class BigIntBase {
 
   template <int other_max_words, typename OtherImpl>
   constexpr ImplType& operator=(const BigIntBase<other_max_words, OtherImpl>& other) {
+    assert(other.used_ <= max_bytes);
+    AssignIgnoreOverflow(other);
+    return *impl();
+  }
+
+  template <int other_max_words, typename OtherImpl>
+  constexpr void AssignIgnoreOverflow(const BigIntBase<other_max_words, OtherImpl>& other) {
     int copy_bytes = max_words < other_max_words ?
                      std::min(other.used_, int(max_words * bytes_per_word)) :
                      other.used_;
@@ -86,7 +95,17 @@ class BigIntBase {
     if (max_words < other_max_words) {
       impl()->Trim();
     }
-    return *impl();
+  }
+
+  template <typename Result, typename Other>
+  constexpr Result operator&(const Other& other) const {
+    Result result;
+    result.used_ = std::min(used_, other.used_);
+    for (int i = 0; i < result.used_words(); i++) {
+      result.words_[i] = words_[i] & other.words_[i];
+    }
+    result.Trim();
+    return result;
   }
 
   template <typename Result, typename Other>
@@ -212,6 +231,21 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImpl<max_words>>
     return Parent::operator=(other);
   }
 
+  template <int other_max_words>
+  constexpr void AssignIgnoreOverflow(
+      const BigUIntImpl<other_max_words>& other) {
+    Parent::AssignIgnoreOverflow(other);
+  }
+
+  static constexpr BigUIntImpl max_value() {
+    BigUIntImpl result;
+    for (int i = 0; i < max_words; ++i) {
+      result.words_[i] = BigUIntWord::max_value();
+    }
+    result.used_ = max_bytes;
+    return result;
+  }
+
   template <int result_words=max_words>
   constexpr BigUIntImpl<result_words> operator << (int shift) const {
     if (used_  == sizeof(BigUIntHalfWord) && shift <= 32) {
@@ -245,6 +279,13 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImpl<max_words>>
     result.used_ = out * BigUIntWord::bytes_per_word;
     result.Trim();
     return result;
+  }
+
+  template <int result_words = 0, int other_words,
+            int rw = result_words == 0 ?
+              std::max(max_words, other_words) : result_words>
+  constexpr BigUIntImpl<rw> operator&(const BigUIntImpl<other_words>& other) {
+    return Parent::template operator&<BigUIntImpl<rw>>(other);
   }
 
   template <int result_words = 0, int other_words,
@@ -452,6 +493,15 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImpl<max_words>>
       if (words_[i] != other.words_[i]) return false;
     }
     return words_[0] == other.words_[0];
+  }
+
+  constexpr bool operator == (int other) const {
+    if (sizeof(int) <= bytes_per_word) {
+      return other >= 0 && used_ <= sizeof(other) && words_[0] == other;
+    } else {
+      return other >= 0 && *this ==
+        BigUIntImpl<(sizeof(int) + bytes_per_word - 1) / bytes_per_word>(other);
+    }
   }
 
   // Adds (add << shift) to this. The caller must ensure:

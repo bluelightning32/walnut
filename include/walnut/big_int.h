@@ -86,6 +86,16 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImpl<max_words>>
     return *this;
   }
 
+  static constexpr BigIntImpl max_value() {
+    BigIntImpl result;
+    for (int i = 0; i < max_words - 1; ++i) {
+      result.words_[i] = BigUIntWord::max_value();
+    }
+    result.words_[max_words - 1] = BigUIntWord{std::numeric_limits<BigIntWord>::max()};
+    result.used_ = max_bytes;
+    return result;
+  }
+
   template <int result_words=max_words>
   constexpr BigIntImpl<result_words> operator << (int shift) const {
     BigIntImpl<result_words> result;
@@ -308,6 +318,15 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImpl<max_words>>
     return words_[0] == other.words_[0];
   }
 
+  constexpr bool operator == (int other) const {
+    if (sizeof(int) <= bytes_per_word) {
+      return used_ <= sizeof(other) && words_[0] == BigUIntWord{other};
+    } else {
+      return *this ==
+        BigIntImpl<(sizeof(int) + bytes_per_word - 1) / bytes_per_word>(other);
+    }
+  }
+
   // Divide `this` by `other`. Return the quotient.
   template <int other_words>
   constexpr BigIntImpl<max_words> operator/(const BigIntImpl<other_words>& other) const {
@@ -403,7 +422,7 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImpl<max_words>>
         next = words_[i];
 
         if (check.Add(BigUIntWord{1}) > BigUIntWord{1} ||
-            BigIntWord{check ^ next} < 0) {
+            BigIntWord(check ^ next) < 0) {
           break;
         }
 

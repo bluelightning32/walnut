@@ -3,6 +3,8 @@
 #include "gtest/gtest.h"
 #include "walnut/stop_watch.h"
 
+#include <iostream>
+
 namespace walnut {
 
 TEST(BigUIntAcceleration, UInt32VsUInt64Multiply) {
@@ -13,7 +15,7 @@ TEST(BigUIntAcceleration, UInt32VsUInt64Multiply) {
       uint32_time.Start();
       BigUInt<64> product{static_cast<uint32_t>(1)};
       for (int i = 0; i < runs; i++) {
-        product = product.Multiply<1>(product);
+        product.AssignIgnoreOverflow(product.Multiply<1>(product));
       }
       uint32_time.Stop();
       std::cout << "uint32 time: " << uint32_time << " product: " << product.low_uint64() << std::endl;
@@ -23,7 +25,7 @@ TEST(BigUIntAcceleration, UInt32VsUInt64Multiply) {
       uint64_time.Start();
       BigUInt<64> product{-1};
       for (int i = 0; i < runs; i++) {
-        product = product.Multiply<1>(product);
+        product.AssignIgnoreOverflow(product.Multiply<1>(product));
       }
       uint64_time.Stop();
       std::cout << "uint64 time: " << uint64_time << " product: " << product.low_uint64() << std::endl;
@@ -48,6 +50,19 @@ TEST(BigUInt, UInt64Construction) {
 
   EXPECT_EQ(static_cast<uint32_t>(a), b.low_uint32());
   EXPECT_EQ(a, b.low_uint64());
+}
+
+TEST(BigUInt, max_value128) {
+  BigUInt<128> max_value = BigUInt<128>::max_value();
+  for (int i = 0; i < 128; i++) {
+    EXPECT_EQ(max_value & (BigUInt<128>{1} << i), BigUInt<128>{1} << i);
+  }
+}
+
+TEST(BigUInt, ConstructorAssertsOnOverflow) {
+  static constexpr int big_bits = BigUInt<32>::max_bits*2;
+  BigUInt<big_bits> big_value = BigUInt<big_bits>::max_value();
+  ASSERT_DEBUG_DEATH(BigUInt<32> constructed(big_value), "overflow");
 }
 
 TEST(BigUInt, LeftShift) {

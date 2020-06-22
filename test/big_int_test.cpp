@@ -20,6 +20,12 @@ TEST(BigInt, Int64Construction) {
   EXPECT_EQ(a, b.low_uint64());
 }
 
+TEST(BigInt, ConstructorAssertsOnOverflow) {
+  static constexpr int big_bits = BigInt<32>::max_bits*2;
+  BigInt<big_bits> big_value = BigInt<big_bits>::max_value();
+  ASSERT_DEBUG_DEATH(BigInt<32> constructed(big_value), "overflow");
+}
+
 TEST(BigInt, LeftShiftPos) {
   BigInt<64> a(3);
   EXPECT_EQ(a << 1, BigInt<64>{3 << 1});

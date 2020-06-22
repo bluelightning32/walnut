@@ -2,6 +2,7 @@
 #define WALNUT_BIG_UINT_WORD_H__
 
 #include <cstdint>
+#include <limits>
 #include <type_traits>
 
 namespace walnut {
@@ -74,6 +75,10 @@ class BigUIntWordBase {
 
   explicit constexpr operator BigIntWord() const {
     return i_;
+  }
+
+  static constexpr ImplType max_value() {
+    return ImplType(std::numeric_limits<uint64_t>::max());
   }
 
   constexpr uint32_t low_uint32() const {
