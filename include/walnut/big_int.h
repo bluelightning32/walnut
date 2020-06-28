@@ -165,6 +165,40 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImpl<max_words>>
     return Add(other);
   }
 
+  template <int other_words>
+  constexpr BigIntImpl& operator+=(const BigIntImpl<other_words>& other) {
+    if (used_ == sizeof(BigIntHalfWord) && other.used_ == sizeof(BigIntHalfWord)) {
+      words_[0] += other.words_[0];
+      if ((BigIntWord)words_[0] < std::numeric_limits<BigIntHalfWord>::min() ||
+          (BigIntWord)words_[0] > std::numeric_limits<BigIntHalfWord>::max()) {
+        used_ = bytes_per_word;
+      }
+      return *this;
+    }
+    int i = 0;
+    bool carry = false;
+    int common_words = GetCommonWordCount(other);
+    BigUIntWord this_extension = SignExtension();
+    BigUIntWord other_extension = other.SignExtension();
+    assert(("overflow", other.used_ <= max_bytes));
+    for (; i < common_words && i < max_words; i++) {
+      words_[i] = words_[i].Add(other.words_[i], carry, &carry);
+    }
+    for (; i < std::min(used_ / bytes_per_word, max_words); i++) {
+      words_[i] = words_[i].Add(other_extension, carry, &carry);
+    }
+    for (; i < std::min(other.used_ / bytes_per_word, max_words); i++) {
+      words_[i] = this_extension.Add(other.words_[i], carry, &carry);
+    }
+    if (i < max_words) {
+      words_[i] = this_extension.Add(other_extension, carry, &carry);
+      i++;
+    }
+    used_ = i * bytes_per_word;
+    Trim();
+    return *this;
+  }
+
   template <int result_words = 0, int other_words,
             int rw = result_words == 0 ?
               std::max(max_words, other_words) : result_words>

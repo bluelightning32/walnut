@@ -323,6 +323,40 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImpl<max_words>>
     return Add(other);
   }
 
+  template <int other_words>
+  constexpr BigUIntImpl operator+=(const BigUIntImpl<other_words>& other) {
+    if (used_ == sizeof(BigUIntHalfWord) && other.used_ == sizeof(BigUIntHalfWord)) {
+      words_[0] += other.words_[0];
+      if (words_[0] > BigUIntWord{std::numeric_limits<BigUIntHalfWord>::max()}) {
+        used_ = bytes_per_word;
+      }
+      return *this;
+    }
+    int i = 0;
+    bool carry = false;
+    assert(("overflow", other.used_ <= max_bytes));
+    int common_words = GetCommonWordCount(other);
+    for (; i < common_words && i < max_words; i++) {
+      words_[i] = words_[i].Add(other.words_[i], carry, &carry);
+    }
+    for (; i < std::min(used_ / BigUIntWord::bytes_per_word, max_words); i++) {
+      words_[i] = words_[i].Add(carry, &carry);
+    }
+    for (; i < std::min(other.used_ / BigUIntWord::bytes_per_word, max_words); i++) {
+      words_[i] = other.words_[i].Add(carry, &carry);
+    }
+    if (carry) {
+      assert (("overflow", i < max_words));
+      if (i < max_words) {
+        words_[i] = 1;
+        i++;
+      }
+    }
+    used_ = i * BigUIntWord::bytes_per_word;
+    Trim();
+    return *this;
+  }
+
   template <int result_words = 0, int other_words,
             int rw = result_words == 0 ?
               std::max(max_words, other_words) : result_words>

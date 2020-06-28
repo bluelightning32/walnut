@@ -167,6 +167,17 @@ TEST(BigUInt, AddLeftShiftedAll1sTo0TripleWord) {
   }
 }
 
+TEST(BigUInt, PlusEqual) {
+  BigUInt<128> result(1);
+  BigUInt<128> add(1);
+
+  for (int i = 0; i < 120; ++i) {
+    result += (add << i);
+  }
+
+  EXPECT_EQ(result, BigUInt<128>(1) << 120);
+}
+
 TEST(BigUInt, SubtractLeftShiftedAll1sFromAll1sSingleWord) {
   for (int i = 0; i < BigUIntWord::bits_per_word; ++i) {
     BigUInt<64> result(-1);
