@@ -18,7 +18,6 @@ struct Vertex3 {
   // supporting more bits. Also note that the BigInt is faster when not all of
   // the requested bits are used.
   static constexpr int coord_bits = coord_bits_template;
-  static constexpr int max_coord_bits = BigIntRep::max_bits;
 
   // Leaves the coordinates in an undefined state
   Vertex3() = default;
@@ -36,11 +35,23 @@ struct Vertex3 {
     return coords[0];
   }
 
+  const BigIntRep& x() const {
+    return coords[0];
+  }
+
   BigIntRep& y() {
     return coords[1];
   }
 
+  const BigIntRep& y() const {
+    return coords[1];
+  }
+
   BigIntRep& z() {
+    return coords[2];
+  }
+
+  const BigIntRep& z() const {
     return coords[2];
   }
 
@@ -68,11 +79,23 @@ struct Vector3 {
 
   // The minimum number of bits to support for each coordinate.
   static constexpr int coord_bits = coord_bits_template;
-  static constexpr int max_coord_bits = Vertex3Rep::max_coord_bits;
 
   Vertex3Rep rep;
 
+  template <int other_coord_bits>
+  Vector3(const Vector3<other_coord_bits>& other) :
+    rep(other.coords[0], other.coords[1], other.coords[2]) { }
+
+  Vector3(const BigIntRep& x, const BigIntRep& y, const BigIntRep& z) :
+    rep(x, y, z) { }
+
+  Vector3(int x, int y, int z) : rep(x, y, z) { }
+
   BigIntRep& x() {
+    return rep.x();
+  }
+
+  const BigIntRep& x() const {
     return rep.x();
   }
 
@@ -80,8 +103,76 @@ struct Vector3 {
     return rep.y();
   }
 
+  const BigIntRep& y() const {
+    return rep.y();
+  }
+
   BigIntRep& z() {
     return rep.z();
+  }
+
+  const BigIntRep& z() const {
+    return rep.z();
+  }
+
+  template <int other_coord_bits>
+  bool operator ==(const Vector3<other_coord_bits>& other) const {
+    return x() == other.x() &&
+           y() == other.y() &&
+           z() == other.z();
+  }
+
+  // Return true if the vectors have the same direction and only differ in
+  // magnitude.
+  //
+  // Vectors with opposite magnitude are considered to have opposite
+  // directions, and this function returns false for such vectors.
+  template <int other_coord_bits>
+  bool IsSameDir(const Vector3<other_coord_bits>& other) const {
+    BigInt<coord_bits> scale_other;
+    BigInt<other_coord_bits> scale_mine;
+    if (x() != 0) {
+      scale_other = x().abs();
+      scale_mine = other.x().abs();
+    } else if (y() != 0) {
+      scale_other = y().abs();
+      scale_mine = other.y().abs();
+    } else {
+      scale_other = z().abs();
+      scale_mine = other.z().abs();
+    }
+
+    return x().Multiply(scale_mine) == other.x().Multiply(scale_other) &&
+           y().Multiply(scale_mine) == other.y().Multiply(scale_other) &&
+           z().Multiply(scale_mine) == other.z().Multiply(scale_other);
+  }
+
+  // Get the square of the scale of this vector
+  BigInt<coord_bits*2 + 2> GetScaleSquared() const {
+    return Dot(*this);
+  }
+
+  // Compute the dot product
+  template <int other_coord_bits>
+  BigInt<coord_bits + other_coord_bits + 2> Dot(const Vector3<other_coord_bits>& other) const {
+    BigInt<coord_bits + other_coord_bits + 2> result = x() * other.x();
+    result += y() * other.y();
+    result += z() * other.z();
+    return result;
+  }
+
+  // Note that you will have to explicitly specify the template parameter,
+  // because the compiler can't figure it out from `scale`, because a BigInt<7>
+  // is the same type as a BigInt<8>.
+  template <int other_bits>
+  Vector3<coord_bits + other_bits> Scale(const BigInt<other_bits>& scale) const {
+    return Vector3<coord_bits + other_bits>(x() * scale,
+                                            y() * scale,
+                                            z() * scale);
+  }
+
+  Vector3<coord_bits + sizeof(int)*8> Scale(int scale) const {
+    return Scale<sizeof(int)*8>(BigInt<sizeof(int)*8>(scale));
   }
 };
 

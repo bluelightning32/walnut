@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <limits>
+#include <cmath>
 #include <type_traits>
 
 namespace walnut {
@@ -309,6 +310,14 @@ class BigUIntWordBase {
 
   constexpr ImplType SignExtension() const {
     return ImplType{BigIntWord(i_) >> 63};
+  }
+
+  constexpr ImplType SignedAbs() const {
+    if (sizeof(long long int) == sizeof(BigIntWord)) {
+      return ImplType{uint64_t(llabs(BigIntWord(i_)))};
+    } else {
+      return ImplType{BigIntWord(i_) >= 0 ? BigIntWord(i_) : -BigIntWord(i_)};
+    }
   }
 
  protected:

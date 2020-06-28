@@ -96,6 +96,16 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImpl<max_words>>
     return result;
   }
 
+  static constexpr BigIntImpl min_value() {
+    BigIntImpl result;
+    for (int i = 0; i < max_words - 1; ++i) {
+      result.words_[i] = BigUIntWord::max_value();
+    }
+    result.words_[max_words - 1] = BigUIntWord{std::numeric_limits<BigIntWord>::min()};
+    result.used_ = max_bytes;
+    return result;
+  }
+
   template <int result_words=max_words>
   constexpr BigIntImpl<result_words> operator << (int shift) const {
     BigIntImpl<result_words> result;
@@ -266,6 +276,11 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImpl<max_words>>
     return Multiply(other);
   }
 
+  constexpr BigIntImpl<max_words + 1>
+  operator*(const int other) const {
+    return Multiply(BigIntImpl<1>(other));
+  }
+
   template <int other_max_words>
   constexpr bool operator < (const BigIntImpl<other_max_words>& other) const {
     if (used_ < other.used_) {
@@ -361,6 +376,10 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImpl<max_words>>
     }
   }
 
+  constexpr bool operator != (int other) const {
+    return !(*this == other);
+  }
+
   // Divide `this` by `other`. Return the quotient.
   template <int other_words>
   constexpr BigIntImpl<max_words> operator/(const BigIntImpl<other_words>& other) const {
@@ -418,6 +437,9 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImpl<max_words>>
   }
 
   constexpr BigIntImpl<max_words> abs() const {
+    if (used_ == sizeof(BigIntHalfWord)) {
+      return BigIntImpl<max_words>(BigIntWord{words_[0].SignedAbs()});
+    }
     if (BigIntWord{words_[used_words() - 1]} >= 0) {
       return *this;
     } else {
