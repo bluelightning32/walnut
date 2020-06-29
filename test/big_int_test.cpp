@@ -21,7 +21,7 @@ TEST(BigInt, Int64Construction) {
 }
 
 TEST(BigInt, ConstructorAssertsOnOverflow) {
-  static constexpr int big_bits = BigInt<32>::max_bits*2;
+  static constexpr int big_bits = BigInt<32>::word_count*BigInt<32>::bits_per_word*2;
   BigInt<big_bits> big_value = BigInt<big_bits>::max_value();
   ASSERT_DEBUG_DEATH(BigInt<32> constructed(big_value), "overflow");
 }
@@ -136,7 +136,7 @@ TEST(BigInt, AddInt32ToInt64) {
 TEST(BigInt, AddInt64Carry) {
   BigInt<64> a(std::numeric_limits<int64_t>::min());
   BigInt<64> b(std::numeric_limits<int64_t>::min());
-  BigInt<128> result = a.Add<2>(b);
+  BigInt<65> result = a.Add<65>(b);
 
   EXPECT_EQ(result.low_uint64(), 0);
   EXPECT_EQ(result, BigInt<128>(a) << 1);

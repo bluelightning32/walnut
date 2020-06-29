@@ -161,9 +161,6 @@ struct Vector3 {
     return result;
   }
 
-  // Note that you will have to explicitly specify the template parameter,
-  // because the compiler can't figure it out from `scale`, because a BigInt<7>
-  // is the same type as a BigInt<8>.
   template <int other_bits>
   Vector3<coord_bits + other_bits> Scale(const BigInt<other_bits>& scale) const {
     return Vector3<coord_bits + other_bits>(x() * scale,

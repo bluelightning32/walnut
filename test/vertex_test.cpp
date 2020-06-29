@@ -5,7 +5,8 @@
 namespace walnut {
 
 TEST(Vertex3, ConstructorAssertsOnOverflow) {
-  static constexpr int big_coord_bits = Vertex3<32>::BigIntRep::max_bits*2;
+  static constexpr int big_coord_bits = Vertex3<32>::BigIntRep::word_count *
+                                        Vertex3<32>::BigIntRep::bits_per_word * 2;
   BigInt<big_coord_bits> big_coord = BigInt<big_coord_bits>::max_value();
   Vertex3<big_coord_bits> big_vertex(big_coord, big_coord, big_coord);
 
@@ -58,7 +59,8 @@ TEST(Vector3, GetScaleSquared) {
 }
 
 TEST(Vector3, GetScaleSquaredMax) {
-  static constexpr int coord_bits = Vector3<>::BigIntRep::max_bits;
+  static constexpr int coord_bits = Vertex3<>::BigIntRep::word_count *
+                                        Vertex3<>::BigIntRep::bits_per_word;
   BigInt<coord_bits> min_value = BigInt<coord_bits>::min_value();
   // abs(int_min) > abs(int_max), so a vector with all int_min coordinates will
   // have the biggest scale.
