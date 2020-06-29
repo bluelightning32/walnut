@@ -68,10 +68,8 @@ class Vertex3 {
   }
 
   template <int other_coord_bits>
-  Vector3<std::max(other_coord_bits, coord_bits) + 1> operator+(const Vertex3<other_coord_bits>& other);
-
-  template <int other_coord_bits>
-  Vector3<std::max(other_coord_bits, coord_bits) + 1> operator-(const Vertex3<other_coord_bits>& other);
+  Vector3<std::max(other_coord_bits, coord_bits_template) + 1> operator-(
+      const Vertex3<other_coord_bits>& other) const;
 
  private:
   std::array<BigIntRep, 3> coords_;
@@ -79,6 +77,9 @@ class Vertex3 {
 
 template <int coord_bits_template>
 class Vector3 {
+  template <int other_coord_bits>
+  friend class Vector3;
+
  public:
   using Vertex3Rep = Vertex3<coord_bits_template>;
   using BigIntRep = typename Vertex3Rep::BigIntRep;
@@ -88,43 +89,43 @@ class Vector3 {
 
   template <int other_coord_bits>
   Vector3(const Vector3<other_coord_bits>& other) :
-    rep(other.coords()[0], other.coords()[1], other.coords()[2]) { }
+    rep_(other.coords()[0], other.coords()[1], other.coords()[2]) { }
 
   Vector3(const BigIntRep& x, const BigIntRep& y, const BigIntRep& z) :
-    rep(x, y, z) { }
+    rep_(x, y, z) { }
 
-  Vector3(int x, int y, int z) : rep(x, y, z) { }
+  Vector3(int x, int y, int z) : rep_(x, y, z) { }
 
   BigIntRep& x() {
-    return rep.x();
+    return rep_.x();
   }
 
   const BigIntRep& x() const {
-    return rep.x();
+    return rep_.x();
   }
 
   BigIntRep& y() {
-    return rep.y();
+    return rep_.y();
   }
 
   const BigIntRep& y() const {
-    return rep.y();
+    return rep_.y();
   }
 
   BigIntRep& z() {
-    return rep.z();
+    return rep_.z();
   }
 
   const BigIntRep& z() const {
-    return rep.z();
+    return rep_.z();
   }
 
   std::array<BigIntRep, 3>& coords() {
-    return rep.coords();
+    return rep_.coords();
   }
 
   const std::array<BigIntRep, 3>& coords() const {
-    return rep.coords();
+    return rep_.coords();
   }
 
   template <int other_coord_bits>
@@ -149,11 +150,26 @@ class Vector3 {
 
   // Compute the dot product
   template <int other_coord_bits>
-  BigInt<coord_bits + other_coord_bits + 2> Dot(const Vector3<other_coord_bits>& other) const {
-    BigInt<coord_bits + other_coord_bits + 2> result = x() * other.x();
+  BigInt<coord_bits + other_coord_bits + 1> Dot(const Vertex3<other_coord_bits>& other) const {
+    BigInt<coord_bits + other_coord_bits + 1> result = x() * other.x();
     result += y() * other.y();
     result += z() * other.z();
     return result;
+  }
+
+  // Compute the dot product
+  template <int other_coord_bits>
+  BigInt<coord_bits + other_coord_bits + 1> Dot(const Vector3<other_coord_bits>& other) const {
+    return Dot(other.rep_);
+  }
+
+  // Compute the cross product
+  template <int other_coord_bits>
+  Vector3<coord_bits + other_coord_bits> Cross(const Vector3<other_coord_bits>& other) const {
+    return Vector3<coord_bits + other_coord_bits>(
+        /*x=*/y()*other.z() - z()*other.y(),
+        /*y=*/z()*other.x() - x()*other.z(),
+        /*z=*/x()*other.y() - y()*other.x());
   }
 
   template <int other_bits>
@@ -168,7 +184,7 @@ class Vector3 {
   }
 
  private:
-  Vertex3Rep rep;
+  Vertex3Rep rep_;
 };
 
 // 3D vertex represented with homogeneous coordinates. The w coordinate acts
@@ -214,6 +230,15 @@ struct Vertex4 {
   Vertex4(const Vertex4<other_num_bits, other_denom_bits>& other) :
     numerator(other.numerator), denominator(other.denominator) { }
 };
+
+template <int coord_bits>
+template <int other_coord_bits>
+Vector3<std::max(other_coord_bits, coord_bits) + 1>
+Vertex3<coord_bits>::operator-(const Vertex3<other_coord_bits>& other) const {
+  return Vector3<std::max(other_coord_bits, coord_bits) + 1>(x() - other.x(),
+                                                             y() - other.y(),
+                                                             z() - other.z());
+}
 
 template <int coord_bits_template>
 template <int other_coord_bits>

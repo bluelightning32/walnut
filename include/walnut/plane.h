@@ -44,6 +44,15 @@ class Plane {
   Plane(const Plane<other_vector_bits, other_dist_bits>& other) :
     Plane(other.normal, other.dist) { }
 
+  template <int vertex_bits>
+  Plane(const Vertex3<vertex_bits>& p1,
+        const Vertex3<vertex_bits>& p2,
+        const Vertex3<vertex_bits>& p3) :
+    // Use p2 as the center point, because if p1, p2, and p3 are from a polygon
+    // with more than 3 points, (p3 - p2) and (p1 - p2) are likely to be
+    // shorter than (p2 - p1) and (p3 - p1).
+    normal_((p3 - p2).Cross(p1 - p2)), dist_(normal_.Dot(p2)) { }
+
   // Returns >0 if `v` is in the half space, 0 if `v` is coincident with the
   // plane, or <0 if `v` is outside of the half space.
   template <int v_bits>
