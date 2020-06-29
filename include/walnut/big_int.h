@@ -69,9 +69,9 @@ class BigInt {
   }
 
   template <int other_bits>
-  constexpr BigInt<std::max(bits, other_bits)> operator+(
+  constexpr BigInt<std::max(bits, other_bits) + 1> operator+(
       const BigInt<other_bits>& other) const {
-    return Add(other);
+    return Add<std::max(bits, other_bits) + 1>(other);
   }
 
   template <int other_bits>
@@ -89,9 +89,9 @@ class BigInt {
   }
 
   template <int other_bits>
-  constexpr BigInt<std::max(bits, other_bits)> operator-(
+  constexpr BigInt<std::max(bits, other_bits) + 1> operator-(
       const BigInt<other_bits>& other) const {
-    return Subtract(other);
+    return Subtract<std::max(bits, other_bits) + 1>(other);
   }
 
   template <int other_bits>
