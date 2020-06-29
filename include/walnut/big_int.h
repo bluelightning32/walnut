@@ -117,6 +117,11 @@ class BigInt {
   }
 
   template <int other_bits>
+  constexpr int Compare(const BigInt<other_bits>& other) const {
+    return rep_.Compare(other.rep_);
+  }
+
+  template <int other_bits>
   constexpr bool operator <= (const BigInt<other_bits>& other) const {
     return rep_ <= other.rep_;
   }

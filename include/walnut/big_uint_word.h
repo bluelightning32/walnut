@@ -118,6 +118,11 @@ class BigUIntWordBase {
     return i_ >= other.i_;
   }
 
+  constexpr int CompareSigned(const ImplType& other) const {
+    if (i_ == other.i_) return 0;
+    return (i_ < other.i_) ? -1 : 1;
+  }
+
   constexpr bool operator != (uint32_t other) const {
     return i_ != other;
   }

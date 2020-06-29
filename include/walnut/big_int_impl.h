@@ -163,6 +163,27 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImpl<max_words>>
     return result;
   }
 
+  template <int other_max_words>
+  constexpr int Compare(const BigIntImpl<other_max_words>& other) const {
+    if (used_ < other.used_) {
+      // `this` is closer to 0 than `other`.
+      return (0 < BigIntWord{other.words_[other.used_words() - 1]}) ? -1 : 1;
+    }
+    if (used_ > other.used_) {
+      // `other` is closer to 0 than `this`.
+      return (0 < BigIntWord{words_[used_words() - 1]}) ? 1 : -1;
+    }
+    int i = used_words() - 1;
+    if (words_[i] != other.words_[i]) {
+      return (BigIntWord{words_[i]} > BigIntWord{other.words_[i]}) ? 1 : -1;
+    }
+    for (i--; i > 0; i--) {
+      if (words_[i] > other.words_[i]) return 1;
+      if (words_[i] < other.words_[i]) return -1;
+    }
+    return words_[0].CompareSigned(other.words_[0]);
+  }
+
   template <int result_words = 0, int other_words,
             int rw = result_words == 0 ?
               std::max(max_words, other_words) : result_words>
