@@ -233,7 +233,7 @@ struct Vertex4 {
 
 template <int coord_bits>
 template <int other_coord_bits>
-Vector3<std::max(other_coord_bits, coord_bits) + 1>
+inline Vector3<std::max(other_coord_bits, coord_bits) + 1>
 Vertex3<coord_bits>::operator-(const Vertex3<other_coord_bits>& other) const {
   return Vector3<std::max(other_coord_bits, coord_bits) + 1>(x() - other.x(),
                                                              y() - other.y(),
@@ -242,7 +242,7 @@ Vertex3<coord_bits>::operator-(const Vertex3<other_coord_bits>& other) const {
 
 template <int coord_bits_template>
 template <int other_coord_bits>
-bool Vector3<coord_bits_template>::IsSameDir(const Vector3<other_coord_bits>& other) const {
+inline bool Vector3<coord_bits_template>::IsSameDir(const Vector3<other_coord_bits>& other) const {
   BigInt<coord_bits> scale_other;
   BigInt<other_coord_bits> scale_mine;
   if (x() != 0) {

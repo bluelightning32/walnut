@@ -65,7 +65,7 @@ class Plane {
 
 template <int vector_bits_template, int dist_bits_template>
 template <int v_bits>
-int Plane<vector_bits_template, dist_bits_template>::Compare(const Vector3<v_bits>& v) {
+inline int Plane<vector_bits_template, dist_bits_template>::Compare(const Vector3<v_bits>& v) {
   return dist_.Compare(normal_.Dot(v));
   return 0;
 }
