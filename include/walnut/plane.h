@@ -3,6 +3,7 @@
 
 #include "walnut/vector.h"
 #include "walnut/vertex3.h"
+#include "walnut/vertex4.h"
 
 namespace walnut {
 
@@ -62,19 +63,21 @@ class Plane {
   // Returns >0 if `v` is in the half space, 0 if `v` is coincident with the
   // plane, or <0 if `v` is outside of the half space.
   template <int v_bits>
-  int Compare(const Vertex3<v_bits>& v);
+  int Compare(const Vertex3<v_bits>& v) {
+    return dist_.Compare(normal_.Dot(v.vector_from_origin()));
+  }
+
+  // Returns >0 if `v` is in the half space, 0 if `v` is coincident with the
+  // plane, or <0 if `v` is outside of the half space.
+  template <int v_num_bits, int v_denom_bits>
+  int Compare(const Vertex4<v_num_bits, v_denom_bits>& v) {
+    return (v.dist_denom() * dist_).Compare(normal_.Dot(v.vector_from_origin()));
+  }
 
  private:
   VectorRep normal_;
   DistInt dist_;
 };
-
-template <int vector_bits_template, int dist_bits_template>
-template <int v_bits>
-inline int Plane<vector_bits_template, dist_bits_template>::Compare(
-    const Vertex3<v_bits>& v) {
-  return dist_.Compare(normal_.Dot(v.vector_from_origin()));
-}
 
 }  // walnut
 

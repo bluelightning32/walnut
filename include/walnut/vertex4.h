@@ -24,19 +24,51 @@ class Vertex4 {
   static constexpr int max_denom_bits = DenomInt::max_bits;
 
   NumInt& x() {
-    return direction_.x();
+    return vector_from_origin_.x();
+  }
+
+  const NumInt& x() const {
+    return vector_from_origin_.x();
   }
 
   NumInt& y() {
-    return direction_.y();
+    return vector_from_origin_.y();
+  }
+
+  const NumInt& y() const {
+    return vector_from_origin_.y();
   }
 
   NumInt& z() {
-    return direction_.z();
+    return vector_from_origin_.z();
+  }
+
+  const NumInt& z() const {
+    return vector_from_origin_.z();
   }
 
   DenomInt& w() {
-    return denominator_;
+    return dist_denom_;
+  }
+
+  const DenomInt& w() const {
+    return dist_denom_;
+  }
+
+  VectorRep& vector_from_origin() {
+    return vector_from_origin_;
+  }
+
+  const VectorRep& vector_from_origin() const {
+    return vector_from_origin_;
+  }
+
+  DenomInt& dist_denom() {
+    return dist_denom_;
+  }
+
+  const DenomInt& dist_denom() const {
+    return dist_denom_;
   }
 
   // Leaves the coordinates in an undefined state
@@ -44,11 +76,21 @@ class Vertex4 {
 
   template <int other_num_bits, int other_denom_bits>
   Vertex4(const Vertex4<other_num_bits, other_denom_bits>& other) :
-    direction_(other.direction_), denominator_(other.denominator_) { }
+    vector_from_origin_(other.vector_from_origin_), dist_denom_(other.dist_denom_) { }
+
+  template <int other_num_bits, int other_denom_bits>
+  Vertex4(const BigInt<other_num_bits>& x,
+          const BigInt<other_num_bits>& y,
+          const BigInt<other_num_bits>& z,
+          const BigInt<other_denom_bits>& w) :
+    vector_from_origin_(x, y, z), dist_denom_(w) { }
+
+  Vertex4(int x, int y, int z, int w) :
+    vector_from_origin_(x, y, z), dist_denom_(w) { }
 
  private:
-  VectorRep direction_;
-  DenomInt denominator_;
+  VectorRep vector_from_origin_;
+  DenomInt dist_denom_;
 };
 
 }  // walnut
