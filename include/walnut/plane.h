@@ -8,8 +8,8 @@ namespace walnut {
 template <int vector_bits_template = 4 + 2*31, int dist_bits_template = 131>
 class Plane {
  public:
-  using Vector3Rep = Vector3<vector_bits_template>;
-  using VectorInt = typename Vector3Rep::BigIntRep;
+  using VectorRep = Vector<vector_bits_template>;
+  using VectorInt = typename VectorRep::BigIntRep;
   using DistInt = BigInt<dist_bits_template>;
 
   // The minimum number of bits to support for each of the x, y, and z coordinates.
@@ -17,16 +17,20 @@ class Plane {
   // The minimum number of bits to support for the d coordinate.
   static constexpr int dist_bits = dist_bits_template;
 
-  VectorInt& x() {
+  const VectorInt& x() const {
     return normal_.x();
   }
 
-  VectorInt& y() {
+  const VectorInt& y() const {
     return normal_.y();
   }
 
-  VectorInt& z() {
+  const VectorInt& z() const {
     return normal_.z();
+  }
+
+  const VectorRep& normal() const {
+    return normal_;
   }
 
   DistInt& d() {
@@ -37,7 +41,7 @@ class Plane {
   Plane() = default;
 
   template <int other_vector_bits>
-  Plane(const Vector3<other_vector_bits>& normal, const DistInt& dist) :
+  Plane(const Vector<other_vector_bits>& normal, const DistInt& dist) :
     normal_(normal), dist_(dist) { }
 
   template <int other_vector_bits, int other_dist_bits>
@@ -51,22 +55,24 @@ class Plane {
     // Use p2 as the center point, because if p1, p2, and p3 are from a polygon
     // with more than 3 points, (p3 - p2) and (p1 - p2) are likely to be
     // shorter than (p2 - p1) and (p3 - p1).
-    normal_((p3 - p2).Cross(p1 - p2)), dist_(normal_.Dot(p2)) { }
+    normal_((p3 - p2).Cross(p1 - p2)),
+    dist_(normal_.Dot(p2.vector_from_origin())) { }
 
   // Returns >0 if `v` is in the half space, 0 if `v` is coincident with the
   // plane, or <0 if `v` is outside of the half space.
   template <int v_bits>
-  int Compare(const Vector3<v_bits>& v);
+  int Compare(const Vertex3<v_bits>& v);
 
  private:
-  Vector3Rep normal_;
+  VectorRep normal_;
   DistInt dist_;
 };
 
 template <int vector_bits_template, int dist_bits_template>
 template <int v_bits>
-inline int Plane<vector_bits_template, dist_bits_template>::Compare(const Vector3<v_bits>& v) {
-  return dist_.Compare(normal_.Dot(v));
+inline int Plane<vector_bits_template, dist_bits_template>::Compare(
+    const Vertex3<v_bits>& v) {
+  return dist_.Compare(normal_.Dot(v.vector_from_origin()));
   return 0;
 }
 
