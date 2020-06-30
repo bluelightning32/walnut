@@ -73,7 +73,6 @@ template <int v_bits>
 inline int Plane<vector_bits_template, dist_bits_template>::Compare(
     const Vertex3<v_bits>& v) {
   return dist_.Compare(normal_.Dot(v.vector_from_origin()));
-  return 0;
 }
 
 }  // walnut
