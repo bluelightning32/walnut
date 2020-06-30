@@ -80,50 +80,6 @@ class Vertex3 {
   Vector<coord_bits> vector_from_origin_;
 };
 
-// 3D vertex represented with homogeneous coordinates. The w coordinate acts
-// like a divisor for the x, y, and z coordinates.
-template <int num_bits_template = 32*7 + 9, int denom_bits_template = 32*6 + 7>
-struct Vertex4 {
-  using Vertex3Rep = Vertex3<num_bits_template>;
-  using NumInt = typename Vertex3Rep::BigIntRep;
-  using DenomInt = BigInt<denom_bits_template>;
-
-  // The minimum number of bits to support for each of the x, y, and z coordinates.
-  static constexpr int num_bits = num_bits_template;
-  // The maximum number of bits supported for the x, y, and z coordinates.
-  static constexpr int max_num_bits = NumInt::max_bits;
-  // The minimum number of bits to support for the w coordinate.
-  static constexpr int denom_bits = denom_bits_template;
-  // The maximum number of bits supported for the w coordinate.
-  static constexpr int max_denom_bits = DenomInt::max_bits;
-
-  Vertex3Rep numerator;
-  DenomInt denominator;
-
-  NumInt& x() {
-    return numerator.x();
-  }
-
-  NumInt& y() {
-    return numerator.y();
-  }
-
-  NumInt& z() {
-    return numerator.z();
-  }
-
-  DenomInt& w() {
-    return denominator;
-  }
-
-  // Leaves the coordinates in an undefined state
-  Vertex4() = default;
-
-  template <int other_num_bits, int other_denom_bits>
-  Vertex4(const Vertex4<other_num_bits, other_denom_bits>& other) :
-    numerator(other.numerator), denominator(other.denominator) { }
-};
-
 }  // walnut
 
-#endif // WALNUT_VERTEX_H__
+#endif // WALNUT_VERTEX3_H__

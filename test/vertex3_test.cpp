@@ -1,4 +1,4 @@
-#include "walnut/vertex.h"
+#include "walnut/vertex3.h"
 
 #include "gtest/gtest.h"
 

@@ -4,7 +4,7 @@
 
 namespace walnut {
 
-TEST(Plane, CompareXAxis) {
+TEST(Plane, CompareVertex3) {
   // Anything with x<5 is included in the half space.
   Plane<> plane(/*normal=*/Vector<>(/*x=*/2, /*y=*/0, /*z=*/0), /*dist=*/BigInt<32>(10));
 

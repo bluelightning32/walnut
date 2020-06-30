@@ -1,6 +1,7 @@
-#include "walnut/vertex.h"
+#include "walnut/vector.h"
 
 #include "gtest/gtest.h"
+#include "walnut/vertex3.h"
 
 namespace walnut {
 
