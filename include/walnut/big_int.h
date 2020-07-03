@@ -185,6 +185,13 @@ class BigInt {
     return rep_.GetUIntAbs(was_signed);
   }
 
+  // If this value is negative, then it returns a negative integer. If this
+  // value is non-negative, this returns a non-negative integer (could be 0
+  // whether or not the value is 0).
+  constexpr BigIntWord last_word() const {
+    return rep_.last_word();
+  }
+
   constexpr uint32_t low_uint32() const {
     return rep_.low_uint32();
   }

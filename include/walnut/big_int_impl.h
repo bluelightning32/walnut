@@ -503,6 +503,10 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImpl<max_words>>
     }
   }
 
+  constexpr BigIntWord last_word() const {
+    return BigIntWord{words_[max_words - 1]};
+  }
+
  protected:
   using Parent::used_;
   using Parent::words_;
