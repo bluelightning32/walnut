@@ -7,7 +7,7 @@
 
 namespace walnut {
 
-template <int vector_bits_template = 4 + 2*31, int dist_bits_template = 131>
+template <int vector_bits_template = 4 + 2*31, int dist_bits_template = 99>
 class Plane {
  public:
   using VectorRep = Vector<vector_bits_template>;
@@ -37,6 +37,10 @@ class Plane {
 
   DistInt& d() {
     return dist_;
+  }
+
+  bool IsValid() const {
+    return !normal_.IsZero();
   }
 
   // Leaves the coordinates in an undefined state

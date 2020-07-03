@@ -23,6 +23,9 @@ class Vector {
   // with fewer used bits are faster.
   static constexpr int coord_bits = coord_bits_template;
 
+  // Leaves the coordinates in an undefined state
+  Vector() = default;
+
   template <int other_coord_bits>
   Vector(const Vector<other_coord_bits>& other) :
     coords_{other.coords()[0], other.coords()[1], other.coords()[2]} { }
@@ -126,6 +129,10 @@ class Vector {
 
   Vector<coord_bits + sizeof(int)*8> Scale(int scale) const {
     return Scale<sizeof(int)*8>(BigInt<sizeof(int)*8>(scale));
+  }
+
+  bool IsZero() const {
+    return coords_[0] == 0 && coords_[1] == 0 && coords_[2] == 0;
   }
 
  private:
