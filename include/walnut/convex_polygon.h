@@ -1,5 +1,5 @@
-#ifndef WALNUT_POLYGON_H__
-#define WALNUT_POLYGON_H__
+#ifndef WALNUT_CONVEX_POLYGON_H__
+#define WALNUT_CONVEX_POLYGON_H__
 
 #include <vector>
 
@@ -9,9 +9,9 @@
 
 namespace walnut {
 
-// A 2D Polygon inside of R^3. The vertices are stored using homogeneous coordinates.
+// A 2D ConvexPolygon inside of R^3. The vertices are stored using homogeneous coordinates.
 template <int vertex3_bits_template = 32>
-class Polygon {
+class ConvexPolygon {
  public:
 
   using Vertex3Rep = Vertex3<vertex3_bits_template>;
@@ -35,15 +35,11 @@ class Polygon {
   static constexpr int vertex4_denom_bits = Vertex4Rep::denom_bits_template;
 
   // Leaves the polygon in an undefined state.
-  Polygon() = default;
+  ConvexPolygon() = default;
 
   template <int other_vertex3_bits>
-  Polygon(const Polygon<other_vertex3_bits>& other) :
-    Polygon(other.points_) { }
-
-  template <typename Container>
-  Polygon(const Container& points) :
-    Polygon(std::begin(points), std::end(points)) { }
+  ConvexPolygon(const ConvexPolygon<other_vertex3_bits>& other) :
+    ConvexPolygon(other.points_) { }
 
   const Vertex4Rep& GetPoint(int i) const {
     return points_[i];
@@ -114,15 +110,17 @@ class Polygon {
 
  private:
   std::vector<Vertex4Rep> points_;
+
+  ConvexPolygon(std::vector<Vertex4Rep> points) : points_(std::move(points)) { }
 };
 
 template <int vertex3_bits>
 template <typename Vertex3Iterator>
 inline Vertex3Iterator
-Polygon<vertex3_bits>::GetNextPlanar(const Vertex3<vertex3_bits>& p1,
-                                     Vertex3Iterator& next_polygon_start,
-                                     Vertex3Iterator vertex_end,
-                                     PlaneRep &plane) {
+ConvexPolygon<vertex3_bits>::GetNextPlanar(const Vertex3<vertex3_bits>& p1,
+                                           Vertex3Iterator& next_polygon_start,
+                                           Vertex3Iterator vertex_end,
+                                           PlaneRep &plane) {
   if (next_polygon_start == vertex_end) {
     return next_polygon_start;
   }
@@ -162,10 +160,10 @@ Polygon<vertex3_bits>::GetNextPlanar(const Vertex3<vertex3_bits>& p1,
 template <int vertex3_bits>
 template <typename Vertex3Iterator>
 inline Vertex3Iterator
-Polygon<vertex3_bits>::GetNextMonotone(int monotone_dimension,
-                                       const Vertex3<vertex3_bits>& p1,
-                                       Vertex3Iterator& next_polygon_start,
-                                       Vertex3Iterator vertex_end) {
+ConvexPolygon<vertex3_bits>::GetNextMonotone(int monotone_dimension,
+                                             const Vertex3<vertex3_bits>& p1,
+                                             Vertex3Iterator& next_polygon_start,
+                                             Vertex3Iterator vertex_end) {
   if (next_polygon_start == vertex_end) {
     return next_polygon_start;
   }
@@ -231,4 +229,4 @@ Polygon<vertex3_bits>::GetNextMonotone(int monotone_dimension,
 
 }  // walnut
 
-#endif // WALNUT_POLYGON_H__
+#endif // WALNUT_CONVEX_POLYGON_H__
