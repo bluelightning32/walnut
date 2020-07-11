@@ -1,15 +1,15 @@
-#include "walnut/vector.h"
+#include "walnut/vector3.h"
 
 #include "gtest/gtest.h"
 #include "walnut/vertex3.h"
 
 namespace walnut {
 
-TEST(Vector, IsSameDir) {
-  Vector<> v1a(0, 0, 1);
-  Vector<> v1b(0, 0, 2);
-  Vector<> v2a(1, 0, 0);
-  Vector<> v2b(10, 0, 0);
+TEST(Vector3, IsSameDir) {
+  Vector3<> v1a(0, 0, 1);
+  Vector3<> v1b(0, 0, 2);
+  Vector3<> v2a(1, 0, 0);
+  Vector3<> v2b(10, 0, 0);
 
   EXPECT_TRUE(v1a.IsSameDir(v1b));
   EXPECT_TRUE(v1b.IsSameDir(v1a));
@@ -20,22 +20,22 @@ TEST(Vector, IsSameDir) {
   EXPECT_FALSE(v2a.IsSameDir(v1a));
 }
 
-TEST(Vector, OppositeDirIsNotSame) {
-  Vector<> v1(1, 1, 1);
-  Vector<> v2(-1, -1, -1);
-  Vector<> v3(-2, -2, -2);
+TEST(Vector3, OppositeDirIsNotSame) {
+  Vector3<> v1(1, 1, 1);
+  Vector3<> v2(-1, -1, -1);
+  Vector3<> v3(-2, -2, -2);
 
   EXPECT_FALSE(v1.IsSameDir(v2));
   EXPECT_FALSE(v1.IsSameDir(v3));
   EXPECT_TRUE(v2.IsSameDir(v3));
 }
 
-TEST(Vector, IsSameOrOppositeDir) {
-  Vector<> v1a(0, 0, -1);
-  Vector<> v1b(0, 0, -2);
-  Vector<> v1c(0, 0, 1);
-  Vector<> v1d(0, 0, 2);
-  Vector<> v2(1, 0, 0);
+TEST(Vector3, IsSameOrOppositeDir) {
+  Vector3<> v1a(0, 0, -1);
+  Vector3<> v1b(0, 0, -2);
+  Vector3<> v1c(0, 0, 1);
+  Vector3<> v1d(0, 0, 2);
+  Vector3<> v2(1, 0, 0);
 
   EXPECT_TRUE(v1a.IsSameOrOppositeDir(v1b));
   EXPECT_TRUE(v1b.IsSameOrOppositeDir(v1c));
@@ -46,27 +46,27 @@ TEST(Vector, IsSameOrOppositeDir) {
   EXPECT_FALSE(v1c.IsSameOrOppositeDir(v2));
 }
 
-TEST(Vector, Minus) {
-  Vector<> v1(1, 10, 100);
-  Vector<> v2(2, 20, 200);
+TEST(Vector3, Minus) {
+  Vector3<> v1(1, 10, 100);
+  Vector3<> v2(2, 20, 200);
 
-  EXPECT_EQ(v1 - v2, Vector<>(-1, -10, -100));
+  EXPECT_EQ(v1 - v2, Vector3<>(-1, -10, -100));
 }
 
-TEST(Vector, Dot) {
-  Vector<> v1(5, 0, 0);
-  Vector<> v2(10, 0, 0);
+TEST(Vector3, Dot) {
+  Vector3<> v1(5, 0, 0);
+  Vector3<> v2(10, 0, 0);
 
   EXPECT_EQ(v1.Dot(v2), 50);
 }
 
-TEST(Vector, GetScaleSquared) {
-  Vector<> v1(1, 2, 3);
+TEST(Vector3, GetScaleSquared) {
+  Vector3<> v1(1, 2, 3);
 
   EXPECT_EQ(v1.GetScaleSquared(), 1*1 + 2*2 + 3*3);
 }
 
-TEST(Vector, GetScaleSquaredMax) {
+TEST(Vector3, GetScaleSquaredMax) {
   static constexpr int coord_bits = Vertex3<>::BigIntRep::word_count *
                                         Vertex3<>::BigIntRep::bits_per_word;
   BigInt<coord_bits> min_value = BigInt<coord_bits>::min_value();
@@ -74,9 +74,9 @@ TEST(Vector, GetScaleSquaredMax) {
   // have the biggest scale.
   //
   // Note that since min_value uses all coord_bits, coord_bits must be
-  // explicitly passed to Vector, because coord_bits could be larger than
-  // Vector<>::coord_bits.
-  Vector<coord_bits> min_vector(min_value, min_value, min_value);
+  // explicitly passed to Vector3, because coord_bits could be larger than
+  // Vector3<>::coord_bits.
+  Vector3<coord_bits> min_vector(min_value, min_value, min_value);
 
   BigInt<coord_bits*2 + 5> expected_scale = min_value;
   expected_scale = expected_scale * min_value;
@@ -85,8 +85,8 @@ TEST(Vector, GetScaleSquaredMax) {
   EXPECT_EQ(min_vector.GetScaleSquared(), expected_scale);
 }
 
-TEST(Vector, Scale) {
-  Vector<> v1(0, 2, 1);
+TEST(Vector3, Scale) {
+  Vector3<> v1(0, 2, 1);
   EXPECT_EQ(v1, v1.Scale(1));
 
   EXPECT_TRUE(v1.IsSameDir(v1.Scale(2)));

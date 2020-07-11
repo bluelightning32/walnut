@@ -1,5 +1,5 @@
-#ifndef WALNUT_VECTOR_H__
-#define WALNUT_VECTOR_H__
+#ifndef WALNUT_VECTOR3_H__
+#define WALNUT_VECTOR3_H__
 
 #include <array>
 
@@ -8,9 +8,9 @@
 namespace walnut {
 
 template <int coord_bits_template = 33>
-class Vector {
+class Vector3 {
   template <int other_coord_bits>
-  friend class Vector;
+  friend class Vector3;
 
  public:
   using BigIntRep = BigInt<coord_bits_template>;
@@ -24,16 +24,16 @@ class Vector {
   static constexpr int coord_bits = coord_bits_template;
 
   // Leaves the coordinates in an undefined state
-  Vector() = default;
+  Vector3() = default;
 
   template <int other_coord_bits>
-  Vector(const Vector<other_coord_bits>& other) :
+  Vector3(const Vector3<other_coord_bits>& other) :
     coords_{other.coords()[0], other.coords()[1], other.coords()[2]} { }
 
-  Vector(const BigIntRep& x, const BigIntRep& y, const BigIntRep& z) :
+  Vector3(const BigIntRep& x, const BigIntRep& y, const BigIntRep& z) :
     coords_{x, y, z} { }
 
-  Vector(int x, int y, int z) :
+  Vector3(int x, int y, int z) :
     coords_{BigIntRep(x), BigIntRep(y), BigIntRep(z)} { }
 
   BigIntRep& x() {
@@ -69,16 +69,16 @@ class Vector {
   }
 
   template <int other_coord_bits>
-  bool operator ==(const Vector<other_coord_bits>& other) const {
+  bool operator ==(const Vector3<other_coord_bits>& other) const {
     return x() == other.x() &&
            y() == other.y() &&
            z() == other.z();
   }
 
   template <int other_coord_bits>
-  Vector<std::max(other_coord_bits, coord_bits_template) + 1> operator-(
-      const Vector<other_coord_bits>& other) const {
-    return Vector<std::max(other_coord_bits, coord_bits_template) + 1>(
+  Vector3<std::max(other_coord_bits, coord_bits_template) + 1> operator-(
+      const Vector3<other_coord_bits>& other) const {
+    return Vector3<std::max(other_coord_bits, coord_bits_template) + 1>(
         /*x=*/x() - other.x(),
         /*y=*/y() - other.y(),
         /*z=*/z() - other.z());
@@ -90,12 +90,12 @@ class Vector {
   // Vectors with opposite magnitude are considered to have opposite
   // directions, and this function returns false for such vectors.
   template <int other_coord_bits>
-  bool IsSameDir(const Vector<other_coord_bits>& other) const;
+  bool IsSameDir(const Vector3<other_coord_bits>& other) const;
 
   // Return true if the vectors have the same direction or opposite directions
   // and only differ in magnitude.
   template <int other_coord_bits>
-  bool IsSameOrOppositeDir(const Vector<other_coord_bits>& other) const;
+  bool IsSameOrOppositeDir(const Vector3<other_coord_bits>& other) const;
 
   // Get the square of the scale of this vector
   BigInt<coord_bits*2 + 2> GetScaleSquared() const {
@@ -104,7 +104,7 @@ class Vector {
 
   // Compute the dot product
   template <int other_coord_bits>
-  BigInt<coord_bits + other_coord_bits + 1> Dot(const Vector<other_coord_bits>& other) const {
+  BigInt<coord_bits + other_coord_bits + 1> Dot(const Vector3<other_coord_bits>& other) const {
     BigInt<coord_bits + other_coord_bits + 1> result = x() * other.x();
     result += y() * other.y();
     result += z() * other.z();
@@ -113,21 +113,21 @@ class Vector {
 
   // Compute the cross product
   template <int other_coord_bits>
-  Vector<coord_bits + other_coord_bits> Cross(const Vector<other_coord_bits>& other) const {
-    return Vector<coord_bits + other_coord_bits>(
+  Vector3<coord_bits + other_coord_bits> Cross(const Vector3<other_coord_bits>& other) const {
+    return Vector3<coord_bits + other_coord_bits>(
         /*x=*/y()*other.z() - z()*other.y(),
         /*y=*/z()*other.x() - x()*other.z(),
         /*z=*/x()*other.y() - y()*other.x());
   }
 
   template <int other_bits>
-  Vector<coord_bits + other_bits> Scale(const BigInt<other_bits>& scale) const {
-    return Vector<coord_bits + other_bits>(x() * scale,
+  Vector3<coord_bits + other_bits> Scale(const BigInt<other_bits>& scale) const {
+    return Vector3<coord_bits + other_bits>(x() * scale,
                                             y() * scale,
                                             z() * scale);
   }
 
-  Vector<coord_bits + sizeof(int)*8> Scale(int scale) const {
+  Vector3<coord_bits + sizeof(int)*8> Scale(int scale) const {
     return Scale<sizeof(int)*8>(BigInt<sizeof(int)*8>(scale));
   }
 
@@ -141,8 +141,8 @@ class Vector {
 
 template <int coord_bits_template>
 template <int other_coord_bits>
-inline bool Vector<coord_bits_template>::IsSameDir(
-    const Vector<other_coord_bits>& other) const {
+inline bool Vector3<coord_bits_template>::IsSameDir(
+    const Vector3<other_coord_bits>& other) const {
   BigInt<coord_bits> scale_other;
   BigInt<other_coord_bits> scale_mine;
   if (x() != 0) {
@@ -163,8 +163,8 @@ inline bool Vector<coord_bits_template>::IsSameDir(
 
 template <int coord_bits_template>
 template <int other_coord_bits>
-inline bool Vector<coord_bits_template>::IsSameOrOppositeDir(
-    const Vector<other_coord_bits>& other) const {
+inline bool Vector3<coord_bits_template>::IsSameOrOppositeDir(
+    const Vector3<other_coord_bits>& other) const {
   BigInt<coord_bits> scale_other;
   BigInt<other_coord_bits> scale_mine;
   if (x() != 0) {
@@ -185,4 +185,4 @@ inline bool Vector<coord_bits_template>::IsSameOrOppositeDir(
 
 }  // walnut
 
-#endif // WALNUT_VECTOR_H__
+#endif // WALNUT_VECTOR3_H__

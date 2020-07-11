@@ -1,7 +1,7 @@
 #ifndef WALNUT_PLANE_H__
 #define WALNUT_PLANE_H__
 
-#include "walnut/vector.h"
+#include "walnut/vector3.h"
 #include "walnut/vertex3.h"
 #include "walnut/vertex4.h"
 
@@ -10,7 +10,7 @@ namespace walnut {
 template <int vector_bits_template = 4 + 2*31, int dist_bits_template = 99>
 class Plane {
  public:
-  using VectorRep = Vector<vector_bits_template>;
+  using VectorRep = Vector3<vector_bits_template>;
   using VectorInt = typename VectorRep::BigIntRep;
   using DistInt = BigInt<dist_bits_template>;
 
@@ -47,7 +47,7 @@ class Plane {
   Plane() = default;
 
   template <int other_vector_bits>
-  Plane(const Vector<other_vector_bits>& normal, const DistInt& dist) :
+  Plane(const Vector3<other_vector_bits>& normal, const DistInt& dist) :
     normal_(normal), dist_(dist) { }
 
   template <int other_vector_bits, int other_dist_bits>

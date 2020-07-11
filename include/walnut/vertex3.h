@@ -1,14 +1,14 @@
 #ifndef WALNUT_VERTEX3_H__
 #define WALNUT_VERTEX3_H__
 
-#include "walnut/vector.h"
+#include "walnut/vector3.h"
 
 namespace walnut {
 
 template <int coord_bits_template = 32>
 class Vertex3 {
  public:
-  using VectorRep = Vector<coord_bits_template>;
+  using VectorRep = Vector3<coord_bits_template>;
   using BigIntRep = typename VectorRep::BigIntRep;
 
   // The minimum number of bits to support for each coordinate.
@@ -71,13 +71,13 @@ class Vertex3 {
   }
 
   template <int other_coord_bits>
-  Vector<std::max(other_coord_bits, coord_bits_template) + 1> operator-(
+  Vector3<std::max(other_coord_bits, coord_bits_template) + 1> operator-(
       const Vertex3<other_coord_bits>& other) const {
     return vector_from_origin() - other.vector_from_origin();
   }
 
  private:
-  Vector<coord_bits> vector_from_origin_;
+  VectorRep vector_from_origin_;
 };
 
 }  // walnut

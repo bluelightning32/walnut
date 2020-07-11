@@ -1,7 +1,7 @@
 #ifndef WALNUT_VERTEX4_H__
 #define WALNUT_VERTEX4_H__
 
-#include "walnut/vector.h"
+#include "walnut/vector3.h"
 
 namespace walnut {
 
@@ -10,7 +10,7 @@ namespace walnut {
 template <int num_bits_template = 32*7 + 9, int denom_bits_template = 32*6 + 7>
 class Vertex4 {
  public:
-  using VectorRep = Vector<num_bits_template>;
+  using VectorRep = Vector3<num_bits_template>;
   using NumInt = typename VectorRep::BigIntRep;
   using DenomInt = BigInt<denom_bits_template>;
 

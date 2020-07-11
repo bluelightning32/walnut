@@ -56,7 +56,7 @@ TEST(PolygonGetNextPlanar, AllPlanar) {
                                                  plane);
   EXPECT_EQ(next_start, input.end());
   EXPECT_EQ(polygon_end, input.end());
-  EXPECT_TRUE(plane.normal().IsSameDir(Vector<>(0, 0, 1)));
+  EXPECT_TRUE(plane.normal().IsSameDir(Vector3<>(0, 0, 1)));
 
   // Add one more point
   input.emplace_back(-1, 0, 0);
@@ -65,7 +65,7 @@ TEST(PolygonGetNextPlanar, AllPlanar) {
                                                  plane);
   EXPECT_EQ(next_start, input.end());
   EXPECT_EQ(polygon_end, input.end());
-  EXPECT_TRUE(plane.normal().IsSameDir(Vector<>(0, 0, 1)));
+  EXPECT_TRUE(plane.normal().IsSameDir(Vector3<>(0, 0, 1)));
 }
 
 TEST(ConvexPolygonGetNextPlanar, StopsAtNonplanar) {
@@ -82,14 +82,14 @@ TEST(ConvexPolygonGetNextPlanar, StopsAtNonplanar) {
                                                  plane);
   EXPECT_EQ(next_start, input.begin() + 1);
   EXPECT_EQ(polygon_end, input.begin() + 2);
-  EXPECT_TRUE(plane.normal().IsSameDir(Vector<>(0, 0, 1)));
+  EXPECT_TRUE(plane.normal().IsSameDir(Vector3<>(0, 0, 1)));
 
   // Make sure it finds the next polygon too.
   polygon_end = ConvexPolygon<32>::GetNextPlanar(p1, next_start, input.end(),
                                                  plane);
   EXPECT_EQ(next_start, input.end());
   EXPECT_EQ(polygon_end, input.end());
-  EXPECT_TRUE(plane.normal().IsSameDir(Vector<>(1, 0, 0)));
+  EXPECT_TRUE(plane.normal().IsSameDir(Vector3<>(1, 0, 0)));
 }
 
 TEST(ConvexPolygonGetNextMonotone, StopsAtInitial) {
