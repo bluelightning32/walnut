@@ -503,8 +503,9 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImpl<max_words>>
     }
   }
 
-  constexpr BigIntWord last_word() const {
-    return BigIntWord{words_[max_words - 1]};
+  constexpr BigIntWord GetSign() const {
+    int i = used_words() - 1;
+    return BigIntWord{words_[i]} | i;
   }
 
  protected:

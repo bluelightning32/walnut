@@ -415,4 +415,15 @@ TEST(BigInt, DivideBig3And2Combinations) {
   }
 }
 
+TEST(BigInt, GetSign) {
+  constexpr int test_bits = 256;
+  EXPECT_EQ(BigInt<test_bits>{0}.GetSign(), 0);
+  for (int shift = 0; shift < test_bits - 1; ++shift) {
+    EXPECT_GT((BigInt<test_bits>{1} << shift).GetSign(), 0) << shift;
+  }
+  for (int shift = 0; shift < test_bits; ++shift) {
+    EXPECT_LT((BigInt<test_bits>{-1} << shift).GetSign(), 0) << shift;
+  }
+}
+
 }  // walnut

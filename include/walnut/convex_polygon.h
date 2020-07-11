@@ -68,7 +68,7 @@ class ConvexPolygon {
   //
   // Returns an iterator to the end vertex (one after) of the planar polygon.
   // If there was no planar polygon in the input list (because the input list
-  // was too short or all vertices were colinear), then a copy of the input
+  // was too short or all vertices were collinear), then a copy of the input
   // value of `next_polygon_start` is returned, and on output
   // `next_polygon_start` points to `vertex_end`.
   template <typename Vertex3Iterator>
@@ -185,7 +185,7 @@ ConvexPolygon<vertex3_bits>::GetNextMonotone(int monotone_dimension,
   // Keep accepting vertices while they continue to increase/decrease
   // (depending on dir) relative to the previous vertex.
   while ((polygon_end->coords()[monotone_dimension] -
-          next_polygon_start->coords()[monotone_dimension]).last_word()
+          next_polygon_start->coords()[monotone_dimension]).GetSign()
          * dir >= 0) {
     next_polygon_start = polygon_end;
     ++polygon_end;
@@ -198,7 +198,7 @@ ConvexPolygon<vertex3_bits>::GetNextMonotone(int monotone_dimension,
   // overshoot p1 in that direction.
   dir = -dir;
   while ((polygon_end->coords()[monotone_dimension] -
-          next_polygon_start->coords()[monotone_dimension]).last_word()
+          next_polygon_start->coords()[monotone_dimension]).GetSign()
          * dir >= 0) {
     next_polygon_start = polygon_end;
     ++polygon_end;
@@ -211,10 +211,10 @@ ConvexPolygon<vertex3_bits>::GetNextMonotone(int monotone_dimension,
   // p1 get overshot again.
   dir = -dir;
   while ((p1.coords()[monotone_dimension] -
-          polygon_end->coords()[monotone_dimension]).last_word()
+          polygon_end->coords()[monotone_dimension]).GetSign()
          * dir >= 0 &&
          (polygon_end->coords()[monotone_dimension] -
-          next_polygon_start->coords()[monotone_dimension]).last_word()
+          next_polygon_start->coords()[monotone_dimension]).GetSign()
          * dir >= 0) {
     next_polygon_start = polygon_end;
     ++polygon_end;
