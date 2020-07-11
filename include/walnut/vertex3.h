@@ -2,6 +2,7 @@
 #define WALNUT_VERTEX3_H__
 
 #include "walnut/vector3.h"
+#include "walnut/vertex2.h"
 
 namespace walnut {
 
@@ -74,6 +75,34 @@ class Vertex3 {
   Vector3<std::max(other_coord_bits, coord_bits_template) + 1> operator-(
       const Vertex3<other_coord_bits>& other) const {
     return vector_from_origin() - other.vector_from_origin();
+  }
+
+  Vertex2<coord_bits> DropDimension(int drop_dimension) const {
+    switch (drop_dimension) {
+      case 0:
+        return Vertex2<coord_bits>(coords()[1], coords()[2]);
+      case 1:
+        return Vertex2<coord_bits>(coords()[0], coords()[2]);
+      case 2:
+        return Vertex2<coord_bits>(coords()[0], coords()[1]);
+      default:
+        assert(false);
+    }
+  }
+
+  // Returns 0 if (p1, `this`, p3) are collinear.
+  // Returns >0 if p3 is counter-clockwise from p1, with `this` as the center
+  // point.
+  // Returns <0 if p3 is clockwise from p1, with `this` as the center point.
+  //
+  // The calculations are done in 2D by removing (treating it as 0)
+  // `drop_dimension` from the vertex.
+  template <int other_coord_bits>
+  BigIntWord Get2DTwistDir(int drop_dimension,
+                           const Vertex3<other_coord_bits>& p1,
+                           const Vertex3<other_coord_bits>& p3) const {
+    return DropDimension(drop_dimension).GetTwistDir(
+        p1.DropDimension(drop_dimension), p3.DropDimension(drop_dimension));
   }
 
  private:

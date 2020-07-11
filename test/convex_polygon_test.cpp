@@ -26,7 +26,7 @@ TEST(ConvexPolygonGetNextPlanar, InputTooShort) {
   EXPECT_EQ(next_start, input.end());
   EXPECT_EQ(polygon_end, input.begin());
 
-  // Test input with 2 vertices, but they're all colinear with p1.
+  // Test input with 2 vertices, but they're all collinear with p1.
   input.emplace_back(3, 3, 3);
   next_start = input.begin();
   polygon_end = ConvexPolygon<32>::GetNextPlanar(p1, next_start, input.end(),
@@ -34,7 +34,7 @@ TEST(ConvexPolygonGetNextPlanar, InputTooShort) {
   EXPECT_EQ(next_start, input.end());
   EXPECT_EQ(polygon_end, input.begin());
 
-  // Test input with 3 vertices, but they're all colinear with p1.
+  // Test input with 3 vertices, but they're all collinear with p1.
   input.emplace_back(4, 4, 4);
   next_start = input.begin();
   polygon_end = ConvexPolygon<32>::GetNextPlanar(p1, next_start, input.end(),
