@@ -109,9 +109,13 @@ class ConvexPolygon {
                                          Vertex3Iterator vertex_end);
 
  private:
-  std::vector<Vertex4Rep> points_;
+  template <int other_vertex3_bits>
+  ConvexPolygon(const std::vector<Vector3<other_vertex3_bits>>& points) :
+    points_(points.begin(), points.end()) { }
 
   ConvexPolygon(std::vector<Vertex4Rep> points) : points_(std::move(points)) { }
+
+  std::vector<Vertex4Rep> points_;
 };
 
 template <int vertex3_bits>
