@@ -323,7 +323,7 @@ class BigUIntWordBase {
   }
 
   constexpr ImplType SignedAbs() const {
-    if (sizeof(long long int) == sizeof(BigIntWord)) {
+    if (sizeof(long long int) >= sizeof(BigIntWord)) {
       return ImplType{uint64_t(llabs(BigIntWord(i_)))};
     } else {
       return ImplType{BigIntWord(i_) >= 0 ? BigIntWord(i_) : -BigIntWord(i_)};

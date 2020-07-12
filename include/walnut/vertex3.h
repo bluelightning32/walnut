@@ -109,6 +109,11 @@ class Vertex3 {
   VectorRep vector_from_origin_;
 };
 
+template <int coord_bits>
+std::ostream& operator<<(std::ostream& out, const Vertex3<coord_bits>& v) {
+  return out << v.vector_from_origin();
+}
+
 }  // walnut
 
 #endif // WALNUT_VERTEX3_H__

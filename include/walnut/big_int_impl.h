@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <iostream>
 
 #include "walnut/big_uint.h"
 
@@ -437,6 +438,10 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImpl<max_words>>
   }
 
   // Divide `this` by `other`. Return the quotient and store the remainder in `remainder_out`.
+  //
+  // `remainder_out` may not equal `this`.
+  //
+  // The quotient is rounded towards 0.
   template <int other_words>
   constexpr BigIntImpl<max_words> DivideRemainder(const BigIntImpl<other_words>& other,
       BigIntImpl<std::min(max_words, other_words)>* remainder_out) const {
@@ -503,6 +508,9 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImpl<max_words>>
     }
   }
 
+  // Returns 0 if this equals 0.
+  // Returns >0 if this is greater than 0.
+  // Returns <0 if this is less than 0.
   constexpr BigIntWord GetSign() const {
     int i = used_words() - 1;
     return BigIntWord{words_[i]} | i;
@@ -588,6 +596,27 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImpl<max_words>>
     return result;
   }
 };
+
+template <int max_words>
+std::ostream& operator<<(std::ostream& out, const BigIntImpl<max_words>& bigint) {
+  BigIntImpl<max_words> remaining = bigint;
+  char digits[BigIntImpl<max_words>::max_bytes*3 + 2];
+  char* digits_pos = &digits[BigIntImpl<max_words>::max_bytes*3 + 1];
+  *digits_pos-- = '\0';
+
+  bool printed_anything = false;
+  BigIntImpl<1> digit;
+  do {
+    remaining = remaining.DivideRemainder(BigIntImpl<1>(10), &digit);
+    *digits_pos-- = digit.words()[0].SignedAbs().low_uint32() + '0';
+  } while (remaining != 0);
+
+  if (digit.GetSign() < 0) {
+    *digits_pos-- = '-';
+  }
+  out << digits_pos + 1;
+  return out;
+}
 
 }  // walnut
 

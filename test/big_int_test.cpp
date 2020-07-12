@@ -426,4 +426,30 @@ TEST(BigInt, GetSign) {
   }
 }
 
+TEST(BigInt, PrintNeg) {
+  std::ostringstream os;
+  os << BigInt<32>(-1);
+  EXPECT_EQ(os.str(), "-1");
+
+  os.str("");
+  os << BigInt<32>(-25);
+  EXPECT_EQ(os.str(), "-25");
+}
+
+TEST(BigInt, PrintPos) {
+  std::ostringstream os;
+  os << BigInt<32>(1);
+  EXPECT_EQ(os.str(), "1");
+
+  os.str("");
+  os << BigInt<32>(25);
+  EXPECT_EQ(os.str(), "25");
+}
+
+TEST(BigInt, PrintZero) {
+  std::ostringstream os;
+  os << BigInt<32>(0);
+  EXPECT_EQ(os.str(), "0");
+}
+
 }  // walnut

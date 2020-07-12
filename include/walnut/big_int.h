@@ -207,12 +207,20 @@ class BigInt {
     return rep_.words();
   }
 
+  template <int print_bits>
+  friend std::ostream& operator<<(std::ostream& out, const BigInt<print_bits>& bigint);
+
  private:
   template <int other_words>
   BigInt(const BigIntImpl<other_words>& other) : rep_(other) { }
 
   BigIntRep rep_;
 };
+
+template <int print_bits>
+std::ostream& operator<<(std::ostream& out, const BigInt<print_bits>& bigint) {
+  return out << bigint.rep_;
+}
 
 }  // walnut
 

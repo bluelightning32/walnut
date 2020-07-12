@@ -183,6 +183,15 @@ inline bool Vector3<coord_bits_template>::IsSameOrOppositeDir(
          z().Multiply(scale_mine) == other.z().Multiply(scale_other);
 }
 
+template <int coord_bits>
+std::ostream& operator<<(std::ostream& out, const Vector3<coord_bits>& v) {
+  return out << "{ "
+             << v.coords()[0] << ", "
+             << v.coords()[1] << ", "
+             << v.coords()[2]
+             << " }";
+}
+
 }  // walnut
 
 #endif // WALNUT_VECTOR3_H__
