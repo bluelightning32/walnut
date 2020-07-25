@@ -14,7 +14,7 @@ class ResultCollector : public MonotoneTriangulator<vertex3_bits_template> {
  public:
   using typename MonotoneTriangulator<vertex3_bits_template>::Vertex3Rep;
 
-  void Emit(bool flipped, const Vertex3Rep& p1, const Vertex3Rep& p2, const Vertex3Rep& p3) override {
+  void Emit(bool p3_is_top_chain, const Vertex3Rep& p1, const Vertex3Rep& p2, const Vertex3Rep& p3) override {
     result_.emplace_back(std::array<Vertex3Rep, 3>{p1, p2, p3});
   }
 

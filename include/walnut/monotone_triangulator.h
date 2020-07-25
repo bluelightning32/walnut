@@ -1,15 +1,12 @@
 #ifndef WALNUT_MONOTONE_TRIANGULATOR_H__
 #define WALNUT_MONOTONE_TRIANGULATOR_H__
 
-// MonotoneDecomposer takes the top and bottom chain from a monotone polygon
+// MonotoneTriangulator takes the top and bottom chain from a monotone polygon
 // and converts them intro triangles.
 
-#include <functional>
 #include <vector>
 
-#include "walnut/plane.h"
 #include "walnut/vertex3.h"
-#include "walnut/vertex4.h"
 
 namespace walnut {
 
@@ -17,9 +14,6 @@ template <int vertex3_bits_template = 32>
 class MonotoneTriangulator {
  public:
   using Vertex3Rep = Vertex3<vertex3_bits_template>;
-  using const_iterator = typename std::vector<Vertex3Rep>::const_iterator;
-  using const_reverse_iterator = typename
-    std::vector<Vertex3Rep>::const_reverse_iterator;
 
   // Given a monotone polygon in the form of an iterator range for its top
   // chain and an iterator range for its bottom chain, this converts the
@@ -64,10 +58,9 @@ class MonotoneTriangulator {
   // `drop_dimension` coordinate set to 0.
   //
   // `p1` and `p2` come from `reflex_stack`. `p3` is a newer vertex from one
-  // of the chains. `flipped` is set to false when `p1` was lower (older) on
-  // the stack than `p2`, or `flipped` is set to true if `p1` and `p2` had to
-  // be reversed to maintain the correct order of [p1, p2, p3].
-  virtual void Emit(bool flipped, const Vertex3Rep& p1, const Vertex3Rep& p2, const Vertex3Rep& p3) = 0;
+  // of the chains. `p3_is_top_chain` is set to true when `p3` comes from the
+  // top chain, or false if it comes from the bottom chain.
+  virtual void Emit(bool p3_is_top_chain, const Vertex3Rep& p1, const Vertex3Rep& p2, const Vertex3Rep& p3) = 0;
 
  private:
   void ProcessVertex(int drop_dimension, bool is_top, const Vertex3Rep& v);
@@ -173,7 +166,7 @@ void MonotoneTriangulator<vertex3_bits_template>::ProcessVertex(
       }
 
       if (p2->Get2DTwistDir(drop_dimension, *p1, v) <= 0) {
-        Emit(/*flipped=*/is_top, *p1, *p2, v);
+        Emit(/*p3_is_top_chain=*/is_top, *p1, *p2, v);
         reflex_stack_.pop_back();
       } else {
         break;
@@ -198,7 +191,7 @@ void MonotoneTriangulator<vertex3_bits_template>::SwitchChains(
       p2 = reflex_stack_.back();
     }
 
-    Emit(/*flipped=*/top_chain_is_current_, *p1, *p2, next);
+    Emit(/*p3_is_top_chain=*/!top_chain_is_current_, *p1, *p2, next);
     reflex_stack_.pop_back();
   }
   assert(reflex_stack_.size() == 1);

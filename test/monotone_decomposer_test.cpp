@@ -13,15 +13,13 @@ class ResultCollector {
  public:
 
   MonotoneDecomposer<32>::Emitter GetAppender() {
-    return [this](const Vertex3<32>& first,
-                  std::vector<Vertex3<32>>::const_iterator range1_begin,
-                  std::vector<Vertex3<32>>::const_iterator range1_end,
-                  std::vector<Vertex3<32>>::const_reverse_iterator range2_begin,
-                  std::vector<Vertex3<32>>::const_reverse_iterator range2_end) {
+    return [this](std::vector<Vertex3<32>>::const_reverse_iterator range1_begin,
+                  std::vector<Vertex3<32>>::const_reverse_iterator range1_end,
+                  std::vector<Vertex3<32>>::const_iterator range2_begin,
+                  std::vector<Vertex3<32>>::const_iterator range2_end) {
       result_.emplace_back();
-      result_.back().reserve(1 + (range1_end - range1_begin) +
-                            (range2_end - range2_begin));
-      result_.back().push_back(first);
+      result_.back().reserve((range1_end - range1_begin) +
+                             (range2_end - range2_begin));
       result_.back().insert(result_.back().end(), range1_begin, range1_end);
       result_.back().insert(result_.back().end(), range2_begin, range2_end);
     };
@@ -63,35 +61,29 @@ class ResultCollector {
 };
 
 TEST(MonotoneDecomposer, AlreadyConvexAllTopChain) {
-  Vertex3<32> minimum_vertex(0, 0, 10);
   Vertex3<32> top_chain[] = {
+    Vertex3<32>(0, 0, 10),
     Vertex3<32>(1, 3, 10),
     Vertex3<32>(2, 5, 10),
     Vertex3<32>(3, 5, 10),
     Vertex3<32>(4, 3, 10),
-    Vertex3<32>(5, 0, 10),
   };
   Vertex3<32> bottom_chain[] = {
-    // The maximum vertex must be in the top and bottom chains.
     Vertex3<32>(5, 0, 10),
   };
 
   MonotoneDecomposer<32> decomposer;
   ResultCollector collector;
   decomposer.Build(collector.GetAppender(), /*drop_dimension=*/2, /*monotone_dimension=*/0,
-             /*minimum_vertex=*/minimum_vertex,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
   EXPECT_THAT(collector.GetSortedResult(), ElementsAre(std::vector<Vertex3<32>>{
-        minimum_vertex, top_chain[4], top_chain[3], top_chain[2], top_chain[1],
-        top_chain[0]}));
+        top_chain[0], bottom_chain[0], top_chain[4], top_chain[3], top_chain[2], top_chain[1]}));
 }
 
 TEST(MonotoneDecomposer, AlreadyConvexAllBottomChain) {
-  Vertex3<32> minimum_vertex(0, 0, 10);
   Vertex3<32> top_chain[] = {
-    // The maximum vertex must be in the top and bottom chains.
-    Vertex3<32>(5, 0, 10),
+    Vertex3<32>(0, 0, 10),
   };
   Vertex3<32> bottom_chain[] = {
     Vertex3<32>(1, -3, 10),
@@ -104,12 +96,59 @@ TEST(MonotoneDecomposer, AlreadyConvexAllBottomChain) {
   MonotoneDecomposer<32> decomposer;
   ResultCollector collector;
   decomposer.Build(collector.GetAppender(), /*drop_dimension=*/2, /*monotone_dimension=*/0,
-             /*minimum_vertex=*/minimum_vertex,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
   EXPECT_THAT(collector.GetSortedResult(), ElementsAre(std::vector<Vertex3<32>>{
-        minimum_vertex, bottom_chain[0], bottom_chain[1], bottom_chain[2],
+        top_chain[0], bottom_chain[0], bottom_chain[1], bottom_chain[2],
         bottom_chain[3], bottom_chain[4]}));
+}
+
+TEST(MonotoneDecomposer, AlreadyConvexAlternatingChains) {
+  Vertex3<32> top_chain[] = {
+    Vertex3<32>(0, 0, 10),
+    Vertex3<32>(2, 3, 10),
+    Vertex3<32>(4, 5, 10),
+    Vertex3<32>(6, 5, 10),
+    Vertex3<32>(8, 3, 10),
+  };
+  Vertex3<32> bottom_chain[] = {
+    Vertex3<32>(1, -3, 10),
+    Vertex3<32>(3, -5, 10),
+    Vertex3<32>(5, -5, 10),
+    Vertex3<32>(7, -3, 10),
+    Vertex3<32>(9, 0, 10),
+  };
+
+  MonotoneDecomposer<32> decomposer;
+  ResultCollector collector;
+  decomposer.Build(collector.GetAppender(), /*drop_dimension=*/2, /*monotone_dimension=*/0,
+             std::begin(top_chain), std::end(top_chain),
+             std::begin(bottom_chain), std::end(bottom_chain));
+  EXPECT_THAT(collector.GetSortedResult(), ElementsAre(std::vector<Vertex3<32>>{
+        top_chain[0], bottom_chain[0], bottom_chain[1], bottom_chain[2],
+        bottom_chain[3], bottom_chain[4],
+        top_chain[4], top_chain[3], top_chain[2], top_chain[1]}));
+}
+
+TEST(MonotoneDecomposer, SingleReflexOnTop) {
+  Vertex3<32> top_chain[] = {
+    Vertex3<32>(0, 0, 10),
+    Vertex3<32>(1, 1, 10),
+    Vertex3<32>(2, 3, 10),
+  };
+  Vertex3<32> bottom_chain[] = {
+    Vertex3<32>(3, 0, 10),
+  };
+
+  MonotoneDecomposer<32> decomposer;
+  ResultCollector collector;
+  decomposer.Build(collector.GetAppender(), /*drop_dimension=*/2, /*monotone_dimension=*/0,
+             std::begin(top_chain), std::end(top_chain),
+             std::begin(bottom_chain), std::end(bottom_chain));
+  EXPECT_THAT(collector.GetSortedResult(), ElementsAre(
+        std::vector<Vertex3<32>>{top_chain[0], bottom_chain[0], top_chain[1]},
+        std::vector<Vertex3<32>>{top_chain[1], bottom_chain[0], top_chain[2]}
+        ));
 }
 
 }  // walnut
