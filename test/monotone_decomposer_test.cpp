@@ -200,4 +200,58 @@ TEST(MonotoneDecomposer, MergeCheckConvex1) {
         ));
 }
 
+TEST(MonotoneDecomposer, MergeCheckReflex2) {
+  Vertex3<32> top_chain[] = {
+    Vertex3<32>(0, 0, 10),
+    Vertex3<32>(4, -7, 10),
+    Vertex3<32>(14, -7, 10),
+  };
+  Vertex3<32> bottom_chain[] = {
+    Vertex3<32>(1, -8, 10),
+    Vertex3<32>(9, -10, 10),
+    Vertex3<32>(17, -8, 10),
+    Vertex3<32>(18, 0, 10),
+  };
+
+  MonotoneDecomposer<32> decomposer;
+  ResultCollector collector;
+  decomposer.Build(collector.GetAppender(), /*drop_dimension=*/2, /*monotone_dimension=*/0,
+             std::begin(top_chain), std::end(top_chain),
+             std::begin(bottom_chain), std::end(bottom_chain));
+  EXPECT_THAT(collector.GetSortedResult(), ElementsAre(
+        std::vector<Vertex3<32>>{top_chain[0], bottom_chain[0], top_chain[1]},
+        std::vector<Vertex3<32>>{bottom_chain[0], bottom_chain[1],
+                                 bottom_chain[2], top_chain[2], top_chain[1]},
+        std::vector<Vertex3<32>>{top_chain[2], bottom_chain[2], bottom_chain[3]}
+        ));
+}
+
+TEST(MonotoneDecomposer, MergeCheckReflex3) {
+  Vertex3<32> top_chain[] = {
+    Vertex3<32>(0, 0, 10),
+    Vertex3<32>(4, -3, 10),
+    Vertex3<32>(10, -3, 10),
+  };
+  Vertex3<32> bottom_chain[] = {
+    Vertex3<32>(1, -2, 10),
+    Vertex3<32>(7, -7, 10),
+    Vertex3<32>(13, -2, 10),
+    Vertex3<32>(14, 0, 10),
+  };
+
+  MonotoneDecomposer<32> decomposer;
+  ResultCollector collector;
+  decomposer.Build(collector.GetAppender(), /*drop_dimension=*/2, /*monotone_dimension=*/0,
+             std::begin(top_chain), std::end(top_chain),
+             std::begin(bottom_chain), std::end(bottom_chain));
+  EXPECT_THAT(collector.GetSortedResult(), ElementsAre(
+        std::vector<Vertex3<32>>{top_chain[0], bottom_chain[0],
+                                 bottom_chain[1], top_chain[1]},
+        std::vector<Vertex3<32>>{top_chain[1], bottom_chain[1],
+                                 top_chain[2]},
+        std::vector<Vertex3<32>>{bottom_chain[1], bottom_chain[2],
+                                 bottom_chain[3], top_chain[2]}
+        ));
+}
+
 }  // walnut
