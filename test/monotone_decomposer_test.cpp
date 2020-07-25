@@ -151,4 +151,53 @@ TEST(MonotoneDecomposer, SingleReflexOnTop) {
         ));
 }
 
+TEST(MonotoneDecomposer, MergeCheckReflex1) {
+  // MergeCheckConvex1 has roughly the same shape as this test, but the top
+  // chain has convex polygons.
+  Vertex3<32> top_chain[] = {
+    Vertex3<32>(0, 0, 10),
+    Vertex3<32>(1, -1, 10),
+    Vertex3<32>(3, -1, 10),
+  };
+  Vertex3<32> bottom_chain[] = {
+    Vertex3<32>(2, -5, 10),
+    Vertex3<32>(4, 0, 10),
+  };
+
+  MonotoneDecomposer<32> decomposer;
+  ResultCollector collector;
+  decomposer.Build(collector.GetAppender(), /*drop_dimension=*/2, /*monotone_dimension=*/0,
+             std::begin(top_chain), std::end(top_chain),
+             std::begin(bottom_chain), std::end(bottom_chain));
+  EXPECT_THAT(collector.GetSortedResult(), ElementsAre(
+        std::vector<Vertex3<32>>{top_chain[0], bottom_chain[0], top_chain[1]},
+        std::vector<Vertex3<32>>{top_chain[1], bottom_chain[0], top_chain[2]},
+        std::vector<Vertex3<32>>{bottom_chain[0], bottom_chain[1], top_chain[2]}
+        ));
+}
+
+TEST(MonotoneDecomposer, MergeCheckConvex1) {
+  // MergeCheckConvex has roughly the same shape as this test, but the top
+  // chain has convex polygons.
+  Vertex3<32> top_chain[] = {
+    Vertex3<32>(0, 0, 10),
+    Vertex3<32>(1, 1, 10),
+    Vertex3<32>(1, 1, 10),
+  };
+  Vertex3<32> bottom_chain[] = {
+    Vertex3<32>(2, -5, 10),
+    Vertex3<32>(4, 0, 10),
+  };
+
+  MonotoneDecomposer<32> decomposer;
+  ResultCollector collector;
+  decomposer.Build(collector.GetAppender(), /*drop_dimension=*/2, /*monotone_dimension=*/0,
+             std::begin(top_chain), std::end(top_chain),
+             std::begin(bottom_chain), std::end(bottom_chain));
+  EXPECT_THAT(collector.GetSortedResult(), ElementsAre(
+        std::vector<Vertex3<32>>{top_chain[0], bottom_chain[0], bottom_chain[1],
+                                 top_chain[2], top_chain[1]}
+        ));
+}
+
 }  // walnut
