@@ -196,7 +196,6 @@ void MonotoneTriangulator<vertex3_bits_template>::SwitchChains(
   }
   assert(reflex_stack_.size() == 1);
   reflex_stack_[0] = reflex_back;
-  top_chain_is_current_ = !top_chain_is_current_;
 }
 
 }  // walnut
