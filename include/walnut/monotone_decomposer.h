@@ -75,12 +75,17 @@ class MonotoneDecomposer : protected MonotoneTriangulator<vertex3_bits_template>
     if (!convex_top_.empty()) {
       assert(!convex_bottom_.empty());
       if (convex_top_.back() == p1 && convex_bottom_.back() == p2) {
+        // For non-self-intersecting polygons, flip will always be 1. However
+        // for self-intersecting polygons, the triangulator can produce flipped
+        // triangles, in which case flip will be -1.
+        const int flip = p2.Get2DTwistDir(drop_dimension_, p1, p3) <= 0 ?
+          1 : -1;
         const Vertex3Rep& prev_top = convex_top_.size() > 1 ?
           convex_top_.end()[-2] : convex_bottom_.front();
         const Vertex3Rep& prev_bottom = convex_bottom_.size() > 1 ?
           convex_bottom_.end()[-2] : convex_top_.front();
-        if (p1.Get2DTwistDir(drop_dimension_, prev_top, p3) >= 0 &&
-            p2.Get2DTwistDir(drop_dimension_, prev_bottom, p3) <= 0) {
+        if (p1.Get2DTwistDir(drop_dimension_, prev_top, p3) * flip >= 0 &&
+            p2.Get2DTwistDir(drop_dimension_, prev_bottom, p3) * flip <= 0) {
           if (p3_is_top_chain) {
             convex_top_.push_back(p3);
           } else {

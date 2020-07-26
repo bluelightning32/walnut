@@ -254,4 +254,31 @@ TEST(MonotoneDecomposer, MergeCheckReflex3) {
         ));
 }
 
+TEST(MonotoneDecomposer, SelfIntersecting1) {
+  Vertex3<32> top_chain[] = {
+    Vertex3<32>(0, 0, 10),
+    Vertex3<32>(2, 4, 10),
+    Vertex3<32>(7, 4, 10),
+    Vertex3<32>(15, -4, 10),
+  };
+  Vertex3<32> bottom_chain[] = {
+    Vertex3<32>(4, -4, 10),
+    Vertex3<32>(12, 4, 10),
+    Vertex3<32>(17, 4, 10),
+    Vertex3<32>(19, 0, 10),
+  };
+
+  MonotoneDecomposer<32> decomposer;
+  ResultCollector collector;
+  decomposer.Build(collector.GetAppender(), /*drop_dimension=*/2, /*monotone_dimension=*/0,
+             std::begin(top_chain), std::end(top_chain),
+             std::begin(bottom_chain), std::end(bottom_chain));
+  EXPECT_THAT(collector.GetSortedResult(), ElementsAre(
+        std::vector<Vertex3<32>>{top_chain[0], bottom_chain[0], bottom_chain[1],
+                                 top_chain[2], top_chain[1]},
+        std::vector<Vertex3<32>>{top_chain[2], bottom_chain[1], bottom_chain[2],
+                                 bottom_chain[3], top_chain[3]}
+        ));
+}
+
 }  // walnut
