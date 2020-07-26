@@ -175,8 +175,8 @@ TEST(MonotoneTriangulator, SingleReflexOnTop) {
              std::begin(bottom_chain), std::end(bottom_chain));
 
   EXPECT_THAT(collector.result(), ElementsAre(
-        std::array<Vertex3<32>, 3>{top_chain[2], top_chain[1], bottom_chain[0]},
-        std::array<Vertex3<32>, 3>{top_chain[1], top_chain[0], bottom_chain[0]}
+        std::array<Vertex3<32>, 3>{top_chain[1], top_chain[0], bottom_chain[0]},
+        std::array<Vertex3<32>, 3>{top_chain[2], top_chain[1], bottom_chain[0]}
         ));
 }
 
@@ -213,8 +213,8 @@ TEST(MonotoneTriangulator, SelfIntersecting) {
 
   EXPECT_THAT(collector.result(), ElementsAre(
         std::array<Vertex3<32>, 3>{top_chain[1], top_chain[0], top_chain[2]},
-        std::array<Vertex3<32>, 3>{top_chain[3], top_chain[2], bottom_chain[0]},
-        std::array<Vertex3<32>, 3>{top_chain[2], top_chain[0], bottom_chain[0]}
+        std::array<Vertex3<32>, 3>{top_chain[2], top_chain[0], bottom_chain[0]},
+        std::array<Vertex3<32>, 3>{top_chain[3], top_chain[2], bottom_chain[0]}
         ));
 }
 

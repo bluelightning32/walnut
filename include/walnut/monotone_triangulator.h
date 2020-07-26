@@ -180,22 +180,21 @@ template <int vertex3_bits_template>
 void MonotoneTriangulator<vertex3_bits_template>::SwitchChains(
     const Vertex3Rep& next) {
   const Vertex3Rep* reflex_back = reflex_stack_.back();
-  while (reflex_stack_.size() >= 2) {
+  for (int i = 0; i < reflex_stack_.size() - 1; ++i) {
     const Vertex3Rep* p1;
     const Vertex3Rep* p2;
     if (top_chain_is_current_) {
-      p1 = reflex_stack_.back();
-      p2 = *(reflex_stack_.end() - 2);
+      p1 = reflex_stack_[i + 1];
+      p2 = reflex_stack_[i];
     } else {
-      p1 = *(reflex_stack_.end() - 2);
-      p2 = reflex_stack_.back();
+      p1 = reflex_stack_[i];
+      p2 = reflex_stack_[i + 1];
     }
 
     Emit(/*p3_is_top_chain=*/!top_chain_is_current_, *p1, *p2, next);
-    reflex_stack_.pop_back();
   }
-  assert(reflex_stack_.size() == 1);
-  reflex_stack_[0] = reflex_back;
+  reflex_stack_.clear();
+  reflex_stack_.push_back(reflex_back);
 }
 
 }  // walnut
