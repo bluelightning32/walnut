@@ -26,7 +26,7 @@ class ResultCollector : public MonotoneTriangulator<vertex3_bits_template> {
   std::vector<std::array<Vertex3Rep, 3>> result_;
 };
 
-TEST(MonotoneDecomposer, AlreadyConvexAllTopChain) {
+TEST(MonotoneTriangulator, AlreadyConvexAllTopChain) {
   //
   //       _t2 -> t3_
   //      /          \
@@ -65,7 +65,7 @@ TEST(MonotoneDecomposer, AlreadyConvexAllTopChain) {
         ));
 }
 
-TEST(MonotoneDecomposer, AlreadyConvexAllBottomChain) {
+TEST(MonotoneTriangulator, AlreadyConvexAllBottomChain) {
   //
   //  t0---------------> b5
   //   \                /
@@ -105,7 +105,7 @@ TEST(MonotoneDecomposer, AlreadyConvexAllBottomChain) {
         ));
 }
 
-TEST(MonotoneDecomposer, AlreadyConvexAlternatingChains) {
+TEST(MonotoneTriangulator, AlreadyConvexAlternatingChains) {
   //                        
   //       t2--->t3__
   //      /          \
@@ -152,7 +152,7 @@ TEST(MonotoneDecomposer, AlreadyConvexAlternatingChains) {
         ));
 }
 
-TEST(MonotoneDecomposer, SingleReflexOnTop) {
+TEST(MonotoneTriangulator, SingleReflexOnTop) {
   //
   //          t2
   //          /\
@@ -180,7 +180,7 @@ TEST(MonotoneDecomposer, SingleReflexOnTop) {
         ));
 }
 
-TEST(MonotoneDecomposer, SelfIntersecting) {
+TEST(MonotoneTriangulator, SelfIntersecting) {
   //
   //      t1          t3
   //     /  \        /  \
