@@ -333,4 +333,71 @@ TEST(MonotoneDecomposer, SelfIntersecting2) {
         ));
 }
 
+TEST(MonotoneDecomposer, SelfIntersecting3) {
+  Vertex3<32> top_chain[] = {
+    Vertex3<32>(0, 0, 10),
+    Vertex3<32>(4, 2, 10),
+    Vertex3<32>(6, 6, 10),
+    Vertex3<32>(14, -3, 10),
+  };
+  Vertex3<32> bottom_chain[] = {
+    Vertex3<32>(9, -3, 10),
+    Vertex3<32>(17, 6, 10),
+    Vertex3<32>(19, 2, 10),
+    Vertex3<32>(23, 0, 10),
+  };
+
+  MonotoneDecomposer<32> decomposer;
+  ResultCollector collector;
+  decomposer.Build(collector.GetAppender(), /*drop_dimension=*/2, /*monotone_dimension=*/0,
+             std::begin(top_chain), std::end(top_chain),
+             std::begin(bottom_chain), std::end(bottom_chain));
+  EXPECT_THAT(collector.GetSortedResult(), ElementsAre(
+        std::vector<Vertex3<32>>{top_chain[0], bottom_chain[0], top_chain[1]},
+        std::vector<Vertex3<32>>{top_chain[1], bottom_chain[0], top_chain[3],
+                                 top_chain[2]},
+        std::vector<Vertex3<32>>{bottom_chain[0], bottom_chain[1],
+                                 bottom_chain[3], top_chain[3]},
+        std::vector<Vertex3<32>>{bottom_chain[1], bottom_chain[2],
+                                 bottom_chain[3]}
+        ));
+}
+
+TEST(MonotoneDecomposer, SelfIntersecting4) {
+  Vertex3<32> top_chain[] = {
+    Vertex3<32>(0, 0, 10),
+    Vertex3<32>(3, 1, 10),
+    Vertex3<32>(5, 3, 10),
+    Vertex3<32>(6, 6, 10),
+    Vertex3<32>(10, -3, 10),
+  };
+  Vertex3<32> bottom_chain[] = {
+    Vertex3<32>(7, -3, 10),
+    Vertex3<32>(11, 6, 10),
+    Vertex3<32>(12, 3, 10),
+    Vertex3<32>(14, 1, 10),
+    Vertex3<32>(17, 0, 10),
+  };
+
+  MonotoneDecomposer<32> decomposer;
+  ResultCollector collector;
+  decomposer.Build(collector.GetAppender(), /*drop_dimension=*/2, /*monotone_dimension=*/0,
+             std::begin(top_chain), std::end(top_chain),
+             std::begin(bottom_chain), std::end(bottom_chain));
+  EXPECT_THAT(collector.GetSortedResult(), ElementsAre(
+        std::vector<Vertex3<32>>{top_chain[0], bottom_chain[0], top_chain[1]},
+        std::vector<Vertex3<32>>{top_chain[1], bottom_chain[0], top_chain[2]},
+        std::vector<Vertex3<32>>{top_chain[2], bottom_chain[0], top_chain[4],
+                                 top_chain[3]},
+        std::vector<Vertex3<32>>{bottom_chain[0], bottom_chain[1],
+                                 top_chain[4]},
+        std::vector<Vertex3<32>>{top_chain[4], bottom_chain[1],
+                                 bottom_chain[4]},
+        std::vector<Vertex3<32>>{bottom_chain[1], bottom_chain[2],
+                                 bottom_chain[3]},
+        std::vector<Vertex3<32>>{bottom_chain[1], bottom_chain[3],
+                                 bottom_chain[4]}
+        ));
+}
+
 }  // walnut
