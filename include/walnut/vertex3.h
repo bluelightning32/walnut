@@ -105,6 +105,27 @@ class Vertex3 {
         p1.DropDimension(drop_dimension), p3.DropDimension(drop_dimension));
   }
 
+  // Returns 0 if (p1, `this`, p3) are collinear.
+  // Returns 1 if p3 is counter-clockwise from p1, with `this` as the center
+  // point.
+  // Returns -1 if p3 is clockwise from p1, with `this` as the center point.
+  //
+  // The calculations are done in 2D by removing (treating it as 0)
+  // `drop_dimension` from the vertex.
+  template <int other_coord_bits>
+  int Get2DTwistDirReduced(int drop_dimension,
+                           const Vertex3<other_coord_bits>& p1,
+                           const Vertex3<other_coord_bits>& p3) const {
+    const BigIntWord twist = Get2DTwistDir(drop_dimension, p1, p3);
+    if (twist > 0) {
+      return 1;
+    } else if (twist < 0) {
+      return -1;
+    } else {
+      return 0;
+    }
+  }
+
  private:
   VectorRep vector_from_origin_;
 };

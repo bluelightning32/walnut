@@ -22,10 +22,13 @@ class MonotoneDecomposer : protected MonotoneTriangulator<vertex3_bits_template>
   using const_reverse_iterator = typename
     std::vector<Vertex3Rep>::const_reverse_iterator;
 
-  // Called to emit a convex polygon. The arguments represent 2
-  // iterator ranges of vertices. To get the actual list of vertices for the
-  // polygon, calculate range1 + range2.
-  using Emitter = std::function<void (const_reverse_iterator,
+  // Called to emit a convex polygon. The first argument represents the
+  // orientation of the polygon. It is set to -1 if the polygon is
+  // counter-clockwise, 1 if it is clockwise, and 0 if it is collinear.
+  //
+  // The next 4 arguments represent 2 iterator ranges of vertices. To get the
+  // actual list of vertices for the polygon, calculate range1 + range2.
+  using Emitter = std::function<void (int, const_reverse_iterator,
                                       const_reverse_iterator,
                                       const_iterator,
                                       const_iterator)>;
@@ -59,12 +62,13 @@ class MonotoneDecomposer : protected MonotoneTriangulator<vertex3_bits_template>
              BottomIterator bottom_begin, BottomIterator bottom_end) {
     assert(convex_top_.empty());
     assert(convex_bottom_.empty());
+    orientation_ = 0;
 
     emit_ = std::move(emit);
     drop_dimension_ = drop_dimension;
     Parent::Build(drop_dimension, monotone_dimension,
                   top_begin, top_end, bottom_begin, bottom_end);
-    emit_(convex_top_.rbegin(), convex_top_.rend(),
+    emit_(orientation_, convex_top_.rbegin(), convex_top_.rend(),
           convex_bottom_.begin(), convex_bottom_.end());
     convex_top_.clear();
     convex_bottom_.clear();
@@ -75,17 +79,20 @@ class MonotoneDecomposer : protected MonotoneTriangulator<vertex3_bits_template>
     if (!convex_top_.empty()) {
       assert(!convex_bottom_.empty());
       if (convex_top_.back() == p1 && convex_bottom_.back() == p2) {
-        // For non-self-intersecting polygons, flip will always be 1. However
-        // for self-intersecting polygons, the triangulator can produce flipped
-        // triangles, in which case flip will be -1.
-        const int flip = p2.Get2DTwistDir(drop_dimension_, p1, p3) <= 0 ?
-          1 : -1;
+        if (orientation_ == 0) {
+          orientation_ = p2.Get2DTwistDirReduced(drop_dimension_, p1, p3);
+        }
+        // For non-self-intersecting polygons, orientation_ will always be 0 or
+        // -1. However for self-intersecting polygons, the triangulator can
+        // produce flipped triangles, in which case orientation_ will be 1.
         const Vertex3Rep& prev_top = convex_top_.size() > 1 ?
           convex_top_.end()[-2] : convex_bottom_.front();
         const Vertex3Rep& prev_bottom = convex_bottom_.size() > 1 ?
           convex_bottom_.end()[-2] : convex_top_.front();
-        if (p1.Get2DTwistDir(drop_dimension_, prev_top, p3) * flip >= 0 &&
-            p2.Get2DTwistDir(drop_dimension_, prev_bottom, p3) * flip <= 0) {
+        if (p1.Get2DTwistDir(drop_dimension_, prev_top, p3) *
+              orientation_ <= 0 &&
+            p2.Get2DTwistDir(drop_dimension_, prev_bottom, p3) *
+              orientation_ >= 0) {
           if (p3_is_top_chain) {
             convex_top_.push_back(p3);
           } else {
@@ -94,7 +101,7 @@ class MonotoneDecomposer : protected MonotoneTriangulator<vertex3_bits_template>
           return;
         }
       }
-      emit_(convex_top_.rbegin(), convex_top_.rend(),
+      emit_(orientation_, convex_top_.rbegin(), convex_top_.rend(),
             convex_bottom_.begin(), convex_bottom_.end());
       convex_top_.clear();
       convex_bottom_.clear();
@@ -106,6 +113,7 @@ class MonotoneDecomposer : protected MonotoneTriangulator<vertex3_bits_template>
     } else {
       convex_bottom_.push_back(p3);
     }
+    orientation_ = p2.Get2DTwistDirReduced(drop_dimension_, p1, p3);
   }
 
  private:
@@ -116,6 +124,10 @@ class MonotoneDecomposer : protected MonotoneTriangulator<vertex3_bits_template>
   // The bottom of the convex polygon currently being constructed. The vertices
   // are sorted in the monotone dimension.
   std::vector<Vertex3Rep> convex_bottom_;
+
+  // The orientation of the polygon being built. 1 for counter-clockwise, -1
+  // for clockwise, or 0 for collinear.
+  int orientation_;
 
   Emitter emit_;
   int drop_dimension_;

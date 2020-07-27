@@ -13,25 +13,47 @@ class ResultCollector {
  public:
 
   MonotoneDecomposer<32>::Emitter GetAppender() {
-    return [this](std::vector<Vertex3<32>>::const_reverse_iterator range1_begin,
+    return [this](int orientation,
+                  std::vector<Vertex3<32>>::const_reverse_iterator range1_begin,
                   std::vector<Vertex3<32>>::const_reverse_iterator range1_end,
                   std::vector<Vertex3<32>>::const_iterator range2_begin,
                   std::vector<Vertex3<32>>::const_iterator range2_end) {
-      result_.emplace_back();
-      result_.back().reserve((range1_end - range1_begin) +
+      result_.emplace_back(orientation, std::vector<Vertex3<32>>());
+      result_.back().second.reserve((range1_end - range1_begin) +
                              (range2_end - range2_begin));
-      result_.back().insert(result_.back().end(), range1_begin, range1_end);
-      result_.back().insert(result_.back().end(), range2_begin, range2_end);
+      result_.back().second.insert(result_.back().second.end(), range1_begin,
+                                   range1_end);
+      result_.back().second.insert(result_.back().second.end(), range2_begin,
+                                   range2_end);
     };
   }
 
-  const std::vector<std::vector<Vertex3<32>>>& GetSortedResult() {
-    for (std::vector<Vertex3<32>>& polygon : result_) {
-      SortVertices(polygon);
+  std::vector<std::vector<Vertex3<32>>> GetSortedPolygonResult() {
+    for (std::pair<int, std::vector<Vertex3<32>>>& polygon : result_) {
+      SortVertices(polygon.second);
     }
 
     std::sort(result_.begin(), result_.end(), PolygonLt);
-    return result_;
+
+    std::vector<std::vector<Vertex3<32>>> result;
+    for (const auto& polygon : result_) {
+      result.push_back(polygon.second);
+    }
+    return result;
+  }
+
+  std::vector<int> GetSortedOrientationResult() {
+    for (std::pair<int, std::vector<Vertex3<32>>>& polygon : result_) {
+      SortVertices(polygon.second);
+    }
+
+    std::sort(result_.begin(), result_.end(), PolygonLt);
+
+    std::vector<int> result;
+    for (const auto& polygon : result_) {
+      result.push_back(polygon.first);
+    }
+    return result;
   }
 
   static void SortVertices(std::vector<Vertex3<32>>& polygon) {
@@ -49,15 +71,15 @@ class ResultCollector {
                                         b.coords().begin(), b.coords().end());
   }
 
-  static bool PolygonLt(const std::vector<Vertex3<32>>& a,
-                        const std::vector<Vertex3<32>>& b) {
-    return std::lexicographical_compare(a.begin(), a.end(),
-                                        b.begin(), b.end(),
+  static bool PolygonLt(const std::pair<int, std::vector<Vertex3<32>>>& a,
+                        const std::pair<int, std::vector<Vertex3<32>>>& b) {
+    return std::lexicographical_compare(a.second.begin(), a.second.end(),
+                                        b.second.begin(), b.second.end(),
                                         &VertexLt);
   }
 
  private:
-  std::vector<std::vector<Vertex3<32>>> result_;
+  std::vector<std::pair<int, std::vector<Vertex3<32>>>> result_;
 };
 
 TEST(MonotoneDecomposer, AlreadyConvexAllTopChain) {
@@ -77,8 +99,11 @@ TEST(MonotoneDecomposer, AlreadyConvexAllTopChain) {
   decomposer.Build(collector.GetAppender(), /*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
-  EXPECT_THAT(collector.GetSortedResult(), ElementsAre(std::vector<Vertex3<32>>{
-        top_chain[0], bottom_chain[0], top_chain[4], top_chain[3], top_chain[2], top_chain[1]}));
+  EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
+        std::vector<Vertex3<32>>{top_chain[0], bottom_chain[0], top_chain[4],
+                                 top_chain[3], top_chain[2], top_chain[1]}));
+  EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
+        -1));
 }
 
 TEST(MonotoneDecomposer, AlreadyConvexAllBottomChain) {
@@ -98,9 +123,12 @@ TEST(MonotoneDecomposer, AlreadyConvexAllBottomChain) {
   decomposer.Build(collector.GetAppender(), /*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
-  EXPECT_THAT(collector.GetSortedResult(), ElementsAre(std::vector<Vertex3<32>>{
-        top_chain[0], bottom_chain[0], bottom_chain[1], bottom_chain[2],
-        bottom_chain[3], bottom_chain[4]}));
+  EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
+        std::vector<Vertex3<32>>{top_chain[0], bottom_chain[0], bottom_chain[1],
+                                 bottom_chain[2], bottom_chain[3],
+                                 bottom_chain[4]}));
+  EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
+        -1));
 }
 
 TEST(MonotoneDecomposer, AlreadyConvexAlternatingChains) {
@@ -124,10 +152,13 @@ TEST(MonotoneDecomposer, AlreadyConvexAlternatingChains) {
   decomposer.Build(collector.GetAppender(), /*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
-  EXPECT_THAT(collector.GetSortedResult(), ElementsAre(std::vector<Vertex3<32>>{
-        top_chain[0], bottom_chain[0], bottom_chain[1], bottom_chain[2],
-        bottom_chain[3], bottom_chain[4],
-        top_chain[4], top_chain[3], top_chain[2], top_chain[1]}));
+  EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
+        std::vector<Vertex3<32>>{top_chain[0], bottom_chain[0], bottom_chain[1],
+                                 bottom_chain[2], bottom_chain[3],
+                                 bottom_chain[4], top_chain[4], top_chain[3],
+                                 top_chain[2], top_chain[1]}));
+  EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
+        -1));
 }
 
 TEST(MonotoneDecomposer, SingleReflexOnTop) {
@@ -145,10 +176,12 @@ TEST(MonotoneDecomposer, SingleReflexOnTop) {
   decomposer.Build(collector.GetAppender(), /*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
-  EXPECT_THAT(collector.GetSortedResult(), ElementsAre(
+  EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
         std::vector<Vertex3<32>>{top_chain[0], bottom_chain[0], top_chain[1]},
         std::vector<Vertex3<32>>{top_chain[1], bottom_chain[0], top_chain[2]}
         ));
+  EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
+        -1, -1));
 }
 
 TEST(MonotoneDecomposer, MergeCheckReflex1) {
@@ -169,11 +202,13 @@ TEST(MonotoneDecomposer, MergeCheckReflex1) {
   decomposer.Build(collector.GetAppender(), /*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
-  EXPECT_THAT(collector.GetSortedResult(), ElementsAre(
+  EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
         std::vector<Vertex3<32>>{top_chain[0], bottom_chain[0], top_chain[1]},
         std::vector<Vertex3<32>>{top_chain[1], bottom_chain[0], top_chain[2]},
         std::vector<Vertex3<32>>{bottom_chain[0], bottom_chain[1], top_chain[2]}
         ));
+  EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
+        -1, -1, -1));
 }
 
 TEST(MonotoneDecomposer, MergeCheckConvex1) {
@@ -194,10 +229,12 @@ TEST(MonotoneDecomposer, MergeCheckConvex1) {
   decomposer.Build(collector.GetAppender(), /*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
-  EXPECT_THAT(collector.GetSortedResult(), ElementsAre(
+  EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
         std::vector<Vertex3<32>>{top_chain[0], bottom_chain[0], bottom_chain[1],
                                  top_chain[2], top_chain[1]}
         ));
+  EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
+        -1));
 }
 
 TEST(MonotoneDecomposer, MergeCheckReflex2) {
@@ -218,12 +255,14 @@ TEST(MonotoneDecomposer, MergeCheckReflex2) {
   decomposer.Build(collector.GetAppender(), /*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
-  EXPECT_THAT(collector.GetSortedResult(), ElementsAre(
+  EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
         std::vector<Vertex3<32>>{top_chain[0], bottom_chain[0], top_chain[1]},
         std::vector<Vertex3<32>>{bottom_chain[0], bottom_chain[1],
                                  bottom_chain[2], top_chain[2], top_chain[1]},
         std::vector<Vertex3<32>>{top_chain[2], bottom_chain[2], bottom_chain[3]}
         ));
+  EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
+        -1, -1, -1));
 }
 
 TEST(MonotoneDecomposer, MergeCheckReflex3) {
@@ -244,7 +283,7 @@ TEST(MonotoneDecomposer, MergeCheckReflex3) {
   decomposer.Build(collector.GetAppender(), /*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
-  EXPECT_THAT(collector.GetSortedResult(), ElementsAre(
+  EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
         std::vector<Vertex3<32>>{top_chain[0], bottom_chain[0],
                                  bottom_chain[1], top_chain[1]},
         std::vector<Vertex3<32>>{top_chain[1], bottom_chain[1],
@@ -252,6 +291,8 @@ TEST(MonotoneDecomposer, MergeCheckReflex3) {
         std::vector<Vertex3<32>>{bottom_chain[1], bottom_chain[2],
                                  bottom_chain[3], top_chain[2]}
         ));
+  EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
+        -1, -1, -1));
 }
 
 TEST(MonotoneDecomposer, MergeAfterReflex) {
@@ -270,11 +311,13 @@ TEST(MonotoneDecomposer, MergeAfterReflex) {
   decomposer.Build(collector.GetAppender(), /*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
-  EXPECT_THAT(collector.GetSortedResult(), ElementsAre(
+  EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
         std::vector<Vertex3<32>>{top_chain[0], bottom_chain[0], top_chain[1]},
         std::vector<Vertex3<32>>{top_chain[1], bottom_chain[0], bottom_chain[1],
                                  top_chain[2]}
         ));
+  EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
+        -1, -1));
 }
 
 TEST(MonotoneDecomposer, SelfIntersecting1) {
@@ -296,12 +339,14 @@ TEST(MonotoneDecomposer, SelfIntersecting1) {
   decomposer.Build(collector.GetAppender(), /*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
-  EXPECT_THAT(collector.GetSortedResult(), ElementsAre(
+  EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
         std::vector<Vertex3<32>>{top_chain[0], bottom_chain[0], bottom_chain[1],
                                  top_chain[2], top_chain[1]},
         std::vector<Vertex3<32>>{top_chain[2], bottom_chain[1], bottom_chain[2],
                                  bottom_chain[3], top_chain[3]}
         ));
+  EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
+        -1, 1));
 }
 
 TEST(MonotoneDecomposer, SelfIntersecting2) {
@@ -323,7 +368,7 @@ TEST(MonotoneDecomposer, SelfIntersecting2) {
   decomposer.Build(collector.GetAppender(), /*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
-  EXPECT_THAT(collector.GetSortedResult(), ElementsAre(
+  EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
         std::vector<Vertex3<32>>{top_chain[0], bottom_chain[0], top_chain[1]},
         std::vector<Vertex3<32>>{top_chain[1], bottom_chain[0], bottom_chain[1],
                                  top_chain[2]},
@@ -331,6 +376,8 @@ TEST(MonotoneDecomposer, SelfIntersecting2) {
                                  top_chain[3]},
         std::vector<Vertex3<32>>{top_chain[3], bottom_chain[2], bottom_chain[3]}
         ));
+  EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
+        -1, -1, 1, 1));
 }
 
 TEST(MonotoneDecomposer, SelfIntersecting3) {
@@ -352,7 +399,7 @@ TEST(MonotoneDecomposer, SelfIntersecting3) {
   decomposer.Build(collector.GetAppender(), /*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
-  EXPECT_THAT(collector.GetSortedResult(), ElementsAre(
+  EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
         std::vector<Vertex3<32>>{top_chain[0], bottom_chain[0], top_chain[1]},
         std::vector<Vertex3<32>>{top_chain[1], bottom_chain[0], top_chain[3],
                                  top_chain[2]},
@@ -361,6 +408,8 @@ TEST(MonotoneDecomposer, SelfIntersecting3) {
         std::vector<Vertex3<32>>{bottom_chain[1], bottom_chain[2],
                                  bottom_chain[3]}
         ));
+  EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
+        -1, -1, 1, -1));
 }
 
 TEST(MonotoneDecomposer, SelfIntersecting4) {
@@ -384,7 +433,7 @@ TEST(MonotoneDecomposer, SelfIntersecting4) {
   decomposer.Build(collector.GetAppender(), /*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
-  EXPECT_THAT(collector.GetSortedResult(), ElementsAre(
+  EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
         std::vector<Vertex3<32>>{top_chain[0], bottom_chain[0], top_chain[1]},
         std::vector<Vertex3<32>>{top_chain[1], bottom_chain[0], top_chain[2]},
         std::vector<Vertex3<32>>{top_chain[2], bottom_chain[0], top_chain[4],
@@ -398,6 +447,8 @@ TEST(MonotoneDecomposer, SelfIntersecting4) {
         std::vector<Vertex3<32>>{bottom_chain[1], bottom_chain[3],
                                  bottom_chain[4]}
         ));
+  EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
+        -1, -1, -1, 1, 1, -1, -1));
 }
 
 }  // walnut
