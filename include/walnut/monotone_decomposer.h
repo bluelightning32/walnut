@@ -5,6 +5,26 @@
 // and converts them into one or more convex polygons. The MonotoneDecomposer
 // tries to minimize the number of convex polygons it outputs, instead of
 // always outputting triangles.
+//
+// This class is designed to output counter clockwise polygons as viewed with
+// the  drop dimension set to 0.  Although for self-intersecting polygons, it
+// may also output clockwise convex polygons.  For non-self-intersecting
+// polygons, the top chain edges should be above the bottom chain edges in the
+// compare_dimension.
+//
+// The MonotoneDecomposer takes 3D vertices. The 3 dimensions can be
+// configured as:
+// * drop_dimension - this dimension is removed from the 3D vertices to make 2D
+//     vertices.
+// * monotone_dimension - each vertex of the top and bottom chains must be
+//     increasing in this dimension.
+// * compare_dimension - for non-self-intersecting input polygons, all of the
+//     edges from the top chain should be above the edges from the bottom chain
+//     in this dimension. For self-intersecting input polygons, the top and
+//     bottom chains may be flipped in this dimension, but the decomposer will
+//     return worse results for the portions that are flipped. They will be
+//     worse in the sense that more overlapping polygons will be outputted than
+//     strictly necessary.
 
 #include <functional>
 #include <vector>
@@ -14,24 +34,13 @@
 namespace walnut {
 
 template <int vertex3_bits_template = 32>
-class MonotoneDecomposer : protected MonotoneTriangulator<vertex3_bits_template> {
+class MonotoneDecomposer : public MonotoneTriangulator<vertex3_bits_template> {
  public:
   using Parent = MonotoneTriangulator<vertex3_bits_template>;
   using Vertex3Rep = typename Parent::Vertex3Rep;
   using const_iterator = typename std::vector<Vertex3Rep>::const_iterator;
   using const_reverse_iterator = typename
     std::vector<Vertex3Rep>::const_reverse_iterator;
-
-  // Called to emit a convex polygon. The first argument represents the
-  // orientation of the polygon. It is set to -1 if the polygon is
-  // counter-clockwise, 1 if it is clockwise, and 0 if it is collinear.
-  //
-  // The next 4 arguments represent 2 iterator ranges of vertices. To get the
-  // actual list of vertices for the polygon, calculate range1 + range2.
-  using Emitter = std::function<void (int, const_reverse_iterator,
-                                      const_reverse_iterator,
-                                      const_iterator,
-                                      const_iterator)>;
 
   // Given a monotone polygon in the form of an iterator range for its top
   // chain and an iterator range for its bottom chain, this converts the
@@ -52,29 +61,38 @@ class MonotoneDecomposer : protected MonotoneTriangulator<vertex3_bits_template>
   // greatest in the monotone dimension) must be included in only the bottom
   // chain. Violating either of these rules results in undefined behavior.
   //
-  // `emit` is called for each convex polygon produced. `emit` must not
+  // Emit is called for each convex polygon produced. Emit must not
   // re-entrantly call back into the same MonotoneDecomposer.
   //
   // Runtime: O(n)
   template <typename TopIterator, typename BottomIterator>
-  void Build(Emitter emit, int drop_dimension, int monotone_dimension,
+  void Build(int drop_dimension, int monotone_dimension,
              TopIterator top_begin, TopIterator top_end,
              BottomIterator bottom_begin, BottomIterator bottom_end) {
     assert(convex_top_.empty());
     assert(convex_bottom_.empty());
     orientation_ = 0;
 
-    emit_ = std::move(emit);
     drop_dimension_ = drop_dimension;
     Parent::Build(drop_dimension, monotone_dimension,
                   top_begin, top_end, bottom_begin, bottom_end);
-    emit_(orientation_, convex_top_.rbegin(), convex_top_.rend(),
-          convex_bottom_.begin(), convex_bottom_.end());
+    Emit(orientation_, convex_top_.rbegin(), convex_top_.rend(),
+         convex_bottom_.begin(), convex_bottom_.end());
     convex_top_.clear();
     convex_bottom_.clear();
   }
 
  protected:
+  // Called to emit a convex polygon. The first argument represents the
+  // orientation of the polygon. It is set to -1 if the polygon is
+  // counter-clockwise, 1 if it is clockwise, and 0 if it is collinear.
+  //
+  // The next 4 arguments represent 2 iterator ranges of vertices. To get the
+  // actual list of vertices for the polygon, calculate range1 + range2.
+  virtual void Emit(int orientation, const_reverse_iterator range1_begin,
+                    const_reverse_iterator range1_end,
+                    const_iterator range2_begin, const_iterator range2_end) = 0;
+
   void Emit(bool p3_is_top_chain, const Vertex3Rep& p1, const Vertex3Rep& p2, const Vertex3Rep& p3) override {
     if (!convex_top_.empty()) {
       assert(!convex_bottom_.empty());
@@ -101,8 +119,8 @@ class MonotoneDecomposer : protected MonotoneTriangulator<vertex3_bits_template>
           return;
         }
       }
-      emit_(orientation_, convex_top_.rbegin(), convex_top_.rend(),
-            convex_bottom_.begin(), convex_bottom_.end());
+      Emit(orientation_, convex_top_.rbegin(), convex_top_.rend(),
+           convex_bottom_.begin(), convex_bottom_.end());
       convex_top_.clear();
       convex_bottom_.clear();
     }
@@ -129,7 +147,6 @@ class MonotoneDecomposer : protected MonotoneTriangulator<vertex3_bits_template>
   // for clockwise, or 0 for collinear.
   int orientation_;
 
-  Emitter emit_;
   int drop_dimension_;
 };
 
