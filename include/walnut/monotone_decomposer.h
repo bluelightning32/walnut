@@ -10,7 +10,8 @@
 // the  drop dimension set to 0.  Although for self-intersecting polygons, it
 // may also output clockwise convex polygons.  For non-self-intersecting
 // polygons, the top chain edges should be above the bottom chain edges in the
-// compare_dimension.
+// compare_dimension. If this can't be guaranteed, OrientingMonotoneDecomposer
+// should be used instead.
 //
 // The MonotoneDecomposer takes 3D vertices. The 3 dimensions can be
 // configured as:
@@ -83,6 +84,14 @@ class MonotoneDecomposer : public MonotoneTriangulator<vertex3_bits_template> {
   }
 
  protected:
+  // The top of the convex polygon currently being constructed. The vertices
+  // are sorted in the monotone dimension.
+  std::vector<Vertex3Rep> convex_top_;
+
+  // The bottom of the convex polygon currently being constructed. The vertices
+  // are sorted in the monotone dimension.
+  std::vector<Vertex3Rep> convex_bottom_;
+
   // Called to emit a convex polygon. The first argument represents the
   // orientation of the polygon. It is set to -1 if the polygon is
   // counter-clockwise, 1 if it is clockwise, and 0 if it is collinear.
@@ -97,7 +106,9 @@ class MonotoneDecomposer : public MonotoneTriangulator<vertex3_bits_template> {
     if (!convex_top_.empty()) {
       assert(!convex_bottom_.empty());
       if (convex_top_.back() == p1 && convex_bottom_.back() == p2) {
+        bool set_orientation = false;
         if (orientation_ == 0) {
+          set_orientation = true;
           orientation_ = p2.Get2DTwistDirReduced(drop_dimension_, p1, p3);
         }
         // For non-self-intersecting polygons, orientation_ will always be 0 or
@@ -122,6 +133,10 @@ class MonotoneDecomposer : public MonotoneTriangulator<vertex3_bits_template> {
           }
           return;
         }
+        if (set_orientation) {
+          // If the triangle isn't merged, restore the old orientation.
+          orientation_ = 0;
+        }
       }
       Emit(orientation_, convex_top_.rbegin(), convex_top_.rend(),
            convex_bottom_.begin(), convex_bottom_.end());
@@ -139,14 +154,6 @@ class MonotoneDecomposer : public MonotoneTriangulator<vertex3_bits_template> {
   }
 
  private:
-  // The top of the convex polygon currently being constructed. The vertices
-  // are sorted in the monotone dimension.
-  std::vector<Vertex3Rep> convex_top_;
-
-  // The bottom of the convex polygon currently being constructed. The vertices
-  // are sorted in the monotone dimension.
-  std::vector<Vertex3Rep> convex_bottom_;
-
   // The orientation of the polygon being built. 1 for counter-clockwise, -1
   // for clockwise, or 0 for collinear.
   int orientation_;

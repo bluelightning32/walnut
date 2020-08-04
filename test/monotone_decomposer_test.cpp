@@ -1,7 +1,5 @@
 #include "walnut/monotone_decomposer.h"
 
-#include <array>
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
