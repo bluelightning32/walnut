@@ -76,6 +76,13 @@ class Vector3 {
   }
 
   template <int other_coord_bits>
+  bool operator !=(const Vector3<other_coord_bits>& other) const {
+    return x() != other.x() ||
+           y() != other.y() ||
+           z() != other.z();
+  }
+
+  template <int other_coord_bits>
   Vector3<std::max(other_coord_bits, coord_bits_template) + 1> operator-(
       const Vector3<other_coord_bits>& other) const {
     return Vector3<std::max(other_coord_bits, coord_bits_template) + 1>(

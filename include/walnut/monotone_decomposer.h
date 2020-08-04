@@ -112,9 +112,13 @@ class MonotoneDecomposer : public MonotoneTriangulator<vertex3_bits_template> {
             p2.Get2DTwistDir(drop_dimension_, prev_bottom, p3) *
               orientation_ >= 0) {
           if (p3_is_top_chain) {
-            convex_top_.push_back(p3);
+            if (p1 != p3) {
+              convex_top_.push_back(p3);
+            }
           } else {
-            convex_bottom_.push_back(p3);
+            if (p2 != p3) {
+              convex_bottom_.push_back(p3);
+            }
           }
           return;
         }

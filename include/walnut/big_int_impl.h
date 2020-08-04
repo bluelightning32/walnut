@@ -404,6 +404,15 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImpl<max_words>>
     return words_[0] >= other.words_[0];
   }
 
+  constexpr bool operator == (int other) const {
+    if (sizeof(int) <= bytes_per_word) {
+      return used_ <= sizeof(other) && words_[0] == BigUIntWord{other};
+    } else {
+      return *this ==
+        BigIntImpl<(sizeof(int) + bytes_per_word - 1) / bytes_per_word>(other);
+    }
+  }
+
   template <int other_max_words>
   constexpr bool operator == (const BigIntImpl<other_max_words>& other) const {
     if (used_ != other.used_) return false;
@@ -414,13 +423,14 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImpl<max_words>>
     return words_[0] == other.words_[0];
   }
 
-  constexpr bool operator == (int other) const {
-    if (sizeof(int) <= bytes_per_word) {
-      return used_ <= sizeof(other) && words_[0] == BigUIntWord{other};
-    } else {
-      return *this ==
-        BigIntImpl<(sizeof(int) + bytes_per_word - 1) / bytes_per_word>(other);
+  template <int other_max_words>
+  constexpr bool operator != (const BigIntImpl<other_max_words>& other) const {
+    if (used_ != other.used_) return true;
+
+    for (int i = used_ / bytes_per_word - 1; i > 0; i--) {
+      if (words_[i] != other.words_[i]) return true;
     }
+    return words_[0] != other.words_[0];
   }
 
   constexpr bool operator != (int other) const {

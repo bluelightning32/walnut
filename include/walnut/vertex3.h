@@ -72,6 +72,11 @@ class Vertex3 {
   }
 
   template <int other_coord_bits>
+  bool operator != (const Vertex3<other_coord_bits>& other) const {
+    return vector_from_origin() != other.vector_from_origin();
+  }
+
+  template <int other_coord_bits>
   Vector3<std::max(other_coord_bits, coord_bits_template) + 1> operator-(
       const Vertex3<other_coord_bits>& other) const {
     return vector_from_origin() - other.vector_from_origin();

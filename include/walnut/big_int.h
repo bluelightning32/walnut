@@ -145,6 +145,11 @@ class BigInt {
     return rep_ == other;
   }
 
+  template <int other_bits>
+  constexpr bool operator != (const BigInt<other_bits>& other) const {
+    return rep_ != other.rep_;
+  }
+
   constexpr bool operator != (int other) const {
     return rep_ != other;
   }
