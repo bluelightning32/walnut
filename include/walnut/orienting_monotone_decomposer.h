@@ -61,8 +61,13 @@ class OrientingMonotoneDecomposer :
                            chain1_begin, chain1_end,
                            chain2_begin, chain2_end)) {
       // All of the vertices are collinear.
-      convex_top_.insert(convex_top_.end(), chain1_begin, chain1_end - 1);
-      convex_bottom_.insert(convex_bottom_.end(), chain2_begin + 1, chain2_end);
+      Chain1Iterator chain1_before_end = chain1_end;
+      --chain1_before_end;
+      Chain2Iterator chain2_after_begin = chain2_begin;
+      ++chain2_after_begin;
+
+      convex_top_.insert(convex_top_.end(), chain1_begin, chain1_before_end);
+      convex_bottom_.insert(convex_bottom_.end(), chain2_after_begin, chain2_end);
       EmitOriented(/*orientation=*/0, convex_top_.rbegin(), convex_top_.rend(),
                    convex_bottom_.begin(), convex_bottom_.end());
       convex_top_.clear();
@@ -71,20 +76,30 @@ class OrientingMonotoneDecomposer :
     }
     
     if (flipped_) {
+      Chain2Iterator chain2_before_end = chain2_end;
+      --chain2_before_end;
+      Chain1Iterator chain1_after_begin = chain1_begin;
+      ++chain1_after_begin;
+
       // Skip the last vertex chain2, because it is the maximum vertex (which
       // is also included in chain1). Skip the first vertex of chain1, because
       // it is the minimum vertex (which is also included in chain2).
       Parent::Build(drop_dimension, monotone_dimension,
-                    /*top_begin=*/chain2_begin, /*top_end=*/chain2_end - 1,
-                    /*bottom_begin=*/chain1_begin + 1,
+                    /*top_begin=*/chain2_begin, /*top_end=*/chain2_before_end,
+                    /*bottom_begin=*/chain1_after_begin,
                     /*bottom_end=*/chain1_end);
     } else {
+      Chain1Iterator chain1_before_end = chain1_end;
+      --chain1_before_end;
+      Chain2Iterator chain2_after_begin = chain2_begin;
+      ++chain2_after_begin;
+
       // Skip the last vertex chain1, because it is the maximum vertex (which
       // is also included in chain2). Skip the first vertex of chain2, because
       // it is the minimum vertex (which is also included in chain1).
       Parent::Build(drop_dimension, monotone_dimension,
-                    /*top_begin=*/chain1_begin, /*top_end=*/chain1_end - 1,
-                    /*bottom_begin=*/chain2_begin + 1,
+                    /*top_begin=*/chain1_begin, /*top_end=*/chain1_before_end,
+                    /*bottom_begin=*/chain2_after_begin,
                     /*bottom_end=*/chain2_end);
     }
   }
