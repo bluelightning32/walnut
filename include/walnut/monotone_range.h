@@ -36,22 +36,27 @@ class MonotoneRange {
   //    from.
   // plane: this is the plane of the polygon.
   //
-  // Returns an iterator to the end vertex (one after) of the monotone polygon.
-  //
-  static Vertex3Iterator GetNextMonotone(int monotone_dimension,
-                                         const Vertex3Rep& p1,
-                                         Vertex3Iterator& next_polygon_start,
-                                         Vertex3Iterator vertex_end);
+  void Build(int monotone_dimension,
+             const Vertex3Rep& p1,
+             Vertex3Iterator& next_polygon_start,
+             Vertex3Iterator vertex_end);
+
+  Vertex3Iterator start() const { return start_; }
+  Vertex3Iterator end() const { return end_; }
+
+ private:
+  Vertex3Iterator start_;
+  Vertex3Iterator end_;
 };
 
 template <typename Vertex3Iterator>
-inline Vertex3Iterator
-MonotoneRange<Vertex3Iterator>::GetNextMonotone(int monotone_dimension,
-                                                const Vertex3Rep& p1,
-                                                Vertex3Iterator& next_polygon_start,
-                                                Vertex3Iterator vertex_end) {
+inline void MonotoneRange<Vertex3Iterator>::Build(
+    int monotone_dimension, const Vertex3Rep& p1,
+    Vertex3Iterator& next_polygon_start, Vertex3Iterator vertex_end) {
+  start_ = next_polygon_start;
   if (next_polygon_start == vertex_end) {
-    return next_polygon_start;
+    end_ = next_polygon_start;
+    return;
   }
   // Find the first vertex that has a different value in the monotone dimension
   // than p1. This is necessary to find out if the vertices are initially
@@ -60,57 +65,56 @@ MonotoneRange<Vertex3Iterator>::GetNextMonotone(int monotone_dimension,
          p1.coords()[monotone_dimension]) {
     ++next_polygon_start;
     if (next_polygon_start == vertex_end) {
-      return next_polygon_start;
+      end_ = next_polygon_start;
+      return;
     }
   }
   // If the vertices are initially increasing in the monotone dimension, set
   // this to 1, otherwise set it to -1.
-  Vertex3Iterator polygon_end = next_polygon_start;
-  int dir = polygon_end->coords()[monotone_dimension] >
+  end_ = next_polygon_start;
+  int dir = end_->coords()[monotone_dimension] >
             p1.coords()[monotone_dimension] ? 1 : -1;
   // Keep accepting vertices while they continue to increase/decrease
   // (depending on dir) relative to the previous vertex.
-  while ((polygon_end->coords()[monotone_dimension] -
+  while ((end_->coords()[monotone_dimension] -
           next_polygon_start->coords()[monotone_dimension]).GetSign()
          * dir >= 0) {
-    next_polygon_start = polygon_end;
-    ++polygon_end;
-    if (polygon_end == vertex_end) {
-      next_polygon_start = polygon_end;
-      return polygon_end;
+    next_polygon_start = end_;
+    ++end_;
+    if (end_ == vertex_end) {
+      next_polygon_start = end_;
+      return;
     }
   }
   // Now accept vertices while they continue to go back towards p1. This may
   // overshoot p1 in that direction.
   dir = -dir;
-  while ((polygon_end->coords()[monotone_dimension] -
+  while ((end_->coords()[monotone_dimension] -
           next_polygon_start->coords()[monotone_dimension]).GetSign()
          * dir >= 0) {
-    next_polygon_start = polygon_end;
-    ++polygon_end;
-    if (polygon_end == vertex_end) {
-      next_polygon_start = polygon_end;
-      return polygon_end;
+    next_polygon_start = end_;
+    ++end_;
+    if (end_ == vertex_end) {
+      next_polygon_start = end_;
+      return;
     }
   }
   // In case p1 was overshot, accept vertices that go back to p1, but don't let
   // p1 get overshot again.
   dir = -dir;
   while ((p1.coords()[monotone_dimension] -
-          polygon_end->coords()[monotone_dimension]).GetSign()
+          end_->coords()[monotone_dimension]).GetSign()
          * dir >= 0 &&
-         (polygon_end->coords()[monotone_dimension] -
+         (end_->coords()[monotone_dimension] -
           next_polygon_start->coords()[monotone_dimension]).GetSign()
          * dir >= 0) {
-    next_polygon_start = polygon_end;
-    ++polygon_end;
-    if (polygon_end == vertex_end) {
-      next_polygon_start = polygon_end;
-      return polygon_end;
+    next_polygon_start = end_;
+    ++end_;
+    if (end_ == vertex_end) {
+      next_polygon_start = end_;
+      return;
     }
   }
-
-  return polygon_end;
 }
 
 }  // walnut

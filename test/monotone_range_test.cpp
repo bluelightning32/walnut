@@ -16,7 +16,6 @@ TEST(MonotoneRange, StopsAtInitial) {
   using Vertex3Iterator = std::vector<Vertex3<32>>::iterator;
   using MonotoneRange = MonotoneRange<Vertex3Iterator>;
   Vertex3Iterator next_start;
-  Vertex3Iterator polygon_end;
   std::vector<Vertex3<32>> input{Vertex3<32>(2, 0, 0),
                                  Vertex3<32>(3, 1, 0),
                                  Vertex3<32>(2, 2, 0),
@@ -25,16 +24,15 @@ TEST(MonotoneRange, StopsAtInitial) {
                                  Vertex3<32>(1, 1, 0)};
 
   next_start = input.begin();
-  polygon_end = MonotoneRange::GetNextMonotone(/*monotone_dimension=*/0, p1,
-                                                   next_start, input.end());
+  MonotoneRange range;
+  range.Build(/*monotone_dimension=*/0, p1, next_start, input.end());
   EXPECT_EQ(next_start, input.begin() + 4);
-  EXPECT_EQ(polygon_end, input.begin() + 5);
+  EXPECT_EQ(range.end(), input.begin() + 5);
 
   // Make sure it finds the next polygon too.
-  polygon_end = MonotoneRange::GetNextMonotone(/*monotone_dimension=*/0, p1,
-                                                   next_start, input.end());
+  range.Build(/*monotone_dimension=*/0, p1, next_start, input.end());
   EXPECT_EQ(next_start, input.end());
-  EXPECT_EQ(polygon_end, input.end());
+  EXPECT_EQ(range.end(), input.end());
 
   // Ensure GetNextMonotone returns the same result if all of the vertices are
   // flipped.
@@ -43,16 +41,14 @@ TEST(MonotoneRange, StopsAtInitial) {
   }
 
   next_start = input.begin();
-  polygon_end = MonotoneRange::GetNextMonotone(/*monotone_dimension=*/0, p1,
-                                                   next_start, input.end());
+  range.Build(/*monotone_dimension=*/0, p1, next_start, input.end());
   EXPECT_EQ(next_start, input.begin() + 4);
-  EXPECT_EQ(polygon_end, input.begin() + 5);
+  EXPECT_EQ(range.end(), input.begin() + 5);
 
   // Make sure it finds the next polygon too.
-  polygon_end = MonotoneRange::GetNextMonotone(/*monotone_dimension=*/0, p1,
-                                                   next_start, input.end());
+  range.Build(/*monotone_dimension=*/0, p1, next_start, input.end());
   EXPECT_EQ(next_start, input.end());
-  EXPECT_EQ(polygon_end, input.end());
+  EXPECT_EQ(range.end(), input.end());
 }
 
 TEST(MonotoneRange, StopsNonMonotone) {
@@ -73,7 +69,7 @@ TEST(MonotoneRange, StopsNonMonotone) {
   using Vertex3Iterator = std::vector<Vertex3<32>>::iterator;
   using MonotoneRange = MonotoneRange<Vertex3Iterator>;
   Vertex3Iterator next_start;
-  Vertex3Iterator polygon_end;
+  MonotoneRange range;
   std::vector<Vertex3<32>> input{Vertex3<32>(1, 0, 0),
                                  Vertex3<32>(2, 0, 0),
                                  Vertex3<32>(3, 1, 0),
@@ -83,16 +79,14 @@ TEST(MonotoneRange, StopsNonMonotone) {
                                  Vertex3<32>(3, 5, 0)};
 
   next_start = input.begin();
-  polygon_end = MonotoneRange::GetNextMonotone(/*monotone_dimension=*/0, p1,
-                                                   next_start, input.end());
+  range.Build(/*monotone_dimension=*/0, p1, next_start, input.end());
   EXPECT_EQ(next_start, input.begin() + 5);
-  EXPECT_EQ(polygon_end, input.begin() + 6);
+  EXPECT_EQ(range.end(), input.begin() + 6);
 
   // Make sure it finds the next polygon too.
-  polygon_end = MonotoneRange::GetNextMonotone(/*monotone_dimension=*/0, p1,
-                                                   next_start, input.end());
+  range.Build(/*monotone_dimension=*/0, p1, next_start, input.end());
   EXPECT_EQ(next_start, input.end());
-  EXPECT_EQ(polygon_end, input.end());
+  EXPECT_EQ(range.end(), input.end());
 
   // Ensure GetNextMonotone returns the same result if all of the vertices are
   // flipped.
@@ -101,16 +95,14 @@ TEST(MonotoneRange, StopsNonMonotone) {
   }
 
   next_start = input.begin();
-  polygon_end = MonotoneRange::GetNextMonotone(/*monotone_dimension=*/0, p1,
-                                                   next_start, input.end());
+  range.Build(/*monotone_dimension=*/0, p1, next_start, input.end());
   EXPECT_EQ(next_start, input.begin() + 5);
-  EXPECT_EQ(polygon_end, input.begin() + 6);
+  EXPECT_EQ(range.end(), input.begin() + 6);
 
   // Make sure it finds the next polygon too.
-  polygon_end = MonotoneRange::GetNextMonotone(/*monotone_dimension=*/0, p1,
-                                                   next_start, input.end());
+  range.Build(/*monotone_dimension=*/0, p1, next_start, input.end());
   EXPECT_EQ(next_start, input.end());
-  EXPECT_EQ(polygon_end, input.end());
+  EXPECT_EQ(range.end(), input.end());
 }
 
 }  // walnut
