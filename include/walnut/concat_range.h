@@ -32,7 +32,11 @@ class ConcatRange {
   ConcatRange() : ranges_(1) { }
 
   void Append(InputIterator start, InputIterator end) {
-    ranges_.emplace(ranges_.end() - 1, start, end);
+    // Replace the terminator at the end with the new range.
+    ranges_.back().first = start;
+    ranges_.back().second = end;
+    // Readd the terminator.
+    ranges_.emplace_back();
   }
 
   void Prepend(InputIterator start, InputIterator end) {
