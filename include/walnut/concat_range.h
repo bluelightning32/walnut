@@ -43,6 +43,12 @@ class ConcatRange {
     ranges_.emplace(ranges_.begin(), start, end);
   }
 
+  void Clear() {
+    ranges_.clear();
+    // Readd the terminator.
+    ranges_.emplace_back();
+  }
+
   iterator begin() {
     return iterator(ranges_.begin(), ranges_.begin()->first);
   }
@@ -145,9 +151,10 @@ class ConcatRange<InputIterator>::IteratorHelper {
     return *this;
   }
 
-  IteratorHelper& operator=(IteratorHelper& other) {
+  IteratorHelper& operator=(const IteratorHelper& other) {
     range_pos_ = other.range_pos_;
     pos_ = other.pos_;
+    return *this;
   }
 
   ValueType& operator*() const {
