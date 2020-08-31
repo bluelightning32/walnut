@@ -1,5 +1,7 @@
 #include "walnut/concat_range.h"
 
+#include <deque>
+
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -60,6 +62,16 @@ TEST(ConcatRange, Append2Ranges) {
                                   NoMoveNoCopy(5)));
 }
 
+TEST(ConcatRange, AppendEmpty) {
+  std::deque<NoMoveNoCopy> input_container;
+
+  using InputIterator = decltype(input_container)::iterator;
+  ConcatRange<InputIterator> ranges;
+  ranges.Append(input_container.begin(), input_container.begin());
+
+  EXPECT_THAT(ranges, ElementsAre());
+}
+
 TEST(ConcatRange, Prepend2Ranges) {
   std::array<NoMoveNoCopy, 6> input_container{NoMoveNoCopy(0),
                                               NoMoveNoCopy(1),
@@ -78,6 +90,16 @@ TEST(ConcatRange, Prepend2Ranges) {
                                   NoMoveNoCopy(5),
                                   NoMoveNoCopy(0),
                                   NoMoveNoCopy(1)));
+}
+
+TEST(ConcatRange, PrependEmpty) {
+  std::deque<NoMoveNoCopy> input_container;
+
+  using InputIterator = decltype(input_container)::iterator;
+  ConcatRange<InputIterator> ranges;
+  ranges.Prepend(input_container.begin(), input_container.begin());
+
+  EXPECT_THAT(ranges, ElementsAre());
 }
 
 TEST(ConcatRange, Reverse) {
