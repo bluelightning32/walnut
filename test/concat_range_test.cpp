@@ -145,4 +145,110 @@ TEST(ConcatRange, Decrement) {
   EXPECT_THAT(result, ElementsAre(5, 4, 3, 2, 0));
 }
 
+TEST(ConcatRangeConcatRange, AppendRanges) {
+  std::deque<NoMoveNoCopy> input_container;
+  for (int i = 0; i < 3 * 4; ++i) {
+    input_container.emplace_back(i);
+  }
+
+  using InputIterator1 = decltype(input_container)::iterator;
+  ConcatRange<InputIterator1> ranges1;
+
+  // Add every 2 out of 3 of the input container.
+  for (int i = 0; i < 3 * 4; i += 3) {
+    ranges1.Append(input_container.begin() + i,
+                   input_container.begin() + i + 2);
+  }
+
+  EXPECT_THAT(ranges1, ElementsAre(NoMoveNoCopy(0),
+                                   NoMoveNoCopy(1),
+                                   NoMoveNoCopy(3),
+                                   NoMoveNoCopy(4),
+                                   NoMoveNoCopy(6),
+                                   NoMoveNoCopy(7),
+                                   NoMoveNoCopy(9),
+                                   NoMoveNoCopy(10)));
+
+  using InputIterator2 = decltype(ranges1)::iterator;
+  ConcatRange<InputIterator2> ranges2;
+
+  InputIterator2 pos = ranges1.begin();
+  InputIterator2 start = pos;
+  for (int i = 0; i < 3; ++i) {
+    ++pos;
+  }
+  ranges2.Append(start, pos);
+
+  for (int i = 0; i < 2; ++i) {
+    ++pos;
+  }
+  ranges2.Append(pos, pos);
+
+  start = pos;
+  for (int i = 0; i < 3; ++i) {
+    ++pos;
+  }
+  ranges2.Append(start, pos);
+
+  EXPECT_THAT(ranges2, ElementsAre(NoMoveNoCopy(0),
+                                   NoMoveNoCopy(1),
+                                   NoMoveNoCopy(3),
+                                   NoMoveNoCopy(7),
+                                   NoMoveNoCopy(9),
+                                   NoMoveNoCopy(10)));
+}
+
+TEST(ConcatRangeConcatRange, PrependRanges) {
+  std::deque<NoMoveNoCopy> input_container;
+  for (int i = 0; i < 3 * 4; ++i) {
+    input_container.emplace_back(i);
+  }
+
+  using InputIterator1 = decltype(input_container)::iterator;
+  ConcatRange<InputIterator1> ranges1;
+
+  // Add every 2 out of 3 of the input container.
+  for (int i = 0; i < 3 * 4; i += 3) {
+    ranges1.Append(input_container.begin() + i,
+                   input_container.begin() + i + 2);
+  }
+
+  EXPECT_THAT(ranges1, ElementsAre(NoMoveNoCopy(0),
+                                   NoMoveNoCopy(1),
+                                   NoMoveNoCopy(3),
+                                   NoMoveNoCopy(4),
+                                   NoMoveNoCopy(6),
+                                   NoMoveNoCopy(7),
+                                   NoMoveNoCopy(9),
+                                   NoMoveNoCopy(10)));
+
+  using InputIterator2 = decltype(ranges1)::iterator;
+  ConcatRange<InputIterator2> ranges2;
+
+  InputIterator2 pos = ranges1.end();
+  InputIterator2 end = pos;
+  for (int i = 0; i < 3; ++i) {
+    --pos;
+  }
+  ranges2.Prepend(pos, end);
+
+  for (int i = 0; i < 2; ++i) {
+    --pos;
+  }
+  ranges2.Prepend(pos, pos);
+
+  end = pos;
+  for (int i = 0; i < 3; ++i) {
+    --pos;
+  }
+  ranges2.Prepend(pos, end);
+
+  EXPECT_THAT(ranges2, ElementsAre(NoMoveNoCopy(0),
+                                   NoMoveNoCopy(1),
+                                   NoMoveNoCopy(3),
+                                   NoMoveNoCopy(7),
+                                   NoMoveNoCopy(9),
+                                   NoMoveNoCopy(10)));
+}
+
 }  // walnut
