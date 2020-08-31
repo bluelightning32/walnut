@@ -145,6 +145,25 @@ TEST(ConcatRange, Decrement) {
   EXPECT_THAT(result, ElementsAre(5, 4, 3, 2, 0));
 }
 
+TEST(ConcatRange, CastIteratorToConstIterator) {
+  using InputIterator = std::deque<NoMoveNoCopy>::iterator;
+  ConcatRange<InputIterator> ranges;
+
+  // Copy initialization requires a non-explicit constructor.
+  ConcatRange<InputIterator>::const_iterator cbegin1 = ranges.begin();
+  EXPECT_EQ(cbegin1, ranges.cbegin());
+
+  ConcatRange<InputIterator>::const_iterator cbegin2(ranges.begin());
+  EXPECT_EQ(cbegin2, ranges.cbegin());
+
+  ConcatRange<InputIterator>::const_iterator cbegin3;
+  cbegin3 = ranges.cbegin();
+  EXPECT_EQ(cbegin3, ranges.cbegin());
+
+  EXPECT_EQ(ranges.begin(), ranges.cbegin());
+}
+
+
 TEST(ConcatRangeConcatRange, AppendRanges) {
   std::deque<NoMoveNoCopy> input_container;
   for (int i = 0; i < 3 * 4; ++i) {

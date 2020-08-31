@@ -120,8 +120,11 @@ class ConcatRangeIteratorHelper {
         std::remove_const_t<ValueType_>>;
 
   // Let the const version of ConcatRangeIteratorHelper access private fields
-  // from the non-const version.
-  friend ConcatRangeIteratorHelper<InputIterator, const ValueType>;
+  // from the non-const version, and vice versa. Unfortunately the only way to
+  // do this in C++ is to also allow `ConcatRageIteratorHelper`s with different
+  // input iterators to access each other.
+  template <typename OtherInputIterator, typename OtherValueType>
+  friend class ConcatRangeIteratorHelper;
 
   // These declarations are necessary for
   // std::iterator_traits<ConcatRangeIteratorHelper> to have its fields
@@ -137,7 +140,7 @@ class ConcatRangeIteratorHelper {
   ConcatRangeIteratorHelper() = default;
 
   template <typename ValueType_ = ValueType>
-  explicit ConcatRangeIteratorHelper(
+  ConcatRangeIteratorHelper(
       const NonconstIterator<ValueType_>& other) :
     ConcatRangeIteratorHelper(other.range_pos_, other.pos_) { }
 
@@ -183,22 +186,18 @@ class ConcatRangeIteratorHelper {
     return copy;
   }
 
-  bool operator==(const ConcatRangeIteratorHelper& other) const {
+  template <typename OtherValueType>
+  bool operator==(const ConcatRangeIteratorHelper<InputIterator,
+                                                  OtherValueType>&
+                  other) const {
     return range_pos_ == other.range_pos_ && pos_ == other.pos_;
   }
 
-  bool operator!=(const ConcatRangeIteratorHelper& other) const {
+  template <typename OtherValueType>
+  bool operator!=(const ConcatRangeIteratorHelper<InputIterator,
+                                                  OtherValueType>&
+                  other) const {
     return !(*this == other);
-  }
-
-  template <typename ValueType_ = ValueType>
-  bool operator==(const NonconstIterator<ValueType_>& other) const {
-    return *this == ConcatRangeIteratorHelper(other);
-  }
-
-  template <typename ValueType_ = ValueType>
-  bool operator!=(const NonconstIterator<ValueType_>& other) const {
-    return *this != ConcatRangeIteratorHelper(other);
   }
 
   ValueType* operator->() const {
