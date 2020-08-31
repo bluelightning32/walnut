@@ -1,6 +1,7 @@
 #ifndef WALNUT_CONCAT_RANGE_H__
 #define WALNUT_CONCAT_RANGE_H__
 
+#include <algorithm>
 #include <iterator>
 #include <type_traits>
 #include <vector>
@@ -41,10 +42,39 @@ class ConcatRange {
     ranges_.emplace_back();
   }
 
+  void Append(const_iterator start, const_iterator end) {
+    // Remove the terminator
+    ranges_.pop_back();
+
+    while (start.range_pos() != end.range_pos()) {
+      ranges_.emplace(ranges_.end(), start.input_pos(), start.range_end());
+      start.AdvanceRange();
+    }
+
+    if (start.input_pos() != end.input_pos()) {
+      ranges_.emplace(ranges_.end(), start.input_pos(), end.input_pos());
+    }
+
+    // Readd the terminator.
+    ranges_.emplace_back();
+  }
+
   void Prepend(InputIterator start, InputIterator end) {
     if (start == end) return;
 
     ranges_.emplace(ranges_.begin(), start, end);
+  }
+
+  void Prepend(const_iterator start, const_iterator end) {
+    // Use the end of ranges_ as temporary space and append the new entries
+    // there. Later they will be rotated into their proper place at the
+    // beginning.
+    int original_ranges_size = ranges_.size();
+    Append(start, end);
+
+    std::rotate(/*first=*/ranges_.begin(),
+        /*n_first=*/ranges_.begin() + ranges_.size() - original_ranges_size,
+        /*last=*/ranges_.end() - 1);
   }
 
   void Clear() {
@@ -172,9 +202,8 @@ class ConcatRangeIteratorHelper {
   // prefix increment
   ConcatRangeIteratorHelper& operator++() {
     ++pos_;
-    if (pos_ == range_pos_->second) {
-      ++range_pos_;
-      pos_ = range_pos_->first;
+    if (pos_ == range_end()) {
+      AdvanceRange();
     }
     return *this;
   }
@@ -206,9 +235,9 @@ class ConcatRangeIteratorHelper {
 
   // prefix decrement
   ConcatRangeIteratorHelper& operator--() {
-    if (pos_ == range_pos_->first) {
+    if (pos_ == range_begin()) {
       --range_pos_;
-      pos_ = range_pos_->second;
+      pos_ = range_end();
     }
     --pos_;
     return *this;
@@ -221,9 +250,38 @@ class ConcatRangeIteratorHelper {
     return copy;
   }
 
+  RangeIterator range_pos() const {
+    return range_pos_;
+  }
+
+  InputIterator input_pos() const {
+    return pos_;
+  }
+
+  InputIterator range_begin() const {
+    return range_pos_->first;
+  }
+
+  InputIterator range_end() const {
+    return range_pos_->second;
+  }
+
+  // Moves the iterator to the start of the next range.
+  ConcatRangeIteratorHelper& AdvanceRange() {
+    ++range_pos_;
+    pos_ = range_begin();
+    return *this;
+  }
+
  private:
   RangeIterator range_pos_;
   InputIterator pos_;
+};
+
+// Collapse ConcatRange<ConcatRange<x>> into ConcatRange<x>.
+template <typename InputIterator, typename ValueType>
+class ConcatRange<ConcatRangeIteratorHelper<InputIterator, ValueType>> :
+  public ConcatRange<InputIterator> {
 };
 
 }  // walnut
