@@ -7,6 +7,9 @@
 
 namespace walnut {
 
+template <typename InputIterator, typename ValueType>
+class ConcatRangeIteratorHelper;
+
 // ConcatRange is a view of ranges of iterators concatenated together. For
 // example, it could represent 2 ranges of a std::vector concatenated together.
 // As it is a view, the elements are referenced from their original iterators
@@ -16,13 +19,10 @@ namespace walnut {
 template <typename InputIterator>
 class ConcatRange {
  private:
-  template <typename ValueType>
-  class IteratorHelper;
-
  public:
-  using iterator = IteratorHelper<
+  using iterator = ConcatRangeIteratorHelper<InputIterator,
     typename std::iterator_traits<InputIterator>::value_type>;
-  using const_iterator = IteratorHelper<
+  using const_iterator = ConcatRangeIteratorHelper<InputIterator,
     const typename std::iterator_traits<InputIterator>::value_type>;
   using reverse_iterator = std::reverse_iterator<iterator>;
   using const_reverse_iterator = std::reverse_iterator<const_iterator>;
@@ -108,27 +108,25 @@ class ConcatRange {
   std::vector<std::pair<InputIterator, InputIterator>> ranges_;
 };
 
-template <typename InputIterator>
-template <typename ValueType>
-class ConcatRange<InputIterator>::IteratorHelper {
+template <typename InputIterator, typename ValueType>
+class ConcatRangeIteratorHelper {
  private:
   using RangeIterator = typename
     std::vector<std::pair<InputIterator, InputIterator>>::const_iterator;
 
  public:
-  // Defines NonconstIterator only if ValueType is const qualified.
-  template <typename ValueType_ = ValueType, typename T =
-    typename std::enable_if<std::is_const<ValueType_>::value,
-                            ConcatRange<InputIterator>::iterator>::type>
-  using NonconstIterator = T;
+  template <typename ValueType_ = ValueType>
+  using NonconstIterator = ConcatRangeIteratorHelper<InputIterator,
+        std::remove_const_t<ValueType_>>;
 
-  // Let the const version of IteratorHelper access private fields from the
-  // non-const version.
-  friend IteratorHelper<const ValueType>;
+  // Let the const version of ConcatRangeIteratorHelper access private fields
+  // from the non-const version.
+  friend ConcatRangeIteratorHelper<InputIterator, const ValueType>;
 
-  // These declarations are necessary for std::iterator_traits<IteratorHelper>
-  // to have its fields defined, which is necessary for IteratorHelper to
-  // satisfy the LegacyIterator requirements.
+  // These declarations are necessary for
+  // std::iterator_traits<ConcatRangeIteratorHelper> to have its fields
+  // defined, which is necessary for ConcatRangeIteratorHelper to satisfy the
+  // LegacyIterator requirements.
   using value_type = ValueType;
   using difference_type = typename
     std::iterator_traits<InputIterator>::difference_type;
@@ -136,26 +134,29 @@ class ConcatRange<InputIterator>::IteratorHelper {
   using reference = ValueType&;
   using iterator_category = std::bidirectional_iterator_tag;
 
-  IteratorHelper() = default;
+  ConcatRangeIteratorHelper() = default;
 
   template <typename ValueType_ = ValueType>
-  explicit IteratorHelper(const NonconstIterator<ValueType_>& other) :
-    IteratorHelper(other.range_pos_, other.pos_) { }
+  explicit ConcatRangeIteratorHelper(
+      const NonconstIterator<ValueType_>& other) :
+    ConcatRangeIteratorHelper(other.range_pos_, other.pos_) { }
 
-  IteratorHelper(const IteratorHelper& other) :
-    IteratorHelper(other.range_pos_, other.pos_) { }
+  ConcatRangeIteratorHelper(const ConcatRangeIteratorHelper& other) :
+    ConcatRangeIteratorHelper(other.range_pos_, other.pos_) { }
 
-  IteratorHelper(const RangeIterator& range_pos, const InputIterator& pos) :
+  ConcatRangeIteratorHelper(const RangeIterator& range_pos,
+                            const InputIterator& pos) :
     range_pos_(range_pos), pos_(pos) { }
 
   template <typename ValueType_ = ValueType>
-  IteratorHelper& operator=(const NonconstIterator<ValueType_>& other) {
+  ConcatRangeIteratorHelper& operator=(
+      const NonconstIterator<ValueType_>& other) {
     range_pos_ = other.range_pos_;
     pos_ = other.pos_;
     return *this;
   }
 
-  IteratorHelper& operator=(const IteratorHelper& other) {
+  ConcatRangeIteratorHelper& operator=(const ConcatRangeIteratorHelper& other) {
     range_pos_ = other.range_pos_;
     pos_ = other.pos_;
     return *this;
@@ -166,7 +167,7 @@ class ConcatRange<InputIterator>::IteratorHelper {
   }
 
   // prefix increment
-  IteratorHelper& operator++() {
+  ConcatRangeIteratorHelper& operator++() {
     ++pos_;
     if (pos_ == range_pos_->second) {
       ++range_pos_;
@@ -176,28 +177,28 @@ class ConcatRange<InputIterator>::IteratorHelper {
   }
 
   // postfix increment
-  IteratorHelper operator++(int) {
-    IteratorHelper copy(*this);
+  ConcatRangeIteratorHelper operator++(int) {
+    ConcatRangeIteratorHelper copy(*this);
     ++*this;
     return copy;
   }
 
-  bool operator==(const IteratorHelper& other) const {
+  bool operator==(const ConcatRangeIteratorHelper& other) const {
     return range_pos_ == other.range_pos_ && pos_ == other.pos_;
   }
 
-  bool operator!=(const IteratorHelper& other) const {
+  bool operator!=(const ConcatRangeIteratorHelper& other) const {
     return !(*this == other);
   }
 
   template <typename ValueType_ = ValueType>
   bool operator==(const NonconstIterator<ValueType_>& other) const {
-    return *this == IteratorHelper(other);
+    return *this == ConcatRangeIteratorHelper(other);
   }
 
   template <typename ValueType_ = ValueType>
   bool operator!=(const NonconstIterator<ValueType_>& other) const {
-    return *this != IteratorHelper(other);
+    return *this != ConcatRangeIteratorHelper(other);
   }
 
   ValueType* operator->() const {
@@ -205,7 +206,7 @@ class ConcatRange<InputIterator>::IteratorHelper {
   }
 
   // prefix decrement
-  IteratorHelper& operator--() {
+  ConcatRangeIteratorHelper& operator--() {
     if (pos_ == range_pos_->first) {
       --range_pos_;
       pos_ = range_pos_->second;
@@ -215,8 +216,8 @@ class ConcatRange<InputIterator>::IteratorHelper {
   }
 
   // postfix decrement
-  IteratorHelper operator--(int) {
-    IteratorHelper copy(*this);
+  ConcatRangeIteratorHelper operator--(int) {
+    ConcatRangeIteratorHelper copy(*this);
     --*this;
     return copy;
   }
