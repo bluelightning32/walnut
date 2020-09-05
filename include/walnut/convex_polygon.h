@@ -47,36 +47,6 @@ class ConvexPolygon {
 
   int point_count() const { return points_.size(); }
 
-  // Find the next planar polygon from an iterator range of Vertex3Rep.
-  //
-  // Abstractly, given an input list of vertices, this finds the first vertex
-  // that is not coplanar. Although iterators are used instead of lists, and
-  // the function also takes the end of the input list into account.
-  //
-  // Note that if the input vertices are not already planar, this function may
-  // return a self intersecting (but planar) polygon. This is a tradeoff for
-  // never adding new vertices to the input.
-  //
-  // p1: a vertex to consider prepended to the input vertices in
-  //    `next_polygon_start`.
-  // next_polygon_start: on input, this points to the list of vertices to take
-  //    from for the next planar polygon. On output, this is the first point to
-  //    consider in the next planar polygon (assuming p1 is passed again).
-  // vertex_end: this defines the end of the input list of vertices to choose
-  //    from.
-  // plane: this is the plane of the polygon.
-  //
-  // Returns an iterator to the end vertex (one after) of the planar polygon.
-  // If there was no planar polygon in the input list (because the input list
-  // was too short or all vertices were collinear), then a copy of the input
-  // value of `next_polygon_start` is returned, and on output
-  // `next_polygon_start` points to `vertex_end`.
-  template <typename Vertex3Iterator>
-  static Vertex3Iterator GetNextPlanar(const Vertex3<vertex3_bits>& p1,
-                                       Vertex3Iterator& next_polygon_start,
-                                       Vertex3Iterator vertex_end,
-                                       PlaneRep &plane);
-
  private:
   template <int other_vertex3_bits>
   ConvexPolygon(const std::vector<Vector3<other_vertex3_bits>>& points) :
@@ -86,49 +56,6 @@ class ConvexPolygon {
 
   std::vector<Vertex4Rep> points_;
 };
-
-template <int vertex3_bits>
-template <typename Vertex3Iterator>
-inline Vertex3Iterator
-ConvexPolygon<vertex3_bits>::GetNextPlanar(const Vertex3<vertex3_bits>& p1,
-                                           Vertex3Iterator& next_polygon_start,
-                                           Vertex3Iterator vertex_end,
-                                           PlaneRep &plane) {
-  if (next_polygon_start == vertex_end) {
-    return next_polygon_start;
-  }
-  Vertex3Iterator polygon_end = next_polygon_start;
-  const Vertex3Rep& p2 = *next_polygon_start;
-
-  // Keep p1 and p2 pointing to where they are. Use the next soonest point for
-  // p3 such that p1, p2, and p3 are not coincident.
-  //
-  // After the loop ends, `plane` holds the plane formed from p1, p2, and p3.
-  do {
-    ++next_polygon_start;
-    if (next_polygon_start == vertex_end) {
-      return polygon_end;
-    }
-    const Vertex3Rep& p3 = *next_polygon_start;
-    plane = PlaneRep(p1, p2, p3);
-  } while (!plane.IsValid());
-
-  polygon_end = next_polygon_start;
-
-  // Keep picking more points as long as they are in the same plane and the
-  // input list does not run out.
-  while (true) {
-    ++polygon_end;
-    if (polygon_end == vertex_end) {
-      next_polygon_start = polygon_end;
-      return polygon_end;
-    }
-    if (plane.Compare(*polygon_end) != 0) {
-      return polygon_end;
-    }
-    next_polygon_start = polygon_end;
-  }
-}
 
 }  // walnut
 

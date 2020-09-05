@@ -36,6 +36,10 @@ class Vector3 {
   Vector3(int x, int y, int z) :
     coords_{BigIntRep(x), BigIntRep(y), BigIntRep(z)} { }
 
+  static Vector3 Zero() {
+    return Vector3(/*x=*/0, /*y=*/0, /*z=*/0);
+  }
+
   BigIntRep& x() {
     return coords_[0];
   }

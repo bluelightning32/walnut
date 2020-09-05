@@ -8,7 +8,9 @@
 
 namespace walnut {
 
-// A 2D monotone polygon inside of R^3.
+// Represents a monotone piece of an R^3 polygon. The vertices are a contiguous
+// range of a parent polygon (not necessarily monotone). Most of the logic in
+// the class is around finding a monotone range within the parent polygon.
 template <typename Vertex3Iterator>
 class MonotoneRange {
  public:

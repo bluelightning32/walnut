@@ -39,6 +39,10 @@ class Plane {
     return dist_;
   }
 
+  const DistInt& d() const {
+    return dist_;
+  }
+
   bool IsValid() const {
     return !normal_.IsZero();
   }
@@ -76,6 +80,20 @@ class Plane {
   template <int v_num_bits, int v_denom_bits>
   int Compare(const Vertex4<v_num_bits, v_denom_bits>& v) {
     return (v.dist_denom() * dist_).Compare(normal_.Dot(v.vector_from_origin()));
+  }
+
+  // Returns a plane with an invalid 0 normal vector and a 0 distance.
+  //
+  // All vertices are coincident with the returned plane. `IsValid` will report
+  // false for the returned plane.
+  static Plane Zero() {
+    return Plane(/*normal=*/VectorRep::Zero(), /*dist=*/DistInt(0));
+  }
+
+  template <int other_vector_bits, int other_dist_bits>
+  bool operator==(
+      const Plane<other_vector_bits, other_dist_bits>& other) const {
+    return normal().Scale(other.d()) == other.normal().Scale(d());
   }
 
  private:
