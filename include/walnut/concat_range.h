@@ -278,7 +278,7 @@ class ConcatRangeIteratorHelper {
   InputIterator pos_;
 };
 
-// Collapse ConcatRange<ConcatRange<x>> into ConcatRange<x>.
+// Collapse ConcatRange<ConcatRange<x>::iterator> into ConcatRange<x>.
 template <typename InputIterator, typename ValueType>
 class ConcatRange<ConcatRangeIteratorHelper<InputIterator, ValueType>> :
   public ConcatRange<InputIterator> {
