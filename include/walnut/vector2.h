@@ -28,7 +28,7 @@ class Vector2 {
 
   template <int other_coord_bits>
   Vector2(const Vector2<other_coord_bits>& other) :
-    coords_{other.coords()[0], other.coords()[1], other.coords()[2]} { }
+    coords_{other.coords()[0], other.coords()[1]} { }
 
   Vector2(const BigIntRep& x, const BigIntRep& y) :
     coords_{x, y} { }
@@ -114,6 +114,16 @@ class Vector2 {
 
   Vector2<coord_bits + sizeof(int)*8> Scale(int scale) const {
     return Scale<sizeof(int)*8>(BigInt<sizeof(int)*8>(scale));
+  }
+
+  template <int other_bits>
+  Vector2<coord_bits + other_bits> operator*(
+      const BigInt<other_bits>& scale) const {
+    return Scale(scale);
+  }
+
+  Vector2<coord_bits + sizeof(int)*8> operator*(int scale) const {
+    return Scale(scale);
   }
 
   bool IsZero() const {

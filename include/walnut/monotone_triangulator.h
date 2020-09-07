@@ -134,11 +134,14 @@ void MonotoneTriangulator<vertex3_bits_template>::Build(
   }
   // Process the remaining bottom chain vertices, up to but not including the
   // maximum vertex.
-  while (bottom_pos + 1 != bottom_end) {
-    ProcessVertex(drop_dimension, /*is_top=*/false, *bottom_pos);
+  BottomIterator bottom_prev = bottom_pos;
+  ++bottom_pos;
+  while (bottom_pos != bottom_end) {
+    ProcessVertex(drop_dimension, /*is_top=*/false, *bottom_prev);
+    bottom_prev = bottom_pos;
     ++bottom_pos;
   }
-  SwitchChains(*bottom_pos);
+  SwitchChains(*bottom_prev);
   assert(reflex_stack_.size() == 1);
   reflex_stack_.clear();
 }

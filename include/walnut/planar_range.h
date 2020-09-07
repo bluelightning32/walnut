@@ -19,6 +19,7 @@ class PlanarRange {
   using ConcatRangeRep = ConcatRange<Vertex3Iterator>;
   using PlaneRep = Plane<(Vertex3Rep::coord_bits - 1)*2 + 4,
                          (Vertex3Rep::coord_bits - 1)*3 + 6>;
+  using OutputIterator = typename ConcatRangeRep::const_iterator;
 
   // Find the next planar range from an iterator range of `Vertex3Rep`s.
   //
@@ -53,12 +54,12 @@ class PlanarRange {
              Vertex3Iterator& remaining_end);
 
   // Returns the start of the output range from the last `Build` call.
-  typename ConcatRangeRep::const_iterator begin() const {
+  OutputIterator begin() const {
     return range_.begin();
   }
 
   // Returns the end of the output range from the last `Build` call.
-  typename ConcatRangeRep::const_iterator end() const {
+  OutputIterator end() const {
     return range_.end();
   }
 

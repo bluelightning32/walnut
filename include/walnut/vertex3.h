@@ -83,16 +83,8 @@ class Vertex3 {
   }
 
   Vertex2<coord_bits> DropDimension(int drop_dimension) const {
-    switch (drop_dimension) {
-      case 0:
-        return Vertex2<coord_bits>(coords()[1], coords()[2]);
-      case 1:
-        return Vertex2<coord_bits>(coords()[0], coords()[2]);
-      case 2:
-        return Vertex2<coord_bits>(coords()[0], coords()[1]);
-      default:
-        assert(false);
-    }
+    Vector2<coord_bits> v = vector_from_origin().DropDimension(drop_dimension);
+    return Vertex2<coord_bits>(v.x(), v.y());
   }
 
   // Returns 0 if (p1, `this`, p3) are collinear.

@@ -4,6 +4,7 @@
 #include <array>
 
 #include "walnut/big_int.h"
+#include "walnut/vector2.h"
 
 namespace walnut {
 
@@ -142,8 +143,31 @@ class Vector3 {
     return Scale<sizeof(int)*8>(BigInt<sizeof(int)*8>(scale));
   }
 
+  template <int other_bits>
+  Vector3<coord_bits + other_bits> operator*(
+      const BigInt<other_bits>& scale) const {
+    return Scale(scale);
+  }
+
+  Vector3<coord_bits + sizeof(int)*8> operator*(int scale) const {
+    return Scale(scale);
+  }
+
   bool IsZero() const {
     return coords_[0] == 0 && coords_[1] == 0 && coords_[2] == 0;
+  }
+
+  Vector2<coord_bits> DropDimension(int drop_dimension) const {
+    switch (drop_dimension) {
+      case 0:
+        return Vector2<coord_bits>(coords()[1], coords()[2]);
+      case 1:
+        return Vector2<coord_bits>(coords()[0], coords()[2]);
+      case 2:
+        return Vector2<coord_bits>(coords()[0], coords()[1]);
+      default:
+        assert(false);
+    }
   }
 
  private:

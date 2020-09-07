@@ -13,12 +13,11 @@ namespace walnut {
 template <int vertex3_bits_template = 32>
 class ConvexPolygon {
  public:
-
+  // Defined in convex_polygon_factory.h
+  class Factory;
   using Vertex3Rep = Vertex3<vertex3_bits_template>;
-
   using Vertex4Rep = Vertex4<(vertex3_bits_template - 1)*7 + 15,
                             (vertex3_bits_template - 1)*6 + 13>;
-
   using PlaneRep = Plane<(vertex3_bits_template - 1)*2 + 4,
                          (vertex3_bits_template - 1)*3 + 6>;
 
@@ -34,27 +33,53 @@ class ConvexPolygon {
   // after an arbitrary number of splits from planes of the type PlaneRep.
   static constexpr int vertex4_denom_bits = Vertex4Rep::denom_bits_template;
 
-  // Leaves the polygon in an undefined state.
-  ConvexPolygon() = default;
-
   template <int other_vertex3_bits>
   ConvexPolygon(const ConvexPolygon<other_vertex3_bits>& other) :
-    ConvexPolygon(other.points_) { }
+    plane_(other.plane_), drop_dimension_(other.drop_dimension_),
+    vertices_(other.vertices_) { }
 
-  const Vertex4Rep& GetPoint(int i) const {
-    return points_[i];
+  const std::vector<Vertex4Rep>& vertices() const {
+    return vertices_;
   }
 
-  int point_count() const { return points_.size(); }
+  const PlaneRep& plane() const { return plane_; }
+
+  // When this dimension is projected to 0, 'dropped', the vertices will not
+  // become collinear (assuming they were not already collinear).
+  int drop_dimension() const { return drop_dimension_; }
+
+  // Sorts `vertices_`, such that the lexicographically minimum vertex comes
+  // first.
+  //
+  // Sorting the vertices does not affect the shape of the polygon.
+  void SortVertices() {
+    typename std::vector<Vertex4Rep>::iterator min = vertices_.begin();
+    for (auto it = vertices_.begin() + 1; it != vertices_.end(); ++it) {
+      if (Vertex4Rep::LexicographicallyLt(*it, *min)) {
+        min = it;
+      }
+    }
+    std::rotate(vertices_.begin(), min, vertices_.end());
+  }
 
  private:
   template <int other_vertex3_bits>
-  ConvexPolygon(const std::vector<Vector3<other_vertex3_bits>>& points) :
-    points_(points.begin(), points.end()) { }
+  ConvexPolygon(const PlaneRep& plane, int drop_dimension,
+                const std::vector<Vector3<other_vertex3_bits>>& vertices) :
+    plane_(plane), drop_dimension_(drop_dimension),
+    vertices_(vertices.begin(), vertices.end()) { }
 
-  ConvexPolygon(std::vector<Vertex4Rep> points) : points_(std::move(points)) { }
+  ConvexPolygon(const PlaneRep& plane, int drop_dimension,
+                std::vector<Vertex4Rep> vertices) :
+    plane_(plane), drop_dimension_(drop_dimension),
+    vertices_(std::move(vertices)) { }
 
-  std::vector<Vertex4Rep> points_;
+  // The plane that all of the vertices are in.
+  PlaneRep plane_;
+  // When this dimension is projected to 0, 'dropped', the vertices will not
+  // become collinear (assuming they were not already collinear).
+  int drop_dimension_;
+  std::vector<Vertex4Rep> vertices_;
 };
 
 }  // walnut

@@ -54,6 +54,12 @@ class Plane {
   Plane(const Vector3<other_vector_bits>& normal, const DistInt& dist) :
     normal_(normal), dist_(dist) { }
 
+  Plane(const VectorInt& x, const VectorInt& y, const VectorInt& z,
+        const DistInt& dist) :
+    normal_(x, y, z), dist_(dist) { }
+
+  Plane(int x, int y, int z, int dist) : normal_(x, y, z), dist_(dist) { }
+
   template <int other_vector_bits, int other_dist_bits>
   Plane(const Plane<other_vector_bits, other_dist_bits>& other) :
     Plane(other.normal, other.dist) { }
@@ -90,10 +96,18 @@ class Plane {
     return Plane(/*normal=*/VectorRep::Zero(), /*dist=*/DistInt(0));
   }
 
+  // Note that everything equals the zero vector.
   template <int other_vector_bits, int other_dist_bits>
   bool operator==(
       const Plane<other_vector_bits, other_dist_bits>& other) const {
     return normal().Scale(other.d()) == other.normal().Scale(d());
+  }
+
+  // Note that everything equals the zero vector.
+  template <int other_vector_bits, int other_dist_bits>
+  bool operator!=(
+      const Plane<other_vector_bits, other_dist_bits>& other) const {
+    return !(*this == other);
   }
 
  private:
