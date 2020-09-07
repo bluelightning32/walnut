@@ -1,14 +1,14 @@
 #ifndef WALNUT_ORIENTING_MONOTONE_DECOMPOSER_H__
 #define WALNUT_ORIENTING_MONOTONE_DECOMPOSER_H__
 
-// OrientingMonotoneDecomposer takes two chains. If the first chain is a top
-// chain (has edges greater than the second chain's edges in
-// compare_dimension), then OrientingMonotoneDecomposer outputs
-// counter-clockwise convex polygons. If the first chain is the bottom chain,
-// then OrientingMonotoneDecomposer outputs clockwise convex polygons. If the
-// two chains cross (which happens for self-intersecting monotone polygons),
-// OrientingMonotoneDecomposer may output clockwise and counter-clockwise
-// convex polygons, and those polygons may overlap.
+// OrientingMonotoneDecomposer takes two chains. If the first chain is a bottom
+// chain (has edges less than the second chain's edges in compare_dimension),
+// then OrientingMonotoneDecomposer outputs counter-clockwise convex polygons.
+// If the first chain is the top chain, then OrientingMonotoneDecomposer
+// outputs clockwise convex polygons. If the two chains cross (which happens
+// for self-intersecting monotone polygons), OrientingMonotoneDecomposer may
+// output clockwise and counter-clockwise convex polygons, and those polygons
+// may overlap.
 //
 // OrientingMonotoneDecomposer does this by autodetecting which chains are top
 // and bottom. It uses the angle between the minimum vertex and the first
@@ -76,19 +76,6 @@ class OrientingMonotoneDecomposer :
     }
     
     if (flipped_) {
-      Chain2Iterator chain2_before_end = chain2_end;
-      --chain2_before_end;
-      Chain1Iterator chain1_after_begin = chain1_begin;
-      ++chain1_after_begin;
-
-      // Skip the last vertex chain2, because it is the maximum vertex (which
-      // is also included in chain1). Skip the first vertex of chain1, because
-      // it is the minimum vertex (which is also included in chain2).
-      Parent::Build(drop_dimension, monotone_dimension,
-                    /*top_begin=*/chain2_begin, /*top_end=*/chain2_before_end,
-                    /*bottom_begin=*/chain1_after_begin,
-                    /*bottom_end=*/chain1_end);
-    } else {
       Chain1Iterator chain1_before_end = chain1_end;
       --chain1_before_end;
       Chain2Iterator chain2_after_begin = chain2_begin;
@@ -101,6 +88,19 @@ class OrientingMonotoneDecomposer :
                     /*top_begin=*/chain1_begin, /*top_end=*/chain1_before_end,
                     /*bottom_begin=*/chain2_after_begin,
                     /*bottom_end=*/chain2_end);
+    } else {
+      Chain2Iterator chain2_before_end = chain2_end;
+      --chain2_before_end;
+      Chain1Iterator chain1_after_begin = chain1_begin;
+      ++chain1_after_begin;
+
+      // Skip the last vertex chain2, because it is the maximum vertex (which
+      // is also included in chain1). Skip the first vertex of chain1, because
+      // it is the minimum vertex (which is also included in chain2).
+      Parent::Build(drop_dimension, monotone_dimension,
+                    /*top_begin=*/chain2_begin, /*top_end=*/chain2_before_end,
+                    /*bottom_begin=*/chain1_after_begin,
+                    /*bottom_end=*/chain1_end);
     }
   }
  
@@ -123,7 +123,7 @@ class OrientingMonotoneDecomposer :
  private:
   // Returns false if all vertices from both chains are collinear, or true
   // otherwise and sets `flipped_`. `flipped_` is set to false if chain1 is the
-  // top chain, or true if chain1 is the bottom chain.
+  // bottom chain, or true if chain1 is the top chain.
   template <typename Chain1Iterator, typename Chain2Iterator>
   bool DetectOrientation(int drop_dimension, int monotone_dimension,
                          Chain1Iterator chain1_begin,
@@ -144,9 +144,9 @@ class OrientingMonotoneDecomposer :
     }
   }
 
-  // orientation of the input polygon. It is set to false if chain1 is the top
-  // chain and chain2 is the bottom chain, or true if chain1 is the bottom
-  // chain and chain2 is the top chain.
+  // orientation of the input polygon. It is set to false if chain1 is the
+  // bottom chain and chain2 is the top chain, or true if chain1 is the top
+  // chain and chain2 is the bottom chain.
   bool flipped_;
 };
 
@@ -159,14 +159,16 @@ bool OrientingMonotoneDecomposer<vertex3_bits_template>::DetectOrientation(
   const Vertex3Rep& minimum_vertex = *chain1_begin;
   // Both chains must include the minimum vertex.
   assert(*chain2_begin == minimum_vertex);
-  Chain1Iterator chain1_pos = chain1_begin + 1;
-  Chain2Iterator chain2_pos = chain2_begin + 1;
+  Chain1Iterator chain1_pos = chain1_begin;
+  ++chain1_pos;
+  Chain2Iterator chain2_pos = chain2_begin;
+  ++chain2_pos;
 
   const int twist = minimum_vertex.Get2DTwistDir(drop_dimension,
                                                  *chain1_pos, *chain2_pos);
   if (twist != 0) {
     // The first vertices from each chain are not collinear.
-    flipped_ = twist > 0;
+    flipped_ = twist < 0;
     return true;
   }
   // (minimum_vertex, collinear_vertex) define the line that chain1_pos and
@@ -183,7 +185,10 @@ bool OrientingMonotoneDecomposer<vertex3_bits_template>::DetectOrientation(
     if (chain1_pos == chain1_end) {
       // Chain1 was completely consumed, which means only the maximum vertex
       // remains in chain2. All of the vertices were collinear.
-      assert(chain2_pos + 1 == chain2_end);
+#ifndef NDEBUG
+      ++chain2_pos;
+      assert(chain2_pos == chain2_end);
+#endif
       return false;
     }
     assert(chain2_pos != chain2_end);
@@ -197,7 +202,7 @@ bool OrientingMonotoneDecomposer<vertex3_bits_template>::DetectOrientation(
       // (indicated by chain1_is_current) can be identified, and the other
       // chain will be the opposite.
       const bool current_chain_is_top = twist > 0;
-      flipped_ = (chain1_is_current != current_chain_is_top);
+      flipped_ = (chain1_is_current == current_chain_is_top);
       return true;
     }
     if (chain1_is_current) {

@@ -93,8 +93,8 @@ TEST(OrientingMonotoneDecomposer, NotFlipped) {
 
   ResultCollector collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
-             std::begin(top_chain), std::end(top_chain),
-             std::begin(bottom_chain), std::end(bottom_chain));
+             std::begin(bottom_chain), std::end(bottom_chain),
+             std::begin(top_chain), std::end(top_chain));
   EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
         std::vector<Vertex3<32>>{top_chain[0], top_chain[5], top_chain[4],
                                  top_chain[3], top_chain[2], top_chain[1]}));
@@ -118,8 +118,8 @@ TEST(OrientingMonotoneDecomposer, Flipped) {
 
   ResultCollector collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
-             std::begin(bottom_chain), std::end(bottom_chain),
-             std::begin(top_chain), std::end(top_chain));
+             std::begin(top_chain), std::end(top_chain),
+             std::begin(bottom_chain), std::end(bottom_chain));
   EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
         std::vector<Vertex3<32>>{top_chain[0], top_chain[1], top_chain[2],
                                  top_chain[3], top_chain[4], top_chain[5]}));
@@ -169,8 +169,8 @@ TEST(OrientingMonotoneDecomposer, CollinearPrefixNotFlipped) {
 
   ResultCollector collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
-             std::begin(top_chain), std::end(top_chain),
-             std::begin(bottom_chain), std::end(bottom_chain));
+             std::begin(bottom_chain), std::end(bottom_chain),
+             std::begin(top_chain), std::end(top_chain));
   EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
         std::vector<Vertex3<32>>{top_chain[0], bottom_chain[1], top_chain[1]},
         std::vector<Vertex3<32>>{top_chain[1], bottom_chain[1],
@@ -195,8 +195,8 @@ TEST(OrientingMonotoneDecomposer, CollinearPrefixFlipped) {
 
   ResultCollector collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
-             std::begin(bottom_chain), std::end(bottom_chain),
-             std::begin(top_chain), std::end(top_chain));
+             std::begin(top_chain), std::end(top_chain),
+             std::begin(bottom_chain), std::end(bottom_chain));
   EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
         std::vector<Vertex3<32>>{top_chain[0], top_chain[1], bottom_chain[1]},
         std::vector<Vertex3<32>>{top_chain[1], top_chain[2], top_chain[3],

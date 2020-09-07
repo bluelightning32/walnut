@@ -60,6 +60,9 @@ class MonotoneRange {
   // The minimum and maximum vertices are included in both chains.
   //
   // Both chains are increasing in the monotone_dimension.
+  //
+  // If the vertices taken from the input range were in counter-clockwise
+  // order, then chain1 will be less than chain2 in the compare dimension.
   void GetChains(typename ConcatRangeRep::const_iterator& chain1_start,
                  typename ConcatRangeRep::const_iterator& chain1_end,
                  typename ConcatRangeRep::const_reverse_iterator& chain2_begin,

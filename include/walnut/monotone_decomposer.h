@@ -154,7 +154,7 @@ class MonotoneDecomposer : public MonotoneTriangulator<vertex3_bits_template> {
   }
 
  private:
-  // The orientation of the polygon being built. 1 for counter-clockwise, -1
+  // The orientation of the polygon being built. -1 for counter-clockwise, 1
   // for clockwise, or 0 for collinear.
   int orientation_;
 
