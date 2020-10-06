@@ -432,6 +432,20 @@ TEST(BigInt, DivideTouchBothWords) {
   EXPECT_EQ(remainder, BigInt<64>{0});
 }
 
+TEST(BigInt, Divide33bitOverflow) {
+  // The internal algorithm will try to divide the greatest 64 bits (which is
+  // 2^64-1) by one greater than the divisor (which is 2^31 + 23169 + 1). The
+  // remainder will be larger than 2^33. So the test verifies that the
+  // algorithm is expecting that large of a remainder.
+  BigInt<196> a = (BigInt<196>{1} << 128) - BigInt<64>{1};
+  BigInt<64> divisor{(1l<<31) + 23169};
+  BigInt<64> remainder;
+  BigInt<196> result = a.DivideRemainder(divisor, &remainder);
+
+  EXPECT_LT(remainder, divisor);
+  EXPECT_EQ(remainder, a - result*divisor);
+}
+
 TEST(BigInt, GetSign) {
   constexpr int test_bits = 256;
   EXPECT_EQ(BigInt<test_bits>{0}.GetSign(), 0);
@@ -479,6 +493,15 @@ TEST(BigInt, Print4WordLargePos) {
   os << a;
   EXPECT_EQ(os.str(),
     "6277101735386680763835789423207666416102355444464034512895");
+}
+
+TEST(BigInt, PrintRepeating2s) {
+  BigInt<512> a = BigInt<512>{3577192789080335246} +
+                  (BigInt<512>{6023345402697246855} << 65) +
+                  (BigInt<512>{1} << 64);
+  std::ostringstream os;
+  os << a;
+  EXPECT_EQ(os.str(), "222222222222222222222222222222222222222");
 }
 
 TEST(BigInt, PrintZero) {

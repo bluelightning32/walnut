@@ -658,25 +658,24 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImpl<max_words>>
   constexpr BigUIntImpl<max_words> DivideRemainderSlow(const BigUIntImpl<other_words>& other,
       BigUIntImpl<std::min(max_words, other_words)>* remainder_out) const {
     // Dividing a 64 bit number by a 32 bit number (with the top bit set)
-    // creates a remainder with at most 33 integer bits, with trailing fraction
+    // creates a remainder with at most 34 integer bits, with trailing fraction
     // bits.
     //
     // 0 <= a < 2^64
     // 2^31 <= b + 1 < 2^32
-    // 2^31 - 1 <= b < 2^32 - 1
     //
-    // remainder = a - ((a-1)/(b+1))*b
-    //           = a - (b*(a-1)/(b+1))
-    //           = (a*(b+1))/(b+1) - (b*(a-1)/(b+1))
-    //           = (a*(b+1) - b*(a-1))/(b+1)
-    //           = (a*b + a - b*a - b)/(b+1)
-    //           = (a - b)/(b+1)
-    //           = a/(b+1) - b/(b+1)
-    //           < 2^64 / (2^31 - 1 + 1) - 0.9
-    //           = 2^33 - 0.9
+    // remainder =  a - b * floor(a/(b+1))
+    //           <= a - b * (a/(b+1) - 1)
+    //           =  a - b * (a/(b+1) + b
+    //           =  a - a*b/(b+1) + b
+    //           =  a * (1 - b/(b+1)) + b
+    //           =  a * ( (b+1)/(b+1) - b/(b+1) ) + b
+    //           =  a * (1/(b+1)) + b
+    //           =  a/(b+1) + b
+    //
     // 
     // So dividing by a 32 bit number (with the top bit set) maximizes the
-    // progress of the algorithm. Unfortunately it progresses at about 31 bits
+    // progress of the algorithm. Unfortunately it progresses at about 30 bits
     // on each round.
 
     int other_highest_word_index = other.used_words() - 1;
@@ -712,17 +711,18 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImpl<max_words>>
     int this_shift_right_bits = (used_ - bytes_per_word) * bits_per_byte;
     for (;
           this_shift_right_bits >= other_shift_right;
-        this_shift_right_bits -= bits_per_word/2 - 1) {
+          this_shift_right_bits -= bits_per_word/2 - 2) {
       BigUIntWord this_shifted = remainder.GetWordAtBitOffset(this_shift_right_bits + bits_per_word);
 
       int shift_result_left = this_shift_right_bits - other_shift_right;
       BigUIntWord result = this_shifted / other_shifted;
       quotient.AddLeftShifted(result, shift_result_left);
       remainder.SubtractLeftShifted(other.Multiply(result), shift_result_left + bits_per_word);
+      assert(remainder.GetWordAtBitOffset(this_shift_right_bits + bits_per_word) <= BigUIntWord{1}<<34);
     }
     for (;
           this_shift_right_bits + bits_per_word/2 >= other_shift_right;
-        this_shift_right_bits -= bits_per_word/2 - 1) {
+          this_shift_right_bits -= bits_per_word/2 - 2) {
       BigUIntWord this_shifted = remainder.GetWordAtBitOffset(this_shift_right_bits + bits_per_word);
 
       int shift_result_right = other_shift_right - this_shift_right_bits;
