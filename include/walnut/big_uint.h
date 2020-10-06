@@ -390,6 +390,12 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImpl<max_words>>
   }
 
   template <int other_words>
+  constexpr BigUIntImpl<std::max(max_words, other_words)> operator-(
+      const BigUIntImpl<other_words>& other) const {
+    return Subtract(other);
+  }
+
+  template <int other_words>
   constexpr BigUIntImpl<max_words + other_words>
   Multiply(const BigUIntImpl<other_words>& other) const {
     assert(used_words() <= max_words);
