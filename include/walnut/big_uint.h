@@ -426,7 +426,7 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImpl<max_words>>
     BigUIntImpl<result_words> result;
     int k = 0;
     BigUIntWord add;
-    for (int i = 0; i < used_ / bytes_per_word; ++i, ++k) {
+    for (int i = 0; i < used_words(); ++i, ++k) {
       result.words_[k] = other.MultiplyAdd(words_[i], add, /*carry_in=*/false, &add);
     }
     if (k < result_words) {

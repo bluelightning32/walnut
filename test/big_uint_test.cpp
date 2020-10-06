@@ -344,7 +344,7 @@ TEST(BigUInt, MultiplyWordPower2) {
   const BigUIntWord b(1);
   for (int i = 0; i < BigUIntWord::bits_per_word * 2; i++) {
     const BigUInt<192> a_shifted = a << i;
-    for (int j = 0; j < BigUIntWord::bits_per_word/2; j++) {
+    for (int j = 0; j < BigUIntWord::bits_per_word - 2; j++) {
       const BigUIntWord b_shifted = b << j;
       const BigUInt<192> result = a_shifted.Multiply<>(b_shifted);
       const BigUInt<192> expected = (BigUInt<192>{1} << (i + j));

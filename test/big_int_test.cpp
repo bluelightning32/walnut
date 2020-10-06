@@ -463,13 +463,22 @@ TEST(BigInt, PrintPos) {
   EXPECT_EQ(os.str(), "25");
 }
 
-TEST(BigInt, PrintLargePos) {
+TEST(BigInt, Print2WordLargePos) {
   BigInt<128> a = (BigInt<128>{2147483647} << 64) +
                   (BigInt<128>{9223372033633550336} << 1) +
                   (BigInt<128>{1});
   std::ostringstream os;
   os << a;
   EXPECT_EQ(os.str(), "39614081257132168790329524225");
+}
+
+TEST(BigInt, Print4WordLargePos) {
+  BigInt<256> a = (BigInt<256>{1} << 192) -
+                  BigInt<256>{1};
+  std::ostringstream os;
+  os << a;
+  EXPECT_EQ(os.str(),
+    "6277101735386680763835789423207666416102355444464034512895");
 }
 
 TEST(BigInt, PrintZero) {
