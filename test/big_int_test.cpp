@@ -487,4 +487,12 @@ TEST(BigInt, PrintZero) {
   EXPECT_EQ(os.str(), "0");
 }
 
+TEST(BigInt, MinValue) {
+  EXPECT_EQ(BigInt<98>::min_value(), BigInt<128>{-1} << 97);
+}
+
+TEST(BigInt, MaxValue) {
+  EXPECT_EQ(BigInt<98>::max_value(), (BigInt<128>{1} << 97) - BigInt<128>{1});
+}
+
 }  // walnut

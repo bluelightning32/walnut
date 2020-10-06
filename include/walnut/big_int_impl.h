@@ -111,9 +111,6 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImpl<max_words>>
 
   static constexpr BigIntImpl min_value(int clear_last_word_bits) {
     BigIntImpl result;
-    for (int i = 0; i < max_words - 1; ++i) {
-      result.words_[i] = BigUIntWord::max_value();
-    }
     result.words_[max_words - 1] = BigUIntWord{-1};
     for (int i = 0; i < clear_last_word_bits; ++i) {
       result.words_[max_words - 1] &= ~(BigUIntWord{1} << i);
