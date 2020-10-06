@@ -554,7 +554,7 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImpl<max_words>>
     for (; pos < max_words && carry; pos++) {
       words_[pos] = words_[pos].Add(carry, &carry);
     }
-    used_ = pos * bytes_per_word;
+    used_ = std::max(used_, pos * bytes_per_word);
     Trim();
     return *this;
   }

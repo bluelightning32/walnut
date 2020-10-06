@@ -599,7 +599,7 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImpl<max_words>>
     if (this_signed) {
       remainder_out->Negate();
     }
-    BigIntImpl<other_words> result{quotient};
+    BigIntImpl<max_words> result{quotient};
     if (this_signed ^ other_signed) {
       result.Negate();
     }

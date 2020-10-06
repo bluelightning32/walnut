@@ -415,6 +415,23 @@ TEST(BigInt, DivideBig3And2Combinations) {
   }
 }
 
+TEST(BigInt, DivideManyBitsByFewBits) {
+  BigInt<128> a = BigInt<128>{1} << 64;
+  BigInt<8> b{2};
+  auto result = a / b;
+  EXPECT_EQ(result, BigInt<128>{1} << 63);
+}
+
+TEST(BigInt, DivideTouchBothWords) {
+  BigInt<128> a = (BigInt<128>{2} << 64) + BigInt<128>{2};
+  BigInt<128> b{2};
+  BigInt<128> remainder;
+  BigInt<128> result = a.DivideRemainder(b, &remainder);
+
+  EXPECT_EQ(result, (BigInt<128>{1} << 64) + BigInt<128>{1});
+  EXPECT_EQ(remainder, BigInt<64>{0});
+}
+
 TEST(BigInt, GetSign) {
   constexpr int test_bits = 256;
   EXPECT_EQ(BigInt<test_bits>{0}.GetSign(), 0);
@@ -444,6 +461,15 @@ TEST(BigInt, PrintPos) {
   os.str("");
   os << BigInt<32>(25);
   EXPECT_EQ(os.str(), "25");
+}
+
+TEST(BigInt, PrintLargePos) {
+  BigInt<128> a = (BigInt<128>{2147483647} << 64) +
+                  (BigInt<128>{9223372033633550336} << 1) +
+                  (BigInt<128>{1});
+  std::ostringstream os;
+  os << a;
+  EXPECT_EQ(os.str(), "39614081257132168790329524225");
 }
 
 TEST(BigInt, PrintZero) {
