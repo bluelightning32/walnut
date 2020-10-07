@@ -125,12 +125,12 @@ class BigIntBase {
     for (int j = 1; j < other.used_words(); j++) {
       k = j;
       BigUIntWord add;
+      bool carry = false;
       for (int i = 0; i < used_words(); ++i, ++k) {
-        bool carry = false;
-        add = add.Add(result.words_[k], &carry);
-        result.words_[k] = other.words_[j].MultiplyAdd(words_[i], add, carry, &add);
+        add = add.Add(result.words_[k], carry, &carry);
+        result.words_[k] = other.words_[j].MultiplyAdd(words_[i], add, /*carry_in=*/false, &add);
       }
-      result.words_[k] = add;
+      result.words_[k] = add.Add(carry, &carry);
     }
     k++;
     result.used_ = k * BigUIntWord::bytes_per_word;

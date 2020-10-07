@@ -353,6 +353,14 @@ TEST(BigUInt, MultiplyWordPower2) {
   }
 }
 
+TEST(BigUInt, Multiply128Carry) {
+  // Perform a multiplication that requires a lot of carrying.
+  const BigUInt<128> a = BigUInt<128>::max_value();
+  const BigUInt<256> result = a*a;
+  EXPECT_EQ(result - BigUInt<256>{2} + (BigUInt<256>{1} << 129),
+            BigUInt<256>::max_value());
+}
+
 TEST(BigUInt, Divide1by1) {
   BigUInt<64> a(1);
   BigUInt<64> b(1);
