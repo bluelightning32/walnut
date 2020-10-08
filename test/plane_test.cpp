@@ -52,4 +52,95 @@ TEST(Plane, BuildFromVertexes) {
   EXPECT_LT(plane.Compare(Vertex3<>(/*x=*/600, /*y=*/100, /*z=*/6)), 0);
 }
 
+template <int vertex3_bits>
+void TestCorrectOutputBits() {
+  using Builder = PlaneFromVertex3Builder<vertex3_bits>;
+  using PlaneRep = typename Builder::PlaneRep;
+  // A plane type with double the required bits.
+  using PlaneExtraBits =
+    Plane<PlaneRep::VectorInt::bits*2, PlaneRep::DistInt::bits*2>;
+  using Vertex3Rep = typename Builder::Vertex3Rep;
+  using VectorInt = typename PlaneRep::VectorInt;
+  using DistInt = typename PlaneRep::DistInt;
+  using BigIntRep = typename Vertex3Rep::BigIntRep;
+  using NextSmallerVectorInt = BigInt<VectorInt::bits - 1>;
+  using NextSmallerDistInt = BigInt<DistInt::bits - 1>;
+  int up_to = 1;
+  for (int i = 0; i < 9; ++i) {
+    up_to *= 3;
+  }
+  EXPECT_GT(up_to, 1);
+  VectorInt smallest_normal_coord[3] = {VectorInt(0),
+                                        VectorInt(0),
+                                        VectorInt(0)};
+  VectorInt largest_normal_coord[3] = {VectorInt(0),
+                                       VectorInt(0),
+                                       VectorInt(0)};
+  DistInt smallest_dist(0);
+  DistInt largest_dist(0);
+  const VectorInt n(VectorInt(BigIntRep::max_value()) + VectorInt(1));
+  const VectorInt two_n_1(n + n - VectorInt(1));
+  const VectorInt two_n_1_squared(two_n_1 * two_n_1);
+  const DistInt two_n_1_squared2(two_n_1_squared * (n + DistInt(1)));
+  for (int i = 0; i < up_to; ++i) {
+    int remaining = i;
+    Vertex3Rep p[3];
+    for (int j = 0; j < 3; ++j) {
+      BigIntRep coords[3];
+      for (int k = 0; k < 3; ++k) {
+        switch (remaining % 3) {
+          case 0:
+            coords[k] = BigIntRep::min_value();
+            break;
+          case 1:
+            coords[k] = BigIntRep(0);
+            break;
+          case 2:
+            coords[k] = BigIntRep::max_value();
+            break;
+        }
+        remaining /= 3;
+      }
+      p[j] = Vertex3Rep(coords[0], coords[1], coords[2]);
+    }
+    PlaneRep plane = Builder::Build(p[0], p[1], p[2]);
+    PlaneExtraBits plane_extra(p[0], p[1], p[2]);
+    EXPECT_EQ(plane.IsValid(), plane_extra.IsValid());
+    EXPECT_EQ(plane, plane_extra);
+    EXPECT_TRUE(plane.IsValidState());
+    for (int j = 0; j < 3; ++j) {
+      smallest_normal_coord[j] = std::min(smallest_normal_coord[j],
+                                          plane.normal().coords()[j]);
+      largest_normal_coord[j] = std::max(largest_normal_coord[j],
+                                         plane.normal().coords()[j]);
+    }
+    smallest_dist = std::min(smallest_dist, plane.d());
+    largest_dist = std::max(largest_dist, plane.d());
+    ASSERT_GE(largest_dist, DistInt(0));
+  }
+  for (int j = 0; j < 3; ++j) {
+    EXPECT_EQ(smallest_normal_coord[j], -two_n_1_squared);
+    EXPECT_EQ(largest_normal_coord[j], two_n_1_squared);
+
+    EXPECT_LT(smallest_normal_coord[j], NextSmallerVectorInt::min_value());
+    EXPECT_GT(largest_normal_coord[j], NextSmallerVectorInt::max_value());
+  }
+  EXPECT_LT(smallest_dist, DistInt(NextSmallerDistInt::min_value()));
+  EXPECT_GT(largest_dist, DistInt(NextSmallerDistInt::max_value()));
+  EXPECT_EQ(smallest_dist, -two_n_1_squared2);
+  EXPECT_EQ(largest_dist, two_n_1_squared2);
+}
+
+TEST(PlaneFromVertex3Builder, CorrectOutputBits2) {
+  TestCorrectOutputBits<2>();
+}
+
+TEST(PlaneFromVertex3Builder, CorrectOutputBits32) {
+  TestCorrectOutputBits<32>();
+}
+
+TEST(PlaneFromVertex3Builder, CorrectOutputBits64) {
+  TestCorrectOutputBits<64>();
+}
+
 }  // walnut

@@ -170,6 +170,19 @@ class Vector3 {
     }
   }
 
+  // Verifies the fields are in their supported ranges.
+  //
+  // The BigInts can sometimes internally support a larger range than what is
+  // requested in the template parameters. This function returns true if all of
+  // the fields are in their supported range.
+  //
+  // This function exists for testing purposes. It should always return true.
+  bool IsValidState() const {
+    return coords_[0].IsValidState() &&
+           coords_[1].IsValidState() &&
+           coords_[2].IsValidState();
+  }
+
  private:
   std::array<BigIntRep, 3> coords_;
 };

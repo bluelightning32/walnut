@@ -7,7 +7,7 @@
 
 namespace walnut {
 
-template <int vector_bits_template = 4 + 2*31, int dist_bits_template = 99>
+template <int vector_bits_template = 31*2 + 3, int dist_bits_template = 31*3 + 3>
 class Plane {
  public:
   using VectorRep = Vector3<vector_bits_template>;
@@ -62,7 +62,7 @@ class Plane {
 
   template <int other_vector_bits, int other_dist_bits>
   Plane(const Plane<other_vector_bits, other_dist_bits>& other) :
-    Plane(other.normal, other.dist) { }
+    Plane(other.normal(), other.d()) { }
 
   template <int vertex_bits>
   Plane(const Vertex3<vertex_bits>& p1,
@@ -110,9 +110,38 @@ class Plane {
     return !(*this == other);
   }
 
+  // Verifies the fields are in their supported ranges.
+  //
+  // The BigInts can sometimes internally support a larger range than what is
+  // requested in the template parameters. This function returns true if all of
+  // the fields are in their supported range.
+  //
+  // This function exists for testing purposes. It should always return true.
+  bool IsValidState() const {
+    return normal_.IsValidState() && dist_.IsValidState();
+  }
+
  private:
   VectorRep normal_;
   DistInt dist_;
+};
+
+// This is a wrapper around the Plane constructor that takes 3 Vertex3's. The
+// only reason to use this wrapper is that it figures out how many bits are
+// necessary in the worst case for the plane numerator and denominator, given
+// the number of bits in each Vertex3.
+template <int vertex3_bits_template = 32>
+class PlaneFromVertex3Builder {
+ public:
+  using Vertex3Rep = Vertex3<vertex3_bits_template>;
+  using PlaneRep = Plane<(vertex3_bits_template - 1)*2 + 3,
+                         (vertex3_bits_template - 1)*3 + 3>;
+
+  static PlaneRep Build(const Vertex3Rep& p1,
+                        const Vertex3Rep& p2,
+                        const Vertex3Rep& p3) {
+    return PlaneRep(p1, p2, p3);
+  }
 };
 
 }  // walnut

@@ -212,6 +212,17 @@ class BigInt {
     return rep_.words();
   }
 
+  // Verifies the value is in the supported range.
+  //
+  // BigInts can sometimes internally support a larger range than
+  // [min_value(), max_value()].
+  // This function returns true if the value is within the [min_value(),
+  // max_value()]. For invalid values, it is possible for this function to
+  // return false, because some BigInts can internally a larger range.
+  bool IsValidState() const {
+    return min_value() <= *this && *this <= max_value();
+  }
+
   template <int print_bits>
   friend std::ostream& operator<<(std::ostream& out, const BigInt<print_bits>& bigint);
 

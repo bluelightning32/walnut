@@ -16,10 +16,10 @@ class ConvexPolygon {
   // Defined in convex_polygon_factory.h
   class Factory;
   using Vertex3Rep = Vertex3<vertex3_bits_template>;
-  using Vertex4Rep = Vertex4<(vertex3_bits_template - 1)*7 + 15,
-                            (vertex3_bits_template - 1)*6 + 13>;
-  using PlaneRep = Plane<(vertex3_bits_template - 1)*2 + 4,
-                         (vertex3_bits_template - 1)*3 + 6>;
+  using Vertex4Rep = Vertex4<(vertex3_bits_template - 1)*7 + 10,
+                             (vertex3_bits_template - 1)*6 + 10>;
+  using PlaneRep =
+    typename PlaneFromVertex3Builder<vertex3_bits_template>::PlaneRep;
 
   // The minimum number of bits to support for each coordinate of the vertex3's
   // that the polygon is built from.

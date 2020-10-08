@@ -14,8 +14,7 @@ class ConvexPolygon<vertex3_bits_template>::Factory :
  public:
   using Vertex3Rep = ConvexPolygon::Vertex3Rep;
   using ConvexPolygonRep = ConvexPolygon<vertex3_bits_template>;
-  using PlaneRep = Plane<(vertex3_bits_template - 1)*2 + 4,
-                         (vertex3_bits_template - 1)*3 + 6>;
+  using PlaneRep = typename ConvexPolygonRep::PlaneRep;
 
   template <typename Vertex3Iterator>
   void Build(Vertex3Iterator begin, Vertex3Iterator end) {
