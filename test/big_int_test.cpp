@@ -518,4 +518,17 @@ TEST(BigInt, MaxValue) {
   EXPECT_EQ(BigInt<98>::max_value(), (BigInt<128>{1} << 97) - BigInt<128>{1});
 }
 
+template <int i>
+constexpr int force_constexpr_int = i;
+
+TEST(BigInt, ConstexprConstructor) {
+  constexpr BigInt<32> a(1);
+  constexpr BigInt<256> b(a);
+  constexpr BigInt<32> c(b);
+
+  EXPECT_EQ(1, force_constexpr_int<a.low_uint32()>);
+  EXPECT_EQ(1, force_constexpr_int<b.low_uint32()>);
+  EXPECT_EQ(1, force_constexpr_int<c.low_uint32()>);
+}
+
 }  // walnut

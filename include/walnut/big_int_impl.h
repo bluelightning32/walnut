@@ -11,15 +11,55 @@
 namespace walnut {
 
 template <int max_words>
-class BigIntImpl : public BigIntBase<max_words, BigIntImpl<max_words>>
+class BigIntImplTrimMixin : public BigIntBase<max_words> {
+  using Parent = BigIntBase<max_words>;
+ public:
+  using Parent::bytes_per_word;
+
+ protected:
+  using Parent::Parent;
+
+  using Parent::used_;
+  using Parent::words_;
+
+  constexpr void Trim() {
+    int i = used_ / bytes_per_word - 1;
+    if (i > 0) {
+      BigUIntWord check = words_[i];
+      BigUIntWord next;
+      do {
+        --i;
+        next = words_[i];
+
+        if (check.Add(BigUIntWord{1}) > BigUIntWord{1} ||
+            BigIntWord(check ^ next) < 0) {
+          break;
+        }
+
+        check = next;
+        used_-= bytes_per_word;
+      } while (i > 0);
+    }
+    const constexpr BigUIntWord unsigned_int_min{BigUIntHalfWord(
+      std::numeric_limits<BigIntHalfWord>::min())};
+    const constexpr BigUIntWord limit = BigUIntWord{std::numeric_limits<BigIntHalfWord>::max()}.Add(unsigned_int_min);
+    if (used_ == bytes_per_word &&
+        words_[0].Add(unsigned_int_min) <= limit) {
+      used_ = sizeof(BigUIntHalfWord);
+    }
+  }
+};
+
+template <int max_words>
+class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
 {
-  template <int other_words>
+  template <typename OtherMixin>
+  friend class BigIntBaseOperations;
+
+  template <int other_max_words>
   friend class BigIntImpl;
 
-  template <int other_words, typename OtherImplType>
-  friend class BigIntBase;
-
-  using Parent = BigIntBase<max_words, BigIntImpl<max_words>>;
+  using Parent = BigIntBaseOperations<BigIntImplTrimMixin<max_words>>;
 
  public:
   using Parent::bits_per_word;
@@ -66,7 +106,8 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImpl<max_words>>
   template <int other_max_words>
   constexpr BigIntImpl<max_words>& operator = (
       const BigIntImpl<other_max_words>& other) {
-    return Parent::operator=(other);
+    Parent::operator=(other);
+    return *this;
   }
 
   template <int other_max_words>
@@ -525,6 +566,7 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImpl<max_words>>
   }
 
  protected:
+  using Parent::Trim;
   using Parent::used_;
   using Parent::words_;
 
@@ -533,33 +575,6 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImpl<max_words>>
 
   constexpr BigUIntWord SignExtension() const {
     return words_[used_words() - 1].SignExtension();
-  }
-
-  constexpr void Trim() {
-    int i = used_ / bytes_per_word - 1;
-    if (i > 0) {
-      BigUIntWord check = words_[i];
-      BigUIntWord next;
-      do {
-        --i;
-        next = words_[i];
-
-        if (check.Add(BigUIntWord{1}) > BigUIntWord{1} ||
-            BigIntWord(check ^ next) < 0) {
-          break;
-        }
-
-        check = next;
-        used_-= bytes_per_word;
-      } while (i > 0);
-    }
-    const constexpr BigUIntWord unsigned_int_min{BigUIntHalfWord(
-      std::numeric_limits<BigIntHalfWord>::min())};
-    const constexpr BigUIntWord limit = BigUIntWord{std::numeric_limits<BigIntHalfWord>::max()}.Add(unsigned_int_min);
-    if (used_ == bytes_per_word &&
-        words_[0].Add(unsigned_int_min) <= limit) {
-      used_ = sizeof(BigUIntHalfWord);
-    }
   }
 
   // Mask everyone of `other` words with `mask`, then subtract other_masked *

@@ -10,15 +10,39 @@
 namespace walnut {
 
 template <int max_words>
-class BigUIntImpl : public BigIntBase<max_words, BigUIntImpl<max_words>>
+class BigUIntImplTrimMixin : public BigIntBase<max_words> {
+  using Parent = BigIntBase<max_words>;
+
+ protected:
+  using Parent::Parent;
+  using Parent::used_;
+  using Parent::words_;
+
+  constexpr void Trim() {
+    while (used_ > BigUIntWord::bytes_per_word) {
+      if (words_[used_ / BigUIntWord::bytes_per_word - 1] != 0) {
+        break;
+      }
+      used_-= BigUIntWord::bytes_per_word;
+    }
+    if (used_ == BigUIntWord::bytes_per_word &&
+        words_[0] <= std::numeric_limits<BigUIntHalfWord>::max()) {
+      used_ = sizeof(BigUIntHalfWord);
+    }
+  }
+
+};
+
+template <int max_words>
+class BigUIntImpl : public BigIntBaseOperations<BigUIntImplTrimMixin<max_words>>
 {
+  template <typename OtherMixin>
+  friend class BigIntBaseOperations;
+
   template <int other_words>
   friend class BigUIntImpl;
 
-  template <int other_words, typename OtherImplType>
-  friend class BigIntBase;
-
-  using Parent = BigIntBase<max_words, BigUIntImpl<max_words>>;
+  using Parent = BigIntBaseOperations<BigUIntImplTrimMixin<max_words>>;
 
  public:
   using Parent::bits_per_word;
@@ -64,7 +88,8 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImpl<max_words>>
   template <int other_max_words>
   constexpr BigUIntImpl<max_words>& operator = (
       const BigUIntImpl<other_max_words>& other) {
-    return Parent::operator=(other);
+    Parent::operator=(other);
+    return *this;
   }
 
   template <int other_max_words>
@@ -471,24 +496,12 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImpl<max_words>>
   }
 
  protected:
+  using Parent::Trim;
   using Parent::used_;
   using Parent::words_;
 
   using Parent::used_words;
   using Parent::GetCommonWordCount;
-
-  constexpr void Trim() {
-    while (used_ > BigUIntWord::bytes_per_word) {
-      if (words_[used_ / BigUIntWord::bytes_per_word - 1] != 0) {
-        break;
-      }
-      used_-= BigUIntWord::bytes_per_word;
-    }
-    if (used_ == BigUIntWord::bytes_per_word &&
-        words_[0] <= std::numeric_limits<BigUIntHalfWord>::max()) {
-      used_ = sizeof(BigUIntHalfWord);
-    }
-  }
 
   constexpr void SignExtend() const {
   }

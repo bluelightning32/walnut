@@ -8,10 +8,10 @@
 namespace walnut {
 
 // Common base for BigIntImpl and BigUIntImpl
-template <int max_words_template, typename ImplType>
+template <int max_words_template>
 class BigIntBase {
-  template <int other_words, typename OtherImplType>
-  friend class BigIntBase;
+  template <typename TrimMixin>
+  friend class BigIntBaseOperations;
 
  public:
   static constexpr int max_words = max_words_template;
@@ -38,111 +38,16 @@ class BigIntBase {
   }
 
  protected:
-  // Get the most derived version of this class.
-  constexpr const ImplType* impl() const {
-    static_cast<const ImplType*>(this);
-  }
-
-  // Get the most derived version of this class.
-  constexpr ImplType* impl() {
-    return static_cast<ImplType*>(this);
-  }
-
   constexpr BigIntBase(int used) : used_(used) { }
-
-  constexpr BigIntBase(const BigUIntWord* words, int used) : used_(used) {
-    assert(("overflow", used_ <= max_bytes));
-    for (int i = 0; i < (used + bytes_per_word - 1) / bytes_per_word; ++i) {
-      words_[i] = words[i];
-    }
-    impl()->Trim();
-  }
-
-  template <int other_max_words, typename OtherImpl>
-  constexpr BigIntBase(const BigIntBase<other_max_words, OtherImpl>& other) {
-    assert(("overflow", other.used_ <= max_bytes));
-    int copy_bytes = max_words < other_max_words ?
-                     std::min(other.used_, int(max_words * bytes_per_word)) :
-                     other.used_;
-    int copy_words = (copy_bytes + bytes_per_word - 1) / bytes_per_word;
-    for (int i = 0; i < copy_words; i++) {
-      words_[i] = other.words_[i];
-    }
-    used_ = copy_bytes;
-    if (max_words < other_max_words) {
-      impl()->Trim();
-    }
-  }
-
-  template <int other_max_words, typename OtherImpl>
-  constexpr ImplType& operator=(const BigIntBase<other_max_words, OtherImpl>& other) {
-    assert(other.used_ <= max_bytes);
-    AssignIgnoreOverflow(other);
-    return *impl();
-  }
-
-  template <int other_max_words, typename OtherImpl>
-  constexpr void AssignIgnoreOverflow(const BigIntBase<other_max_words, OtherImpl>& other) {
-    int copy_bytes = max_words < other_max_words ?
-                     std::min(other.used_, int(max_words * bytes_per_word)) :
-                     other.used_;
-    int copy_words = (copy_bytes + bytes_per_word - 1) / bytes_per_word;
-    for (int i = 0; i < copy_words; i++) {
-      words_[i] = other.words_[i];
-    }
-    used_ = copy_bytes;
-    if (max_words < other_max_words) {
-      impl()->Trim();
-    }
-  }
-
-  template <typename Result, typename Other>
-  constexpr Result operator&(const Other& other) const {
-    Result result;
-    result.used_ = std::min(used_, other.used_);
-    for (int i = 0; i < result.used_words(); i++) {
-      result.words_[i] = words_[i] & other.words_[i];
-    }
-    result.Trim();
-    return result;
-  }
-
-  template <typename Result, typename Other>
-  constexpr Result MultiplySlow(const Other& other) const {
-    if (used_ < other.used_) {
-      return other.template MultiplySlow<Result>(*this);
-    }
-    Result result;
-    int k = 0;
-    {
-      BigUIntWord add;
-      for (int i = 0; i < used_words(); ++i, ++k) {
-        result.words_[k] = other.words_[0].MultiplyAdd(words_[i], add, /*carry_in=*/false, &add);
-      }
-      result.words_[k] = add;
-    }
-    for (int j = 1; j < other.used_words(); j++) {
-      k = j;
-      BigUIntWord add;
-      bool carry = false;
-      for (int i = 0; i < used_words(); ++i, ++k) {
-        add = add.Add(result.words_[k], carry, &carry);
-        result.words_[k] = other.words_[j].MultiplyAdd(words_[i], add, /*carry_in=*/false, &add);
-      }
-      result.words_[k] = add.Add(carry, &carry);
-    }
-    k++;
-    result.used_ = k * BigUIntWord::bytes_per_word;
-    return result;
-  }
 
   constexpr int used_words() const {
     return (used_ + bytes_per_word - 1) / bytes_per_word;
   }
 
-  template <typename OtherImpl>
-  constexpr int GetCommonWordCount(const OtherImpl& other) const {
-    return (std::min(used_, other.used_) +
+  template <int other_words>
+  constexpr int GetCommonWordCount(
+      const BigIntBase<other_words>& other) const {
+    return (std::min(used_bytes(), other.used_bytes()) +
             bytes_per_word - 1) / bytes_per_word;
   }
 
@@ -170,6 +75,116 @@ class BigIntBase {
   // words_[0] holds the lowest significant bits. Within each element of
   // words_, the bit order is in the machine native order.
   BigUIntWord words_[max_words];
+};
+
+// Adds operations that require Trim.
+//
+// TrimMixin must implement Trim, and TrimMixin must inherit from BigIntBase.
+template <typename TrimMixin>
+class BigIntBaseOperations : public TrimMixin {
+  template <typename OtherTrimBase>
+  friend class BigIntBaseOperations;
+
+ public:
+  using TrimMixin::max_words;
+  using TrimMixin::bits_per_word;
+  using TrimMixin::bits_per_byte;
+  using TrimMixin::bytes_per_word;
+  using TrimMixin::max_bits;
+  using TrimMixin::max_bytes;
+
+ protected:
+  using TrimMixin::TrimMixin;
+  using TrimMixin::used_;
+  using TrimMixin::words_;
+
+  constexpr BigIntBaseOperations(const BigUIntWord* words, int used) :
+      TrimMixin(used) {
+    assert(("overflow", used_ <= max_bytes));
+    for (int i = 0; i < (used + bytes_per_word - 1) / bytes_per_word; ++i) {
+      words_[i] = words[i];
+    }
+    this->Trim();
+  }
+
+  template <typename OtherMixin>
+  constexpr BigIntBaseOperations(
+      const BigIntBaseOperations<OtherMixin>& other) :
+      TrimMixin(max_words < OtherMixin::max_words ?
+                  std::min(other.used_, int(max_words * bytes_per_word)) :
+                  other.used_) {
+    assert(("overflow", other.used_ <= max_bytes));
+    int copy_words = (used_ + bytes_per_word - 1) / bytes_per_word;
+    for (int i = 0; i < copy_words; i++) {
+      words_[i] = other.words_[i];
+    }
+    this->Trim();
+  }
+
+  template <typename OtherMixin>
+  constexpr BigIntBaseOperations operator=(
+      const BigIntBaseOperations<OtherMixin>& other) {
+    assert(other.used_ <= max_bytes);
+    AssignIgnoreOverflow(other);
+    return *this;
+  }
+
+  template <typename OtherMixin>
+  constexpr void AssignIgnoreOverflow(
+      const BigIntBaseOperations<OtherMixin>& other) {
+    int copy_bytes = max_words < OtherMixin::max_words ?
+                     std::min(other.used_, int(max_words * bytes_per_word)) :
+                     other.used_;
+    int copy_words = (copy_bytes + bytes_per_word - 1) / bytes_per_word;
+    for (int i = 0; i < copy_words; i++) {
+      words_[i] = other.words_[i];
+    }
+    used_ = copy_bytes;
+    if (max_words < OtherMixin::max_words) {
+      this->Trim();
+    }
+  }
+
+  template <typename Result, typename Other>
+  constexpr Result operator&(const Other& other) const {
+    Result result;
+    result.used_ = std::min(used_, other.used_);
+    for (int i = 0; i < result.used_words(); i++) {
+      result.words_[i] = words_[i] & other.words_[i];
+    }
+    result.Trim();
+    return result;
+  }
+
+  template <typename Result, typename OtherMixin>
+  constexpr Result MultiplySlow(
+      const BigIntBaseOperations<OtherMixin>& other) const {
+    if (used_ < other.used_) {
+      return other.template MultiplySlow<Result>(*this);
+    }
+    Result result;
+    int k = 0;
+    {
+      BigUIntWord add;
+      for (int i = 0; i < this->used_words(); ++i, ++k) {
+        result.words_[k] = other.words_[0].MultiplyAdd(words_[i], add, /*carry_in=*/false, &add);
+      }
+      result.words_[k] = add;
+    }
+    for (int j = 1; j < other.used_words(); j++) {
+      k = j;
+      BigUIntWord add;
+      bool carry = false;
+      for (int i = 0; i < this->used_words(); ++i, ++k) {
+        add = add.Add(result.words_[k], carry, &carry);
+        result.words_[k] = other.words_[j].MultiplyAdd(words_[i], add, /*carry_in=*/false, &add);
+      }
+      result.words_[k] = add.Add(carry, &carry);
+    }
+    k++;
+    result.used_ = k * BigUIntWord::bytes_per_word;
+    return result;
+  }
 };
 
 }  // walnut
