@@ -5,6 +5,7 @@
 #include <cassert>
 #include <iostream>
 
+#include "walnut/big_int_base.h"
 #include "walnut/big_uint.h"
 
 namespace walnut {
