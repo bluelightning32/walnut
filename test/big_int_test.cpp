@@ -531,4 +531,15 @@ TEST(BigInt, ConstexprConstructor) {
   EXPECT_EQ(1, force_constexpr_int<c.low_uint32()>);
 }
 
+TEST(BigInt, ConstexprMaxValue) {
+  EXPECT_EQ(force_constexpr_int<BigInt<32>::max_value().low_uint32()> & 0xFF,
+            0xFF);
+}
+
+TEST(BigInt, ConstexprMinValue) {
+  constexpr BigInt<32> min_value = BigInt<32>::min_value();
+  constexpr int min_value_int = static_cast<int>(min_value.low_uint32());
+  EXPECT_EQ(force_constexpr_int<min_value_int> & 0x00, 0x00);
+}
+
 }  // walnut

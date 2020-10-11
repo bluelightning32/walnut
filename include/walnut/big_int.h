@@ -228,7 +228,7 @@ class BigInt {
 
  private:
   template <int other_words>
-  BigInt(const BigIntImpl<other_words>& other) : rep_(other) { }
+  constexpr BigInt(const BigIntImpl<other_words>& other) : rep_(other) { }
 
   BigIntRep rep_;
 };
