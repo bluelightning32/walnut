@@ -96,6 +96,15 @@ class Vector3 {
         /*z=*/z() - other.z());
   }
 
+  template <int other_coord_bits>
+  Vector3<std::max(other_coord_bits, coord_bits_template) + 1> operator+(
+      const Vector3<other_coord_bits>& other) const {
+    return Vector3<std::max(other_coord_bits, coord_bits_template) + 1>(
+        /*x=*/x() + other.x(),
+        /*y=*/y() + other.y(),
+        /*z=*/z() + other.z());
+  }
+
   // Return true if the vectors have the same direction and only differ in
   // magnitude.
   //

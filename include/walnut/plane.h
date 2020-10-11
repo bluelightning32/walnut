@@ -136,6 +136,24 @@ class PlaneFromVertex3Builder {
   using Vertex3Rep = Vertex3<vertex3_bits_template>;
   using PlaneRep = Plane<(vertex3_bits_template - 1)*2 + 3,
                          (vertex3_bits_template - 1)*3 + 3>;
+  using VectorInt = typename PlaneRep::VectorInt;
+  using DistInt = typename PlaneRep::DistInt;
+
+  static constexpr VectorInt normal_component_min() {
+    VectorInt n = Vertex3Rep::BigIntRep::max_value() + VectorInt(1);
+    VectorInt two_n_1 = n + n - BigInt<2>(1);
+    return -two_n_1 * two_n_1;
+  }
+  static constexpr VectorInt normal_component_max() {
+    return -normal_component_min();
+  }
+  static constexpr DistInt dist_min() {
+    DistInt n = Vertex3Rep::BigIntRep::max_value() + DistInt(1);
+    return normal_component_min() * (n + DistInt(1));
+  }
+  static constexpr DistInt dist_max() {
+    return -dist_min();
+  }
 
   static PlaneRep Build(const Vertex3Rep& p1,
                         const Vertex3Rep& p2,

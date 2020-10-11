@@ -67,7 +67,7 @@ void TestCorrectOutputBits() {
   using NextSmallerDistInt = BigInt<DistInt::bits - 1>;
   int up_to = 1;
   for (int i = 0; i < 9; ++i) {
-    up_to *= 3;
+    up_to *= 2;
   }
   EXPECT_GT(up_to, 1);
   VectorInt smallest_normal_coord[3] = {VectorInt(0),
@@ -78,28 +78,21 @@ void TestCorrectOutputBits() {
                                        VectorInt(0)};
   DistInt smallest_dist(0);
   DistInt largest_dist(0);
-  const VectorInt n(VectorInt(BigIntRep::max_value()) + VectorInt(1));
-  const VectorInt two_n_1(n + n - VectorInt(1));
-  const VectorInt two_n_1_squared(two_n_1 * two_n_1);
-  const DistInt two_n_1_squared2(two_n_1_squared * (n + DistInt(1)));
   for (int i = 0; i < up_to; ++i) {
     int remaining = i;
     Vertex3Rep p[3];
     for (int j = 0; j < 3; ++j) {
       BigIntRep coords[3];
       for (int k = 0; k < 3; ++k) {
-        switch (remaining % 3) {
+        switch (remaining % 2) {
           case 0:
             coords[k] = BigIntRep::min_value();
             break;
           case 1:
-            coords[k] = BigIntRep(0);
-            break;
-          case 2:
             coords[k] = BigIntRep::max_value();
             break;
         }
-        remaining /= 3;
+        remaining /= 2;
       }
       p[j] = Vertex3Rep(coords[0], coords[1], coords[2]);
     }
@@ -119,16 +112,16 @@ void TestCorrectOutputBits() {
     ASSERT_GE(largest_dist, DistInt(0));
   }
   for (int j = 0; j < 3; ++j) {
-    EXPECT_EQ(smallest_normal_coord[j], -two_n_1_squared);
-    EXPECT_EQ(largest_normal_coord[j], two_n_1_squared);
+    EXPECT_EQ(smallest_normal_coord[j], Builder::normal_component_min());
+    EXPECT_EQ(largest_normal_coord[j], Builder::normal_component_max());
 
     EXPECT_LT(smallest_normal_coord[j], NextSmallerVectorInt::min_value());
     EXPECT_GT(largest_normal_coord[j], NextSmallerVectorInt::max_value());
   }
   EXPECT_LT(smallest_dist, DistInt(NextSmallerDistInt::min_value()));
   EXPECT_GT(largest_dist, DistInt(NextSmallerDistInt::max_value()));
-  EXPECT_EQ(smallest_dist, -two_n_1_squared2);
-  EXPECT_EQ(largest_dist, two_n_1_squared2);
+  EXPECT_EQ(smallest_dist, Builder::dist_min());
+  EXPECT_EQ(largest_dist, Builder::dist_max());
 }
 
 TEST(PlaneFromVertex3Builder, CorrectOutputBits2) {

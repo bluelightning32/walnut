@@ -23,8 +23,12 @@ class Vertex3 {
   Vertex3() = default;
 
   template <int other_coord_bits>
-  Vertex3(const Vertex3<other_coord_bits>& other) :
+  explicit Vertex3(const Vector3<other_coord_bits>& other) :
     Vertex3(other.coords()[0], other.coords()[1], other.coords()[2]) { }
+
+  template <int other_coord_bits>
+  Vertex3(const Vertex3<other_coord_bits>& other) :
+    Vertex3(other.vector_from_origin()) { }
 
   template <int other_coord_bits>
   Vertex3(const BigInt<other_coord_bits>& x,
@@ -80,6 +84,20 @@ class Vertex3 {
   Vector3<std::max(other_coord_bits, coord_bits_template) + 1> operator-(
       const Vertex3<other_coord_bits>& other) const {
     return vector_from_origin() - other.vector_from_origin();
+  }
+
+  template <int other_coord_bits>
+  Vertex3<std::max(other_coord_bits, coord_bits_template) + 1> operator+(
+      const Vector3<other_coord_bits>& other) const {
+    return Vertex3<std::max(other_coord_bits, coord_bits_template) + 1>(
+        vector_from_origin() + other);
+  }
+
+  template <int other_coord_bits>
+  Vertex3<std::max(other_coord_bits, coord_bits_template) + 1> operator-(
+      const Vector3<other_coord_bits>& other) const {
+    return Vertex3<std::max(other_coord_bits, coord_bits_template) + 1>(
+        vector_from_origin() - other);
   }
 
   Vertex2<coord_bits> DropDimension(int drop_dimension) const {
