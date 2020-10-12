@@ -1,6 +1,7 @@
 #ifndef WALNUT_PLUCKER_LINE_H__
 #define WALNUT_PLUCKER_LINE_H__
 
+#include "walnut/plane.h"
 #include "walnut/vector3.h"
 #include "walnut/vertex3.h"
 
@@ -19,6 +20,10 @@ class PluckerLine {
   static constexpr int m_bits = m_bits_template;
 
   // Returns the direction vector for the line.
+  //
+  // Some definitions use the p^ab or p_ab notation.
+  // d = (p_01, p_02, p_03)
+  // d = (p^23, p^31, p^12)
   const DVector& d() const {
     return d_;
   }
@@ -32,6 +37,10 @@ class PluckerLine {
   // The moment indirectly indicates how far the direction vector is from the
   // origin. The moment is zero if and only if the line goes through the
   // origin.
+  //
+  // Some definitions use the p^ab or p_ab notation.
+  // m = (p_23, p_31, p_12)
+  // m = (p^01, p^02, p^03)
   const MVector& m() const {
     return m_;
   }
@@ -61,6 +70,41 @@ class PluckerLine {
   PluckerLine(const Vertex3<vertex_bits>& p1,
               const Vertex3<vertex_bits>& p2) :
     d_(p2 - p1), m_(p1.vector_from_origin().Cross(p2.vector_from_origin())) { }
+
+  // Constructs the line for the intersection of the two planes, `a` and `b`.
+  //
+  // Both `a` and `b` must be valid (have non-zero normals), and they must be
+  // non-equal.
+  template <int vector_bits, int dist_bits>
+  PluckerLine(const Plane<vector_bits, dist_bits>& a,
+              const Plane<vector_bits, dist_bits>& b) :
+    // d = (p^23, p^31, p^12)
+    //
+    // p^23 = | a.y  a.z |
+    //        | b.y  b.z |
+    //
+    // p^31 = | a.z  a.x |
+    //        | b.z  b.x |
+    //
+    // p^12 = | a.x  a.y |
+    //        | b.x  b.y |
+    //
+    // m = (p^01, p^02, p^03)
+    //
+    // p^01 = | a.d  a.x |
+    //        | b.d  b.x |
+    //
+    // p^02 = | a.d  a.y |
+    //        | b.d  b.y |
+    //
+    // p^03 = | a.d  a.z |
+    //        | b.d  b.z |
+    d_(DVector::BigIntRep::Determinant(a.y(), a.z(), b.y(), b.z()),
+       DVector::BigIntRep::Determinant(a.z(), a.x(), b.z(), b.x()),
+       DVector::BigIntRep::Determinant(a.x(), a.y(), b.x(), b.y())),
+    m_(MVector::BigIntRep::Determinant(a.d(), a.x(), b.d(), b.x()),
+       MVector::BigIntRep::Determinant(a.d(), a.y(), b.d(), b.y()),
+       MVector::BigIntRep::Determinant(a.d(), a.z(), b.d(), b.z())) { }
 
   // Returns true if `v` is on the line.
   template <int v_bits>
@@ -124,7 +168,7 @@ class PluckerLine {
 // necessary in the worst case for the PluckerLine d and m vector components,
 // given the number of bits in each Vertex3.
 template <int vertex3_bits_template = 32>
-class PluckerLineFromVertex3Builder {
+class PluckerLineFromVertex3sBuilder {
  public:
   using Vertex3Rep = Vertex3<vertex3_bits_template>;
   using PluckerLineRep = PluckerLine<vertex3_bits_template + 1,
@@ -149,6 +193,45 @@ class PluckerLineFromVertex3Builder {
   }
 
   static PluckerLineRep Build(const Vertex3Rep& p1, const Vertex3Rep& p2) {
+    return PluckerLineRep(p1, p2);
+  }
+};
+
+// This is a wrapper around the PluckerLine constructor that takes 2 Planes.
+// The only reason to use this wrapper is that it figures out how many bits are
+// necessary in the worst case for the PluckerLine d and m vector components,
+// given that the Plane components are all within the bounds defined by
+// PlaneFromVertex3Builder<vertex3_bits>.
+template <int vertex3_bits_template = 32>
+class PluckerLineFromPlanesFromVertex3sBuilder {
+ public:
+  static_assert(vertex3_bits_template >= 3,
+      "The bit formulas are only correct for vertex3_bits_template >= 3");
+  using Vertex3Rep = Vertex3<vertex3_bits_template>;
+  using PlaneBuilder = PlaneFromVertex3Builder<vertex3_bits_template>;
+  using PlaneRep = typename PlaneBuilder::PlaneRep;
+  using PluckerLineRep = PluckerLine<(vertex3_bits_template - 1)*4 + 6,
+                                     (vertex3_bits_template - 1)*5 + 6>;
+  using DInt = typename PluckerLineRep::DVector::BigIntRep;
+  using MInt = typename PluckerLineRep::MVector::BigIntRep;
+
+  static constexpr DInt d_component_min() {
+    DInt n = Vertex3Rep::BigIntRep::max_value() + DInt(1);
+    DInt two_n_1 = n + n - BigInt<2>(1);
+    return -two_n_1*two_n_1*two_n_1*two_n_1*DInt(2);
+  }
+  static constexpr DInt d_component_max() {
+    return -d_component_min();
+  }
+  static constexpr MInt m_component_min() {
+    MInt n = Vertex3Rep::BigIntRep::max_value() + MInt(1);
+    return d_component_min() * (n + MInt(1));
+  }
+  static constexpr MInt m_component_max() {
+    return -m_component_min();
+  }
+
+  static PluckerLineRep Build(const PlaneRep& p1, const PlaneRep& p2) {
     return PluckerLineRep(p1, p2);
   }
 };

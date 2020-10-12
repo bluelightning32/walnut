@@ -223,6 +223,14 @@ class BigInt {
     return min_value() <= *this && *this <= max_value();
   }
 
+  template <int r1_c1_bits, int r1_c2_bits, int r2_c1_bits, int r2_c2_bits>
+  static BigInt Determinant(const BigInt<r1_c1_bits>& r1_c1,
+                            const BigInt<r1_c2_bits>& r1_c2,
+                            const BigInt<r2_c1_bits>& r2_c1,
+                            const BigInt<r2_c2_bits>& r2_c2) {
+    return r1_c1*r2_c2 - r2_c1*r1_c2;
+  }
+
   template <int print_bits>
   friend std::ostream& operator<<(std::ostream& out, const BigInt<print_bits>& bigint);
 
