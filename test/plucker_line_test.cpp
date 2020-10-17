@@ -4,6 +4,16 @@
 
 namespace walnut {
 
+TEST(PluckerLine, FromPointsDirection) {
+  const Vertex3<> p1(1, 2, 3);
+  const Vertex3<> p2(5, 7, 11);
+  PluckerLine<> line(p1, p2);
+
+  EXPECT_GT((p2 - p1).Dot(line.d()), 0);
+  EXPECT_LT((p1 - p2).Dot(line.d()), 0);
+  EXPECT_EQ((p2 - p1).Cross(line.d()), Vector3<>::Zero());
+}
+
 TEST(PluckerLine, IsOnLine) {
   const Vertex3<> p1(1, 2, 3);
   const Vertex3<> p2(5, 7, 11);
@@ -63,6 +73,23 @@ TEST(PluckerLine, ConstructFromPlanes) {
 
   EXPECT_TRUE(line_from_planes.IsOnLine(p1));
   EXPECT_TRUE(line_from_planes.IsOnLine(p2));
+}
+
+TEST(PluckerLine, FromPlanesDirection) {
+  const Vertex3<> p1(1, 2, 3);
+  const Vertex3<> p2(5, 7, 11);
+  const PluckerLine<> line_from_points(p1, p2);
+
+  const Vertex3<> p3(5, 7, 12);
+  const Vertex3<> p4(6, 7, 11);
+
+  Plane<> a(p1, p2, p3);
+  Plane<> b(p1, p2, p4);
+  const PluckerLine<> line(a, b);
+
+  EXPECT_GT((p2 - p1).Dot(line.d()), 0);
+  EXPECT_LT((p1 - p2).Dot(line.d()), 0);
+  EXPECT_EQ((p2 - p1).Cross(line.d()), Vector3<>::Zero());
 }
 
 TEST(PluckerLine, IntersectPlane) {

@@ -21,6 +21,9 @@ class PluckerLine {
 
   // Returns the direction vector for the line.
   //
+  // If the line was constructed using points, the direction vector points from
+  // p1 to p2.
+  //
   // Some definitions use the p^ab or p_ab notation.
   // d = (p_01, p_02, p_03)
   // d = (p^23, p^31, p^12)
@@ -78,7 +81,7 @@ class PluckerLine {
   template <int vector_bits, int dist_bits>
   PluckerLine(const Plane<vector_bits, dist_bits>& a,
               const Plane<vector_bits, dist_bits>& b) :
-    // d = (p^23, p^31, p^12)
+    // d = a_xyz x b_xyz = (p^23, p^31, p^12)
     //
     // p^23 = | a.y  a.z |
     //        | b.y  b.z |
@@ -99,9 +102,7 @@ class PluckerLine {
     //
     // p^03 = | a.d  a.z |
     //        | b.d  b.z |
-    d_(DVector::BigIntRep::Determinant(a.y(), a.z(), b.y(), b.z()),
-       DVector::BigIntRep::Determinant(a.z(), a.x(), b.z(), b.x()),
-       DVector::BigIntRep::Determinant(a.x(), a.y(), b.x(), b.y())),
+    d_(a.normal().Cross(b.normal())),
     m_(MVector::BigIntRep::Determinant(-a.d(), a.x(), -b.d(), b.x()),
        MVector::BigIntRep::Determinant(-a.d(), a.y(), -b.d(), b.y()),
        MVector::BigIntRep::Determinant(-a.d(), a.z(), -b.d(), b.z())) { }

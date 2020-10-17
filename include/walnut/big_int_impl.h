@@ -386,6 +386,14 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     return words_[0] < other.words_[0];
   }
 
+  constexpr bool operator < (int other) const {
+    static_assert(bytes_per_word >= sizeof(other), "Word size is smaller than int size");
+    if (used_ > sizeof(other)) {
+      return BigIntWord{words_[used_words() - 1]} < 0;
+    }
+    return BigIntWord{words_[0]} < other;
+  }
+
   template <int other_max_words>
   constexpr bool operator <= (const BigIntImpl<other_max_words>& other) const {
     if (used_ < other.used_) {
@@ -403,6 +411,14 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
       if (words_[i] > other.words_[i]) return false;
     }
     return words_[0] <= other.words_[0];
+  }
+
+  constexpr bool operator <= (int other) const {
+    static_assert(bytes_per_word >= sizeof(other), "Word size is smaller than int size");
+    if (used_ > sizeof(other)) {
+      return BigIntWord{words_[used_words() - 1]} < 0;
+    }
+    return BigIntWord{words_[0]} <= other;
   }
 
   template <int other_max_words>
@@ -424,6 +440,14 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     return words_[0] > other.words_[0];
   }
 
+  constexpr bool operator > (int other) const {
+    static_assert(bytes_per_word >= sizeof(other), "Word size is smaller than int size");
+    if (used_ > sizeof(other)) {
+      return BigIntWord{words_[used_words() - 1]} >= 0;
+    }
+    return BigIntWord{words_[0]} > other;
+  }
+
   template <int other_max_words>
   constexpr bool operator >= (const BigIntImpl<other_max_words>& other) const {
     if (used_ < other.used_) {
@@ -441,6 +465,14 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
       if (words_[i] < other.words_[i]) return false;
     }
     return words_[0] >= other.words_[0];
+  }
+
+  constexpr bool operator >= (int other) const {
+    static_assert(bytes_per_word >= sizeof(other), "Word size is smaller than int size");
+    if (used_ > sizeof(other)) {
+      return BigIntWord{words_[used_words() - 1]} >= 0;
+    }
+    return BigIntWord{words_[0]} >= other;
   }
 
   constexpr bool operator == (int other) const {
