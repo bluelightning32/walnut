@@ -60,6 +60,25 @@ TEST(PluckerLine, ConstructFromPlanes) {
   const PluckerLine<> line_from_planes(a, b);
 
   EXPECT_EQ(line_from_planes, line_from_points);
+
+  EXPECT_TRUE(line_from_planes.IsOnLine(p1));
+  EXPECT_TRUE(line_from_planes.IsOnLine(p2));
+}
+
+TEST(PluckerLine, IntersectPlane) {
+  const Vertex3<> p1(1, 2, 3);
+  const Vertex3<> p2(5, 7, 11);
+  const PluckerLine<> line(p1, p2);
+
+  const Vertex3<> p3(6, 8, 12);
+  const Vertex3<> p4(6, 9, 11);
+
+  EXPECT_FALSE(line.IsOnLine(p3));
+  EXPECT_FALSE(line.IsOnLine(p4));
+
+  Plane<> plane(p2, p3, p4);
+
+  EXPECT_EQ(line.Intersect(plane), Vertex4<>(p2));
 }
 
 template <int vertex3_bits>

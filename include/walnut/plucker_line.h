@@ -158,6 +158,17 @@ class PluckerLine {
     return d().IsValidState() && m().IsValidState();
   }
 
+  template <int vector_bits, int dist_bits>
+  Vertex4<std::max(vector_bits + m_bits, d_bits + dist_bits) + 1,
+          vector_bits + d_bits + 1>
+  Intersect(const Plane<vector_bits, dist_bits>& p) const {
+    auto vector = p.normal().Cross(m()) + d().Scale(p.d());
+    auto w = p.normal().Dot(d());
+    return Vertex4<decltype(vector)::coord_bits, decltype(w)::bits>(
+                       /*p=*/Vertex3<decltype(vector)::coord_bits>(vector),
+                       w);
+  }
+
  private:
   DVector d_;
   MVector m_;

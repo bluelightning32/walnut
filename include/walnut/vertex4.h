@@ -92,6 +92,11 @@ class Vertex4 {
   Vertex4(const Vertex3<other_num_bits>& other) :
     vector_from_origin_(other.vector_from_origin()), dist_denom_(1) { }
 
+  template <int other_num_bits, int other_denom_bits>
+  Vertex4(const Vertex3<other_num_bits>& p,
+          const BigInt<other_denom_bits>& w) :
+    vector_from_origin_(p.vector_from_origin()), dist_denom_(w) { }
+
   template <int other_num_bits=num_bits, int other_denom_bits=denom_bits>
   static bool LexicographicallyLt(const Vertex4& a,
       const Vertex4<other_num_bits, other_denom_bits>& b) {
@@ -160,6 +165,16 @@ template <int a_bits, int b_num_bits, int b_denom_bits>
 bool operator==(const Vertex3<a_bits>& a,
                 const Vertex4<b_num_bits, b_denom_bits>& b) {
   return b == a;
+}
+
+template <int num_bits, int denom_bits>
+std::ostream& operator<<(std::ostream& out, const Vertex4<num_bits, denom_bits>& p) {
+  return out << "{ ["
+             << p.x() << ", "
+             << p.y() << ", "
+             << p.z() << "] / "
+             << p.w()
+             << " }";
 }
 
 }  // walnut
