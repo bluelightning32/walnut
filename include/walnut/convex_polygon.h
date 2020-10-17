@@ -21,6 +21,12 @@ class ConvexPolygon {
   using PlaneRep =
     typename PlaneFromVertex3Builder<vertex3_bits_template>::PlaneRep;
 
+  class VertexIterator : public std::vector<Vertex4Rep>::const_iterator {
+   public:
+    VertexIterator(typename std::vector<Vertex4Rep>::const_iterator pos) :
+      std::vector<Vertex4Rep>::const_iterator(pos) { }
+  };
+
   // The minimum number of bits to support for each coordinate of the vertex3's
   // that the polygon is built from.
   static constexpr int vertex3_bits = vertex3_bits_template;
@@ -38,8 +44,20 @@ class ConvexPolygon {
     plane_(other.plane_), drop_dimension_(other.drop_dimension_),
     vertices_(other.vertices_) { }
 
-  const std::vector<Vertex4Rep>& vertices() const {
-    return vertices_;
+  size_t vertex_count() const {
+    return vertices_.size();
+  }
+
+  const Vertex4Rep& vertex(size_t index) const {
+    return vertices_[index];
+  }
+
+  VertexIterator vertices_begin() const {
+    return VertexIterator(vertices_.begin());
+  }
+
+  VertexIterator vertices_end() const {
+    return VertexIterator(vertices_.end());
   }
 
   const PlaneRep& plane() const { return plane_; }

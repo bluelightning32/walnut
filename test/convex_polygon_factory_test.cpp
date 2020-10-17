@@ -27,7 +27,8 @@ class ResultCollector : public ConvexPolygon<32>::Factory {
     std::vector<std::vector<Vertex3<32>>> result;
     for (const ConvexPolygonRep& polygon : sorted) {
       std::vector<Vertex3<32>> vertices;
-      for (const Vertex4Rep vertex4 : polygon.vertices()) {
+      for (size_t i = 0; i < polygon.vertex_count(); ++i) {
+        const Vertex4Rep& vertex4 = polygon.vertex(i);
         EXPECT_EQ(vertex4.dist_denom(), 1);
         vertices.emplace_back(vertex4.x(), vertex4.y(), vertex4.z());
       }
@@ -38,8 +39,8 @@ class ResultCollector : public ConvexPolygon<32>::Factory {
 
   static bool PolygonLt(const ConvexPolygonRep& a,
                         const ConvexPolygonRep& b) {
-    return std::lexicographical_compare(a.vertices().begin(), a.vertices().end(),
-        b.vertices().begin(), b.vertices().end(),
+    return std::lexicographical_compare(a.vertices_begin(), a.vertices_end(),
+        b.vertices_begin(), b.vertices_end(),
         Vertex4Rep::LexicographicallyLt<>);
   }
 
@@ -50,12 +51,12 @@ class ResultCollector : public ConvexPolygon<32>::Factory {
         polygon.plane().normal().coords()[polygon.drop_dimension()];
       ASSERT_NE(drop_dim_value, 0);
       const int orientation = drop_dim_value.GetSign();
-      const size_t vertex_count = polygon.vertices().size();
+      const size_t vertex_count = polygon.vertex_count();
       for (int i = 0; i < vertex_count; ++i) {
-        const Vertex4Rep& prev = polygon.vertices()[
-            (vertex_count + i - 1) % vertex_count];
-        const Vertex4Rep& cur = polygon.vertices()[i];
-        const Vertex4Rep& next = polygon.vertices()[(i + 1) % vertex_count];
+        const Vertex4Rep& prev = polygon.vertex(
+            (vertex_count + i - 1) % vertex_count);
+        const Vertex4Rep& cur = polygon.vertex(i);
+        const Vertex4Rep& next = polygon.vertex((i + 1) % vertex_count);
         EXPECT_LE(cur.Get2DTwistDir(polygon.drop_dimension(), prev, next) *
                   orientation, 0);
       }
@@ -65,7 +66,8 @@ class ResultCollector : public ConvexPolygon<32>::Factory {
   int CountVertexAppearances(const Vertex3<32>& v) {
     size_t matching = 0;
     for (const ConvexPolygonRep& polygon : result_) {
-      for (const Vertex4Rep& v4 : polygon.vertices()) {
+      for (size_t i = 0; i < polygon.vertex_count(); ++i) {
+        const Vertex4Rep& v4 = polygon.vertex(i);
         if (v == v4) {
           ++matching;
         }
