@@ -57,7 +57,7 @@ TEST(PluckerLine, ConstructFromPlanes) {
 
   Plane<> a(p1, p2, p3);
   Plane<> b(p1, p2, p4);
-  const PluckerLine<> line_from_planes(p1, p2);
+  const PluckerLine<> line_from_planes(a, b);
 
   EXPECT_EQ(line_from_planes, line_from_points);
 }

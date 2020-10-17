@@ -102,9 +102,9 @@ class PluckerLine {
     d_(DVector::BigIntRep::Determinant(a.y(), a.z(), b.y(), b.z()),
        DVector::BigIntRep::Determinant(a.z(), a.x(), b.z(), b.x()),
        DVector::BigIntRep::Determinant(a.x(), a.y(), b.x(), b.y())),
-    m_(MVector::BigIntRep::Determinant(a.d(), a.x(), b.d(), b.x()),
-       MVector::BigIntRep::Determinant(a.d(), a.y(), b.d(), b.y()),
-       MVector::BigIntRep::Determinant(a.d(), a.z(), b.d(), b.z())) { }
+    m_(MVector::BigIntRep::Determinant(-a.d(), a.x(), -b.d(), b.x()),
+       MVector::BigIntRep::Determinant(-a.d(), a.y(), -b.d(), b.y()),
+       MVector::BigIntRep::Determinant(-a.d(), a.z(), -b.d(), b.z())) { }
 
   // Returns true if `v` is on the line.
   template <int v_bits>
