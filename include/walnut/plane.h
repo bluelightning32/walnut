@@ -77,8 +77,14 @@ class Plane {
   // Returns >0 if `v` is in the half space, 0 if `v` is coincident with the
   // plane, or <0 if `v` is outside of the half space.
   template <int v_bits>
-  int Compare(const Vertex3<v_bits>& v) {
+  int Compare(const Vertex3<v_bits>& v) const {
     return dist_.Compare(normal_.Dot(v.vector_from_origin()));
+  }
+
+  // Returns true if the vertex is on the plane
+  template <int v_bits>
+  bool IsCoincident(const Vertex3<v_bits>& v) const {
+    return Compare(v) == 0;
   }
 
   // Returns >0 if `v` is in the half space, 0 if `v` is coincident with the
@@ -86,6 +92,12 @@ class Plane {
   template <int v_num_bits, int v_denom_bits>
   int Compare(const Vertex4<v_num_bits, v_denom_bits>& v) {
     return (v.dist_denom() * dist_).Compare(normal_.Dot(v.vector_from_origin()));
+  }
+
+  // Returns true if the point is on the plane
+  template <int v_num_bits, int v_denom_bits>
+  bool IsCoincident(const Vertex4<v_num_bits, v_denom_bits>& v) const {
+    return Compare(v) == 0;
   }
 
   // Returns a plane with an invalid 0 normal vector and a 0 distance.
@@ -96,11 +108,32 @@ class Plane {
     return Plane(/*normal=*/VectorRep::Zero(), /*dist=*/DistInt(0));
   }
 
-  // Note that everything equals the zero vector.
+  // Note that everything equals the zero plane.
+  //
+  // Two Planes are not equal if they refer to different half-spaces.
   template <int other_vector_bits, int other_dist_bits>
   bool operator==(
       const Plane<other_vector_bits, other_dist_bits>& other) const {
-    return normal().Scale(other.d()) == other.normal().Scale(d());
+    BigInt<std::max(vector_bits, dist_bits)> scale_other;
+    BigInt<std::max(other_vector_bits, other_dist_bits)> scale_mine;
+    if (d() != 0) {
+      scale_other = d().abs();
+      scale_mine = other.d().abs();
+    } else if (x() != 0) {
+      scale_other = x().abs();
+      scale_mine = other.x().abs();
+    } else if (y() != 0) {
+      scale_other = y().abs();
+      scale_mine = other.y().abs();
+    } else {
+      scale_other = z().abs();
+      scale_mine = other.z().abs();
+    }
+
+    return x().Multiply(scale_mine) == other.x().Multiply(scale_other) &&
+           y().Multiply(scale_mine) == other.y().Multiply(scale_other) &&
+           z().Multiply(scale_mine) == other.z().Multiply(scale_other) &&
+           d().Multiply(scale_mine) == other.d().Multiply(scale_other);
   }
 
   // Note that everything equals the zero vector.

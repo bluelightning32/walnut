@@ -68,8 +68,9 @@ class OrientingMonotoneDecomposer :
 
       convex_top_.insert(convex_top_.end(), chain1_begin, chain1_before_end);
       convex_bottom_.insert(convex_bottom_.end(), chain2_after_begin, chain2_end);
-      EmitOriented(/*orientation=*/0, convex_top_.rbegin(), convex_top_.rend(),
-                   convex_bottom_.begin(), convex_bottom_.end());
+      EmitOriented(/*flipped=*/false, /*orientation=*/0, convex_top_.rbegin(),
+                   convex_top_.rend(), convex_bottom_.begin(),
+                   convex_bottom_.end());
       convex_top_.clear();
       convex_bottom_.clear();
       return;
@@ -108,13 +109,13 @@ class OrientingMonotoneDecomposer :
   using Parent::convex_top_;
   using Parent::convex_bottom_;
 
-  // Called to emit a convex polygon. The first argument represents the
+  // Called to emit a convex polygon. The orientation argument represents the
   // orientation of the polygon. It is set to -1 if the polygon is
   // counter-clockwise, 1 if it is clockwise, and 0 if it is collinear.
   //
   // The next 4 arguments represent 2 iterator ranges of vertices. To get the
   // actual list of vertices for the polygon, calculate range1 + range2.
-  virtual void EmitOriented(int orientation,
+  virtual void EmitOriented(bool flipped, int orientation,
                             const_reverse_iterator range1_begin,
                             const_reverse_iterator range1_end,
                             const_iterator range2_begin,
@@ -135,12 +136,13 @@ class OrientingMonotoneDecomposer :
             const_reverse_iterator range1_end,
             const_iterator range2_begin, const_iterator range2_end) override {
     if (flipped_) {
-      EmitOriented(-orientation, const_reverse_iterator(range2_end),
-                   const_reverse_iterator(range2_begin), range1_end.base(),
-                   range1_begin.base());
+      EmitOriented(flipped_, -orientation,
+                   const_reverse_iterator(range2_end),
+                   const_reverse_iterator(range2_begin),
+                   range1_end.base(), range1_begin.base());
     } else {
-      EmitOriented(orientation, range1_begin, range1_end, range2_begin,
-                   range2_end);
+      EmitOriented(flipped_, orientation,
+                   range1_begin, range1_end, range2_begin, range2_end);
     }
   }
 

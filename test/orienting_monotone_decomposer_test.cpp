@@ -7,32 +7,38 @@ namespace walnut {
 
 using testing::ElementsAre;
 
+struct PolygonResult {
+  bool flipped;
+  int orientation;
+  std::vector<Vertex3<32>> vertices;
+};
+
 class ResultCollector : public OrientingMonotoneDecomposer<32> {
  public:
   std::vector<std::vector<Vertex3<32>>> GetSortedPolygonResult() {
-    for (std::pair<int, std::vector<Vertex3<32>>>& polygon : result_) {
-      SortVertices(polygon.second);
+    for (PolygonResult& polygon : result_) {
+      SortVertices(polygon.vertices);
     }
 
     std::sort(result_.begin(), result_.end(), PolygonLt);
 
     std::vector<std::vector<Vertex3<32>>> result;
     for (const auto& polygon : result_) {
-      result.push_back(polygon.second);
+      result.push_back(polygon.vertices);
     }
     return result;
   }
 
   std::vector<int> GetSortedOrientationResult() {
-    for (std::pair<int, std::vector<Vertex3<32>>>& polygon : result_) {
-      SortVertices(polygon.second);
+    for (PolygonResult& polygon : result_) {
+      SortVertices(polygon.vertices);
     }
 
     std::sort(result_.begin(), result_.end(), PolygonLt);
 
     std::vector<int> result;
     for (const auto& polygon : result_) {
-      result.push_back(polygon.first);
+      result.push_back(polygon.orientation);
     }
     return result;
   }
@@ -52,29 +58,32 @@ class ResultCollector : public OrientingMonotoneDecomposer<32> {
                                         b.coords().begin(), b.coords().end());
   }
 
-  static bool PolygonLt(const std::pair<int, std::vector<Vertex3<32>>>& a,
-                        const std::pair<int, std::vector<Vertex3<32>>>& b) {
-    return std::lexicographical_compare(a.second.begin(), a.second.end(),
-                                        b.second.begin(), b.second.end(),
+  static bool PolygonLt(const PolygonResult& a,
+                        const PolygonResult& b) {
+    return std::lexicographical_compare(a.vertices.begin(), a.vertices.end(),
+                                        b.vertices.begin(), b.vertices.end(),
                                         &VertexLt);
   }
 
  protected:
-  void EmitOriented(int orientation, const_reverse_iterator range1_begin,
+  void EmitOriented(bool flipped, int orientation,
+                    const_reverse_iterator range1_begin,
                     const_reverse_iterator range1_end,
                     const_iterator range2_begin,
                     const_iterator range2_end) override {
-    result_.emplace_back(orientation, std::vector<Vertex3<32>>());
-    result_.back().second.reserve((range1_end - range1_begin) +
+    result_.emplace_back();
+    result_.back().flipped = flipped;
+    result_.back().orientation = orientation;
+    result_.back().vertices.reserve((range1_end - range1_begin) +
                            (range2_end - range2_begin));
-    result_.back().second.insert(result_.back().second.end(), range1_begin,
-                                 range1_end);
-    result_.back().second.insert(result_.back().second.end(), range2_begin,
-                                 range2_end);
+    result_.back().vertices.insert(result_.back().vertices.end(), range1_begin,
+                                   range1_end);
+    result_.back().vertices.insert(result_.back().vertices.end(), range2_begin,
+                                   range2_end);
   }
 
  private:
-  std::vector<std::pair<int, std::vector<Vertex3<32>>>> result_;
+  std::vector<PolygonResult> result_;
 };
 
 TEST(OrientingMonotoneDecomposer, NotFlipped) {

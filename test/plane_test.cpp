@@ -52,6 +52,11 @@ TEST(Plane, BuildFromVertexes) {
   EXPECT_LT(plane.Compare(Vertex3<>(/*x=*/600, /*y=*/100, /*z=*/6)), 0);
 }
 
+TEST(Plane, HalfSpacesDistinct) {
+  EXPECT_NE(Plane<>(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10),
+            Plane<>(/*x=*/0, /*y=*/0, /*z=*/-1, /*dist=*/-10));
+}
+
 template <int vertex3_bits>
 void TestCorrectOutputBits() {
   using Builder = PlaneFromVertex3Builder<vertex3_bits>;

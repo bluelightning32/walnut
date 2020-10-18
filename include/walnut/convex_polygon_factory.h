@@ -67,7 +67,7 @@ class ConvexPolygon<vertex3_bits_template>::Factory :
  private:
   using Parent = OrientingMonotoneDecomposer<vertex3_bits_template>;
 
-  void EmitOriented(int orientation,
+  void EmitOriented(bool flipped, int orientation,
                     typename Parent::const_reverse_iterator range1_begin,
                     typename Parent::const_reverse_iterator range1_end,
                     typename Parent::const_iterator range2_begin,
@@ -80,8 +80,9 @@ class ConvexPolygon<vertex3_bits_template>::Factory :
     vertices.reserve((range1_end - range1_begin) + (range2_end - range2_begin));
     vertices.insert(vertices.end(), range1_begin, range1_end);
     vertices.insert(vertices.end(), range2_begin, range2_end);
-    Emit(ConvexPolygon(PlaneRep(plane_.normal() * -orientation,
-                                plane_.d() * -orientation),
+    const int flip_orientation = flipped ? orientation : -orientation;
+    Emit(ConvexPolygon(PlaneRep(plane_.normal() * flip_orientation,
+                                plane_.d() * flip_orientation),
                        drop_dimension_,
                        std::move(vertices)));
   }

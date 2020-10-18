@@ -597,6 +597,11 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     return BigIntWord{words_[i]} | i;
   }
 
+  template <int other_words>
+  constexpr bool HasSameSign(const BigIntImpl<other_words>& other) const {
+    return GetSign() ^ other.GetSign() >= 0;
+  }
+
  protected:
   using Parent::Trim;
   using Parent::used_;

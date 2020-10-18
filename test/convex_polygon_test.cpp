@@ -55,6 +55,10 @@ TEST(ConvexPolygon, TrianglePlane) {
             Plane<>(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10));
 
   EXPECT_EQ(polygon.drop_dimension(), 2);
+
+  for (const Vertex3<32>& v : input) {
+    EXPECT_TRUE(polygon.plane().IsCoincident(v));
+  }
 }
 
 TEST(ConvexPolygon, Triangle0DistPlane) {
@@ -69,6 +73,60 @@ TEST(ConvexPolygon, Triangle0DistPlane) {
             Plane<>(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/0));
 
   EXPECT_EQ(polygon.drop_dimension(), 2);
+
+  for (const Vertex3<32>& v : input) {
+    EXPECT_TRUE(polygon.plane().IsCoincident(v));
+  }
+}
+
+TEST(ConvexPolygon, TriangleXZPlane) {
+  Vertex3<32> input[] = {
+    Vertex3<32>(0 - 5, 0, 0 + 5),
+    Vertex3<32>(10 - 5, 0, 10 + 5),
+    Vertex3<32>(10 - 5, 10, 10 + 5),
+  };
+
+  ConvexPolygon<32> polygon = MakeConvexPolygon(input);
+  EXPECT_EQ(polygon.plane(),
+            Plane<>(/*x=*/-1, /*y=*/0, /*z=*/1, /*dist=*/10));
+
+  for (const Vertex3<32>& v : input) {
+    EXPECT_TRUE(polygon.plane().IsCoincident(v));
+  }
+}
+
+TEST(ConvexPolygon, ClockwiseTrianglePlane) {
+  Vertex3<32> input[] = {
+    Vertex3<32>(0, 0, 10),
+    Vertex3<32>(1, 1, 10),
+    Vertex3<32>(1, 0, 10),
+  };
+
+  ConvexPolygon<32> polygon = MakeConvexPolygon(input);
+  EXPECT_EQ(polygon.plane(),
+            Plane<>(/*x=*/0, /*y=*/0, /*z=*/-1, /*dist=*/-10));
+
+  EXPECT_EQ(polygon.drop_dimension(), 2);
+
+  for (const Vertex3<32>& v : input) {
+    EXPECT_TRUE(polygon.plane().IsCoincident(v));
+  }
+}
+
+TEST(ConvexPolygon, ClockwiseTriangleXZPlane) {
+  Vertex3<32> input[] = {
+    Vertex3<32>(0 - 5, 0, 0 + 5),
+    Vertex3<32>(10 - 5, 10, 10 + 5),
+    Vertex3<32>(10 - 5, 0, 10 + 5),
+  };
+
+  ConvexPolygon<32> polygon = MakeConvexPolygon(input);
+  EXPECT_EQ(polygon.plane(),
+            Plane<>(/*x=*/1, /*y=*/0, /*z=*/-1, /*dist=*/-10));
+
+  for (const Vertex3<32>& v : input) {
+    EXPECT_TRUE(polygon.plane().IsCoincident(v));
+  }
 }
 
 TEST(ConvexPolygon, CopyConstructor) {

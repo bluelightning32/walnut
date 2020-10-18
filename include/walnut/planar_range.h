@@ -131,7 +131,7 @@ inline void PlanarRange<Vertex3Iterator>::Build(
       range_.Append(range_begin, range_end);
       return;
     }
-    if (plane_.Compare(*remaining_begin) != 0) {
+    if (!plane_.IsCoincident(*remaining_begin)) {
       break;
     }
     ++size_;
@@ -145,7 +145,7 @@ inline void PlanarRange<Vertex3Iterator>::Build(
   while (true) {
     assert(remaining_begin != remaining_end);
     --remaining_end;
-    if (plane_.Compare(*remaining_end) != 0) {
+    if (!plane_.IsCoincident(*remaining_end)) {
       ++remaining_end;
       break;
     }
