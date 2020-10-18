@@ -80,7 +80,7 @@ class ConvexPolygon<vertex3_bits_template>::Factory :
       // Skip collinear polygons
       return;
     }
-    std::vector<ConvexPolygonRep::Vertex4Rep> vertices;
+    std::vector<ConvexPolygonRep::VertexInfo> vertices;
     vertices.reserve((range1_end - range1_begin) + (range2_end - range2_begin));
     vertices.insert(vertices.end(), range1_begin, range1_end);
     vertices.insert(vertices.end(), range2_begin, range2_end);

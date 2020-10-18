@@ -39,9 +39,10 @@ class ResultCollector : public ConvexPolygon<32>::Factory {
 
   static bool PolygonLt(const ConvexPolygonRep& a,
                         const ConvexPolygonRep& b) {
-    return std::lexicographical_compare(a.vertices_begin(), a.vertices_end(),
-        b.vertices_begin(), b.vertices_end(),
-        Vertex4Rep::LexicographicallyLt<>);
+    return std::lexicographical_compare(a.vertices().begin(),
+        a.vertices().end(),
+        b.vertices().begin(), b.vertices().end(),
+        ConvexPolygonRep::VertexInfo::LexicographicallyLt);
   }
 
   // Check that every vertex in every convex polygon really is a convex vertex.

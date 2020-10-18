@@ -21,10 +21,15 @@ class ConvexPolygon {
   using PlaneRep =
     typename PlaneFromVertex3Builder<vertex3_bits_template>::PlaneRep;
 
-  class VertexIterator : public std::vector<Vertex4Rep>::const_iterator {
-   public:
-    VertexIterator(typename std::vector<Vertex4Rep>::const_iterator pos) :
-      std::vector<Vertex4Rep>::const_iterator(pos) { }
+  struct VertexInfo {
+    template <int other_vertex3_bits>
+    VertexInfo(const Vertex3<other_vertex3_bits>& vertex) : vertex(vertex) { }
+
+    static bool LexicographicallyLt(const VertexInfo& a, const VertexInfo& b) {
+      return Vertex4Rep::LexicographicallyLt(a.vertex, b.vertex);
+    }
+
+    Vertex4Rep vertex;
   };
 
   // The minimum number of bits to support for each coordinate of the vertex3's
@@ -51,15 +56,11 @@ class ConvexPolygon {
   }
 
   const Vertex4Rep& vertex(size_t index) const {
-    return vertices_[index];
+    return vertices_[index].vertex;
   }
 
-  VertexIterator vertices_begin() const {
-    return VertexIterator(vertices_.begin());
-  }
-
-  VertexIterator vertices_end() const {
-    return VertexIterator(vertices_.end());
+  const std::vector<VertexInfo>& vertices() const {
+    return vertices_;
   }
 
   const PlaneRep& plane() const { return plane_; }
@@ -72,7 +73,7 @@ class ConvexPolygon {
   size_t GetMinimumIndex() const {
     size_t min = 0;
     for (size_t i = 1; i < vertices_.size(); ++i) {
-      if (Vertex4Rep::LexicographicallyLt(vertices_[i], vertices_[min])) {
+      if (Vertex4Rep::LexicographicallyLt(vertex(i), vertex(min))) {
         min = i;
       }
     }
@@ -108,7 +109,7 @@ class ConvexPolygon {
     vertices_(vertices.begin(), vertices.end()) { }
 
   ConvexPolygon(const PlaneRep& plane, int drop_dimension,
-                std::vector<Vertex4Rep> vertices) :
+                std::vector<VertexInfo> vertices) :
     plane_(plane), drop_dimension_(drop_dimension),
     vertices_(std::move(vertices)) { }
 
@@ -117,7 +118,7 @@ class ConvexPolygon {
   // When this dimension is projected to 0, 'dropped', the vertices will not
   // become collinear (assuming they were not already collinear).
   int drop_dimension_;
-  std::vector<Vertex4Rep> vertices_;
+  std::vector<VertexInfo> vertices_;
 };
 
 template <int vertex3_bits>
