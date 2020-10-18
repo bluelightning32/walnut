@@ -6,6 +6,7 @@
 namespace walnut {
 
 using testing::ElementsAre;
+using testing::IsEmpty;
 
 class ResultCollector : public ConvexPolygon<32>::Factory {
  public:
@@ -100,6 +101,18 @@ TEST(ConvexPolygonFactory, Triangle) {
         ));
   EXPECT_EQ(collector.GetSortedPolygonResult()[0].plane(),
             ResultCollector::PlaneRep(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10));
+}
+
+TEST(ConvexPolygonFactory, Collinear3Points) {
+  Vertex3<32> input[] = {
+    Vertex3<32>(0, 0, 0),
+    Vertex3<32>(1, 1, 1),
+    Vertex3<32>(2, 2, 2),
+  };
+
+  ResultCollector collector;
+  collector.Build(std::begin(input), std::end(input));
+  ASSERT_THAT(collector.GetSortedPolygonVertices(), IsEmpty());
 }
 
 TEST(ConvexPolygonFactory, CWTriangle) {

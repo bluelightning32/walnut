@@ -29,10 +29,6 @@ class ConvexPolygon<vertex3_bits_template>::Factory :
       plane_ = planar_range.plane();
       int monotone_dimension;
       if (plane_.x() != 0) {
-        if (plane_.d() == 0) {
-          // Skip collinear polygons
-          continue;
-        }
         drop_dimension_ = 0;
         monotone_dimension = 1;
       } else if (plane_.y() != 0) {

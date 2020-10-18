@@ -162,6 +162,16 @@ class PlaneFromVertex3Builder {
   }
 };
 
+template <int vector_bits, int dist_bits>
+std::ostream& operator<<(std::ostream& out,
+                         const Plane<vector_bits, dist_bits>& p) {
+  return out << "{ x*" << p.x()
+             << " + y*" << p.y()
+             << " + z*" << p.z()
+             << " = " << p.d()
+             << " }";
+}
+
 }  // walnut
 
 #endif // WALNUT_PLANE_H__

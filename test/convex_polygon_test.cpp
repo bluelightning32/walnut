@@ -57,6 +57,20 @@ TEST(ConvexPolygon, TrianglePlane) {
   EXPECT_EQ(polygon.drop_dimension(), 2);
 }
 
+TEST(ConvexPolygon, Triangle0DistPlane) {
+  Vertex3<32> input[] = {
+    Vertex3<32>(0, 0, 0),
+    Vertex3<32>(10, 0, 0),
+    Vertex3<32>(10, 10, 0),
+  };
+
+  ConvexPolygon<32> polygon = MakeConvexPolygon(input);
+  EXPECT_EQ(polygon.plane(),
+            Plane<>(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/0));
+
+  EXPECT_EQ(polygon.drop_dimension(), 2);
+}
+
 TEST(ConvexPolygon, CopyConstructor) {
   Vertex3<32> input[] = {
     Vertex3<32>(0, 0, 10),
