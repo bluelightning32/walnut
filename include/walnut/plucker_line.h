@@ -110,7 +110,12 @@ class PluckerLine {
   // Returns true if `v` is on the line.
   template <int v_bits>
   bool IsOnLine(const Vertex3<v_bits>& v) const {
-    return v.vector_from_origin().Cross((v + d_).vector_from_origin()) == m();
+    /*
+     * v x (v + d) == m
+     * v x v + v x d == m
+     * v x d == m
+     */
+    return v.vector_from_origin().Cross(d_) == m();
   }
 
   // Returns true when the lines match
