@@ -78,8 +78,34 @@ class ConvexPolygon<vertex3_bits_template>::Factory :
     }
     std::vector<ConvexPolygonRep::VertexInfo> vertices;
     vertices.reserve((range1_end - range1_begin) + (range2_end - range2_begin));
-    vertices.insert(vertices.end(), range1_begin, range1_end);
-    vertices.insert(vertices.end(), range2_begin, range2_end);
+    const Vertex3Rep* prev;
+    const Vertex3Rep* first;
+    if (range1_begin != range1_end) {
+      auto pos1 = range1_begin;
+      prev = &*pos1;
+      first = prev;
+      ++pos1;
+      while (pos1 != range1_end) {
+        vertices.emplace_back(*prev, *pos1);
+        prev = &*pos1;
+        ++pos1;
+      }
+      for (auto pos2 = range2_begin; pos2 != range2_end; ++pos2) {
+        vertices.emplace_back(*prev, *pos2);
+        prev = &*pos2;
+      }
+    } else {
+      auto pos2 = range2_begin;
+      prev = &*pos2;
+      first = prev;
+      ++pos2;
+      while (pos2 != range2_end) {
+        vertices.emplace_back(*prev, *pos2);
+        prev = &*pos2;
+        ++pos2;
+      }
+    }
+    vertices.emplace_back(*prev, *first);
     const int flip_orientation = flipped ? orientation : -orientation;
     Emit(ConvexPolygon(PlaneRep(plane_.normal() * flip_orientation,
                                 plane_.d() * flip_orientation),

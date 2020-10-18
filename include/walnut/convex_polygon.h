@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "walnut/plane.h"
+#include "walnut/plucker_line.h"
 #include "walnut/vertex3.h"
 #include "walnut/vertex4.h"
 
@@ -20,16 +21,26 @@ class ConvexPolygon {
                              (vertex3_bits_template - 1)*6 + 10>;
   using PlaneRep =
     typename PlaneFromVertex3Builder<vertex3_bits_template>::PlaneRep;
+  using LineRep = typename PluckerLineFromPlanesFromVertex3sBuilder<
+    vertex3_bits_template>::PluckerLineRep;
 
   struct VertexInfo {
     template <int other_vertex3_bits>
-    VertexInfo(const Vertex3<other_vertex3_bits>& vertex) : vertex(vertex) { }
+    VertexInfo(const Vertex3<other_vertex3_bits>& vertex,
+               const Vertex3<other_vertex3_bits>& next_vertex) :
+      vertex(vertex), edge(vertex, next_vertex) { }
 
     static bool LexicographicallyLt(const VertexInfo& a, const VertexInfo& b) {
       return Vertex4Rep::LexicographicallyLt(a.vertex, b.vertex);
     }
 
     Vertex4Rep vertex;
+    // This is the line for the edge that starts at vertex and ends at
+    // the next vertex in the cycle.
+    //
+    // Notably:
+    //   next_vertex == vertex + edge.d()
+    LineRep edge;
   };
 
   // The minimum number of bits to support for each coordinate of the vertex3's
@@ -57,6 +68,10 @@ class ConvexPolygon {
 
   const Vertex4Rep& vertex(size_t index) const {
     return vertices_[index].vertex;
+  }
+
+  const LineRep& edge(size_t index) const {
+    return vertices_[index].edge;
   }
 
   const std::vector<VertexInfo>& vertices() const {

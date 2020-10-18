@@ -141,4 +141,115 @@ TEST(ConvexPolygon, CopyConstructor) {
   EXPECT_EQ(polygon2, polygon1);
 }
 
+TEST(ConvexPolygon, CounterClockwiseTriangleEdges) {
+  Vertex3<32> input[] = {
+    Vertex3<32>(0, 0, 10),
+    Vertex3<32>(1, 0, 10),
+    Vertex3<32>(1, 1, 10),
+  };
+
+  ConvexPolygon<32> polygon = MakeConvexPolygon(input);
+
+  ASSERT_EQ(polygon.vertex_count(), std::end(input) - std::begin(input));
+  for (size_t i = 0; i < polygon.vertex_count(); ++i) {
+    EXPECT_EQ(polygon.vertex(i), input[i]);
+    const ConvexPolygon<32>::Vertex4Rep& vertex = polygon.vertex(i);
+    const ConvexPolygon<32>::Vertex4Rep& next_vertex = polygon.vertex(
+        (i + 1) % polygon.vertex_count());
+    const Vertex3<32>& input_vertex = input[i];
+    const Vertex3<32>& next_input_vertex = input[
+        (i + 1) % polygon.vertex_count()];
+    EXPECT_TRUE(polygon.edge(i).IsOnLine(vertex));
+    EXPECT_TRUE(polygon.edge(i).IsOnLine(next_vertex));
+    EXPECT_TRUE(polygon.edge(i).IsOnLine(input_vertex));
+    EXPECT_TRUE(polygon.edge(i).IsOnLine(next_input_vertex));
+    EXPECT_GT((next_input_vertex - input_vertex).Dot(polygon.edge(i).d()), 0);
+  }
+}
+
+TEST(ConvexPolygon, CounterClockwiseSquareEdges) {
+  Vertex3<32> input[] = {
+    Vertex3<32>(0, 0, 10),
+    Vertex3<32>(1, 0, 10),
+    Vertex3<32>(1, 1, 10),
+    Vertex3<32>(0, 1, 10),
+  };
+
+  ConvexPolygon<32> polygon = MakeConvexPolygon(input);
+
+  ASSERT_EQ(polygon.vertex_count(), std::end(input) - std::begin(input));
+  for (size_t i = 0; i < polygon.vertex_count(); ++i) {
+    EXPECT_EQ(polygon.vertex(i), input[i]);
+    const ConvexPolygon<32>::Vertex4Rep& vertex = polygon.vertex(i);
+    const ConvexPolygon<32>::Vertex4Rep& next_vertex = polygon.vertex(
+        (i + 1) % polygon.vertex_count());
+    const Vertex3<32>& input_vertex = input[i];
+    const Vertex3<32>& next_input_vertex = input[
+        (i + 1) % polygon.vertex_count()];
+    EXPECT_TRUE(polygon.edge(i).IsOnLine(vertex));
+    EXPECT_TRUE(polygon.edge(i).IsOnLine(next_vertex));
+    EXPECT_TRUE(polygon.edge(i).IsOnLine(input_vertex));
+    EXPECT_TRUE(polygon.edge(i).IsOnLine(next_input_vertex));
+    EXPECT_GT((next_input_vertex - input_vertex).Dot(polygon.edge(i).d()), 0);
+  }
+}
+
+TEST(ConvexPolygon, ClockwiseSquareEdges) {
+  Vertex3<32> input[] = {
+    Vertex3<32>(0, 0, 10),
+    Vertex3<32>(0, 1, 10),
+    Vertex3<32>(1, 1, 10),
+    Vertex3<32>(1, 0, 10),
+  };
+
+  ConvexPolygon<32> polygon = MakeConvexPolygon(input);
+
+  ASSERT_EQ(polygon.vertex_count(), std::end(input) - std::begin(input));
+  for (size_t i = 0; i < polygon.vertex_count(); ++i) {
+    EXPECT_EQ(polygon.vertex(i), input[i]);
+    const ConvexPolygon<32>::Vertex4Rep& vertex = polygon.vertex(i);
+    const ConvexPolygon<32>::Vertex4Rep& next_vertex = polygon.vertex(
+        (i + 1) % polygon.vertex_count());
+    const Vertex3<32>& input_vertex = input[i];
+    const Vertex3<32>& next_input_vertex = input[
+        (i + 1) % polygon.vertex_count()];
+    EXPECT_TRUE(polygon.edge(i).IsOnLine(vertex));
+    EXPECT_TRUE(polygon.edge(i).IsOnLine(next_vertex));
+    EXPECT_TRUE(polygon.edge(i).IsOnLine(input_vertex));
+    EXPECT_TRUE(polygon.edge(i).IsOnLine(next_input_vertex));
+    EXPECT_GT((next_input_vertex - input_vertex).Dot(polygon.edge(i).d()), 0);
+  }
+}
+
+TEST(ConvexPolygon, RedundantEdges) {
+  Vertex3<32> input[] = {
+    Vertex3<32>(0, 0, 10),
+    Vertex3<32>(1, 0, 10), // collinear
+    Vertex3<32>(2, 0, 10), // collinear
+    Vertex3<32>(3, 0, 10),
+    Vertex3<32>(3, 1, 10),
+    Vertex3<32>(2, 1, 10), // collinear
+    Vertex3<32>(1, 1, 10), // collinear
+    Vertex3<32>(0, 1, 10),
+  };
+
+  ConvexPolygon<32> polygon = MakeConvexPolygon(input);
+
+  ASSERT_EQ(polygon.vertex_count(), std::end(input) - std::begin(input));
+  for (size_t i = 0; i < polygon.vertex_count(); ++i) {
+    EXPECT_EQ(polygon.vertex(i), input[i]);
+    const ConvexPolygon<32>::Vertex4Rep& vertex = polygon.vertex(i);
+    const ConvexPolygon<32>::Vertex4Rep& next_vertex = polygon.vertex(
+        (i + 1) % polygon.vertex_count());
+    const Vertex3<32>& input_vertex = input[i];
+    const Vertex3<32>& next_input_vertex = input[
+        (i + 1) % polygon.vertex_count()];
+    EXPECT_TRUE(polygon.edge(i).IsOnLine(vertex));
+    EXPECT_TRUE(polygon.edge(i).IsOnLine(next_vertex));
+    EXPECT_TRUE(polygon.edge(i).IsOnLine(input_vertex));
+    EXPECT_TRUE(polygon.edge(i).IsOnLine(next_input_vertex));
+    EXPECT_GT((next_input_vertex - input_vertex).Dot(polygon.edge(i).d()), 0);
+  }
+}
+
 }  // walnut

@@ -118,6 +118,17 @@ class PluckerLine {
     return v.vector_from_origin().Cross(d_) == m();
   }
 
+  // Returns true if `v` is on the line.
+  template <int num_bits, int denom_bits>
+  bool IsOnLine(const Vertex4<num_bits, denom_bits>& v) const {
+    /*
+     * v x (v + v.dist*d) == m
+     * v x v + v x (v.dist*d) == m
+     * v x (v.dist*d) == m
+     */
+    return v.vector_from_origin().Cross(d_ * v.dist_denom()) == m();
+  }
+
   // Returns true when the lines match
   //
   // Two plucker lines are still considered equal if they describe the same set
