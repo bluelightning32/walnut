@@ -39,6 +39,8 @@ class ConvexPolygon {
   // after an arbitrary number of splits from planes of the type PlaneRep.
   static constexpr int vertex4_denom_bits = Vertex4Rep::denom_bits_template;
 
+  ConvexPolygon() : plane_(PlaneRep::Zero()), drop_dimension_(-1) { }
+
   template <int other_vertex3_bits>
   ConvexPolygon(const ConvexPolygon<other_vertex3_bits>& other) :
     plane_(other.plane_), drop_dimension_(other.drop_dimension_),
@@ -66,19 +68,37 @@ class ConvexPolygon {
   // become collinear (assuming they were not already collinear).
   int drop_dimension() const { return drop_dimension_; }
 
+  // Gets the index of the lexicographically smallest vertex.
+  size_t GetMinimumIndex() const {
+    size_t min = 0;
+    for (size_t i = 1; i < vertices_.size(); ++i) {
+      if (Vertex4Rep::LexicographicallyLt(vertices_[i], vertices_[min])) {
+        min = i;
+      }
+    }
+    return min;
+  }
+
   // Sorts `vertices_`, such that the lexicographically minimum vertex comes
   // first.
   //
   // Sorting the vertices does not affect the shape of the polygon.
   void SortVertices() {
-    typename std::vector<Vertex4Rep>::iterator min = vertices_.begin();
-    for (auto it = vertices_.begin() + 1; it != vertices_.end(); ++it) {
-      if (Vertex4Rep::LexicographicallyLt(*it, *min)) {
-        min = it;
-      }
-    }
-    std::rotate(vertices_.begin(), min, vertices_.end());
+    std::rotate(vertices_.begin(), vertices_.begin() + GetMinimumIndex(),
+                vertices_.end());
   }
+
+  // Returns true of the other polygon is the same as this.
+  //
+  // Two polygons are considered equal if:
+  // 1. their planes are the same
+  //    - different scales are okay.
+  // 2. they have the same vertices in the same order
+  //    - the vertices are in a cycle. It's okay if the polygon cycles start at
+  //      different indices.
+  //    - it's okay of the homogenous vertices have a different scale.
+  template <int other_vertex3_bits>
+  bool operator==(const ConvexPolygon<other_vertex3_bits>& other) const;
 
  private:
   template <int other_vertex3_bits>
@@ -99,6 +119,33 @@ class ConvexPolygon {
   int drop_dimension_;
   std::vector<Vertex4Rep> vertices_;
 };
+
+template <int vertex3_bits>
+template <int other_vertex3_bits>
+bool ConvexPolygon<vertex3_bits>::operator==(
+    const ConvexPolygon<other_vertex3_bits>& other) const {
+  if (plane_ != other.plane()) {
+    return false;
+  }
+  if (vertex_count() != other.vertex_count()) {
+    return false;
+  }
+  size_t match_offset = 0;
+  while (true) {
+    if (match_offset == vertex_count()) {
+      return false;
+    }
+    if (other.vertex(match_offset) == vertex(0)) {
+      break;
+    }
+  }
+  for (size_t i = 1, j = match_offset + 1; i < vertices_.size(); ++i, ++j) {
+    if (vertex(i) != other.vertex(j)) {
+      return false;
+    }
+  }
+  return true;
+}
 
 }  // walnut
 

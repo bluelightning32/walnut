@@ -156,6 +156,19 @@ class Vertex4 {
     return vector_from_origin() == other.vector_from_origin().Scale(w());
   }
 
+  // Note that everything equals the 0 vertex with a 0 denominator.
+  template <int other_num_bits, int other_denom_bits>
+  bool operator!=(
+      const Vertex4<other_num_bits, other_denom_bits>& other) const {
+    return !(*this == other);
+  }
+
+  // Note that everything equals the 0 vertex with a 0 denominator.
+  template <int other_bits>
+  bool operator!=(const Vertex3<other_bits>& other) const {
+    return !(*this == other);
+  }
+
  private:
   VectorRep vector_from_origin_;
   DenomInt dist_denom_;
