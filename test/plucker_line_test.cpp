@@ -105,7 +105,7 @@ TEST(PluckerLine, IntersectPlane) {
 
   Plane<> plane(p2, p3, p4);
 
-  EXPECT_EQ(line.Intersect(plane), Point4<>(p2));
+  EXPECT_EQ(line.Intersect(plane), HomoPoint3<>(p2));
 }
 
 template <int point3_bits>

@@ -11,7 +11,7 @@ using testing::IsEmpty;
 class ResultCollector : public ConvexPolygon<32>::Factory {
  public:
   using ConvexPolygonRep = ConvexPolygon<32>;
-  using Point4Rep = ConvexPolygonRep::Point4Rep;
+  using HomoPoint3Rep = ConvexPolygonRep::HomoPoint3Rep;
   using PlaneRep = ConvexPolygonRep::PlaneRep;
 
   std::vector<ConvexPolygonRep> GetSortedPolygonResult() {
@@ -29,9 +29,9 @@ class ResultCollector : public ConvexPolygon<32>::Factory {
     for (const ConvexPolygonRep& polygon : sorted) {
       std::vector<Point3<32>> vertices;
       for (size_t i = 0; i < polygon.vertex_count(); ++i) {
-        const Point4Rep& vertex4 = polygon.vertex(i);
-        EXPECT_EQ(vertex4.dist_denom(), 1);
-        vertices.emplace_back(vertex4.x(), vertex4.y(), vertex4.z());
+        const HomoPoint3Rep& vertex = polygon.vertex(i);
+        EXPECT_EQ(vertex.dist_denom(), 1);
+        vertices.emplace_back(vertex.x(), vertex.y(), vertex.z());
       }
       result.push_back(std::move(vertices));
     }
@@ -55,10 +55,10 @@ class ResultCollector : public ConvexPolygon<32>::Factory {
       const int orientation = drop_dim_value.GetSign();
       const size_t vertex_count = polygon.vertex_count();
       for (int i = 0; i < vertex_count; ++i) {
-        const Point4Rep& prev = polygon.vertex(
+        const HomoPoint3Rep& prev = polygon.vertex(
             (vertex_count + i - 1) % vertex_count);
-        const Point4Rep& cur = polygon.vertex(i);
-        const Point4Rep& next = polygon.vertex((i + 1) % vertex_count);
+        const HomoPoint3Rep& cur = polygon.vertex(i);
+        const HomoPoint3Rep& next = polygon.vertex((i + 1) % vertex_count);
         EXPECT_LE(cur.Get2DTwistDir(polygon.drop_dimension(), prev, next) *
                   orientation, 0);
       }
@@ -69,8 +69,8 @@ class ResultCollector : public ConvexPolygon<32>::Factory {
     size_t matching = 0;
     for (const ConvexPolygonRep& polygon : result_) {
       for (size_t i = 0; i < polygon.vertex_count(); ++i) {
-        const Point4Rep& v4 = polygon.vertex(i);
-        if (v == v4) {
+        const HomoPoint3Rep& hv = polygon.vertex(i);
+        if (v == hv) {
           ++matching;
         }
       }

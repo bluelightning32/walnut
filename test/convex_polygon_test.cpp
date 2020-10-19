@@ -153,8 +153,8 @@ TEST(ConvexPolygon, CounterClockwiseTriangleEdges) {
   ASSERT_EQ(polygon.vertex_count(), std::end(input) - std::begin(input));
   for (size_t i = 0; i < polygon.vertex_count(); ++i) {
     EXPECT_EQ(polygon.vertex(i), input[i]);
-    const ConvexPolygon<32>::Point4Rep& vertex = polygon.vertex(i);
-    const ConvexPolygon<32>::Point4Rep& next_vertex = polygon.vertex(
+    const ConvexPolygon<32>::HomoPoint3Rep& vertex = polygon.vertex(i);
+    const ConvexPolygon<32>::HomoPoint3Rep& next_vertex = polygon.vertex(
         (i + 1) % polygon.vertex_count());
     const Point3<32>& input_vertex = input[i];
     const Point3<32>& next_input_vertex = input[
@@ -180,8 +180,8 @@ TEST(ConvexPolygon, CounterClockwiseSquareEdges) {
   ASSERT_EQ(polygon.vertex_count(), std::end(input) - std::begin(input));
   for (size_t i = 0; i < polygon.vertex_count(); ++i) {
     EXPECT_EQ(polygon.vertex(i), input[i]);
-    const ConvexPolygon<32>::Point4Rep& vertex = polygon.vertex(i);
-    const ConvexPolygon<32>::Point4Rep& next_vertex = polygon.vertex(
+    const ConvexPolygon<32>::HomoPoint3Rep& vertex = polygon.vertex(i);
+    const ConvexPolygon<32>::HomoPoint3Rep& next_vertex = polygon.vertex(
         (i + 1) % polygon.vertex_count());
     const Point3<32>& input_vertex = input[i];
     const Point3<32>& next_input_vertex = input[
@@ -207,8 +207,8 @@ TEST(ConvexPolygon, ClockwiseSquareEdges) {
   ASSERT_EQ(polygon.vertex_count(), std::end(input) - std::begin(input));
   for (size_t i = 0; i < polygon.vertex_count(); ++i) {
     EXPECT_EQ(polygon.vertex(i), input[i]);
-    const ConvexPolygon<32>::Point4Rep& vertex = polygon.vertex(i);
-    const ConvexPolygon<32>::Point4Rep& next_vertex = polygon.vertex(
+    const ConvexPolygon<32>::HomoPoint3Rep& vertex = polygon.vertex(i);
+    const ConvexPolygon<32>::HomoPoint3Rep& next_vertex = polygon.vertex(
         (i + 1) % polygon.vertex_count());
     const Point3<32>& input_vertex = input[i];
     const Point3<32>& next_input_vertex = input[
@@ -238,8 +238,8 @@ TEST(ConvexPolygon, RedundantEdges) {
   ASSERT_EQ(polygon.vertex_count(), std::end(input) - std::begin(input));
   for (size_t i = 0; i < polygon.vertex_count(); ++i) {
     EXPECT_EQ(polygon.vertex(i), input[i]);
-    const ConvexPolygon<32>::Point4Rep& vertex = polygon.vertex(i);
-    const ConvexPolygon<32>::Point4Rep& next_vertex = polygon.vertex(
+    const ConvexPolygon<32>::HomoPoint3Rep& vertex = polygon.vertex(i);
+    const ConvexPolygon<32>::HomoPoint3Rep& next_vertex = polygon.vertex(
         (i + 1) % polygon.vertex_count());
     const Point3<32>& input_vertex = input[i];
     const Point3<32>& next_input_vertex = input[

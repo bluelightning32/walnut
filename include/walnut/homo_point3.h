@@ -1,6 +1,7 @@
-#ifndef WALNUT_POINT4_H__
-#define WALNUT_POINT4_H__
+#ifndef WALNUT_HOMO_POINT3_H__
+#define WALNUT_HOMO_POINT3_H__
 
+#include "walnut/point3.h"
 #include "walnut/vector3.h"
 
 namespace walnut {
@@ -8,7 +9,7 @@ namespace walnut {
 // 3D point represented with homogeneous coordinates. The w coordinate acts
 // like a divisor for the x, y, and z coordinates.
 template <int num_bits_template = 32*7 + 9, int denom_bits_template = 32*6 + 7>
-class Point4 {
+class HomoPoint3 {
  public:
   using VectorRep = Vector3<num_bits_template>;
   using NumInt = typename VectorRep::BigIntRep;
@@ -72,34 +73,34 @@ class Point4 {
   }
 
   // Leaves the coordinates in an undefined state
-  Point4() = default;
+  HomoPoint3() = default;
 
   template <int other_num_bits, int other_denom_bits>
-  Point4(const Point4<other_num_bits, other_denom_bits>& other) :
+  HomoPoint3(const HomoPoint3<other_num_bits, other_denom_bits>& other) :
     vector_from_origin_(other.vector_from_origin_), dist_denom_(other.dist_denom_) { }
 
   template <int other_num_bits, int other_denom_bits>
-  Point4(const BigInt<other_num_bits>& x,
+  HomoPoint3(const BigInt<other_num_bits>& x,
           const BigInt<other_num_bits>& y,
           const BigInt<other_num_bits>& z,
           const BigInt<other_denom_bits>& w) :
     vector_from_origin_(x, y, z), dist_denom_(w) { }
 
-  Point4(int x, int y, int z, int w) :
+  HomoPoint3(int x, int y, int z, int w) :
     vector_from_origin_(x, y, z), dist_denom_(w) { }
 
   template <int other_num_bits>
-  Point4(const Point3<other_num_bits>& other) :
+  HomoPoint3(const Point3<other_num_bits>& other) :
     vector_from_origin_(other.vector_from_origin()), dist_denom_(1) { }
 
   template <int other_num_bits, int other_denom_bits>
-  Point4(const Point3<other_num_bits>& p,
+  HomoPoint3(const Point3<other_num_bits>& p,
           const BigInt<other_denom_bits>& w) :
     vector_from_origin_(p.vector_from_origin()), dist_denom_(w) { }
 
   template <int other_num_bits=num_bits, int other_denom_bits=denom_bits>
-  static bool LexicographicallyLt(const Point4& a,
-      const Point4<other_num_bits, other_denom_bits>& b) {
+  static bool LexicographicallyLt(const HomoPoint3& a,
+      const HomoPoint3<other_num_bits, other_denom_bits>& b) {
     auto a_scaled = a.vector_from_origin() * b.dist_denom();
     auto b_scaled = b.vector_from_origin() * a.dist_denom();
     return std::lexicographical_compare(a_scaled.coords().begin(),
@@ -117,15 +118,15 @@ class Point4 {
   // `drop_dimension` from the point.
   template <int other_num_bits, int other_denom_bits>
   BigIntWord Get2DTwistDir(int drop_dimension,
-      const Point4<other_num_bits, other_denom_bits>& p1,
-      const Point4<other_num_bits, other_denom_bits>& p3) const {
+      const HomoPoint3<other_num_bits, other_denom_bits>& p1,
+      const HomoPoint3<other_num_bits, other_denom_bits>& p3) const {
     // We roughly want to calculate:
     //   sign( (p1 - *this) x (p3 - *this) )
     //
-    // However, each Point4 is like a fraction. The fractions must have common
-    // bases to perform subtraction. However, only the pairs that will be
-    // subtracted need to have common bases. The trick is to make two copies of
-    // *this, one for p1's denominator and one for p3's denominator.
+    // However, each HomoPoint3 is like a fraction. The fractions must have
+    // common bases to perform subtraction. However, only the pairs that will
+    // be subtracted need to have common bases. The trick is to make two copies
+    // of *this, one for p1's denominator and one for p3's denominator.
     //
     // The vectors (p1 - *this) and (p3 - *this) will have different scales,
     // but that's okay since we're only looking at the sign of the cross
@@ -145,7 +146,7 @@ class Point4 {
   // Note that everything equals the 0 point with a 0 denominator.
   template <int other_num_bits, int other_denom_bits>
   bool operator==(
-      const Point4<other_num_bits, other_denom_bits>& other) const {
+      const HomoPoint3<other_num_bits, other_denom_bits>& other) const {
     return vector_from_origin().Scale(other.w()) ==
       other.vector_from_origin().Scale(w());
   }
@@ -159,7 +160,7 @@ class Point4 {
   // Note that everything equals the 0 point with a 0 denominator.
   template <int other_num_bits, int other_denom_bits>
   bool operator!=(
-      const Point4<other_num_bits, other_denom_bits>& other) const {
+      const HomoPoint3<other_num_bits, other_denom_bits>& other) const {
     return !(*this == other);
   }
 
@@ -176,12 +177,12 @@ class Point4 {
 
 template <int a_bits, int b_num_bits, int b_denom_bits>
 bool operator==(const Point3<a_bits>& a,
-                const Point4<b_num_bits, b_denom_bits>& b) {
+                const HomoPoint3<b_num_bits, b_denom_bits>& b) {
   return b == a;
 }
 
 template <int num_bits, int denom_bits>
-std::ostream& operator<<(std::ostream& out, const Point4<num_bits, denom_bits>& p) {
+std::ostream& operator<<(std::ostream& out, const HomoPoint3<num_bits, denom_bits>& p) {
   return out << "{ ["
              << p.x() << ", "
              << p.y() << ", "
@@ -192,4 +193,4 @@ std::ostream& operator<<(std::ostream& out, const Point4<num_bits, denom_bits>& 
 
 }  // walnut
 
-#endif // WALNUT_POINT4_H__
+#endif // WALNUT_HOMO_POINT3_H__

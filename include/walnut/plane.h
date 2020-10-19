@@ -1,8 +1,8 @@
 #ifndef WALNUT_PLANE_H__
 #define WALNUT_PLANE_H__
 
+#include "walnut/homo_point3.h"
 #include "walnut/point3.h"
-#include "walnut/point4.h"
 #include "walnut/vector3.h"
 
 namespace walnut {
@@ -90,13 +90,13 @@ class Plane {
   // Returns >0 if `v` is in the half space, 0 if `v` is coincident with the
   // plane, or <0 if `v` is outside of the half space.
   template <int v_num_bits, int v_denom_bits>
-  int Compare(const Point4<v_num_bits, v_denom_bits>& v) {
+  int Compare(const HomoPoint3<v_num_bits, v_denom_bits>& v) {
     return (v.dist_denom() * dist_).Compare(normal_.Dot(v.vector_from_origin()));
   }
 
   // Returns true if the point is on the plane
   template <int v_num_bits, int v_denom_bits>
-  bool IsCoincident(const Point4<v_num_bits, v_denom_bits>& v) const {
+  bool IsCoincident(const HomoPoint3<v_num_bits, v_denom_bits>& v) const {
     return Compare(v) == 0;
   }
 

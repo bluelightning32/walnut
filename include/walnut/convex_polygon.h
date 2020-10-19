@@ -3,10 +3,10 @@
 
 #include <vector>
 
+#include "walnut/homo_point3.h"
 #include "walnut/plane.h"
 #include "walnut/plucker_line.h"
 #include "walnut/point3.h"
-#include "walnut/point4.h"
 
 namespace walnut {
 
@@ -17,7 +17,7 @@ class ConvexPolygon {
   // Defined in convex_polygon_factory.h
   class Factory;
   using Point3Rep = Point3<point3_bits_template>;
-  using Point4Rep = Point4<(point3_bits_template - 1)*7 + 10,
+  using HomoPoint3Rep = HomoPoint3<(point3_bits_template - 1)*7 + 10,
                              (point3_bits_template - 1)*6 + 10>;
   using PlaneRep =
     typename PlaneFromPoint3Builder<point3_bits_template>::PlaneRep;
@@ -31,10 +31,10 @@ class ConvexPolygon {
       vertex(vertex), edge(vertex, next_vertex) { }
 
     static bool LexicographicallyLt(const VertexInfo& a, const VertexInfo& b) {
-      return Point4Rep::LexicographicallyLt(a.vertex, b.vertex);
+      return HomoPoint3Rep::LexicographicallyLt(a.vertex, b.vertex);
     }
 
-    Point4Rep vertex;
+    HomoPoint3Rep vertex;
     // This is the line for the edge that starts at vertex and ends at
     // the next vertex in the cycle.
     //
@@ -50,10 +50,10 @@ class ConvexPolygon {
   // The minimum number of bits to support for each of the x, y, and z
   // coordinates for each vertex, after an arbitrary number of splits from
   // planes of the type PlaneRep.
-  static constexpr int point4_num_bits = Point4Rep::num_bits;
+  static constexpr int point4_num_bits = HomoPoint3Rep::num_bits;
   // The minimum number of bits to support the w coordinate for each vertex,
   // after an arbitrary number of splits from planes of the type PlaneRep.
-  static constexpr int point4_denom_bits = Point4Rep::denom_bits_template;
+  static constexpr int point4_denom_bits = HomoPoint3Rep::denom_bits_template;
 
   ConvexPolygon() : plane_(PlaneRep::Zero()), drop_dimension_(-1) { }
 
@@ -66,7 +66,7 @@ class ConvexPolygon {
     return vertices_.size();
   }
 
-  const Point4Rep& vertex(size_t index) const {
+  const HomoPoint3Rep& vertex(size_t index) const {
     return vertices_[index].vertex;
   }
 
@@ -88,7 +88,7 @@ class ConvexPolygon {
   size_t GetMinimumIndex() const {
     size_t min = 0;
     for (size_t i = 1; i < vertices_.size(); ++i) {
-      if (Point4Rep::LexicographicallyLt(vertex(i), vertex(min))) {
+      if (HomoPoint3Rep::LexicographicallyLt(vertex(i), vertex(min))) {
         min = i;
       }
     }

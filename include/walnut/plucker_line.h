@@ -120,7 +120,7 @@ class PluckerLine {
 
   // Returns true if `p` is on the line.
   template <int num_bits, int denom_bits>
-  bool IsOnLine(const Point4<num_bits, denom_bits>& p) const {
+  bool IsOnLine(const HomoPoint3<num_bits, denom_bits>& p) const {
     /*
      * p x (p + p.dist*d) == m
      * p x p + p x (p.dist*d) == m
@@ -176,12 +176,12 @@ class PluckerLine {
   }
 
   template <int vector_bits, int dist_bits>
-  Point4<std::max(vector_bits + m_bits, d_bits + dist_bits) + 1,
+  HomoPoint3<std::max(vector_bits + m_bits, d_bits + dist_bits) + 1,
           vector_bits + d_bits + 1>
   Intersect(const Plane<vector_bits, dist_bits>& p) const {
     auto vector = p.normal().Cross(m()) + d().Scale(p.d());
     auto w = p.normal().Dot(d());
-    return Point4<decltype(vector)::coord_bits, decltype(w)::bits>(
+    return HomoPoint3<decltype(vector)::coord_bits, decltype(w)::bits>(
                        /*p=*/Point3<decltype(vector)::coord_bits>(vector),
                        w);
   }

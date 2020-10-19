@@ -18,19 +18,19 @@ TEST(Plane, ComparePoint3) {
   EXPECT_LT(plane.Compare(Point3<>(/*x=*/6, /*y=*/100, /*z=*/100)), 0);
 }
 
-TEST(Plane, ComparePoint4) {
+TEST(Plane, CompareHomoPoint3) {
   // Anything with x<5 is included in the half space.
   Plane<> plane(/*normal=*/Vector3<>(/*x=*/2, /*y=*/0, /*z=*/0), /*dist=*/BigInt<32>(10));
 
   // included
-  EXPECT_GT(plane.Compare(Point4<>(/*x=*/1, /*y=*/100, /*z=*/100, /*w=*/1)), 0);
-  EXPECT_GT(plane.Compare(Point4<>(/*x=*/9, /*y=*/100, /*z=*/100, /*w=*/2)), 0);
+  EXPECT_GT(plane.Compare(HomoPoint3<>(/*x=*/1, /*y=*/100, /*z=*/100, /*w=*/1)), 0);
+  EXPECT_GT(plane.Compare(HomoPoint3<>(/*x=*/9, /*y=*/100, /*z=*/100, /*w=*/2)), 0);
   // coincident
-  EXPECT_EQ(plane.Compare(Point4<>(/*x=*/5, /*y=*/100, /*z=*/100, /*w=*/1)), 0);
-  EXPECT_EQ(plane.Compare(Point4<>(/*x=*/10, /*y=*/100, /*z=*/100, /*w=*/2)), 0);
+  EXPECT_EQ(plane.Compare(HomoPoint3<>(/*x=*/5, /*y=*/100, /*z=*/100, /*w=*/1)), 0);
+  EXPECT_EQ(plane.Compare(HomoPoint3<>(/*x=*/10, /*y=*/100, /*z=*/100, /*w=*/2)), 0);
   // excluded
-  EXPECT_LT(plane.Compare(Point4<>(/*x=*/6, /*y=*/100, /*z=*/100, /*w=*/1)), 0);
-  EXPECT_LT(plane.Compare(Point4<>(/*x=*/11, /*y=*/100, /*z=*/100, /*w=*/2)), 0);
+  EXPECT_LT(plane.Compare(HomoPoint3<>(/*x=*/6, /*y=*/100, /*z=*/100, /*w=*/1)), 0);
+  EXPECT_LT(plane.Compare(HomoPoint3<>(/*x=*/11, /*y=*/100, /*z=*/100, /*w=*/2)), 0);
 }
 
 TEST(Plane, BuildFromPoints) {
