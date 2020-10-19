@@ -38,6 +38,8 @@ class ConvexPolygon<vertex3_bits_template>::Factory :
         drop_dimension_ = 2;
         monotone_dimension = 0;
       }
+      plane_orientation_ =
+        plane_.normal().coords()[drop_dimension_].GetSign() < 0 ? 1 : -1;
       typename PlanarRangeRep::OutputIterator planar_begin =
         planar_range.begin();
       typename PlanarRangeRep::OutputIterator planar_end =
@@ -67,7 +69,7 @@ class ConvexPolygon<vertex3_bits_template>::Factory :
  private:
   using Parent = OrientingMonotoneDecomposer<vertex3_bits_template>;
 
-  void EmitOriented(bool flipped, int orientation,
+  void EmitOriented(int orientation,
                     typename Parent::const_reverse_iterator range1_begin,
                     typename Parent::const_reverse_iterator range1_end,
                     typename Parent::const_iterator range2_begin,
@@ -106,7 +108,11 @@ class ConvexPolygon<vertex3_bits_template>::Factory :
       }
     }
     vertices.emplace_back(*prev, *first);
-    const int flip_orientation = flipped ? orientation : -orientation;
+    // orientation is -1 if the polygon is counter-clockwise.
+    // plane_orientation_ is -1 if plane_ is already the normal of a
+    // counter-clockwise polygon. If both are -1, then plane_ is already
+    // correct, and they should cancel out.
+    const int flip_orientation = orientation ^ plane_orientation_;
     Emit(ConvexPolygon(PlaneRep(plane_.normal() * flip_orientation,
                                 plane_.d() * flip_orientation),
                        drop_dimension_,
@@ -115,6 +121,9 @@ class ConvexPolygon<vertex3_bits_template>::Factory :
 
   int drop_dimension_;
   PlaneRep plane_;
+  // This is -1 if plane_ already represents the normal of a counter-clockwise
+  // polygon, or 1 if plane_ represents the normal of a clockwise polygon.
+  int plane_orientation_;
 };
 
 }  // walnut

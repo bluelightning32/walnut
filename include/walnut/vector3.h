@@ -192,6 +192,14 @@ class Vector3 {
            coords_[2].IsValidState();
   }
 
+  // This function could potentially overflow. The caller must ensure there is
+  // sufficient bitspace.
+  void Negate() {
+    for (BigIntRep& coord : coords_) {
+      coord.Negate();
+    }
+  }
+
  private:
   std::array<BigIntRep, 3> coords_;
 };

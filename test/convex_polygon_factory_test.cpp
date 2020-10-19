@@ -232,4 +232,35 @@ TEST(ConvexPolygonFactory, SelfIntersecting) {
             ResultCollector::PlaneRep(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10));
 }
 
+TEST(ConvexPolygonFactory, SelfIntersectingStartAtReflex) {
+  //
+  //   p1        p4
+  //  /  \      /  \
+  // p2 --\----/--> p3
+  //       \  /
+  //        p0
+  //
+  Vertex3<32> input[] = {
+    /*p0=*/Vertex3<32>(2, -1, 10),
+    /*p1=*/Vertex3<32>(1, 1, 10),
+    /*p2=*/Vertex3<32>(0, 0, 10),
+    /*p3=*/Vertex3<32>(4, 0, 10),
+    /*p4=*/Vertex3<32>(3, 1, 10),
+  };
+
+  ResultCollector collector;
+  collector.Build(std::begin(input), std::end(input));
+  ASSERT_THAT(collector.GetSortedPolygonVertices(), ElementsAre(
+        std::vector<Vertex3<32>>{input[(0 + 2)%5], input[(3 + 2)%5], input[(4 + 2)%5]},
+        std::vector<Vertex3<32>>{input[(0 + 2)%5], input[(1 + 2)%5], input[(3 + 2)%5]},
+        std::vector<Vertex3<32>>{input[(3 + 2)%5], input[(1 + 2)%5], input[(2 + 2)%5]}
+        ));
+  EXPECT_EQ(collector.GetSortedPolygonResult()[0].plane(),
+            ResultCollector::PlaneRep(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10));
+  EXPECT_EQ(collector.GetSortedPolygonResult()[1].plane(),
+            ResultCollector::PlaneRep(/*x=*/0, /*y=*/0, /*z=*/-1, /*dist=*/-10));
+  EXPECT_EQ(collector.GetSortedPolygonResult()[2].plane(),
+            ResultCollector::PlaneRep(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10));
+}
+
 }  // walnut

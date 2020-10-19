@@ -8,7 +8,6 @@ namespace walnut {
 using testing::ElementsAre;
 
 struct PolygonResult {
-  bool flipped;
   int orientation;
   std::vector<Vertex3<32>> vertices;
 };
@@ -66,13 +65,12 @@ class ResultCollector : public OrientingMonotoneDecomposer<32> {
   }
 
  protected:
-  void EmitOriented(bool flipped, int orientation,
+  void EmitOriented(int orientation,
                     const_reverse_iterator range1_begin,
                     const_reverse_iterator range1_end,
                     const_iterator range2_begin,
                     const_iterator range2_end) override {
     result_.emplace_back();
-    result_.back().flipped = flipped;
     result_.back().orientation = orientation;
     result_.back().vertices.reserve((range1_end - range1_begin) +
                            (range2_end - range2_begin));

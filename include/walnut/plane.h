@@ -154,6 +154,13 @@ class Plane {
     return normal_.IsValidState() && dist_.IsValidState();
   }
 
+  // This function could potentially overflow. The caller must ensure there is
+  // sufficient bitspace.
+  void Negate() {
+    normal_.Negate();
+    dist_.Negate();
+  }
+
  private:
   VectorRep normal_;
   DistInt dist_;

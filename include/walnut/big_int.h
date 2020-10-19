@@ -190,6 +190,8 @@ class BigInt {
     return rep_ % other.rep_;
   }
 
+  // This function could potentially overflow. The caller must ensure there is
+  // sufficient bitspace.
   constexpr void Negate() {
     rep_.Negate();
   }
