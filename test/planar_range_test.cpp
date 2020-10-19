@@ -31,7 +31,7 @@ TEST(PlanarRange, InputTooShort) {
   result.Build(remaining_begin, remaining_end);
   EXPECT_EQ(remaining_begin, remaining_end);
   EXPECT_EQ(result.size(), 1);
-  EXPECT_EQ(result.plane(), Plane<>::Zero());
+  EXPECT_EQ(result.plane(), HalfSpace3<>::Zero());
   EXPECT_EQ(std::vector<Point3<32>>(result.begin(), result.end()),
             input);
 
@@ -42,7 +42,7 @@ TEST(PlanarRange, InputTooShort) {
   result.Build(remaining_begin, remaining_end);
   EXPECT_EQ(remaining_begin, remaining_end);
   EXPECT_EQ(result.size(), 2);
-  EXPECT_EQ(result.plane(), Plane<>::Zero());
+  EXPECT_EQ(result.plane(), HalfSpace3<>::Zero());
   EXPECT_EQ(std::vector<Point3<32>>(result.begin(), result.end()),
             input);
 
@@ -53,7 +53,7 @@ TEST(PlanarRange, InputTooShort) {
   result.Build(remaining_begin, remaining_end);
   EXPECT_EQ(remaining_begin, remaining_end);
   EXPECT_EQ(result.size(), 3);
-  EXPECT_EQ(result.plane(), Plane<>::Zero());
+  EXPECT_EQ(result.plane(), HalfSpace3<>::Zero());
   EXPECT_EQ(std::vector<Point3<32>>(result.begin(), result.end()),
             input);
 }

@@ -1,12 +1,12 @@
-#include "walnut/plane.h"
+#include "walnut/half_space3.h"
 
 #include "gtest/gtest.h"
 
 namespace walnut {
 
-TEST(Plane, ComparePoint3) {
+TEST(HalfSpace3, ComparePoint3) {
   // Anything with x<5 is included in the half space.
-  Plane<> plane(/*normal=*/Vector3<>(/*x=*/2, /*y=*/0, /*z=*/0), /*dist=*/BigInt<32>(10));
+  HalfSpace3<> plane(/*normal=*/Vector3<>(/*x=*/2, /*y=*/0, /*z=*/0), /*dist=*/BigInt<32>(10));
 
   EXPECT_TRUE(plane.normal().IsSameDir(Vector3<>(1, 0, 0)));
 
@@ -18,9 +18,9 @@ TEST(Plane, ComparePoint3) {
   EXPECT_LT(plane.Compare(Point3<>(/*x=*/6, /*y=*/100, /*z=*/100)), 0);
 }
 
-TEST(Plane, CompareHomoPoint3) {
+TEST(HalfSpace3, CompareHomoPoint3) {
   // Anything with x<5 is included in the half space.
-  Plane<> plane(/*normal=*/Vector3<>(/*x=*/2, /*y=*/0, /*z=*/0), /*dist=*/BigInt<32>(10));
+  HalfSpace3<> plane(/*normal=*/Vector3<>(/*x=*/2, /*y=*/0, /*z=*/0), /*dist=*/BigInt<32>(10));
 
   // included
   EXPECT_GT(plane.Compare(HomoPoint3<>(/*x=*/1, /*y=*/100, /*z=*/100, /*w=*/1)), 0);
@@ -33,12 +33,12 @@ TEST(Plane, CompareHomoPoint3) {
   EXPECT_LT(plane.Compare(HomoPoint3<>(/*x=*/11, /*y=*/100, /*z=*/100, /*w=*/2)), 0);
 }
 
-TEST(Plane, BuildFromPoints) {
+TEST(HalfSpace3, BuildFromPoints) {
   // Build from the triangle:
   // [0, 0, 5], [1, 0, 5], [0, 1, 5]
   //
   // Anything with z<5 is included in the half space.
-  Plane<> plane(/*p1=*/Point3<>(0, 0, 5),
+  HalfSpace3<> plane(/*p1=*/Point3<>(0, 0, 5),
                 /*p2=*/Point3<>(1, 0, 5),
                 /*p3=*/Point3<>(0, 1, 5));
 
@@ -52,21 +52,21 @@ TEST(Plane, BuildFromPoints) {
   EXPECT_LT(plane.Compare(Point3<>(/*x=*/600, /*y=*/100, /*z=*/6)), 0);
 }
 
-TEST(Plane, HalfSpacesDistinct) {
-  EXPECT_NE(Plane<>(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10),
-            Plane<>(/*x=*/0, /*y=*/0, /*z=*/-1, /*dist=*/-10));
+TEST(HalfSpace3, HalfSpacesDistinct) {
+  EXPECT_NE(HalfSpace3<>(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10),
+            HalfSpace3<>(/*x=*/0, /*y=*/0, /*z=*/-1, /*dist=*/-10));
 }
 
 template <int point3_bits>
 void TestCorrectOutputBits() {
-  using Builder = PlaneFromPoint3Builder<point3_bits>;
-  using PlaneRep = typename Builder::PlaneRep;
+  using Builder = HalfSpace3FromPoint3Builder<point3_bits>;
+  using HalfSpace3Rep = typename Builder::HalfSpace3Rep;
   // A plane type with double the required bits.
-  using PlaneExtraBits =
-    Plane<PlaneRep::VectorInt::bits*2, PlaneRep::DistInt::bits*2>;
+  using HalfSpace3ExtraBits =
+    HalfSpace3<HalfSpace3Rep::VectorInt::bits*2, HalfSpace3Rep::DistInt::bits*2>;
   using Point3Rep = typename Builder::Point3Rep;
-  using VectorInt = typename PlaneRep::VectorInt;
-  using DistInt = typename PlaneRep::DistInt;
+  using VectorInt = typename HalfSpace3Rep::VectorInt;
+  using DistInt = typename HalfSpace3Rep::DistInt;
   using BigIntRep = typename Point3Rep::BigIntRep;
   using NextSmallerVectorInt = BigInt<VectorInt::bits - 1>;
   using NextSmallerDistInt = BigInt<DistInt::bits - 1>;
@@ -101,8 +101,8 @@ void TestCorrectOutputBits() {
       }
       p[j] = Point3Rep(coords[0], coords[1], coords[2]);
     }
-    PlaneRep plane = Builder::Build(p[0], p[1], p[2]);
-    PlaneExtraBits plane_extra(p[0], p[1], p[2]);
+    HalfSpace3Rep plane = Builder::Build(p[0], p[1], p[2]);
+    HalfSpace3ExtraBits plane_extra(p[0], p[1], p[2]);
     EXPECT_EQ(plane.IsValid(), plane_extra.IsValid());
     EXPECT_EQ(plane, plane_extra);
     EXPECT_TRUE(plane.IsValidState());
@@ -129,15 +129,15 @@ void TestCorrectOutputBits() {
   EXPECT_EQ(largest_dist, Builder::dist_max());
 }
 
-TEST(PlaneFromPoint3Builder, CorrectOutputBits2) {
+TEST(HalfSpace3FromPoint3Builder, CorrectOutputBits2) {
   TestCorrectOutputBits<2>();
 }
 
-TEST(PlaneFromPoint3Builder, CorrectOutputBits32) {
+TEST(HalfSpace3FromPoint3Builder, CorrectOutputBits32) {
   TestCorrectOutputBits<32>();
 }
 
-TEST(PlaneFromPoint3Builder, CorrectOutputBits64) {
+TEST(HalfSpace3FromPoint3Builder, CorrectOutputBits64) {
   TestCorrectOutputBits<64>();
 }
 

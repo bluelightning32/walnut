@@ -4,7 +4,7 @@
 #include <iterator>
 
 #include "walnut/concat_range.h"
-#include "walnut/plane.h"
+#include "walnut/half_space3.h"
 #include "walnut/point3.h"
 
 namespace walnut {
@@ -17,7 +17,7 @@ class PlanarRange {
  public:
   using Point3Rep = typename std::iterator_traits<Point3Iterator>::value_type;
   using ConcatRangeRep = ConcatRange<Point3Iterator>;
-  using PlaneRep = Plane<(Point3Rep::coord_bits - 1)*2 + 4,
+  using HalfSpace3Rep = HalfSpace3<(Point3Rep::coord_bits - 1)*2 + 4,
                          (Point3Rep::coord_bits - 1)*3 + 6>;
   using OutputIterator = typename ConcatRangeRep::const_iterator;
 
@@ -72,14 +72,14 @@ class PlanarRange {
   //
   // If all of the vertices in the input range were collinear, a plane with a 0
   // normal vector will be returned.
-  PlaneRep plane() const {
+  HalfSpace3Rep plane() const {
     return plane_;
   }
 
  private:
   ConcatRangeRep range_;
   size_t size_;
-  PlaneRep plane_;
+  HalfSpace3Rep plane_;
 };
 
 template <typename Point3Iterator>
@@ -88,7 +88,7 @@ inline void PlanarRange<Point3Iterator>::Build(
     Point3Iterator& remaining_end) {
   range_.Clear();
   if (remaining_begin == remaining_end) {
-    plane_ = PlaneRep::Zero();
+    plane_ = HalfSpace3Rep::Zero();
     size_ = 0;
     return;
   }
@@ -99,7 +99,7 @@ inline void PlanarRange<Point3Iterator>::Build(
   const Point3Rep& p1 = *remaining_end;
   if (remaining_begin == remaining_end) {
     range_.Append(range_begin, range_end);
-    plane_ = PlaneRep::Zero();
+    plane_ = HalfSpace3Rep::Zero();
     size_ = 1;
     return;
   }
@@ -115,11 +115,11 @@ inline void PlanarRange<Point3Iterator>::Build(
   do {
     if (remaining_begin == remaining_end) {
       range_.Append(range_begin, range_end);
-      plane_ = PlaneRep::Zero();
+      plane_ = HalfSpace3Rep::Zero();
       return;
     }
     const Point3Rep& p3 = *remaining_begin;
-    plane_ = PlaneRep(p1, p2, p3);
+    plane_ = HalfSpace3Rep(p1, p2, p3);
     ++size_;
     ++remaining_begin;
   } while (!plane_.IsValid());

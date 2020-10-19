@@ -3,8 +3,8 @@
 
 #include <vector>
 
+#include "walnut/half_space3.h"
 #include "walnut/homo_point3.h"
-#include "walnut/plane.h"
 #include "walnut/plucker_line.h"
 #include "walnut/point3.h"
 
@@ -19,8 +19,8 @@ class ConvexPolygon {
   using Point3Rep = Point3<point3_bits_template>;
   using HomoPoint3Rep = HomoPoint3<(point3_bits_template - 1)*7 + 10,
                              (point3_bits_template - 1)*6 + 10>;
-  using PlaneRep =
-    typename PlaneFromPoint3Builder<point3_bits_template>::PlaneRep;
+  using HalfSpace3Rep =
+    typename HalfSpace3FromPoint3Builder<point3_bits_template>::HalfSpace3Rep;
   using LineRep = typename PluckerLineFromPlanesFromPoint3sBuilder<
     point3_bits_template>::PluckerLineRep;
 
@@ -49,13 +49,13 @@ class ConvexPolygon {
 
   // The minimum number of bits to support for each of the x, y, and z
   // coordinates for each vertex, after an arbitrary number of splits from
-  // planes of the type PlaneRep.
-  static constexpr int point4_num_bits = HomoPoint3Rep::num_bits;
+  // planes of the type HalfSpace3Rep.
+  static constexpr int homo_point3_num_bits = HomoPoint3Rep::num_bits;
   // The minimum number of bits to support the w coordinate for each vertex,
-  // after an arbitrary number of splits from planes of the type PlaneRep.
-  static constexpr int point4_denom_bits = HomoPoint3Rep::denom_bits_template;
+  // after an arbitrary number of splits from planes of the type HalfSpace3Rep.
+  static constexpr int homo_point3_denom_bits = HomoPoint3Rep::denom_bits_template;
 
-  ConvexPolygon() : plane_(PlaneRep::Zero()), drop_dimension_(-1) { }
+  ConvexPolygon() : plane_(HalfSpace3Rep::Zero()), drop_dimension_(-1) { }
 
   template <int other_point3_bits>
   ConvexPolygon(const ConvexPolygon<other_point3_bits>& other) :
@@ -78,7 +78,7 @@ class ConvexPolygon {
     return vertices_;
   }
 
-  const PlaneRep& plane() const { return plane_; }
+  const HalfSpace3Rep& plane() const { return plane_; }
 
   // When this dimension is projected to 0, 'dropped', the vertices will not
   // become collinear (assuming they were not already collinear).
@@ -118,18 +118,18 @@ class ConvexPolygon {
 
  private:
   template <int other_point3_bits>
-  ConvexPolygon(const PlaneRep& plane, int drop_dimension,
+  ConvexPolygon(const HalfSpace3Rep& plane, int drop_dimension,
                 const std::vector<Vector3<other_point3_bits>>& vertices) :
     plane_(plane), drop_dimension_(drop_dimension),
     vertices_(vertices.begin(), vertices.end()) { }
 
-  ConvexPolygon(const PlaneRep& plane, int drop_dimension,
+  ConvexPolygon(const HalfSpace3Rep& plane, int drop_dimension,
                 std::vector<VertexInfo> vertices) :
     plane_(plane), drop_dimension_(drop_dimension),
     vertices_(std::move(vertices)) { }
 
   // The plane that all of the vertices are in.
-  PlaneRep plane_;
+  HalfSpace3Rep plane_;
   // When this dimension is projected to 0, 'dropped', the vertices will not
   // become collinear (assuming they were not already collinear).
   int drop_dimension_;

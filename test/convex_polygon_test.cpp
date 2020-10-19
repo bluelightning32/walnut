@@ -52,7 +52,7 @@ TEST(ConvexPolygon, TrianglePlane) {
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
   EXPECT_EQ(polygon.plane(),
-            Plane<>(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10));
+            HalfSpace3<>(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10));
 
   EXPECT_EQ(polygon.drop_dimension(), 2);
 
@@ -70,7 +70,7 @@ TEST(ConvexPolygon, Triangle0DistPlane) {
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
   EXPECT_EQ(polygon.plane(),
-            Plane<>(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/0));
+            HalfSpace3<>(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/0));
 
   EXPECT_EQ(polygon.drop_dimension(), 2);
 
@@ -88,7 +88,7 @@ TEST(ConvexPolygon, TriangleXZPlane) {
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
   EXPECT_EQ(polygon.plane(),
-            Plane<>(/*x=*/-1, /*y=*/0, /*z=*/1, /*dist=*/10));
+            HalfSpace3<>(/*x=*/-1, /*y=*/0, /*z=*/1, /*dist=*/10));
 
   for (const Point3<32>& v : input) {
     EXPECT_TRUE(polygon.plane().IsCoincident(v));
@@ -104,7 +104,7 @@ TEST(ConvexPolygon, ClockwiseTrianglePlane) {
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
   EXPECT_EQ(polygon.plane(),
-            Plane<>(/*x=*/0, /*y=*/0, /*z=*/-1, /*dist=*/-10));
+            HalfSpace3<>(/*x=*/0, /*y=*/0, /*z=*/-1, /*dist=*/-10));
 
   EXPECT_EQ(polygon.drop_dimension(), 2);
 
@@ -122,7 +122,7 @@ TEST(ConvexPolygon, ClockwiseTriangleXZPlane) {
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
   EXPECT_EQ(polygon.plane(),
-            Plane<>(/*x=*/1, /*y=*/0, /*z=*/-1, /*dist=*/-10));
+            HalfSpace3<>(/*x=*/1, /*y=*/0, /*z=*/-1, /*dist=*/-10));
 
   for (const Point3<32>& v : input) {
     EXPECT_TRUE(polygon.plane().IsCoincident(v));

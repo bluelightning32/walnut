@@ -1,7 +1,7 @@
 #ifndef WALNUT_PLUCKER_LINE_H__
 #define WALNUT_PLUCKER_LINE_H__
 
-#include "walnut/plane.h"
+#include "walnut/half_space3.h"
 #include "walnut/point3.h"
 #include "walnut/vector3.h"
 
@@ -79,8 +79,8 @@ class PluckerLine {
   // Both `a` and `b` must be valid (have non-zero normals), and they must be
   // non-equal.
   template <int vector_bits, int dist_bits>
-  PluckerLine(const Plane<vector_bits, dist_bits>& a,
-              const Plane<vector_bits, dist_bits>& b) :
+  PluckerLine(const HalfSpace3<vector_bits, dist_bits>& a,
+              const HalfSpace3<vector_bits, dist_bits>& b) :
     // d = a_xyz x b_xyz = (p^23, p^31, p^12)
     //
     // p^23 = | a.y  a.z |
@@ -175,10 +175,11 @@ class PluckerLine {
     return d().IsValidState() && m().IsValidState();
   }
 
+  // Calculate the intersection between this line and a plane.
   template <int vector_bits, int dist_bits>
   HomoPoint3<std::max(vector_bits + m_bits, d_bits + dist_bits) + 1,
           vector_bits + d_bits + 1>
-  Intersect(const Plane<vector_bits, dist_bits>& p) const {
+  Intersect(const HalfSpace3<vector_bits, dist_bits>& p) const {
     auto vector = p.normal().Cross(m()) + d().Scale(p.d());
     auto w = p.normal().Dot(d());
     return HomoPoint3<decltype(vector)::coord_bits, decltype(w)::bits>(
@@ -229,15 +230,15 @@ class PluckerLineFromPoint3sBuilder {
 // The only reason to use this wrapper is that it figures out how many bits are
 // necessary in the worst case for the PluckerLine d and m vector components,
 // given that the Plane components are all within the bounds defined by
-// PlaneFromPoint3Builder<point3_bits>.
+// HalfSpace3FromPoint3Builder<point3_bits>.
 template <int point3_bits_template = 32>
 class PluckerLineFromPlanesFromPoint3sBuilder {
  public:
   static_assert(point3_bits_template >= 3,
       "The bit formulas are only correct for point3_bits_template >= 3");
   using Point3Rep = Point3<point3_bits_template>;
-  using PlaneBuilder = PlaneFromPoint3Builder<point3_bits_template>;
-  using PlaneRep = typename PlaneBuilder::PlaneRep;
+  using HalfSpace3Builder = HalfSpace3FromPoint3Builder<point3_bits_template>;
+  using HalfSpace3Rep = typename HalfSpace3Builder::HalfSpace3Rep;
   using PluckerLineRep = PluckerLine<(point3_bits_template - 1)*4 + 6,
                                      (point3_bits_template - 1)*5 + 6>;
   using DInt = typename PluckerLineRep::DVector::BigIntRep;
@@ -259,7 +260,7 @@ class PluckerLineFromPlanesFromPoint3sBuilder {
     return -m_component_min();
   }
 
-  static PluckerLineRep Build(const PlaneRep& p1, const PlaneRep& p2) {
+  static PluckerLineRep Build(const HalfSpace3Rep& p1, const HalfSpace3Rep& p2) {
     return PluckerLineRep(p1, p2);
   }
 };

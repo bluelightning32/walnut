@@ -65,8 +65,8 @@ TEST(PluckerLine, ConstructFromPlanes) {
   const Point3<> p3(5, 7, 12);
   const Point3<> p4(6, 7, 11);
 
-  Plane<> a(p1, p2, p3);
-  Plane<> b(p1, p2, p4);
+  HalfSpace3<> a(p1, p2, p3);
+  HalfSpace3<> b(p1, p2, p4);
   const PluckerLine<> line_from_planes(a, b);
 
   EXPECT_EQ(line_from_planes, line_from_points);
@@ -83,8 +83,8 @@ TEST(PluckerLine, FromPlanesDirection) {
   const Point3<> p3(5, 7, 12);
   const Point3<> p4(6, 7, 11);
 
-  Plane<> a(p1, p2, p3);
-  Plane<> b(p1, p2, p4);
+  HalfSpace3<> a(p1, p2, p3);
+  HalfSpace3<> b(p1, p2, p4);
   const PluckerLine<> line(a, b);
 
   EXPECT_GT((p2 - p1).Dot(line.d()), 0);
@@ -103,7 +103,7 @@ TEST(PluckerLine, IntersectPlane) {
   EXPECT_FALSE(line.IsOnLine(p3));
   EXPECT_FALSE(line.IsOnLine(p4));
 
-  Plane<> plane(p2, p3, p4);
+  HalfSpace3<> plane(p2, p3, p4);
 
   EXPECT_EQ(line.Intersect(plane), HomoPoint3<>(p2));
 }
@@ -202,10 +202,10 @@ TEST(PluckerLineFromPoint3sBuilder, CorrectOutputBits64) {
 template <int point3_bits>
 void TestCorrectOutputBitsFromPlanesFromPoint3s() {
   using Builder = PluckerLineFromPlanesFromPoint3sBuilder<point3_bits>;
-  using PlaneBuilder = typename Builder::PlaneBuilder;
-  using PlaneRep = typename PlaneBuilder::PlaneRep;
-  using VectorInt = typename PlaneRep::VectorInt;
-  using DistInt = typename PlaneRep::DistInt;
+  using HalfSpace3Builder = typename Builder::HalfSpace3Builder;
+  using HalfSpace3Rep = typename HalfSpace3Builder::HalfSpace3Rep;
+  using VectorInt = typename HalfSpace3Rep::VectorInt;
+  using DistInt = typename HalfSpace3Rep::DistInt;
   using PluckerLineRep = typename Builder::PluckerLineRep;
   using DInt = typename PluckerLineRep::DVector::BigIntRep;
   using MInt = typename PluckerLineRep::MVector::BigIntRep;
@@ -228,16 +228,16 @@ void TestCorrectOutputBitsFromPlanesFromPoint3s() {
                              MInt(0)};
   for (int i = 0; i < up_to; ++i) {
     int remaining = i;
-    PlaneRep plane[2];
+    HalfSpace3Rep plane[2];
     for (int j = 0; j < 2; ++j) {
       VectorInt normal_coords[3];
       for (int k = 0; k < 3; ++k) {
         switch (remaining % 2) {
           case 0:
-            normal_coords[k] = PlaneBuilder::normal_component_min();
+            normal_coords[k] = HalfSpace3Builder::normal_component_min();
             break;
           case 1:
-            normal_coords[k] = PlaneBuilder::normal_component_max();
+            normal_coords[k] = HalfSpace3Builder::normal_component_max();
             break;
         }
         remaining /= 2;
@@ -245,17 +245,17 @@ void TestCorrectOutputBitsFromPlanesFromPoint3s() {
       DistInt dist;
       switch (remaining % 2) {
         case 0:
-          dist = PlaneBuilder::dist_min();
+          dist = HalfSpace3Builder::dist_min();
           break;
         case 1:
-          dist = PlaneBuilder::dist_max();
+          dist = HalfSpace3Builder::dist_max();
           break;
       }
       remaining /= 2;
-      typename PlaneRep::VectorRep normal(normal_coords[0],
+      typename HalfSpace3Rep::VectorRep normal(normal_coords[0],
                                           normal_coords[1],
                                           normal_coords[2]);
-      plane[j] = PlaneRep(normal, dist);
+      plane[j] = HalfSpace3Rep(normal, dist);
     }
     if (!plane[0].IsValid() || !plane[1].IsValid()) {
       continue;
@@ -268,8 +268,8 @@ void TestCorrectOutputBitsFromPlanesFromPoint3s() {
     using PluckerLineExtraBits =
       PluckerLine<PluckerLineRep::DVector::BigIntRep::bits*2,
                   PluckerLineRep::MVector::BigIntRep::bits*2>;
-    PluckerLineExtraBits line_extra(const_cast<const PlaneRep&>(plane[0]),
-        const_cast<const PlaneRep&>(plane[1]));
+    PluckerLineExtraBits line_extra(const_cast<const HalfSpace3Rep&>(plane[0]),
+        const_cast<const HalfSpace3Rep&>(plane[1]));
     EXPECT_EQ(line.IsValid(), line_extra.IsValid());
     EXPECT_EQ(line, line_extra);
     EXPECT_TRUE(line.IsValidState());
