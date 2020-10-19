@@ -20,15 +20,15 @@
 
 namespace walnut {
 
-template <int vertex3_bits_template = 32>
+template <int point3_bits_template = 32>
 class OrientingMonotoneDecomposer :
-  public MonotoneDecomposer<vertex3_bits_template> {
+  public MonotoneDecomposer<point3_bits_template> {
  public:
-  using Parent = MonotoneDecomposer<vertex3_bits_template>;
-  using Vertex3Rep = typename Parent::Vertex3Rep;
-  using const_iterator = typename std::vector<Vertex3Rep>::const_iterator;
+  using Parent = MonotoneDecomposer<point3_bits_template>;
+  using Point3Rep = typename Parent::Point3Rep;
+  using const_iterator = typename std::vector<Point3Rep>::const_iterator;
   using const_reverse_iterator = typename
-    std::vector<Vertex3Rep>::const_reverse_iterator;
+    std::vector<Point3Rep>::const_reverse_iterator;
 
   // Given a monotone polygon in the form of two iterator ranges, representing
   // the top and bottom chains (in either order), this converts the monotone
@@ -152,13 +152,13 @@ class OrientingMonotoneDecomposer :
   bool flipped_;
 };
 
-template <int vertex3_bits_template>
+template <int point3_bits_template>
 template <typename Chain1Iterator, typename Chain2Iterator>
-bool OrientingMonotoneDecomposer<vertex3_bits_template>::DetectOrientation(
+bool OrientingMonotoneDecomposer<point3_bits_template>::DetectOrientation(
     int drop_dimension, int monotone_dimension, Chain1Iterator chain1_begin,
     Chain1Iterator chain1_end, Chain2Iterator chain2_begin,
     Chain2Iterator chain2_end) {
-  const Vertex3Rep& minimum_vertex = *chain1_begin;
+  const Point3Rep& minimum_vertex = *chain1_begin;
   // Both chains must include the minimum vertex.
   assert(*chain2_begin == minimum_vertex);
   Chain1Iterator chain1_pos = chain1_begin;
@@ -176,7 +176,7 @@ bool OrientingMonotoneDecomposer<vertex3_bits_template>::DetectOrientation(
   // (minimum_vertex, collinear_vertex) define the line that chain1_pos and
   // chain2_pos are collinear with. Either chain1_pos or chain2_pos could be
   // used here.
-  const Vertex3Rep& collinear_vertex = *chain1_pos;
+  const Point3Rep& collinear_vertex = *chain1_pos;
   // Loop through vertices of both chains sorted by the monotone_dimension.
   // Keep looping until a non-collinear vertex is found, or all of the
   // vertices in both chains are consumed.
@@ -196,7 +196,7 @@ bool OrientingMonotoneDecomposer<vertex3_bits_template>::DetectOrientation(
     assert(chain2_pos != chain2_end);
     const bool chain1_is_current = chain1_pos->coords()[monotone_dimension] <=
                                    chain2_pos->coords()[monotone_dimension];
-    const Vertex3Rep& current = chain1_is_current ? *chain1_pos : *chain2_pos;
+    const Point3Rep& current = chain1_is_current ? *chain1_pos : *chain2_pos;
     const int twist = minimum_vertex.Get2DTwistDir(drop_dimension,
                                                    collinear_vertex, current);
     if (twist != 0) {

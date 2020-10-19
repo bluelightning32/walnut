@@ -13,8 +13,8 @@ MakeConvexPolygon(const Container& vertices) ->
 ConvexPolygon<std::iterator_traits<
     decltype(std::begin(vertices))>::value_type::coord_bits> {
   using Iterator = decltype(std::begin(vertices));
-  using Vertex3Rep = typename std::iterator_traits<Iterator>::value_type;
-  using ConvexPolygonRep = ConvexPolygon<Vertex3Rep::coord_bits>;
+  using Point3Rep = typename std::iterator_traits<Iterator>::value_type;
+  using ConvexPolygonRep = ConvexPolygon<Point3Rep::coord_bits>;
 
   class CollectOne : public ConvexPolygonRep::Factory {
    public:
@@ -44,10 +44,10 @@ ConvexPolygon<std::iterator_traits<
 }
 
 TEST(ConvexPolygon, TrianglePlane) {
-  Vertex3<32> input[] = {
-    Vertex3<32>(0, 0, 10),
-    Vertex3<32>(1, 0, 10),
-    Vertex3<32>(1, 1, 10),
+  Point3<32> input[] = {
+    Point3<32>(0, 0, 10),
+    Point3<32>(1, 0, 10),
+    Point3<32>(1, 1, 10),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
@@ -56,16 +56,16 @@ TEST(ConvexPolygon, TrianglePlane) {
 
   EXPECT_EQ(polygon.drop_dimension(), 2);
 
-  for (const Vertex3<32>& v : input) {
+  for (const Point3<32>& v : input) {
     EXPECT_TRUE(polygon.plane().IsCoincident(v));
   }
 }
 
 TEST(ConvexPolygon, Triangle0DistPlane) {
-  Vertex3<32> input[] = {
-    Vertex3<32>(0, 0, 0),
-    Vertex3<32>(10, 0, 0),
-    Vertex3<32>(10, 10, 0),
+  Point3<32> input[] = {
+    Point3<32>(0, 0, 0),
+    Point3<32>(10, 0, 0),
+    Point3<32>(10, 10, 0),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
@@ -74,32 +74,32 @@ TEST(ConvexPolygon, Triangle0DistPlane) {
 
   EXPECT_EQ(polygon.drop_dimension(), 2);
 
-  for (const Vertex3<32>& v : input) {
+  for (const Point3<32>& v : input) {
     EXPECT_TRUE(polygon.plane().IsCoincident(v));
   }
 }
 
 TEST(ConvexPolygon, TriangleXZPlane) {
-  Vertex3<32> input[] = {
-    Vertex3<32>(0 - 5, 0, 0 + 5),
-    Vertex3<32>(10 - 5, 0, 10 + 5),
-    Vertex3<32>(10 - 5, 10, 10 + 5),
+  Point3<32> input[] = {
+    Point3<32>(0 - 5, 0, 0 + 5),
+    Point3<32>(10 - 5, 0, 10 + 5),
+    Point3<32>(10 - 5, 10, 10 + 5),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
   EXPECT_EQ(polygon.plane(),
             Plane<>(/*x=*/-1, /*y=*/0, /*z=*/1, /*dist=*/10));
 
-  for (const Vertex3<32>& v : input) {
+  for (const Point3<32>& v : input) {
     EXPECT_TRUE(polygon.plane().IsCoincident(v));
   }
 }
 
 TEST(ConvexPolygon, ClockwiseTrianglePlane) {
-  Vertex3<32> input[] = {
-    Vertex3<32>(0, 0, 10),
-    Vertex3<32>(1, 1, 10),
-    Vertex3<32>(1, 0, 10),
+  Point3<32> input[] = {
+    Point3<32>(0, 0, 10),
+    Point3<32>(1, 1, 10),
+    Point3<32>(1, 0, 10),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
@@ -108,32 +108,32 @@ TEST(ConvexPolygon, ClockwiseTrianglePlane) {
 
   EXPECT_EQ(polygon.drop_dimension(), 2);
 
-  for (const Vertex3<32>& v : input) {
+  for (const Point3<32>& v : input) {
     EXPECT_TRUE(polygon.plane().IsCoincident(v));
   }
 }
 
 TEST(ConvexPolygon, ClockwiseTriangleXZPlane) {
-  Vertex3<32> input[] = {
-    Vertex3<32>(0 - 5, 0, 0 + 5),
-    Vertex3<32>(10 - 5, 10, 10 + 5),
-    Vertex3<32>(10 - 5, 0, 10 + 5),
+  Point3<32> input[] = {
+    Point3<32>(0 - 5, 0, 0 + 5),
+    Point3<32>(10 - 5, 10, 10 + 5),
+    Point3<32>(10 - 5, 0, 10 + 5),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
   EXPECT_EQ(polygon.plane(),
             Plane<>(/*x=*/1, /*y=*/0, /*z=*/-1, /*dist=*/-10));
 
-  for (const Vertex3<32>& v : input) {
+  for (const Point3<32>& v : input) {
     EXPECT_TRUE(polygon.plane().IsCoincident(v));
   }
 }
 
 TEST(ConvexPolygon, CopyConstructor) {
-  Vertex3<32> input[] = {
-    Vertex3<32>(0, 0, 10),
-    Vertex3<32>(1, 0, 10),
-    Vertex3<32>(1, 1, 10),
+  Point3<32> input[] = {
+    Point3<32>(0, 0, 10),
+    Point3<32>(1, 0, 10),
+    Point3<32>(1, 1, 10),
   };
 
   ConvexPolygon<32> polygon1 = MakeConvexPolygon(input);
@@ -142,10 +142,10 @@ TEST(ConvexPolygon, CopyConstructor) {
 }
 
 TEST(ConvexPolygon, CounterClockwiseTriangleEdges) {
-  Vertex3<32> input[] = {
-    Vertex3<32>(0, 0, 10),
-    Vertex3<32>(1, 0, 10),
-    Vertex3<32>(1, 1, 10),
+  Point3<32> input[] = {
+    Point3<32>(0, 0, 10),
+    Point3<32>(1, 0, 10),
+    Point3<32>(1, 1, 10),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
@@ -153,11 +153,11 @@ TEST(ConvexPolygon, CounterClockwiseTriangleEdges) {
   ASSERT_EQ(polygon.vertex_count(), std::end(input) - std::begin(input));
   for (size_t i = 0; i < polygon.vertex_count(); ++i) {
     EXPECT_EQ(polygon.vertex(i), input[i]);
-    const ConvexPolygon<32>::Vertex4Rep& vertex = polygon.vertex(i);
-    const ConvexPolygon<32>::Vertex4Rep& next_vertex = polygon.vertex(
+    const ConvexPolygon<32>::Point4Rep& vertex = polygon.vertex(i);
+    const ConvexPolygon<32>::Point4Rep& next_vertex = polygon.vertex(
         (i + 1) % polygon.vertex_count());
-    const Vertex3<32>& input_vertex = input[i];
-    const Vertex3<32>& next_input_vertex = input[
+    const Point3<32>& input_vertex = input[i];
+    const Point3<32>& next_input_vertex = input[
         (i + 1) % polygon.vertex_count()];
     EXPECT_TRUE(polygon.edge(i).IsOnLine(vertex));
     EXPECT_TRUE(polygon.edge(i).IsOnLine(next_vertex));
@@ -168,11 +168,11 @@ TEST(ConvexPolygon, CounterClockwiseTriangleEdges) {
 }
 
 TEST(ConvexPolygon, CounterClockwiseSquareEdges) {
-  Vertex3<32> input[] = {
-    Vertex3<32>(0, 0, 10),
-    Vertex3<32>(1, 0, 10),
-    Vertex3<32>(1, 1, 10),
-    Vertex3<32>(0, 1, 10),
+  Point3<32> input[] = {
+    Point3<32>(0, 0, 10),
+    Point3<32>(1, 0, 10),
+    Point3<32>(1, 1, 10),
+    Point3<32>(0, 1, 10),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
@@ -180,11 +180,11 @@ TEST(ConvexPolygon, CounterClockwiseSquareEdges) {
   ASSERT_EQ(polygon.vertex_count(), std::end(input) - std::begin(input));
   for (size_t i = 0; i < polygon.vertex_count(); ++i) {
     EXPECT_EQ(polygon.vertex(i), input[i]);
-    const ConvexPolygon<32>::Vertex4Rep& vertex = polygon.vertex(i);
-    const ConvexPolygon<32>::Vertex4Rep& next_vertex = polygon.vertex(
+    const ConvexPolygon<32>::Point4Rep& vertex = polygon.vertex(i);
+    const ConvexPolygon<32>::Point4Rep& next_vertex = polygon.vertex(
         (i + 1) % polygon.vertex_count());
-    const Vertex3<32>& input_vertex = input[i];
-    const Vertex3<32>& next_input_vertex = input[
+    const Point3<32>& input_vertex = input[i];
+    const Point3<32>& next_input_vertex = input[
         (i + 1) % polygon.vertex_count()];
     EXPECT_TRUE(polygon.edge(i).IsOnLine(vertex));
     EXPECT_TRUE(polygon.edge(i).IsOnLine(next_vertex));
@@ -195,11 +195,11 @@ TEST(ConvexPolygon, CounterClockwiseSquareEdges) {
 }
 
 TEST(ConvexPolygon, ClockwiseSquareEdges) {
-  Vertex3<32> input[] = {
-    Vertex3<32>(0, 0, 10),
-    Vertex3<32>(0, 1, 10),
-    Vertex3<32>(1, 1, 10),
-    Vertex3<32>(1, 0, 10),
+  Point3<32> input[] = {
+    Point3<32>(0, 0, 10),
+    Point3<32>(0, 1, 10),
+    Point3<32>(1, 1, 10),
+    Point3<32>(1, 0, 10),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
@@ -207,11 +207,11 @@ TEST(ConvexPolygon, ClockwiseSquareEdges) {
   ASSERT_EQ(polygon.vertex_count(), std::end(input) - std::begin(input));
   for (size_t i = 0; i < polygon.vertex_count(); ++i) {
     EXPECT_EQ(polygon.vertex(i), input[i]);
-    const ConvexPolygon<32>::Vertex4Rep& vertex = polygon.vertex(i);
-    const ConvexPolygon<32>::Vertex4Rep& next_vertex = polygon.vertex(
+    const ConvexPolygon<32>::Point4Rep& vertex = polygon.vertex(i);
+    const ConvexPolygon<32>::Point4Rep& next_vertex = polygon.vertex(
         (i + 1) % polygon.vertex_count());
-    const Vertex3<32>& input_vertex = input[i];
-    const Vertex3<32>& next_input_vertex = input[
+    const Point3<32>& input_vertex = input[i];
+    const Point3<32>& next_input_vertex = input[
         (i + 1) % polygon.vertex_count()];
     EXPECT_TRUE(polygon.edge(i).IsOnLine(vertex));
     EXPECT_TRUE(polygon.edge(i).IsOnLine(next_vertex));
@@ -222,15 +222,15 @@ TEST(ConvexPolygon, ClockwiseSquareEdges) {
 }
 
 TEST(ConvexPolygon, RedundantEdges) {
-  Vertex3<32> input[] = {
-    Vertex3<32>(0, 0, 10),
-    Vertex3<32>(1, 0, 10), // collinear
-    Vertex3<32>(2, 0, 10), // collinear
-    Vertex3<32>(3, 0, 10),
-    Vertex3<32>(3, 1, 10),
-    Vertex3<32>(2, 1, 10), // collinear
-    Vertex3<32>(1, 1, 10), // collinear
-    Vertex3<32>(0, 1, 10),
+  Point3<32> input[] = {
+    Point3<32>(0, 0, 10),
+    Point3<32>(1, 0, 10), // collinear
+    Point3<32>(2, 0, 10), // collinear
+    Point3<32>(3, 0, 10),
+    Point3<32>(3, 1, 10),
+    Point3<32>(2, 1, 10), // collinear
+    Point3<32>(1, 1, 10), // collinear
+    Point3<32>(0, 1, 10),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
@@ -238,11 +238,11 @@ TEST(ConvexPolygon, RedundantEdges) {
   ASSERT_EQ(polygon.vertex_count(), std::end(input) - std::begin(input));
   for (size_t i = 0; i < polygon.vertex_count(); ++i) {
     EXPECT_EQ(polygon.vertex(i), input[i]);
-    const ConvexPolygon<32>::Vertex4Rep& vertex = polygon.vertex(i);
-    const ConvexPolygon<32>::Vertex4Rep& next_vertex = polygon.vertex(
+    const ConvexPolygon<32>::Point4Rep& vertex = polygon.vertex(i);
+    const ConvexPolygon<32>::Point4Rep& next_vertex = polygon.vertex(
         (i + 1) % polygon.vertex_count());
-    const Vertex3<32>& input_vertex = input[i];
-    const Vertex3<32>& next_input_vertex = input[
+    const Point3<32>& input_vertex = input[i];
+    const Point3<32>& next_input_vertex = input[
         (i + 1) % polygon.vertex_count()];
     EXPECT_TRUE(polygon.edge(i).IsOnLine(vertex));
     EXPECT_TRUE(polygon.edge(i).IsOnLine(next_vertex));

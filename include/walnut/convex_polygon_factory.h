@@ -8,17 +8,17 @@
 
 namespace walnut {
 
-template <int vertex3_bits_template>
-class ConvexPolygon<vertex3_bits_template>::Factory :
-  private OrientingMonotoneDecomposer<vertex3_bits_template> {
+template <int point3_bits_template>
+class ConvexPolygon<point3_bits_template>::Factory :
+  private OrientingMonotoneDecomposer<point3_bits_template> {
  public:
-  using Vertex3Rep = ConvexPolygon::Vertex3Rep;
-  using ConvexPolygonRep = ConvexPolygon<vertex3_bits_template>;
+  using Point3Rep = ConvexPolygon::Point3Rep;
+  using ConvexPolygonRep = ConvexPolygon<point3_bits_template>;
   using PlaneRep = typename ConvexPolygonRep::PlaneRep;
 
-  template <typename Vertex3Iterator>
-  void Build(Vertex3Iterator begin, Vertex3Iterator end) {
-    using PlanarRangeRep = PlanarRange<Vertex3Iterator>;
+  template <typename Point3Iterator>
+  void Build(Point3Iterator begin, Point3Iterator end) {
+    using PlanarRangeRep = PlanarRange<Point3Iterator>;
     PlanarRangeRep planar_range;
     using MonotoneRangeRep =
       MonotoneRange<typename PlanarRangeRep::OutputIterator>;
@@ -67,7 +67,7 @@ class ConvexPolygon<vertex3_bits_template>::Factory :
   virtual void Emit(ConvexPolygon&& polygon) = 0;
 
  private:
-  using Parent = OrientingMonotoneDecomposer<vertex3_bits_template>;
+  using Parent = OrientingMonotoneDecomposer<point3_bits_template>;
 
   void EmitOriented(int orientation,
                     typename Parent::const_reverse_iterator range1_begin,
@@ -80,8 +80,8 @@ class ConvexPolygon<vertex3_bits_template>::Factory :
     }
     std::vector<ConvexPolygonRep::VertexInfo> vertices;
     vertices.reserve((range1_end - range1_begin) + (range2_end - range2_begin));
-    const Vertex3Rep* prev;
-    const Vertex3Rep* first;
+    const Point3Rep* prev;
+    const Point3Rep* first;
     if (range1_begin != range1_end) {
       auto pos1 = range1_begin;
       prev = &*pos1;

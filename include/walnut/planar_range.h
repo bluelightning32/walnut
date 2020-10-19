@@ -5,23 +5,23 @@
 
 #include "walnut/concat_range.h"
 #include "walnut/plane.h"
-#include "walnut/vertex3.h"
+#include "walnut/point3.h"
 
 namespace walnut {
 
 // Represents a subrange of a parent range of R^3 vertices, such that all of
 // the vertices in the subrange are in a plane. Most of the logic in the class
 // is around finding the planar subrange within the parent range.
-template <typename Vertex3Iterator>
+template <typename Point3Iterator>
 class PlanarRange {
  public:
-  using Vertex3Rep = typename std::iterator_traits<Vertex3Iterator>::value_type;
-  using ConcatRangeRep = ConcatRange<Vertex3Iterator>;
-  using PlaneRep = Plane<(Vertex3Rep::coord_bits - 1)*2 + 4,
-                         (Vertex3Rep::coord_bits - 1)*3 + 6>;
+  using Point3Rep = typename std::iterator_traits<Point3Iterator>::value_type;
+  using ConcatRangeRep = ConcatRange<Point3Iterator>;
+  using PlaneRep = Plane<(Point3Rep::coord_bits - 1)*2 + 4,
+                         (Point3Rep::coord_bits - 1)*3 + 6>;
   using OutputIterator = typename ConcatRangeRep::const_iterator;
 
-  // Find the next planar range from an iterator range of `Vertex3Rep`s.
+  // Find the next planar range from an iterator range of `Point3Rep`s.
   //
   // First the function finds the plane normal. This is calculated from one
   // vertex at the end of the input range and typically 2 vertices from the
@@ -50,8 +50,8 @@ class PlanarRange {
   // remaining_end: on input, this points to one past the last vertex to
   //    in the input range. On output, this points to one past the last vertex
   //    to use for the next input range.
-  void Build(Vertex3Iterator& remaining_begin,
-             Vertex3Iterator& remaining_end);
+  void Build(Point3Iterator& remaining_begin,
+             Point3Iterator& remaining_end);
 
   // Returns the start of the output range from the last `Build` call.
   OutputIterator begin() const {
@@ -82,21 +82,21 @@ class PlanarRange {
   PlaneRep plane_;
 };
 
-template <typename Vertex3Iterator>
-inline void PlanarRange<Vertex3Iterator>::Build(
-    Vertex3Iterator& remaining_begin,
-    Vertex3Iterator& remaining_end) {
+template <typename Point3Iterator>
+inline void PlanarRange<Point3Iterator>::Build(
+    Point3Iterator& remaining_begin,
+    Point3Iterator& remaining_end) {
   range_.Clear();
   if (remaining_begin == remaining_end) {
     plane_ = PlaneRep::Zero();
     size_ = 0;
     return;
   }
-  Vertex3Iterator range_begin = remaining_begin;
-  Vertex3Iterator range_end = remaining_end;
+  Point3Iterator range_begin = remaining_begin;
+  Point3Iterator range_end = remaining_end;
   --remaining_end;
 
-  const Vertex3Rep& p1 = *remaining_end;
+  const Point3Rep& p1 = *remaining_end;
   if (remaining_begin == remaining_end) {
     range_.Append(range_begin, range_end);
     plane_ = PlaneRep::Zero();
@@ -104,7 +104,7 @@ inline void PlanarRange<Vertex3Iterator>::Build(
     return;
   }
 
-  const Vertex3Rep& p2 = *remaining_begin;
+  const Point3Rep& p2 = *remaining_begin;
   size_ = 2;
   ++remaining_begin;
 
@@ -118,7 +118,7 @@ inline void PlanarRange<Vertex3Iterator>::Build(
       plane_ = PlaneRep::Zero();
       return;
     }
-    const Vertex3Rep& p3 = *remaining_begin;
+    const Point3Rep& p3 = *remaining_begin;
     plane_ = PlaneRep(p1, p2, p3);
     ++size_;
     ++remaining_begin;

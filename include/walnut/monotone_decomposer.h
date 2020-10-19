@@ -34,14 +34,14 @@
 
 namespace walnut {
 
-template <int vertex3_bits_template = 32>
-class MonotoneDecomposer : public MonotoneTriangulator<vertex3_bits_template> {
+template <int point3_bits_template = 32>
+class MonotoneDecomposer : public MonotoneTriangulator<point3_bits_template> {
  public:
-  using Parent = MonotoneTriangulator<vertex3_bits_template>;
-  using Vertex3Rep = typename Parent::Vertex3Rep;
-  using const_iterator = typename std::vector<Vertex3Rep>::const_iterator;
+  using Parent = MonotoneTriangulator<point3_bits_template>;
+  using Point3Rep = typename Parent::Point3Rep;
+  using const_iterator = typename std::vector<Point3Rep>::const_iterator;
   using const_reverse_iterator = typename
-    std::vector<Vertex3Rep>::const_reverse_iterator;
+    std::vector<Point3Rep>::const_reverse_iterator;
 
   // Given a monotone polygon in the form of an iterator range for its top
   // chain and an iterator range for its bottom chain, this converts the
@@ -86,11 +86,11 @@ class MonotoneDecomposer : public MonotoneTriangulator<vertex3_bits_template> {
  protected:
   // The top of the convex polygon currently being constructed. The vertices
   // are sorted in the monotone dimension.
-  std::vector<Vertex3Rep> convex_top_;
+  std::vector<Point3Rep> convex_top_;
 
   // The bottom of the convex polygon currently being constructed. The vertices
   // are sorted in the monotone dimension.
-  std::vector<Vertex3Rep> convex_bottom_;
+  std::vector<Point3Rep> convex_bottom_;
 
   // Called to emit a convex polygon. The first argument represents the
   // orientation of the polygon. It is set to -1 if the polygon is
@@ -102,7 +102,7 @@ class MonotoneDecomposer : public MonotoneTriangulator<vertex3_bits_template> {
                     const_reverse_iterator range1_end,
                     const_iterator range2_begin, const_iterator range2_end) = 0;
 
-  void Emit(bool p3_is_top_chain, const Vertex3Rep& p1, const Vertex3Rep& p2, const Vertex3Rep& p3) override {
+  void Emit(bool p3_is_top_chain, const Point3Rep& p1, const Point3Rep& p2, const Point3Rep& p3) override {
     if (!convex_top_.empty()) {
       assert(!convex_bottom_.empty());
       if (convex_top_.back() == p1 && convex_bottom_.back() == p2) {
@@ -114,9 +114,9 @@ class MonotoneDecomposer : public MonotoneTriangulator<vertex3_bits_template> {
         // For non-self-intersecting polygons, orientation_ will always be 0 or
         // -1. However for self-intersecting polygons, the triangulator can
         // produce flipped triangles, in which case orientation_ will be 1.
-        const Vertex3Rep& prev_top = convex_top_.size() > 1 ?
+        const Point3Rep& prev_top = convex_top_.size() > 1 ?
           convex_top_.end()[-2] : convex_bottom_.front();
-        const Vertex3Rep& prev_bottom = convex_bottom_.size() > 1 ?
+        const Point3Rep& prev_bottom = convex_bottom_.size() > 1 ?
           convex_bottom_.end()[-2] : convex_top_.front();
         if (p1.Get2DTwistDir(drop_dimension_, prev_top, p3) *
               orientation_ <= 0 &&

@@ -6,14 +6,14 @@
 
 #include <vector>
 
-#include "walnut/vertex3.h"
+#include "walnut/point3.h"
 
 namespace walnut {
 
-template <int vertex3_bits_template = 32>
+template <int point3_bits_template = 32>
 class MonotoneTriangulator {
  public:
-  using Vertex3Rep = Vertex3<vertex3_bits_template>;
+  using Point3Rep = Point3<point3_bits_template>;
 
   // Given a monotone polygon in the form of an iterator range for its top
   // chain and an iterator range for its bottom chain, this converts the
@@ -60,16 +60,16 @@ class MonotoneTriangulator {
   // `p1` and `p2` come from `reflex_stack`. `p3` is a newer vertex from one
   // of the chains. `p3_is_top_chain` is set to true when `p3` comes from the
   // top chain, or false if it comes from the bottom chain.
-  virtual void Emit(bool p3_is_top_chain, const Vertex3Rep& p1, const Vertex3Rep& p2, const Vertex3Rep& p3) = 0;
+  virtual void Emit(bool p3_is_top_chain, const Point3Rep& p1, const Point3Rep& p2, const Point3Rep& p3) = 0;
 
  private:
-  void ProcessVertex(int drop_dimension, bool is_top, const Vertex3Rep& v);
+  void ProcessVertex(int drop_dimension, bool is_top, const Point3Rep& v);
 
   // Emits triangles for all the vertices waiting in reflex_stack_, and uses
   // `top_chain_is_current_` as the 3rd vertex.
   //
   // This function leaves the reflex_stack_ with 1 element in it.
-  void SwitchChains(const Vertex3Rep& next);
+  void SwitchChains(const Point3Rep& next);
 
   // This is a stack of vertices that must be closed to form triangles.
   //
@@ -83,16 +83,16 @@ class MonotoneTriangulator {
   // At any point, either a new triangle will be formed with the top 2 vertices
   // from reflex_stack_ along with a third from the current chain, or else the
   // current vertex will be pushed onto the stack.
-  std::vector<const Vertex3Rep*> reflex_stack_;
+  std::vector<const Point3Rep*> reflex_stack_;
 
   // True if the top of reflex_stack_ came from the top chain, or false if it
   // came from the bottom chain.
   bool top_chain_is_current_;
 };
 
-template <int vertex3_bits_template>
+template <int point3_bits_template>
 template <typename TopIterator, typename BottomIterator>
-void MonotoneTriangulator<vertex3_bits_template>::Build(
+void MonotoneTriangulator<point3_bits_template>::Build(
     int drop_dimension, int monotone_dimension,
     TopIterator top_begin, TopIterator top_end,
     BottomIterator bottom_begin, BottomIterator bottom_end) {
@@ -146,9 +146,9 @@ void MonotoneTriangulator<vertex3_bits_template>::Build(
   reflex_stack_.clear();
 }
 
-template <int vertex3_bits_template>
-void MonotoneTriangulator<vertex3_bits_template>::ProcessVertex(
-    int drop_dimension, bool is_top, const Vertex3Rep& v) {
+template <int point3_bits_template>
+void MonotoneTriangulator<point3_bits_template>::ProcessVertex(
+    int drop_dimension, bool is_top, const Point3Rep& v) {
   assert(reflex_stack_.size() >= 2);
 
   if (is_top != top_chain_is_current_) {
@@ -158,8 +158,8 @@ void MonotoneTriangulator<vertex3_bits_template>::ProcessVertex(
     // Keep emitting triangles as long as there are at least 2 elements in the
     // reflex stack, and the top of the reflex stack is now convex.
     while (reflex_stack_.size() >= 2) {
-      const Vertex3Rep* p1;
-      const Vertex3Rep* p2;
+      const Point3Rep* p1;
+      const Point3Rep* p2;
       if (is_top) {
         p1 = reflex_stack_.back();
         p2 = *(reflex_stack_.end() - 2);
@@ -179,13 +179,13 @@ void MonotoneTriangulator<vertex3_bits_template>::ProcessVertex(
   reflex_stack_.push_back(&v);
 }
 
-template <int vertex3_bits_template>
-void MonotoneTriangulator<vertex3_bits_template>::SwitchChains(
-    const Vertex3Rep& next) {
-  const Vertex3Rep* reflex_back = reflex_stack_.back();
+template <int point3_bits_template>
+void MonotoneTriangulator<point3_bits_template>::SwitchChains(
+    const Point3Rep& next) {
+  const Point3Rep* reflex_back = reflex_stack_.back();
   for (int i = 0; i < reflex_stack_.size() - 1; ++i) {
-    const Vertex3Rep* p1;
-    const Vertex3Rep* p2;
+    const Point3Rep* p1;
+    const Point3Rep* p2;
     if (top_chain_is_current_) {
       p1 = reflex_stack_[i + 1];
       p2 = reflex_stack_[i];

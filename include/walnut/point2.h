@@ -1,12 +1,12 @@
-#ifndef WALNUT_VERTEX2_H__
-#define WALNUT_VERTEX2_H__
+#ifndef WALNUT_POINT2_H__
+#define WALNUT_POINT2_H__
 
 #include "walnut/vector2.h"
 
 namespace walnut {
 
 template <int coord_bits_template = 32>
-class Vertex2 {
+class Point2 {
  public:
   using VectorRep = Vector2<coord_bits_template>;
   using BigIntRep = typename VectorRep::BigIntRep;
@@ -19,18 +19,18 @@ class Vertex2 {
   static constexpr int coord_bits = coord_bits_template;
 
   // Leaves the coordinates in an undefined state
-  Vertex2() = default;
+  Point2() = default;
 
   template <int other_coord_bits>
-  Vertex2(const Vertex2<other_coord_bits>& other) :
-    Vertex2(other.coords()[0], other.coords()[1]) { }
+  Point2(const Point2<other_coord_bits>& other) :
+    Point2(other.coords()[0], other.coords()[1]) { }
 
   template <int other_coord_bits>
-  Vertex2(const BigInt<other_coord_bits>& x,
+  Point2(const BigInt<other_coord_bits>& x,
           const BigInt<other_coord_bits>& y) :
     vector_from_origin_(x, y) { }
 
-  Vertex2(int x, int y) : vector_from_origin_(x, y) { }
+  Point2(int x, int y) : vector_from_origin_(x, y) { }
 
   std::array<BigIntRep, 2>& coords() { return vector_from_origin_.coords(); }
 
@@ -57,13 +57,13 @@ class Vertex2 {
   }
 
   template <int other_coord_bits>
-  bool operator == (const Vertex2<other_coord_bits>& other) const {
+  bool operator == (const Point2<other_coord_bits>& other) const {
     return vector_from_origin() == other.vector_from_origin();
   }
 
   template <int other_coord_bits>
   Vector2<std::max(other_coord_bits, coord_bits_template) + 1> operator-(
-      const Vertex2<other_coord_bits>& other) const {
+      const Point2<other_coord_bits>& other) const {
     return vector_from_origin() - other.vector_from_origin();
   }
 
@@ -72,8 +72,8 @@ class Vertex2 {
   // point.
   // Returns <0 if p3 is clockwise from p1, with `this` as the center point.
   template <int other_coord_bits>
-  BigIntWord GetTwistDir(const Vertex2<other_coord_bits>& p1,
-                         const Vertex2<other_coord_bits>& p3) {
+  BigIntWord GetTwistDir(const Point2<other_coord_bits>& p1,
+                         const Point2<other_coord_bits>& p3) {
     return (p1 - *this).Cross(p3 - *this).GetSign();
   }
 
@@ -83,4 +83,4 @@ class Vertex2 {
 
 }  // walnut
 
-#endif // WALNUT_VERTEX2_H__
+#endif // WALNUT_POINT2_H__

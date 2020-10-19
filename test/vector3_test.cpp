@@ -1,7 +1,7 @@
 #include "walnut/vector3.h"
 
 #include "gtest/gtest.h"
-#include "walnut/vertex3.h"
+#include "walnut/point3.h"
 
 namespace walnut {
 
@@ -167,32 +167,6 @@ TEST(Vector3, CrossMax) {
 
   auto allowed_max = decltype(v1.Cross(v2))::BigIntRep::max_value();
   EXPECT_GE(allowed_max, expected_z);
-}
-
-TEST(Vertex3, Get2DTwistDirDropZ) {
-  int z_values[] = {0, 10, -10};
-  for (int z : z_values) {
-    //
-    // b
-    // ^
-    // |
-    // c ---> a
-    //
-    Vertex3<> a(1, 0, z);
-    Vertex3<> center(0, 0, z);
-    Vertex3<> b(0, 1, z);
-
-    // a to b is counter-clockwise
-    EXPECT_GT(center.Get2DTwistDir(/*drop_dimension=*/2, a, b), 0);
-    // b to a is clockwise
-    EXPECT_LT(center.Get2DTwistDir(/*drop_dimension=*/2, b, a), 0);
-
-    // collinear tests
-    EXPECT_EQ(center.Get2DTwistDir(/*drop_dimension=*/2, a, a), 0);
-    EXPECT_EQ(center.Get2DTwistDir(/*drop_dimension=*/2, b, b), 0);
-    EXPECT_EQ(center.Get2DTwistDir(/*drop_dimension=*/2, a, center), 0);
-    EXPECT_EQ(center.Get2DTwistDir(/*drop_dimension=*/2, center, a), 0);
-  }
 }
 
 }  // walnut

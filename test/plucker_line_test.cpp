@@ -5,8 +5,8 @@
 namespace walnut {
 
 TEST(PluckerLine, FromPointsDirection) {
-  const Vertex3<> p1(1, 2, 3);
-  const Vertex3<> p2(5, 7, 11);
+  const Point3<> p1(1, 2, 3);
+  const Point3<> p2(5, 7, 11);
   PluckerLine<> line(p1, p2);
 
   EXPECT_GT((p2 - p1).Dot(line.d()), 0);
@@ -15,36 +15,36 @@ TEST(PluckerLine, FromPointsDirection) {
 }
 
 TEST(PluckerLine, IsOnLine) {
-  const Vertex3<> p1(1, 2, 3);
-  const Vertex3<> p2(5, 7, 11);
+  const Point3<> p1(1, 2, 3);
+  const Point3<> p2(5, 7, 11);
   PluckerLine<> line(p1, p2);
 
   EXPECT_TRUE(line.IsOnLine(p1));
   EXPECT_TRUE(line.IsOnLine(p2));
 
-  const Vertex3<> p3(p2 + (p2 - p1));
+  const Point3<> p3(p2 + (p2 - p1));
   EXPECT_TRUE(line.IsOnLine(p3));
 
-  const Vertex3<> p4(p1 - (p2 - p1));
+  const Point3<> p4(p1 - (p2 - p1));
   EXPECT_TRUE(line.IsOnLine(p4));
 }
 
 TEST(PluckerLine, IsOnLineThroughOrigin) {
-  const Vertex3<> p1(1, 2, 3);
-  const Vertex3<> p2(0, 0, 0);
+  const Point3<> p1(1, 2, 3);
+  const Point3<> p2(0, 0, 0);
   PluckerLine<> line(p1, p2);
 
   EXPECT_TRUE(line.IsOnLine(p1));
   EXPECT_TRUE(line.IsOnLine(p2));
 
-  const Vertex3<> p3(p2 + (p2 - p1));
+  const Point3<> p3(p2 + (p2 - p1));
   EXPECT_TRUE(line.IsOnLine(p3));
 }
 
 TEST(PluckerLine, Equality) {
-  const Vertex3<> p1(1, 2, 3);
+  const Point3<> p1(1, 2, 3);
   const Vector3<> d(5, 7, 11);
-  const PluckerLine<> line(p1, Vertex3<>(p1 + d.Scale(2)));
+  const PluckerLine<> line(p1, Point3<>(p1 + d.Scale(2)));
 
   const PluckerLine<> line2(p1 + d.Scale(5),
                             p1 + d.Scale(3));
@@ -52,18 +52,18 @@ TEST(PluckerLine, Equality) {
   EXPECT_EQ(line, line2);
 
   const PluckerLine<> line3(p1,
-                            Vertex3<>(p1 + d.Scale(-3)));
+                            Point3<>(p1 + d.Scale(-3)));
 
   EXPECT_EQ(line, line3);
 }
 
 TEST(PluckerLine, ConstructFromPlanes) {
-  const Vertex3<> p1(1, 2, 3);
-  const Vertex3<> p2(5, 7, 11);
+  const Point3<> p1(1, 2, 3);
+  const Point3<> p2(5, 7, 11);
   const PluckerLine<> line_from_points(p1, p2);
 
-  const Vertex3<> p3(5, 7, 12);
-  const Vertex3<> p4(6, 7, 11);
+  const Point3<> p3(5, 7, 12);
+  const Point3<> p4(6, 7, 11);
 
   Plane<> a(p1, p2, p3);
   Plane<> b(p1, p2, p4);
@@ -76,12 +76,12 @@ TEST(PluckerLine, ConstructFromPlanes) {
 }
 
 TEST(PluckerLine, FromPlanesDirection) {
-  const Vertex3<> p1(1, 2, 3);
-  const Vertex3<> p2(5, 7, 11);
+  const Point3<> p1(1, 2, 3);
+  const Point3<> p2(5, 7, 11);
   const PluckerLine<> line_from_points(p1, p2);
 
-  const Vertex3<> p3(5, 7, 12);
-  const Vertex3<> p4(6, 7, 11);
+  const Point3<> p3(5, 7, 12);
+  const Point3<> p4(6, 7, 11);
 
   Plane<> a(p1, p2, p3);
   Plane<> b(p1, p2, p4);
@@ -93,29 +93,29 @@ TEST(PluckerLine, FromPlanesDirection) {
 }
 
 TEST(PluckerLine, IntersectPlane) {
-  const Vertex3<> p1(1, 2, 3);
-  const Vertex3<> p2(5, 7, 11);
+  const Point3<> p1(1, 2, 3);
+  const Point3<> p2(5, 7, 11);
   const PluckerLine<> line(p1, p2);
 
-  const Vertex3<> p3(6, 8, 12);
-  const Vertex3<> p4(6, 9, 11);
+  const Point3<> p3(6, 8, 12);
+  const Point3<> p4(6, 9, 11);
 
   EXPECT_FALSE(line.IsOnLine(p3));
   EXPECT_FALSE(line.IsOnLine(p4));
 
   Plane<> plane(p2, p3, p4);
 
-  EXPECT_EQ(line.Intersect(plane), Vertex4<>(p2));
+  EXPECT_EQ(line.Intersect(plane), Point4<>(p2));
 }
 
-template <int vertex3_bits>
+template <int point3_bits>
 void TestCorrectOutputBitsFromVertices() {
-  using Builder = PluckerLineFromVertex3sBuilder<vertex3_bits>;
+  using Builder = PluckerLineFromPoint3sBuilder<point3_bits>;
   using PluckerLineRep = typename Builder::PluckerLineRep;
-  using Vertex3Rep = typename Builder::Vertex3Rep;
+  using Point3Rep = typename Builder::Point3Rep;
   using DInt = typename PluckerLineRep::DVector::BigIntRep;
   using MInt = typename PluckerLineRep::MVector::BigIntRep;
-  using BigIntRep = typename Vertex3Rep::BigIntRep;
+  using BigIntRep = typename Point3Rep::BigIntRep;
   int up_to = 1;
   for (int i = 0; i < 6; ++i) {
     up_to *= 2;
@@ -135,7 +135,7 @@ void TestCorrectOutputBitsFromVertices() {
                              MInt(0)};
   for (int i = 0; i < up_to; ++i) {
     int remaining = i;
-    Vertex3Rep p[2];
+    Point3Rep p[2];
     for (int j = 0; j < 2; ++j) {
       BigIntRep coords[3];
       for (int k = 0; k < 3; ++k) {
@@ -149,7 +149,7 @@ void TestCorrectOutputBitsFromVertices() {
         }
         remaining /= 2;
       }
-      p[j] = Vertex3Rep(coords[0], coords[1], coords[2]);
+      p[j] = Point3Rep(coords[0], coords[1], coords[2]);
     }
     PluckerLineRep line = Builder::Build(p[0], p[1]);
     // A PluckerLine type with double the required bits.
@@ -187,21 +187,21 @@ void TestCorrectOutputBitsFromVertices() {
   EXPECT_GT(Builder::m_component_max(), MInt(NextSmallerMInt::max_value()));
 }
 
-TEST(PluckerLineFromVertex3sBuilder, CorrectOutputBits2) {
+TEST(PluckerLineFromPoint3sBuilder, CorrectOutputBits2) {
   TestCorrectOutputBitsFromVertices<2>();
 }
 
-TEST(PluckerLineFromVertex3sBuilder, CorrectOutputBits32) {
+TEST(PluckerLineFromPoint3sBuilder, CorrectOutputBits32) {
   TestCorrectOutputBitsFromVertices<32>();
 }
 
-TEST(PluckerLineFromVertex3sBuilder, CorrectOutputBits64) {
+TEST(PluckerLineFromPoint3sBuilder, CorrectOutputBits64) {
   TestCorrectOutputBitsFromVertices<64>();
 }
 
-template <int vertex3_bits>
-void TestCorrectOutputBitsFromPlanesFromVertex3s() {
-  using Builder = PluckerLineFromPlanesFromVertex3sBuilder<vertex3_bits>;
+template <int point3_bits>
+void TestCorrectOutputBitsFromPlanesFromPoint3s() {
+  using Builder = PluckerLineFromPlanesFromPoint3sBuilder<point3_bits>;
   using PlaneBuilder = typename Builder::PlaneBuilder;
   using PlaneRep = typename PlaneBuilder::PlaneRep;
   using VectorInt = typename PlaneRep::VectorInt;
@@ -300,16 +300,16 @@ void TestCorrectOutputBitsFromPlanesFromVertex3s() {
   EXPECT_GT(Builder::m_component_max(), MInt(NextSmallerMInt::max_value()));
 }
 
-TEST(PluckerLineFromPlanesFromVertex3sBuilder, CorrectOutputBits3) {
-  TestCorrectOutputBitsFromPlanesFromVertex3s<3>();
+TEST(PluckerLineFromPlanesFromPoint3sBuilder, CorrectOutputBits3) {
+  TestCorrectOutputBitsFromPlanesFromPoint3s<3>();
 }
 
-TEST(PluckerLineFromPlanesFromVertex3sBuilder, CorrectOutputBits32) {
-  TestCorrectOutputBitsFromPlanesFromVertex3s<32>();
+TEST(PluckerLineFromPlanesFromPoint3sBuilder, CorrectOutputBits32) {
+  TestCorrectOutputBitsFromPlanesFromPoint3s<32>();
 }
 
-TEST(PluckerLineFromPlanesFromVertex3sBuilder, CorrectOutputBits64) {
-  TestCorrectOutputBitsFromPlanesFromVertex3s<64>();
+TEST(PluckerLineFromPlanesFromPoint3sBuilder, CorrectOutputBits64) {
+  TestCorrectOutputBitsFromPlanesFromPoint3s<64>();
 }
 
 }  // walnut

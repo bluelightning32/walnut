@@ -1,13 +1,13 @@
-#ifndef WALNUT_VERTEX3_H__
-#define WALNUT_VERTEX3_H__
+#ifndef WALNUT_POINT3_H__
+#define WALNUT_POINT3_H__
 
+#include "walnut/point2.h"
 #include "walnut/vector3.h"
-#include "walnut/vertex2.h"
 
 namespace walnut {
 
 template <int coord_bits_template = 32>
-class Vertex3 {
+class Point3 {
  public:
   using VectorRep = Vector3<coord_bits_template>;
   using BigIntRep = typename VectorRep::BigIntRep;
@@ -20,23 +20,23 @@ class Vertex3 {
   static constexpr int coord_bits = coord_bits_template;
 
   // Leaves the coordinates in an undefined state
-  Vertex3() = default;
+  Point3() = default;
 
   template <int other_coord_bits>
-  explicit Vertex3(const Vector3<other_coord_bits>& other) :
-    Vertex3(other.coords()[0], other.coords()[1], other.coords()[2]) { }
+  explicit Point3(const Vector3<other_coord_bits>& other) :
+    Point3(other.coords()[0], other.coords()[1], other.coords()[2]) { }
 
   template <int other_coord_bits>
-  Vertex3(const Vertex3<other_coord_bits>& other) :
-    Vertex3(other.vector_from_origin()) { }
+  Point3(const Point3<other_coord_bits>& other) :
+    Point3(other.vector_from_origin()) { }
 
   template <int other_coord_bits>
-  Vertex3(const BigInt<other_coord_bits>& x,
+  Point3(const BigInt<other_coord_bits>& x,
           const BigInt<other_coord_bits>& y,
           const BigInt<other_coord_bits>& z) :
     vector_from_origin_(x, y, z) { }
 
-  Vertex3(int x, int y, int z) : vector_from_origin_(x, y, z) { }
+  Point3(int x, int y, int z) : vector_from_origin_(x, y, z) { }
 
   std::array<BigIntRep, 3>& coords() { return vector_from_origin_.coords(); }
 
@@ -71,38 +71,38 @@ class Vertex3 {
   }
 
   template <int other_coord_bits>
-  bool operator == (const Vertex3<other_coord_bits>& other) const {
+  bool operator == (const Point3<other_coord_bits>& other) const {
     return vector_from_origin() == other.vector_from_origin();
   }
 
   template <int other_coord_bits>
-  bool operator != (const Vertex3<other_coord_bits>& other) const {
+  bool operator != (const Point3<other_coord_bits>& other) const {
     return vector_from_origin() != other.vector_from_origin();
   }
 
   template <int other_coord_bits>
   Vector3<std::max(other_coord_bits, coord_bits_template) + 1> operator-(
-      const Vertex3<other_coord_bits>& other) const {
+      const Point3<other_coord_bits>& other) const {
     return vector_from_origin() - other.vector_from_origin();
   }
 
   template <int other_coord_bits>
-  Vertex3<std::max(other_coord_bits, coord_bits_template) + 1> operator+(
+  Point3<std::max(other_coord_bits, coord_bits_template) + 1> operator+(
       const Vector3<other_coord_bits>& other) const {
-    return Vertex3<std::max(other_coord_bits, coord_bits_template) + 1>(
+    return Point3<std::max(other_coord_bits, coord_bits_template) + 1>(
         vector_from_origin() + other);
   }
 
   template <int other_coord_bits>
-  Vertex3<std::max(other_coord_bits, coord_bits_template) + 1> operator-(
+  Point3<std::max(other_coord_bits, coord_bits_template) + 1> operator-(
       const Vector3<other_coord_bits>& other) const {
-    return Vertex3<std::max(other_coord_bits, coord_bits_template) + 1>(
+    return Point3<std::max(other_coord_bits, coord_bits_template) + 1>(
         vector_from_origin() - other);
   }
 
-  Vertex2<coord_bits> DropDimension(int drop_dimension) const {
+  Point2<coord_bits> DropDimension(int drop_dimension) const {
     Vector2<coord_bits> v = vector_from_origin().DropDimension(drop_dimension);
-    return Vertex2<coord_bits>(v.x(), v.y());
+    return Point2<coord_bits>(v.x(), v.y());
   }
 
   // Returns 0 if (p1, `this`, p3) are collinear.
@@ -111,11 +111,11 @@ class Vertex3 {
   // Returns <0 if p3 is clockwise from p1, with `this` as the center point.
   //
   // The calculations are done in 2D by removing (treating it as 0)
-  // `drop_dimension` from the vertex.
+  // `drop_dimension` from the point.
   template <int other_coord_bits>
   BigIntWord Get2DTwistDir(int drop_dimension,
-                           const Vertex3<other_coord_bits>& p1,
-                           const Vertex3<other_coord_bits>& p3) const {
+                           const Point3<other_coord_bits>& p1,
+                           const Point3<other_coord_bits>& p3) const {
     return DropDimension(drop_dimension).GetTwistDir(
         p1.DropDimension(drop_dimension), p3.DropDimension(drop_dimension));
   }
@@ -126,11 +126,11 @@ class Vertex3 {
   // Returns -1 if p3 is clockwise from p1, with `this` as the center point.
   //
   // The calculations are done in 2D by removing (treating it as 0)
-  // `drop_dimension` from the vertex.
+  // `drop_dimension` from the point.
   template <int other_coord_bits>
   int Get2DTwistDirReduced(int drop_dimension,
-                           const Vertex3<other_coord_bits>& p1,
-                           const Vertex3<other_coord_bits>& p3) const {
+                           const Point3<other_coord_bits>& p1,
+                           const Point3<other_coord_bits>& p3) const {
     const BigIntWord twist = Get2DTwistDir(drop_dimension, p1, p3);
     if (twist > 0) {
       return 1;
@@ -146,10 +146,10 @@ class Vertex3 {
 };
 
 template <int coord_bits>
-std::ostream& operator<<(std::ostream& out, const Vertex3<coord_bits>& v) {
+std::ostream& operator<<(std::ostream& out, const Point3<coord_bits>& v) {
   return out << v.vector_from_origin();
 }
 
 }  // walnut
 
-#endif // WALNUT_VERTEX3_H__
+#endif // WALNUT_POINT3_H__

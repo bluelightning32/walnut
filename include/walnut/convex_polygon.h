@@ -5,36 +5,36 @@
 
 #include "walnut/plane.h"
 #include "walnut/plucker_line.h"
-#include "walnut/vertex3.h"
-#include "walnut/vertex4.h"
+#include "walnut/point3.h"
+#include "walnut/point4.h"
 
 namespace walnut {
 
 // A 2D ConvexPolygon inside of R^3. The vertices are stored using homogeneous coordinates.
-template <int vertex3_bits_template = 32>
+template <int point3_bits_template = 32>
 class ConvexPolygon {
  public:
   // Defined in convex_polygon_factory.h
   class Factory;
-  using Vertex3Rep = Vertex3<vertex3_bits_template>;
-  using Vertex4Rep = Vertex4<(vertex3_bits_template - 1)*7 + 10,
-                             (vertex3_bits_template - 1)*6 + 10>;
+  using Point3Rep = Point3<point3_bits_template>;
+  using Point4Rep = Point4<(point3_bits_template - 1)*7 + 10,
+                             (point3_bits_template - 1)*6 + 10>;
   using PlaneRep =
-    typename PlaneFromVertex3Builder<vertex3_bits_template>::PlaneRep;
-  using LineRep = typename PluckerLineFromPlanesFromVertex3sBuilder<
-    vertex3_bits_template>::PluckerLineRep;
+    typename PlaneFromPoint3Builder<point3_bits_template>::PlaneRep;
+  using LineRep = typename PluckerLineFromPlanesFromPoint3sBuilder<
+    point3_bits_template>::PluckerLineRep;
 
   struct VertexInfo {
-    template <int other_vertex3_bits>
-    VertexInfo(const Vertex3<other_vertex3_bits>& vertex,
-               const Vertex3<other_vertex3_bits>& next_vertex) :
+    template <int other_point3_bits>
+    VertexInfo(const Point3<other_point3_bits>& vertex,
+               const Point3<other_point3_bits>& next_vertex) :
       vertex(vertex), edge(vertex, next_vertex) { }
 
     static bool LexicographicallyLt(const VertexInfo& a, const VertexInfo& b) {
-      return Vertex4Rep::LexicographicallyLt(a.vertex, b.vertex);
+      return Point4Rep::LexicographicallyLt(a.vertex, b.vertex);
     }
 
-    Vertex4Rep vertex;
+    Point4Rep vertex;
     // This is the line for the edge that starts at vertex and ends at
     // the next vertex in the cycle.
     //
@@ -45,20 +45,20 @@ class ConvexPolygon {
 
   // The minimum number of bits to support for each coordinate of the vertex3's
   // that the polygon is built from.
-  static constexpr int vertex3_bits = vertex3_bits_template;
+  static constexpr int point3_bits = point3_bits_template;
 
   // The minimum number of bits to support for each of the x, y, and z
   // coordinates for each vertex, after an arbitrary number of splits from
   // planes of the type PlaneRep.
-  static constexpr int vertex4_num_bits = Vertex4Rep::num_bits;
+  static constexpr int point4_num_bits = Point4Rep::num_bits;
   // The minimum number of bits to support the w coordinate for each vertex,
   // after an arbitrary number of splits from planes of the type PlaneRep.
-  static constexpr int vertex4_denom_bits = Vertex4Rep::denom_bits_template;
+  static constexpr int point4_denom_bits = Point4Rep::denom_bits_template;
 
   ConvexPolygon() : plane_(PlaneRep::Zero()), drop_dimension_(-1) { }
 
-  template <int other_vertex3_bits>
-  ConvexPolygon(const ConvexPolygon<other_vertex3_bits>& other) :
+  template <int other_point3_bits>
+  ConvexPolygon(const ConvexPolygon<other_point3_bits>& other) :
     plane_(other.plane_), drop_dimension_(other.drop_dimension_),
     vertices_(other.vertices_) { }
 
@@ -66,7 +66,7 @@ class ConvexPolygon {
     return vertices_.size();
   }
 
-  const Vertex4Rep& vertex(size_t index) const {
+  const Point4Rep& vertex(size_t index) const {
     return vertices_[index].vertex;
   }
 
@@ -88,7 +88,7 @@ class ConvexPolygon {
   size_t GetMinimumIndex() const {
     size_t min = 0;
     for (size_t i = 1; i < vertices_.size(); ++i) {
-      if (Vertex4Rep::LexicographicallyLt(vertex(i), vertex(min))) {
+      if (Point4Rep::LexicographicallyLt(vertex(i), vertex(min))) {
         min = i;
       }
     }
@@ -113,13 +113,13 @@ class ConvexPolygon {
   //    - the vertices are in a cycle. It's okay if the polygon cycles start at
   //      different indices.
   //    - it's okay of the homogenous vertices have a different scale.
-  template <int other_vertex3_bits>
-  bool operator==(const ConvexPolygon<other_vertex3_bits>& other) const;
+  template <int other_point3_bits>
+  bool operator==(const ConvexPolygon<other_point3_bits>& other) const;
 
  private:
-  template <int other_vertex3_bits>
+  template <int other_point3_bits>
   ConvexPolygon(const PlaneRep& plane, int drop_dimension,
-                const std::vector<Vector3<other_vertex3_bits>>& vertices) :
+                const std::vector<Vector3<other_point3_bits>>& vertices) :
     plane_(plane), drop_dimension_(drop_dimension),
     vertices_(vertices.begin(), vertices.end()) { }
 
@@ -136,10 +136,10 @@ class ConvexPolygon {
   std::vector<VertexInfo> vertices_;
 };
 
-template <int vertex3_bits>
-template <int other_vertex3_bits>
-bool ConvexPolygon<vertex3_bits>::operator==(
-    const ConvexPolygon<other_vertex3_bits>& other) const {
+template <int point3_bits>
+template <int other_point3_bits>
+bool ConvexPolygon<point3_bits>::operator==(
+    const ConvexPolygon<other_point3_bits>& other) const {
   if (plane_ != other.plane()) {
     return false;
   }

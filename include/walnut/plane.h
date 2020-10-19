@@ -1,9 +1,9 @@
 #ifndef WALNUT_PLANE_H__
 #define WALNUT_PLANE_H__
 
+#include "walnut/point3.h"
+#include "walnut/point4.h"
 #include "walnut/vector3.h"
-#include "walnut/vertex3.h"
-#include "walnut/vertex4.h"
 
 namespace walnut {
 
@@ -64,10 +64,10 @@ class Plane {
   Plane(const Plane<other_vector_bits, other_dist_bits>& other) :
     Plane(other.normal(), other.d()) { }
 
-  template <int vertex_bits>
-  Plane(const Vertex3<vertex_bits>& p1,
-        const Vertex3<vertex_bits>& p2,
-        const Vertex3<vertex_bits>& p3) :
+  template <int point_bits>
+  Plane(const Point3<point_bits>& p1,
+        const Point3<point_bits>& p2,
+        const Point3<point_bits>& p3) :
     // Use p2 as the center point, because if p1, p2, and p3 are from a polygon
     // with more than 3 points, (p3 - p2) and (p1 - p2) are likely to be
     // shorter than (p2 - p1) and (p3 - p1).
@@ -77,26 +77,26 @@ class Plane {
   // Returns >0 if `v` is in the half space, 0 if `v` is coincident with the
   // plane, or <0 if `v` is outside of the half space.
   template <int v_bits>
-  int Compare(const Vertex3<v_bits>& v) const {
+  int Compare(const Point3<v_bits>& v) const {
     return dist_.Compare(normal_.Dot(v.vector_from_origin()));
   }
 
-  // Returns true if the vertex is on the plane
+  // Returns true if the point is on the plane
   template <int v_bits>
-  bool IsCoincident(const Vertex3<v_bits>& v) const {
+  bool IsCoincident(const Point3<v_bits>& v) const {
     return Compare(v) == 0;
   }
 
   // Returns >0 if `v` is in the half space, 0 if `v` is coincident with the
   // plane, or <0 if `v` is outside of the half space.
   template <int v_num_bits, int v_denom_bits>
-  int Compare(const Vertex4<v_num_bits, v_denom_bits>& v) {
+  int Compare(const Point4<v_num_bits, v_denom_bits>& v) {
     return (v.dist_denom() * dist_).Compare(normal_.Dot(v.vector_from_origin()));
   }
 
   // Returns true if the point is on the plane
   template <int v_num_bits, int v_denom_bits>
-  bool IsCoincident(const Vertex4<v_num_bits, v_denom_bits>& v) const {
+  bool IsCoincident(const Point4<v_num_bits, v_denom_bits>& v) const {
     return Compare(v) == 0;
   }
 
@@ -166,21 +166,21 @@ class Plane {
   DistInt dist_;
 };
 
-// This is a wrapper around the Plane constructor that takes 3 Vertex3's. The
+// This is a wrapper around the Plane constructor that takes 3 Point3's. The
 // only reason to use this wrapper is that it figures out how many bits are
 // necessary in the worst case for the plane numerator and denominator, given
-// the number of bits in each Vertex3.
-template <int vertex3_bits_template = 32>
-class PlaneFromVertex3Builder {
+// the number of bits in each Point3.
+template <int point3_bits_template = 32>
+class PlaneFromPoint3Builder {
  public:
-  using Vertex3Rep = Vertex3<vertex3_bits_template>;
-  using PlaneRep = Plane<(vertex3_bits_template - 1)*2 + 3,
-                         (vertex3_bits_template - 1)*3 + 3>;
+  using Point3Rep = Point3<point3_bits_template>;
+  using PlaneRep = Plane<(point3_bits_template - 1)*2 + 3,
+                         (point3_bits_template - 1)*3 + 3>;
   using VectorInt = typename PlaneRep::VectorInt;
   using DistInt = typename PlaneRep::DistInt;
 
   static constexpr VectorInt normal_component_min() {
-    VectorInt n = Vertex3Rep::BigIntRep::max_value() + VectorInt(1);
+    VectorInt n = Point3Rep::BigIntRep::max_value() + VectorInt(1);
     VectorInt two_n_1 = n + n - BigInt<2>(1);
     return -two_n_1 * two_n_1;
   }
@@ -188,16 +188,16 @@ class PlaneFromVertex3Builder {
     return -normal_component_min();
   }
   static constexpr DistInt dist_min() {
-    DistInt n = Vertex3Rep::BigIntRep::max_value() + DistInt(1);
+    DistInt n = Point3Rep::BigIntRep::max_value() + DistInt(1);
     return normal_component_min() * (n + DistInt(1));
   }
   static constexpr DistInt dist_max() {
     return -dist_min();
   }
 
-  static PlaneRep Build(const Vertex3Rep& p1,
-                        const Vertex3Rep& p2,
-                        const Vertex3Rep& p3) {
+  static PlaneRep Build(const Point3Rep& p1,
+                        const Point3Rep& p2,
+                        const Point3Rep& p3) {
     return PlaneRep(p1, p2, p3);
   }
 };

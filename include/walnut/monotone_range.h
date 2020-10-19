@@ -4,20 +4,20 @@
 #include <iterator>
 
 #include "walnut/concat_range.h"
-#include "walnut/vertex3.h"
+#include "walnut/point3.h"
 
 namespace walnut {
 
 // Represents a monotone piece of an R^3 polygon. The vertices are a contiguous
 // range of a parent polygon (not necessarily monotone). Most of the logic in
 // the class is around finding a monotone range within the parent polygon.
-template <typename Vertex3Iterator>
+template <typename Point3Iterator>
 class MonotoneRange {
  public:
-  using Vertex3Rep = typename std::iterator_traits<Vertex3Iterator>::value_type;
-  using ConcatRangeRep = ConcatRange<Vertex3Iterator>;
+  using Point3Rep = typename std::iterator_traits<Point3Iterator>::value_type;
+  using ConcatRangeRep = ConcatRange<Point3Iterator>;
 
-  // Find the next monotone polygon from an iterator range of `Vertex3Rep`s in
+  // Find the next monotone polygon from an iterator range of `Point3Rep`s in
   // the same plane.
   //
   // Abstractly, given an input list of vertices, all in the same plane, this
@@ -51,8 +51,8 @@ class MonotoneRange {
   //    consider for the monotone polygon. On output, this points to one past
   //    the last vertex to use for the next monotone polygon.
   void Build(int monotone_dimension,
-             Vertex3Iterator& remaining_begin,
-             Vertex3Iterator& remaining_end);
+             Point3Iterator& remaining_begin,
+             Point3Iterator& remaining_end);
 
   // Gets the resulting chains from the last call to `Build`. The next call to
   // `Build` will invalidate the resulting iterators.
@@ -88,8 +88,8 @@ class MonotoneRange {
   //   in the monotone dimension.
   // * -1 if the first vertices of `remaining_begin` are decreasing in the
   //   monotone dimension.
-  static int GetDir(int monotone_dimension, const Vertex3Rep* prev,
-      Vertex3Iterator& remaining_begin, Vertex3Iterator remaining_end);
+  static int GetDir(int monotone_dimension, const Point3Rep* prev,
+      Point3Iterator& remaining_begin, Point3Iterator remaining_end);
 
   // Decrements `remaining_end` as long as the vertices follow `dir` in the
   // monotone dimension. Initially `*remaining_end` is compared against
@@ -102,7 +102,7 @@ class MonotoneRange {
   //
   // On output, `remaining_end` points to the last vertex that was accepted.
   static void FollowDirReverse(int monotone_dimension, int dir,
-      const Vertex3Rep* next, Vertex3Iterator& remaining_end);
+      const Point3Rep* next, Point3Iterator& remaining_end);
 
   // Increments `remaining_begin` as long as the vertices follow `dir` in the
   // monotone dimension. Initially `*remaining_begin` is compared against
@@ -116,7 +116,7 @@ class MonotoneRange {
   // On output, `remaining_begin` points to the first vertex that was not
   // accepted.
   static void FollowDir(int monotone_dimension, int dir,
-      const Vertex3Rep* prev, Vertex3Iterator& remaining_begin);
+      const Point3Rep* prev, Point3Iterator& remaining_begin);
 
   // Increments `remaining_begin` as long as the vertices follow `dir` in the
   // monotone dimension, and they are before `up_to` in the monotone_dimension.
@@ -126,8 +126,8 @@ class MonotoneRange {
   // On output, `remaining_begin` points to the first vertex that was not
   // accepted.
   static void FollowDirUpTo(int monotone_dimension, int dir,
-      const Vertex3Rep* prev, Vertex3Iterator& remaining_begin,
-      const Vertex3Rep* up_to);
+      const Point3Rep* prev, Point3Iterator& remaining_begin,
+      const Point3Rep* up_to);
 
   // Decrements `remaining_end` as long as the vertices follow `dir` in the
   // monotone dimension, and they are before `up_to` in the monotone_dimension.
@@ -141,8 +141,8 @@ class MonotoneRange {
   //
   // On output, `remaining_end` points to the last vertex that was accepted.
   static void FollowDirUpToReverse(int monotone_dimension, int dir,
-      const Vertex3Rep* next, Vertex3Iterator& remaining_end,
-      const Vertex3Rep* up_to);
+      const Point3Rep* next, Point3Iterator& remaining_end,
+      const Point3Rep* up_to);
 
   // 1 if chain1 is increasing in the monotone dimension and chain2 is
   // decreasing in the monotone dimension.
@@ -157,10 +157,10 @@ class MonotoneRange {
   ConcatRangeRep chain2_;
 };
 
-template <typename Vertex3Iterator>
-inline int MonotoneRange<Vertex3Iterator>::GetDir(
-    int monotone_dimension, const Vertex3Rep* prev,
-    Vertex3Iterator& remaining_begin, Vertex3Iterator remaining_end) {
+template <typename Point3Iterator>
+inline int MonotoneRange<Point3Iterator>::GetDir(
+    int monotone_dimension, const Point3Rep* prev,
+    Point3Iterator& remaining_begin, Point3Iterator remaining_end) {
   if (remaining_begin == remaining_end) {
     return 0;
   }
@@ -182,10 +182,10 @@ inline int MonotoneRange<Vertex3Iterator>::GetDir(
          remaining_begin->coords()[monotone_dimension] ? 1 : -1;
 }
 
-template <typename Vertex3Iterator>
-inline void MonotoneRange<Vertex3Iterator>::FollowDirReverse(
-    int monotone_dimension, int dir, const Vertex3Rep* next,
-    Vertex3Iterator& remaining_end) {
+template <typename Point3Iterator>
+inline void MonotoneRange<Point3Iterator>::FollowDirReverse(
+    int monotone_dimension, int dir, const Point3Rep* next,
+    Point3Iterator& remaining_end) {
   while ((next->coords()[monotone_dimension] -
           remaining_end->coords()[monotone_dimension]).GetSign() * dir >= 0) {
     next = &*remaining_end;
@@ -197,10 +197,10 @@ inline void MonotoneRange<Vertex3Iterator>::FollowDirReverse(
   // Now remaining_end is the last vertex accepted in the above loop.
 }
 
-template <typename Vertex3Iterator>
-inline void MonotoneRange<Vertex3Iterator>::FollowDir(
-    int monotone_dimension, int dir, const Vertex3Rep* prev,
-    Vertex3Iterator& remaining_begin) {
+template <typename Point3Iterator>
+inline void MonotoneRange<Point3Iterator>::FollowDir(
+    int monotone_dimension, int dir, const Point3Rep* prev,
+    Point3Iterator& remaining_begin) {
   while ((remaining_begin->coords()[monotone_dimension] -
           prev->coords()[monotone_dimension]).GetSign() * dir >= 0) {
     prev = &*remaining_begin;
@@ -208,10 +208,10 @@ inline void MonotoneRange<Vertex3Iterator>::FollowDir(
   }
 }
 
-template <typename Vertex3Iterator>
-inline void MonotoneRange<Vertex3Iterator>::FollowDirUpTo(
-    int monotone_dimension, int dir, const Vertex3Rep* prev,
-    Vertex3Iterator& remaining_begin, const Vertex3Rep* up_to) {
+template <typename Point3Iterator>
+inline void MonotoneRange<Point3Iterator>::FollowDirUpTo(
+    int monotone_dimension, int dir, const Point3Rep* prev,
+    Point3Iterator& remaining_begin, const Point3Rep* up_to) {
   while ((up_to->coords()[monotone_dimension] -
           remaining_begin->coords()[monotone_dimension]).GetSign() * dir > 0 &&
          (remaining_begin->coords()[monotone_dimension] -
@@ -221,10 +221,10 @@ inline void MonotoneRange<Vertex3Iterator>::FollowDirUpTo(
   }
 }
 
-template <typename Vertex3Iterator>
-inline void MonotoneRange<Vertex3Iterator>::FollowDirUpToReverse(
-    int monotone_dimension, int dir, const Vertex3Rep* next,
-    Vertex3Iterator& remaining_end, const Vertex3Rep* up_to) {
+template <typename Point3Iterator>
+inline void MonotoneRange<Point3Iterator>::FollowDirUpToReverse(
+    int monotone_dimension, int dir, const Point3Rep* next,
+    Point3Iterator& remaining_end, const Point3Rep* up_to) {
   while ((next->coords()[monotone_dimension] -
           remaining_end->coords()[monotone_dimension]).GetSign() * dir >= 0 &&
          (remaining_end->coords()[monotone_dimension] -
@@ -238,22 +238,22 @@ inline void MonotoneRange<Vertex3Iterator>::FollowDirUpToReverse(
   // Now remaining_end is the last vertex accepted in the above loop.
 }
 
-template <typename Vertex3Iterator>
-inline void MonotoneRange<Vertex3Iterator>::Build(
-    int monotone_dimension, Vertex3Iterator& remaining_begin,
-    Vertex3Iterator& remaining_end) {
+template <typename Point3Iterator>
+inline void MonotoneRange<Point3Iterator>::Build(
+    int monotone_dimension, Point3Iterator& remaining_begin,
+    Point3Iterator& remaining_end) {
   chain1_.Clear();
   chain2_.Clear();
   if (remaining_begin == remaining_end) {
     chain_dir_ = 0;
     return;
   }
-  Vertex3Iterator range_end = remaining_end;
+  Point3Iterator range_end = remaining_end;
   --remaining_end;
 
   // Step 1. determine chain_dir_.
-  Vertex3Iterator range_begin = remaining_begin;
-  chain_dir_ = MonotoneRange<Vertex3Iterator>::GetDir(monotone_dimension, /*prev=*/&*remaining_end, remaining_begin, remaining_end);
+  Point3Iterator range_begin = remaining_begin;
+  chain_dir_ = MonotoneRange<Point3Iterator>::GetDir(monotone_dimension, /*prev=*/&*remaining_end, remaining_begin, remaining_end);
   if (chain_dir_ == 0) {
     // All of the vertices are collinear.
     chain1_.Append(range_begin, range_end);
@@ -272,7 +272,7 @@ inline void MonotoneRange<Vertex3Iterator>::Build(
     if (remaining_end != range_begin) {
       // Only random access iterators have a +n operator. To support
       // bidirectional iterators, use ++ with a temporary iterator instead.
-      Vertex3Iterator temp = range_begin;
+      Point3Iterator temp = range_begin;
       ++temp;
       chain2_.Append(range_begin, temp);
     }
@@ -292,7 +292,7 @@ inline void MonotoneRange<Vertex3Iterator>::Build(
   // Keep accepting vertices from the end of the input range while they
   // continue to increase/decrease (depending on dir) relative to the next
   // vertex.
-  Vertex3Rep* next = &*remaining_end;
+  Point3Rep* next = &*remaining_end;
   --remaining_end;
   FollowDirReverse(monotone_dimension, /*dir=*/chain_dir_, next, remaining_end);
   // remaining_end points to the last vertex accepted by FollowDirReverse.
@@ -307,7 +307,7 @@ inline void MonotoneRange<Vertex3Iterator>::Build(
   // Keep accepting vertices from the beginning of the input range while they
   // continue to increase/decrease (depending on dir) relative to the previous
   // vertex.
-  Vertex3Rep* prev = &*remaining_begin;
+  Point3Rep* prev = &*remaining_begin;
   ++remaining_begin;
   FollowDir(monotone_dimension, /*dir=*/chain_dir_, prev, remaining_begin);
   // At this point remaining_begin is the first vertex not accepted for the end
@@ -349,7 +349,7 @@ inline void MonotoneRange<Vertex3Iterator>::Build(
   ++range_end;
   next = &*remaining_end;
   --remaining_end;
-  Vertex3Iterator last_accepted = remaining_begin;
+  Point3Iterator last_accepted = remaining_begin;
   --last_accepted;
   FollowDirUpToReverse(monotone_dimension, /*dir=*/-chain_dir_, next, remaining_end,
                        /*up_to=*/&*last_accepted);
@@ -370,8 +370,8 @@ inline void MonotoneRange<Vertex3Iterator>::Build(
   }
 }
 
-template <typename Vertex3Iterator>
-inline void MonotoneRange<Vertex3Iterator>::GetChains(
+template <typename Point3Iterator>
+inline void MonotoneRange<Point3Iterator>::GetChains(
     typename ConcatRangeRep::const_iterator& chain1_start,
     typename ConcatRangeRep::const_iterator& chain1_end,
     typename ConcatRangeRep::const_reverse_iterator& chain2_begin,

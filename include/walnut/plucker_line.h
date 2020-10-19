@@ -2,8 +2,8 @@
 #define WALNUT_PLUCKER_LINE_H__
 
 #include "walnut/plane.h"
+#include "walnut/point3.h"
 #include "walnut/vector3.h"
-#include "walnut/vertex3.h"
 
 namespace walnut {
 
@@ -69,9 +69,9 @@ class PluckerLine {
   PluckerLine(const PluckerLine<other_d_bits, other_m_bits>& other) :
     PluckerLine(other.d(), other.m()) { }
 
-  template <int vertex_bits>
-  PluckerLine(const Vertex3<vertex_bits>& p1,
-              const Vertex3<vertex_bits>& p2) :
+  template <int point_bits>
+  PluckerLine(const Point3<point_bits>& p1,
+              const Point3<point_bits>& p2) :
     d_(p2 - p1), m_(p1.vector_from_origin().Cross(p2.vector_from_origin())) { }
 
   // Constructs the line for the intersection of the two planes, `a` and `b`.
@@ -107,26 +107,26 @@ class PluckerLine {
        MVector::BigIntRep::Determinant(-a.d(), a.y(), -b.d(), b.y()),
        MVector::BigIntRep::Determinant(-a.d(), a.z(), -b.d(), b.z())) { }
 
-  // Returns true if `v` is on the line.
+  // Returns true if `p` is on the line.
   template <int v_bits>
-  bool IsOnLine(const Vertex3<v_bits>& v) const {
+  bool IsOnLine(const Point3<v_bits>& p) const {
     /*
-     * v x (v + d) == m
-     * v x v + v x d == m
-     * v x d == m
+     * p x (p + d) == m
+     * p x p + p x d == m
+     * p x d == m
      */
-    return v.vector_from_origin().Cross(d_) == m();
+    return p.vector_from_origin().Cross(d_) == m();
   }
 
-  // Returns true if `v` is on the line.
+  // Returns true if `p` is on the line.
   template <int num_bits, int denom_bits>
-  bool IsOnLine(const Vertex4<num_bits, denom_bits>& v) const {
+  bool IsOnLine(const Point4<num_bits, denom_bits>& p) const {
     /*
-     * v x (v + v.dist*d) == m
-     * v x v + v x (v.dist*d) == m
-     * v x (v.dist*d) == m
+     * p x (p + p.dist*d) == m
+     * p x p + p x (p.dist*d) == m
+     * p x (p.dist*d) == m
      */
-    return v.vector_from_origin().Cross(d_ * v.dist_denom()) == m();
+    return p.vector_from_origin().Cross(d_ * p.dist_denom()) == m();
   }
 
   // Returns true when the lines match
@@ -176,13 +176,13 @@ class PluckerLine {
   }
 
   template <int vector_bits, int dist_bits>
-  Vertex4<std::max(vector_bits + m_bits, d_bits + dist_bits) + 1,
+  Point4<std::max(vector_bits + m_bits, d_bits + dist_bits) + 1,
           vector_bits + d_bits + 1>
   Intersect(const Plane<vector_bits, dist_bits>& p) const {
     auto vector = p.normal().Cross(m()) + d().Scale(p.d());
     auto w = p.normal().Dot(d());
-    return Vertex4<decltype(vector)::coord_bits, decltype(w)::bits>(
-                       /*p=*/Vertex3<decltype(vector)::coord_bits>(vector),
+    return Point4<decltype(vector)::coord_bits, decltype(w)::bits>(
+                       /*p=*/Point3<decltype(vector)::coord_bits>(vector),
                        w);
   }
 
@@ -191,21 +191,21 @@ class PluckerLine {
   MVector m_;
 };
 
-// This is a wrapper around the PluckerLine constructor that takes 2 Vertex3's.
+// This is a wrapper around the PluckerLine constructor that takes 2 Point3's.
 // The only reason to use this wrapper is that it figures out how many bits are
 // necessary in the worst case for the PluckerLine d and m vector components,
-// given the number of bits in each Vertex3.
-template <int vertex3_bits_template = 32>
-class PluckerLineFromVertex3sBuilder {
+// given the number of bits in each Point3.
+template <int point3_bits_template = 32>
+class PluckerLineFromPoint3sBuilder {
  public:
-  using Vertex3Rep = Vertex3<vertex3_bits_template>;
-  using PluckerLineRep = PluckerLine<vertex3_bits_template + 1,
-                                     (vertex3_bits_template - 1)*2 + 2>;
+  using Point3Rep = Point3<point3_bits_template>;
+  using PluckerLineRep = PluckerLine<point3_bits_template + 1,
+                                     (point3_bits_template - 1)*2 + 2>;
   using DInt = typename PluckerLineRep::DVector::BigIntRep;
   using MInt = typename PluckerLineRep::MVector::BigIntRep;
 
   static constexpr DInt d_component_min() {
-    DInt n = Vertex3Rep::BigIntRep::max_value() + DInt(1);
+    DInt n = Point3Rep::BigIntRep::max_value() + DInt(1);
     DInt two_n_1 = n + n - BigInt<2>(1);
     return -two_n_1;
   }
@@ -213,14 +213,14 @@ class PluckerLineFromVertex3sBuilder {
     return -d_component_min();
   }
   static constexpr MInt m_component_min() {
-    MInt n = Vertex3Rep::BigIntRep::max_value() + MInt(1);
+    MInt n = Point3Rep::BigIntRep::max_value() + MInt(1);
     return d_component_min() * n;
   }
   static constexpr MInt m_component_max() {
     return -m_component_min();
   }
 
-  static PluckerLineRep Build(const Vertex3Rep& p1, const Vertex3Rep& p2) {
+  static PluckerLineRep Build(const Point3Rep& p1, const Point3Rep& p2) {
     return PluckerLineRep(p1, p2);
   }
 };
@@ -229,22 +229,22 @@ class PluckerLineFromVertex3sBuilder {
 // The only reason to use this wrapper is that it figures out how many bits are
 // necessary in the worst case for the PluckerLine d and m vector components,
 // given that the Plane components are all within the bounds defined by
-// PlaneFromVertex3Builder<vertex3_bits>.
-template <int vertex3_bits_template = 32>
-class PluckerLineFromPlanesFromVertex3sBuilder {
+// PlaneFromPoint3Builder<point3_bits>.
+template <int point3_bits_template = 32>
+class PluckerLineFromPlanesFromPoint3sBuilder {
  public:
-  static_assert(vertex3_bits_template >= 3,
-      "The bit formulas are only correct for vertex3_bits_template >= 3");
-  using Vertex3Rep = Vertex3<vertex3_bits_template>;
-  using PlaneBuilder = PlaneFromVertex3Builder<vertex3_bits_template>;
+  static_assert(point3_bits_template >= 3,
+      "The bit formulas are only correct for point3_bits_template >= 3");
+  using Point3Rep = Point3<point3_bits_template>;
+  using PlaneBuilder = PlaneFromPoint3Builder<point3_bits_template>;
   using PlaneRep = typename PlaneBuilder::PlaneRep;
-  using PluckerLineRep = PluckerLine<(vertex3_bits_template - 1)*4 + 6,
-                                     (vertex3_bits_template - 1)*5 + 6>;
+  using PluckerLineRep = PluckerLine<(point3_bits_template - 1)*4 + 6,
+                                     (point3_bits_template - 1)*5 + 6>;
   using DInt = typename PluckerLineRep::DVector::BigIntRep;
   using MInt = typename PluckerLineRep::MVector::BigIntRep;
 
   static constexpr DInt d_component_min() {
-    DInt n = Vertex3Rep::BigIntRep::max_value() + DInt(1);
+    DInt n = Point3Rep::BigIntRep::max_value() + DInt(1);
     DInt two_n_1 = n + n - BigInt<2>(1);
     return -two_n_1*two_n_1*two_n_1*two_n_1*DInt(2);
   }
@@ -252,7 +252,7 @@ class PluckerLineFromPlanesFromVertex3sBuilder {
     return -d_component_min();
   }
   static constexpr MInt m_component_min() {
-    MInt n = Vertex3Rep::BigIntRep::max_value() + MInt(1);
+    MInt n = Point3Rep::BigIntRep::max_value() + MInt(1);
     return d_component_min() * (n + MInt(1));
   }
   static constexpr MInt m_component_max() {
