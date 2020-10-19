@@ -131,8 +131,10 @@ class PluckerLine {
 
   // Returns true when the lines match
   //
-  // Two plucker lines are still considered equal if they describe the same set
-  // of lines. Notably the lines may have different common scale factors.
+  // Two plucker lines are considered equal if they describe the same set
+  // of points. Notably the lines may have a different common scale factors.
+  // The lines are considered equal even if their directions are opposite
+  // (one scale factor is negative).
   template <int other_d_bits, int other_m_bits>
   bool operator==(const PluckerLine<other_d_bits, other_m_bits>& other) const {
     using OtherDVector =

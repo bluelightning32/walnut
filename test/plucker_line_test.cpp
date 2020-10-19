@@ -75,6 +75,39 @@ TEST(PluckerLine, ConstructFromPlanes) {
   EXPECT_TRUE(line_from_planes.IsOnLine(p2));
 }
 
+TEST(PluckerLine, ConstructFromPlanesOrientation) {
+  const Point3<> p1(1, 2, 3);
+  const Point3<> p2(5, 7, 11);
+  const Point3<> p3(5, 7, 12);
+  const Point3<> p4(6, 7, 11);
+
+  HalfSpace3<> a(p1, p2, p3);
+  HalfSpace3<> b(p1, p2, p4);
+  HalfSpace3<> neg_a(a);
+  HalfSpace3<> neg_b(b);
+  neg_a.Negate();
+  neg_b.Negate();
+
+  const PluckerLine<> line_a_b(a, b);
+  const PluckerLine<> line_neg_a_b(neg_a, b);
+  const PluckerLine<> line_a_neg_b(a, neg_b);
+  const PluckerLine<> line_neg_a_neg_b(neg_a, neg_b);
+  const PluckerLine<> line_b_a(b, a);
+
+  auto d = line_a_b.d();
+  auto neg_d = line_a_b.d();
+  neg_d.Negate();
+
+  // Even lines with opposite directions are considered equal.
+  EXPECT_EQ(line_a_b, line_neg_a_b);
+
+  EXPECT_EQ(line_a_b.d(), d);
+  EXPECT_EQ(line_neg_a_b.d(), neg_d);
+  EXPECT_EQ(line_a_neg_b.d(), neg_d);
+  EXPECT_EQ(line_neg_a_neg_b.d(), d);
+  EXPECT_EQ(line_b_a.d(), neg_d);
+}
+
 TEST(PluckerLine, FromPlanesDirection) {
   const Point3<> p1(1, 2, 3);
   const Point3<> p2(5, 7, 11);
