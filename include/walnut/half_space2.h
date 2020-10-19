@@ -1,6 +1,7 @@
 #ifndef WALNUT_HALF_SPACE2_H__
 #define WALNUT_HALF_SPACE2_H__
 
+#include "walnut/homo_point2.h"
 #include "walnut/point2.h"
 #include "walnut/vector2.h"
 
@@ -75,6 +76,19 @@ class HalfSpace2 {
   // Returns true if the point is on the line
   template <int v_bits>
   bool IsCoincident(const Point2<v_bits>& v) const {
+    return Compare(v) == 0;
+  }
+
+  // Returns >0 if `v` is in the half-space, 0 if `v` is coincident with the
+  // plane, or <0 if `v` is outside of the half-space.
+  template <int v_num_bits, int v_denom_bits>
+  int Compare(const HomoPoint2<v_num_bits, v_denom_bits>& v) {
+    return (v.dist_denom() * dist_).Compare(normal_.Dot(v.vector_from_origin()));
+  }
+
+  // Returns true if the point is on the plane
+  template <int v_num_bits, int v_denom_bits>
+  bool IsCoincident(const HomoPoint2<v_num_bits, v_denom_bits>& v) const {
     return Compare(v) == 0;
   }
 
