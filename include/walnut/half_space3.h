@@ -77,8 +77,8 @@ class HalfSpace3 {
     normal_((p3 - p2).Cross(p1 - p2)),
     dist_(normal_.Dot(p2.vector_from_origin())) { }
 
-  // Returns >0 if `v` is in the half space, 0 if `v` is coincident with the
-  // plane, or <0 if `v` is outside of the half space.
+  // Returns >0 if `v` is in the half-space, 0 if `v` is coincident with the
+  // plane, or <0 if `v` is outside of the half-space.
   template <int v_bits>
   int Compare(const Point3<v_bits>& v) const {
     return dist_.Compare(normal_.Dot(v.vector_from_origin()));
@@ -90,8 +90,8 @@ class HalfSpace3 {
     return Compare(v) == 0;
   }
 
-  // Returns >0 if `v` is in the half space, 0 if `v` is coincident with the
-  // plane, or <0 if `v` is outside of the half space.
+  // Returns >0 if `v` is in the half-space, 0 if `v` is coincident with the
+  // plane, or <0 if `v` is outside of the half-space.
   template <int v_num_bits, int v_denom_bits>
   int Compare(const HomoPoint3<v_num_bits, v_denom_bits>& v) {
     return (v.dist_denom() * dist_).Compare(normal_.Dot(v.vector_from_origin()));

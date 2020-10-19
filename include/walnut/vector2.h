@@ -130,6 +130,25 @@ class Vector2 {
     return coords_[0] == 0 && coords_[1] == 0;
   }
 
+  // This can overflow.
+  //
+  // It is up to the caller to ensure there is enough bitspace.
+  Vector2 GetPerpendicular() const {
+    return Vector2(y(), -x());
+  }
+
+  // Verifies the fields are in their supported ranges.
+  //
+  // The BigInts can sometimes internally support a larger range than what is
+  // requested in the template parameters. This function returns true if all of
+  // the fields are in their supported range.
+  //
+  // This function exists for testing purposes. It should always return true.
+  bool IsValidState() const {
+    return coords_[0].IsValidState() &&
+           coords_[1].IsValidState();
+  }
+
  private:
   std::array<BigIntRep, 2> coords_;
 };
