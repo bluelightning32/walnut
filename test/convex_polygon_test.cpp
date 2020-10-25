@@ -326,4 +326,24 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesBisect) {
   }
 }
 
+TEST(ConvexPolygon, GetGreaterCycleIndex) {
+  Point3<32> input[] = {
+    Point3<32>(0, 0, 10),
+    Point3<32>(0, 1, 10),
+    Point3<32>(1, 1, 10),
+    Point3<32>(1, 0, 10),
+  };
+
+  ConvexPolygon<32> polygon = MakeConvexPolygon(input);
+
+  for (int a = 0; a < polygon.vertices().size(); ++a) {
+    for (int b = 0; b < polygon.vertices().size(); ++b) {
+      size_t ret = polygon.GetGreaterCycleIndex(a, b);
+      EXPECT_GE(ret, a);
+      EXPECT_LT(ret, a + polygon.vertices().size());
+      EXPECT_EQ(ret % polygon.vertices().size(), b);
+    }
+  }
+}
+
 }  // walnut

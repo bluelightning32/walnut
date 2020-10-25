@@ -144,7 +144,19 @@ class ConvexPolygon {
   // direction.
   template <int vector_bits>
   std::pair<size_t, size_t> GetOppositeEdgeIndicesBisect(
-      const Vector2<vector_bits>& v, int drop_dimension);
+      const Vector2<vector_bits>& v, int drop_dimension) const;
+
+  // Returns an index into vertices() such that:
+  //   a <= ret < a + vertices.size()
+  // and:
+  //   ret % vertices().size() == b % vertices.size()
+  //
+  // This precondition must be true:
+  //   b + vertices.size >= a
+  constexpr size_t GetGreaterCycleIndex(size_t a, size_t b) const {
+    assert(b + vertices().size() >= a);
+    return a + (b - a + vertices().size())%vertices().size();
+  }
 
  private:
   template <int other_point3_bits>
@@ -197,7 +209,7 @@ template <int point3_bits>
 template <int vector_bits>
 std::pair<size_t, size_t>
 ConvexPolygon<point3_bits>::GetOppositeEdgeIndicesBisect(
-    const Vector2<vector_bits>& v, int drop_dimension) {
+    const Vector2<vector_bits>& v, int drop_dimension) const {
   int initial_dir_sign = vertices()[0].edge.d().DropDimension(drop_dimension)
                                       .Dot(v).GetSign();
   if (initial_dir_sign == 0) {
