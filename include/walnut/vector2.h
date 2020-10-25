@@ -145,6 +145,14 @@ class Vector2 {
     return Vector2(y(), x());
   }
 
+  // This function could potentially overflow. The caller must ensure there is
+  // sufficient bitspace.
+  void Negate() {
+    for (BigIntRep& coord : coords_) {
+      coord.Negate();
+    }
+  }
+
   // Verifies the fields are in their supported ranges.
   //
   // The BigInts can sometimes internally support a larger range than what is

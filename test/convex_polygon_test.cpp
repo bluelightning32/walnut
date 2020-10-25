@@ -252,4 +252,78 @@ TEST(ConvexPolygon, RedundantEdges) {
   }
 }
 
+TEST(ConvexPolygon, GetOppositeEdgeIndicesBisectStartPerp) {
+  // Test GetOppositeEdgeIndicesBisect on a convex polygon where the 0th edge
+  // is perpendicular to the vector, and there are a few collinear edges around
+  // the 0th edge.
+
+  //
+  // p[1] <- p[0] <- p[7] <- p[6]
+  //                                ^
+  //  |                       ^     | vector
+  //  v                       |     |
+  //
+  // p[2] -> p[3] -> p[4] -> p[5]
+  Point3<32> p[] = {
+    /*p[0]=*/Point3<32>(1, 1, 10),
+    /*p[1]=*/Point3<32>(0, 1, 10),
+    /*p[2]=*/Point3<32>(0, 0, 10),
+    /*p[3]=*/Point3<32>(1, 0, 10),
+    /*p[4]=*/Point3<32>(2, 0, 10),
+    /*p[5]=*/Point3<32>(3, 0, 10),
+    /*p[6]=*/Point3<32>(3, 1, 10),
+    /*p[7]=*/Point3<32>(2, 1, 10),
+  };
+  ConvexPolygon<32> polygon = MakeConvexPolygon(p);
+
+  Vector2<> vector(0, 1);
+  std::pair<size_t, size_t> opp_edges = polygon.GetOppositeEdgeIndicesBisect(
+      vector, /*drop_dimension=*/2);
+
+  EXPECT_GT(polygon.vertices()[opp_edges.first].edge.d().DropDimension(2)
+                   .Dot(vector), 0);
+  EXPECT_LT(polygon.vertices()[opp_edges.second].edge.d().DropDimension(2)
+                   .Dot(vector), 0);
+
+  vector.Negate();
+  opp_edges = polygon.GetOppositeEdgeIndicesBisect(vector,
+                                                   /*drop_dimension=*/2);
+  EXPECT_GT(polygon.vertices()[opp_edges.first].edge.d().DropDimension(2)
+                   .Dot(vector), 0);
+  EXPECT_LT(polygon.vertices()[opp_edges.second].edge.d().DropDimension(2)
+                   .Dot(vector), 0);
+}
+
+TEST(ConvexPolygon, GetOppositeEdgeIndicesBisect) {
+  //
+  // p[99] <- ... <- p[2] <- p[1]
+  //
+  //  \                     /     <-- vector
+  //   ----       ----------
+  //       \     /
+  //         p[0]
+  Point3<32> p[100] = {
+    /*p[0]=*/Point3<32>(1, 0, 10),
+  };
+
+  for (int i = 1; i < 100; ++i) {
+    p[i] = Point3<32>(99 - i, 1, 10);
+  }
+
+  const Vector2<> vector(-1, 0);
+  for (size_t offset = 0; offset < sizeof(p)/sizeof(p[0]); ++offset) {
+    ConvexPolygon<32> polygon = MakeConvexPolygon(p);
+
+    std::pair<size_t, size_t> opp_edges = polygon.GetOppositeEdgeIndicesBisect(
+        vector, /*drop_dimension=*/2);
+
+    EXPECT_GT(polygon.vertices()[opp_edges.first].edge.d().DropDimension(2)
+                     .Dot(vector), 0);
+    EXPECT_LT(polygon.vertices()[opp_edges.second].edge.d().DropDimension(2)
+                     .Dot(vector), 0);
+
+    std::rotate(std::begin(p), std::begin(p) + 1, std::end(p));
+  }
+}
+
 }  // walnut

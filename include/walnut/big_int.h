@@ -214,6 +214,10 @@ class BigInt {
     return rep_.GetSign();
   }
 
+  constexpr bool IsZero() const {
+    return GetSign() == 0;
+  }
+
   template <int other_bits>
   constexpr bool HasSameSign(const BigInt<other_bits>& other) const {
     return rep_.HasSameSign(other.rep_);

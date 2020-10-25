@@ -2,6 +2,7 @@
 #define WALNUT_CONVEX_POLYGON_H__
 
 #include <vector>
+#include <utility>
 
 #include "walnut/half_space3.h"
 #include "walnut/homo_point3.h"
@@ -116,6 +117,35 @@ class ConvexPolygon {
   template <int other_point3_bits>
   bool operator==(const ConvexPolygon<other_point3_bits>& other) const;
 
+  // Returns the source index of an edge pointing in roughly the same direction
+  // as `v` and one pointing in the roughly opposite direction, using a binary
+  // search.
+  //
+  // This function projects all of the vertices to 2D by dropping the
+  // `drop_dimension`. That's why the input vector is a `Vector2`.
+  // `drop_dimension` must refer to a non-zero component of the plane normal.
+  //
+  // For the purposes of this function, any edge is considered to point in
+  // roughly the same direction as v, perpendicular to v, or roughly the
+  // opposite direction as v. These 3 cases are defined as edge dot v being
+  // greater than 0, equal to 0, or less than 0.
+  //
+  // This function returns edge source indices. An edge is defined by a source
+  // and target vertex. An edge source index is the index of the source vertex.
+  //
+  // The bisect part of the function name refers to how this function uses a
+  // binary search to find the edges. This algorithm is good for ConvexPolgyons
+  // with many vertices, but a regular linear search is faster for
+  // ConvexPolygons with fewer vertices (roughly 5 or fewer vertices).
+  //
+  // The first element in the returned pair is the source index for an edge
+  // pointing in roughly the same direction as `v`. The second element in the
+  // pair is the edge source index for an edge pointing in roughly the opposite
+  // direction.
+  template <int vector_bits>
+  std::pair<size_t, size_t> GetOppositeEdgeIndicesBisect(
+      const Vector2<vector_bits>& v, int drop_dimension);
+
  private:
   template <int other_point3_bits>
   ConvexPolygon(const HalfSpace3Rep& plane, int drop_dimension,
@@ -161,6 +191,78 @@ bool ConvexPolygon<point3_bits>::operator==(
     }
   }
   return true;
+}
+
+template <int point3_bits>
+template <int vector_bits>
+std::pair<size_t, size_t>
+ConvexPolygon<point3_bits>::GetOppositeEdgeIndicesBisect(
+    const Vector2<vector_bits>& v, int drop_dimension) {
+  int initial_dir_sign = vertices()[0].edge.d().DropDimension(drop_dimension)
+                                      .Dot(v).GetSign();
+  if (initial_dir_sign == 0) {
+    // The 0th edge is perpendicular to `v`. Find the first non-perpendicular
+    // edge before and after `v`.
+    int before = vertices().size() - 1;
+    int before_sign;
+    while (true) {
+      // A well formed ConvexPolygon with a valid drop_dimension should always
+      // find a match.
+      assert(before > 0);
+      before_sign = vertices()[before].edge.d().DropDimension(drop_dimension)
+                                      .Dot(v).GetSign();
+      if (before_sign != 0) break;
+      --before;
+    }
+    int after = 1;
+    while (vertices()[after].edge.d().DropDimension(drop_dimension)
+                            .Dot(v).IsZero()) {
+      assert(after < vertices().size());
+      ++after;
+    }
+    assert(before_sign != 0);
+    // Return same dir first then opposite dir.
+    if (before_sign > 0) {
+      return std::make_pair(before, after);
+    } else {
+      return std::make_pair(after, before);
+    }
+  }
+  // Copy `v` into `v_flipped` and negate `v_flipped` as necessary such that it
+  // roughly points in the same direction as the 0th edge.
+  bool flipped = initial_dir_sign < 0;
+  Vector2<vector_bits> v_flipped = v;
+  if (flipped) v_flipped.Negate();
+  auto initial_dist = vertices()[0].vertex.vector_from_origin()
+                                   .DropDimension(drop_dimension)
+                                   .Dot(v_flipped);
+
+  // Current range being considered by the binary search. The range includes
+  // the begin side but excludes the end side.
+  size_t begin = 1;
+  size_t end = vertices().size();
+
+  while (true) {
+    size_t mid = (begin + end) / 2;
+    if (vertices()[mid].edge.d().DropDimension(drop_dimension)
+                       .Dot(v_flipped).GetSign() < 0) {
+      if (flipped) {
+        return std::make_pair(mid, 0);
+      } else {
+        return std::make_pair(0, mid);
+      }
+    }
+    auto dist = vertices()[mid].vertex.vector_from_origin()
+                               .DropDimension(drop_dimension).Dot(v_flipped);
+    // This check works as long as there are no duplicate vertices in the
+    // polygon. Coincident vertices are okay.
+    assert (dist != initial_dist);
+    if (dist < initial_dist) {
+      begin = mid + 1;
+    } else {
+      end = mid;
+    }
+  }
 }
 
 }  // walnut
