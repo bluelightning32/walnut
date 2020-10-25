@@ -158,6 +158,27 @@ class ConvexPolygon {
     return a + (b - a + vertices().size())%vertices().size();
   }
 
+  // Returns the index of the vertex that is farthest in the `v` direction
+  // using a binary search.
+  //
+  // This function projects all of the vertices to 2D by dropping the
+  // `drop_dimension`. That's why the input vector is a `Vector2`.
+  // `drop_dimension` must refer to a non-zero component of the plane normal.
+  //
+  // The furthest vertex is the one whose vector from the origin has the
+  // greatest dot product with `v`. If is a tie for vertex with the furthest
+  // distance, then the lowest index is returned. If there is a tie between the
+  // last vertex in the list and the 0th vertex, then the last vertex is
+  // considered to have the lower index.
+  //
+  // The bisect part of the function name refers to how this function uses a
+  // binary search to find the edges. This algorithm is good for ConvexPolgyons
+  // with many vertices, but a regular linear search is faster for
+  // ConvexPolygons with fewer vertices (roughly 10 or fewer vertices).
+  template <int vector_bits>
+  size_t GetExtremeIndexBisect(const Vector2<vector_bits>& v,
+                               int drop_dimension) const;
+
  private:
   template <int other_point3_bits>
   ConvexPolygon(const HalfSpace3Rep& plane, int drop_dimension,
@@ -275,6 +296,36 @@ ConvexPolygon<point3_bits>::GetOppositeEdgeIndicesBisect(
       end = mid;
     }
   }
+}
+
+template <int point3_bits>
+template <int vector_bits>
+size_t ConvexPolygon<point3_bits>::GetExtremeIndexBisect(
+    const Vector2<vector_bits>& v, int drop_dimension) const {
+  std::pair<size_t, size_t> dir_indices =
+    GetOppositeEdgeIndicesBisect(v, drop_dimension);
+
+  // Current range being considered by the binary search. The range excludes
+  // the begin side but includes the end side.
+  //
+  // INVARIANT: begin is the source index of an edge that points in roughly the
+  // same direction as `v`.
+  // INVARIANT: end is the source index of an edge that points in roughly the
+  // opposite direction as `v` or perpendicular.
+  size_t begin = dir_indices.first;
+  size_t end = GetGreaterCycleIndex(begin, dir_indices.second);
+
+  while (begin + 1 < end) {
+    size_t mid = (begin + end) / 2;
+    if (vertices()[mid % vertices().size()].edge.d()
+                                           .DropDimension(drop_dimension)
+                                           .Dot(v).GetSign() > 0) {
+      begin = mid;
+    } else {
+      end = mid;
+    }
+  }
+  return end % vertices().size();
 }
 
 }  // walnut

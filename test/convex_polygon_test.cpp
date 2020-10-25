@@ -346,4 +346,82 @@ TEST(ConvexPolygon, GetGreaterCycleIndex) {
   }
 }
 
+TEST(ConvexPolygon, CounterClockwiseSquareGetExtremeIndexBisect) {
+  // p[3] <- p[2]
+  //  |       ^
+  //  v       |
+  // p[0] -> p[1]
+  Point3<32> p[] = {
+    Point3<32>(0, 0, 10),
+    Point3<32>(1, 0, 10),
+    Point3<32>(1, 1, 10),
+    Point3<32>(0, 1, 10),
+  };
+
+  ConvexPolygon<32> polygon = MakeConvexPolygon(p);
+
+  Vector2<> to_corner[] = {
+    Vector2<>(-1, -1),
+    Vector2<>(1, -1),
+    Vector2<>(1, 1),
+    Vector2<>(-1, 1),
+  };
+
+  for (int i = 0; i < 4; ++i) {
+    EXPECT_EQ(polygon.GetExtremeIndexBisect(to_corner[i],
+                                            /*drop_dimension=*/2), i);
+  }
+
+  Vector2<> along_edges[] = {
+    Vector2<>(0, -1),
+    Vector2<>(1, 0),
+    Vector2<>(0, 1),
+    Vector2<>(-1, 0),
+  };
+
+  for (int i = 0; i < 4; ++i) {
+    EXPECT_EQ(polygon.GetExtremeIndexBisect(along_edges[i],
+                                            /*drop_dimension=*/2), i);
+  }
+}
+
+TEST(ConvexPolygon, ClockwiseSquareGetExtremeIndexBisect) {
+  // p[1] -> p[2]
+  //  ^       |
+  //  |       v
+  // p[0] <- p[3]
+  Point3<32> p[] = {
+    Point3<32>(0, 0, 10),
+    Point3<32>(0, 1, 10),
+    Point3<32>(1, 1, 10),
+    Point3<32>(1, 0, 10),
+  };
+
+  ConvexPolygon<32> polygon = MakeConvexPolygon(p);
+
+  Vector2<> to_corner[] = {
+    Vector2<>(-1, -1),
+    Vector2<>(-1, 1),
+    Vector2<>(1, 1),
+    Vector2<>(1, -1),
+  };
+
+  for (int i = 0; i < 4; ++i) {
+    EXPECT_EQ(polygon.GetExtremeIndexBisect(to_corner[i],
+                                            /*drop_dimension=*/2), i);
+  }
+
+  Vector2<> along_edges[] = {
+    Vector2<>(-1, 0),
+    Vector2<>(0, 1),
+    Vector2<>(1, 0),
+    Vector2<>(0, -1),
+  };
+
+  for (int i = 0; i < 4; ++i) {
+    EXPECT_EQ(polygon.GetExtremeIndexBisect(along_edges[i],
+                                            /*drop_dimension=*/2), i);
+  }
+}
+
 }  // walnut
