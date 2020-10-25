@@ -80,13 +80,13 @@ class HalfSpace2 {
   }
 
   // Returns >0 if `v` is in the half-space, 0 if `v` is coincident with the
-  // plane, or <0 if `v` is outside of the half-space.
+  // line, or <0 if `v` is outside of the half-space.
   template <int v_num_bits, int v_denom_bits>
   int Compare(const HomoPoint2<v_num_bits, v_denom_bits>& v) {
     return (v.dist_denom() * dist_).Compare(normal_.Dot(v.vector_from_origin()));
   }
 
-  // Returns true if the point is on the plane
+  // Returns true if the point is on the line
   template <int v_num_bits, int v_denom_bits>
   bool IsCoincident(const HomoPoint2<v_num_bits, v_denom_bits>& v) const {
     return Compare(v) == 0;
@@ -155,10 +155,10 @@ class HalfSpace2 {
   DistInt dist_;
 };
 
-// This is a wrapper around the HalfSpace2 constructor that takes 2 Point2's. The
-// only reason to use this wrapper is that it figures out how many bits are
-// necessary in the worst case for the plane numerator and denominator, given
-// the number of bits in each Point2.
+// This is a wrapper around the HalfSpace2 constructor that takes 2 Point2's.
+// The only reason to use this wrapper is that it figures out how many bits are
+// necessary in the worst case for the numerator and denominator, given the
+// number of bits in each Point2.
 template <int point3_bits_template = 32>
 class HalfSpace2FromPoint2Builder {
  public:

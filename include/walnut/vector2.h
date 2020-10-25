@@ -137,6 +137,14 @@ class Vector2 {
     return Vector2(y(), -x());
   }
 
+  // Swap the x and y coordinates
+  //
+  // Swapping the x and y coordinates is like reflecting the
+  // vector across the x=y line.
+  Vector2 SwapXY() const {
+    return Vector2(y(), x());
+  }
+
   // Verifies the fields are in their supported ranges.
   //
   // The BigInts can sometimes internally support a larger range than what is

@@ -1,6 +1,7 @@
 #ifndef WALNUT_PLUCKER_LINE_H__
 #define WALNUT_PLUCKER_LINE_H__
 
+#include "walnut/half_space2.h"
 #include "walnut/half_space3.h"
 #include "walnut/point3.h"
 #include "walnut/vector3.h"
@@ -187,6 +188,21 @@ class PluckerLine {
     return HomoPoint3<decltype(vector)::coord_bits, decltype(w)::bits>(
                        /*p=*/Point3<decltype(vector)::coord_bits>(vector),
                        w);
+  }
+
+  // Project the line into a HalfSpace2 by dropping one of the dimensions.
+  //
+  // At least one of the remaining coordinates of d() must be non-zero for the
+  // resulting HalfSpace2 to be valid.
+  //
+  // Note that this may overflow if some of the components of d() equal
+  // DVector::BigIntRep::min_value().
+  HalfSpace2<d_bits, m_bits> Project2D(int drop_dimension) const {
+    int normal_scale = drop_dimension & 1 ? -1 : 1;
+    return HalfSpace2<d_bits, m_bits>(
+        /*normal=*/d().DropDimension(drop_dimension).GetPerpendicular()
+                      .Scale(normal_scale),
+        /*dist=*/m_.coords()[drop_dimension]);
   }
 
  private:

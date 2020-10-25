@@ -141,6 +141,28 @@ TEST(PluckerLine, IntersectPlane) {
   EXPECT_EQ(line.Intersect(plane), HomoPoint3<>(p2));
 }
 
+TEST(PluckerLine, Project2D) {
+  const Point3<> p1(17, 23, 31);
+  const Point3<> p2(131, 163, 197);
+  const PluckerLine<> line(p1, p2);
+
+  const Point3<> p3(41, 103, 73);
+
+  EXPECT_TRUE(line.IsOnLine(p1));
+  EXPECT_TRUE(line.IsOnLine(p2));
+  EXPECT_FALSE(line.IsOnLine(p3));
+
+  for (int dimension = 0; dimension < 3; ++dimension) {
+    auto line2d = line.Project2D(dimension);
+    EXPECT_TRUE(line2d.IsCoincident(p1.DropDimension(dimension)))
+      << "dimension=" << dimension;
+    EXPECT_TRUE(line2d.IsCoincident(p2.DropDimension(dimension)))
+      << "dimension=" << dimension;
+    EXPECT_FALSE(line2d.IsCoincident(p3.DropDimension(dimension)))
+      << "dimension=" << dimension;
+  }
+}
+
 template <int point3_bits>
 void TestCorrectOutputBitsFromVertices() {
   using Builder = PluckerLineFromPoint3sBuilder<point3_bits>;
