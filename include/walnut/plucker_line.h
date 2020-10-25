@@ -127,7 +127,7 @@ class PluckerLine {
      * p x p + p x (p.dist*d) == m
      * p x (p.dist*d) == m
      */
-    return p.vector_from_origin().Cross(d_ * p.dist_denom()) == m();
+    return p.vector_from_origin().Cross(d_) == m() * p.dist_denom();
   }
 
   // Returns true when the lines match
@@ -186,8 +186,7 @@ class PluckerLine {
     auto vector = p.normal().Cross(m()) + d().Scale(p.d());
     auto w = p.normal().Dot(d());
     return HomoPoint3<decltype(vector)::coord_bits, decltype(w)::bits>(
-                       /*p=*/Point3<decltype(vector)::coord_bits>(vector),
-                       w);
+                       vector, w);
   }
 
   // Project the line into a HalfSpace2 by dropping one of the dimensions.

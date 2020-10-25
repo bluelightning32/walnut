@@ -25,8 +25,17 @@ TEST(PluckerLine, IsOnLine) {
   const Point3<> p3(p2 + (p2 - p1));
   EXPECT_TRUE(line.IsOnLine(p3));
 
+  const HomoPoint3<> doubled_p3(p3.vector_from_origin().Scale(2), BigInt<8>(2));
+  EXPECT_TRUE(line.IsOnLine(doubled_p3));
+
   const Point3<> p4(p1 - (p2 - p1));
   EXPECT_TRUE(line.IsOnLine(p4));
+
+  const Point3<> p5(17, 23, 31);
+  EXPECT_FALSE(line.IsOnLine(p5));
+
+  const HomoPoint3<> doubled_p5(p5.vector_from_origin().Scale(2), BigInt<8>(2));
+  EXPECT_FALSE(line.IsOnLine(doubled_p5));
 }
 
 TEST(PluckerLine, IsOnLineThroughOrigin) {
@@ -138,7 +147,9 @@ TEST(PluckerLine, IntersectPlane) {
 
   HalfSpace3<> plane(p2, p3, p4);
 
-  EXPECT_EQ(line.Intersect(plane), HomoPoint3<>(p2));
+  auto intersect_point = line.Intersect(plane);
+  EXPECT_EQ(intersect_point, HomoPoint3<>(p2));
+  EXPECT_TRUE(line.IsOnLine(intersect_point));
 }
 
 TEST(PluckerLine, Project2D) {
