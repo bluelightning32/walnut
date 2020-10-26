@@ -112,9 +112,9 @@ class ConvexPolygon<point3_bits_template>::Factory :
     // plane_orientation_ is -1 if plane_ is already the normal of a
     // counter-clockwise polygon. If both are -1, then plane_ is already
     // correct, and they should cancel out.
-    const int flip_orientation = orientation ^ plane_orientation_;
+    const int flip_orientation = (orientation ^ plane_orientation_) | 1;
     Emit(ConvexPolygon(HalfSpace3Rep(plane_.normal() * flip_orientation,
-                                plane_.d() * flip_orientation),
+                                     plane_.d() * flip_orientation),
                        drop_dimension_,
                        std::move(vertices)));
   }
