@@ -1,6 +1,7 @@
 #ifndef WALNUT_HOMO_POINT3_H__
 #define WALNUT_HOMO_POINT3_H__
 
+#include "walnut/homo_point2.h"
 #include "walnut/point3.h"
 #include "walnut/vector3.h"
 
@@ -141,6 +142,11 @@ class HomoPoint3 {
       p3.vector_from_origin().DropDimension(drop_dimension) * dist_denom();
     return (p1_from_origin - p2_from_origin1).Cross(
         p3_from_origin - p2_from_origin3).GetSign();
+  }
+
+  HomoPoint2<num_bits, denom_bits> DropDimension(int drop_dimension) const {
+    Vector2<num_bits> v = vector_from_origin().DropDimension(drop_dimension);
+    return HomoPoint2<num_bits, denom_bits>(v, w());
   }
 
   // Note that everything equals the 0 point with a 0 denominator.

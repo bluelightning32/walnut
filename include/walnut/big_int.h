@@ -120,6 +120,9 @@ class BigInt {
     return rep_ < other;
   }
 
+  // Returns -1 if *this < `other`,
+  //          0 if *this ==  `other`, or
+  //          1 if *this > `other`.
   template <int other_bits>
   constexpr int Compare(const BigInt<other_bits>& other) const {
     return rep_.Compare(other.rep_);

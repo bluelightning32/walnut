@@ -203,6 +203,9 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     return result;
   }
 
+  // Returns -1 if *this < `other`,
+  //          0 if *this ==  `other`, or
+  //          1 if *this > `other`.
   template <int other_max_words>
   constexpr int Compare(const BigIntImpl<other_max_words>& other) const {
     if (used_ < other.used_) {

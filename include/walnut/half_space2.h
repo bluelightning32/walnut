@@ -61,8 +61,7 @@ class HalfSpace2 {
     HalfSpace2(other.normal(), other.d()) { }
 
   template <int point_bits>
-  HalfSpace2(const Point2<point_bits>& p1,
-        const Point2<point_bits>& p2) :
+  HalfSpace2(const Point2<point_bits>& p1, const Point2<point_bits>& p2) :
     normal_((p2 - p1).GetPerpendicular()),
     dist_(normal_.Dot(p1.vector_from_origin())) { }
 
@@ -82,7 +81,7 @@ class HalfSpace2 {
   // Returns >0 if `v` is in the half-space, 0 if `v` is coincident with the
   // line, or <0 if `v` is outside of the half-space.
   template <int v_num_bits, int v_denom_bits>
-  int Compare(const HomoPoint2<v_num_bits, v_denom_bits>& v) {
+  int Compare(const HomoPoint2<v_num_bits, v_denom_bits>& v) const {
     return normal_.Dot(v.vector_from_origin()).Compare(v.dist_denom() * dist_);
   }
 

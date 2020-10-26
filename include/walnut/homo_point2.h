@@ -85,9 +85,9 @@ class HomoPoint2 {
     vector_from_origin_(other.vector_from_origin()), dist_denom_(1) { }
 
   template <int other_num_bits, int other_denom_bits>
-  HomoPoint2(const Point2<other_num_bits>& p,
-          const BigInt<other_denom_bits>& w) :
-    vector_from_origin_(p.vector_from_origin()), dist_denom_(w) { }
+  HomoPoint2(const Vector2<other_num_bits>& v,
+             const BigInt<other_denom_bits>& w) :
+    vector_from_origin_(v), dist_denom_(w) { }
 
   template <int other_num_bits=num_bits, int other_denom_bits=denom_bits>
   static bool LexicographicallyLt(const HomoPoint2& a,
