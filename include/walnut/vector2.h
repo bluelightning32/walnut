@@ -134,11 +134,12 @@ class Vector2 {
     return coords_[0] == 0 && coords_[1] == 0;
   }
 
-  // This can overflow.
+  // Get a vector that is a 1/4 turn counter-clockwise.
   //
-  // It is up to the caller to ensure there is enough bitspace.
+  // This can overflow. It is up to the caller to ensure there is enough
+  // bitspace.
   Vector2 GetPerpendicular() const {
-    return Vector2(y(), -x());
+    return Vector2(-y(), x());
   }
 
   // Swap the x and y coordinates

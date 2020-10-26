@@ -40,8 +40,8 @@ TEST(HalfSpace2, BuildFromPoints) {
   // [5, 0], [6, -1]
   //
   // Anything with z<5 is included in the half space.
-  HalfSpace2<> half_space(/*p1=*/Point2<>(5, 0),
-                          /*p2=*/Point2<>(6, -1));
+  HalfSpace2<> half_space(/*p1=*/Point2<>(6, -1),
+                          /*p2=*/Point2<>(5, 0));
 
   EXPECT_TRUE(half_space.normal().IsSameDir(Vector2<>(-1, -1)));
 

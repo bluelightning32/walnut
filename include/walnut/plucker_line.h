@@ -197,7 +197,7 @@ class PluckerLine {
   // Note that this may overflow if some of the components of d() equal
   // DVector::BigIntRep::min_value().
   HalfSpace2<d_bits, m_bits> Project2D(int drop_dimension) const {
-    int normal_scale = drop_dimension & 1 ? -1 : 1;
+    int normal_scale = drop_dimension & 1 ? 1 : -1;
     return HalfSpace2<d_bits, m_bits>(
         /*normal=*/d().DropDimension(drop_dimension).GetPerpendicular()
                       .Scale(normal_scale),
