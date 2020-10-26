@@ -70,7 +70,7 @@ class HalfSpace2 {
   // line, or <0 if `v` is outside of the half-space.
   template <int v_bits>
   int Compare(const Point2<v_bits>& v) const {
-    return dist_.Compare(normal_.Dot(v.vector_from_origin()));
+    return normal_.Dot(v.vector_from_origin()).Compare(dist_);
   }
 
   // Returns true if the point is on the line
@@ -83,7 +83,7 @@ class HalfSpace2 {
   // line, or <0 if `v` is outside of the half-space.
   template <int v_num_bits, int v_denom_bits>
   int Compare(const HomoPoint2<v_num_bits, v_denom_bits>& v) {
-    return (v.dist_denom() * dist_).Compare(normal_.Dot(v.vector_from_origin()));
+    return normal_.Dot(v.vector_from_origin()).Compare(v.dist_denom() * dist_);
   }
 
   // Returns true if the point is on the line
