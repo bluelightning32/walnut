@@ -5,32 +5,34 @@
 namespace walnut {
 
 TEST(HalfSpace3, ComparePoint3) {
-  // Anything with x<5 is included in the half space.
-  HalfSpace3<> plane(/*normal=*/Vector3<>(/*x=*/2, /*y=*/0, /*z=*/0), /*dist=*/BigInt<32>(10));
+  // Anything with x>5 is included in the half space.
+  HalfSpace3<> plane(/*normal=*/Vector3<>(/*x=*/2, /*y=*/0, /*z=*/0),
+                     /*dist=*/BigInt<32>(10));
 
   EXPECT_TRUE(plane.normal().IsSameDir(Vector3<>(1, 0, 0)));
 
-  // included
-  EXPECT_GT(plane.Compare(Point3<>(/*x=*/1, /*y=*/100, /*z=*/100)), 0);
+  // excluded
+  EXPECT_LT(plane.Compare(Point3<>(/*x=*/1, /*y=*/100, /*z=*/100)), 0);
   // coincident
   EXPECT_EQ(plane.Compare(Point3<>(/*x=*/5, /*y=*/100, /*z=*/100)), 0);
-  // excluded
-  EXPECT_LT(plane.Compare(Point3<>(/*x=*/6, /*y=*/100, /*z=*/100)), 0);
+  // included
+  EXPECT_GT(plane.Compare(Point3<>(/*x=*/6, /*y=*/100, /*z=*/100)), 0);
 }
 
 TEST(HalfSpace3, CompareHomoPoint3) {
-  // Anything with x<5 is included in the half space.
-  HalfSpace3<> plane(/*normal=*/Vector3<>(/*x=*/2, /*y=*/0, /*z=*/0), /*dist=*/BigInt<32>(10));
+  // Anything with x>5 is included in the half space.
+  HalfSpace3<> plane(/*normal=*/Vector3<>(/*x=*/2, /*y=*/0, /*z=*/0),
+                     /*dist=*/BigInt<32>(10));
 
-  // included
-  EXPECT_GT(plane.Compare(HomoPoint3<>(/*x=*/1, /*y=*/100, /*z=*/100, /*w=*/1)), 0);
-  EXPECT_GT(plane.Compare(HomoPoint3<>(/*x=*/9, /*y=*/100, /*z=*/100, /*w=*/2)), 0);
+  // excluded
+  EXPECT_LT(plane.Compare(HomoPoint3<>(/*x=*/1, /*y=*/100, /*z=*/100, /*w=*/1)), 0);
+  EXPECT_LT(plane.Compare(HomoPoint3<>(/*x=*/9, /*y=*/100, /*z=*/100, /*w=*/2)), 0);
   // coincident
   EXPECT_EQ(plane.Compare(HomoPoint3<>(/*x=*/5, /*y=*/100, /*z=*/100, /*w=*/1)), 0);
   EXPECT_EQ(plane.Compare(HomoPoint3<>(/*x=*/10, /*y=*/100, /*z=*/100, /*w=*/2)), 0);
-  // excluded
-  EXPECT_LT(plane.Compare(HomoPoint3<>(/*x=*/6, /*y=*/100, /*z=*/100, /*w=*/1)), 0);
-  EXPECT_LT(plane.Compare(HomoPoint3<>(/*x=*/11, /*y=*/100, /*z=*/100, /*w=*/2)), 0);
+  // included
+  EXPECT_GT(plane.Compare(HomoPoint3<>(/*x=*/6, /*y=*/100, /*z=*/100, /*w=*/1)), 0);
+  EXPECT_GT(plane.Compare(HomoPoint3<>(/*x=*/11, /*y=*/100, /*z=*/100, /*w=*/2)), 0);
 }
 
 TEST(HalfSpace3, BuildFromPoints) {
@@ -44,12 +46,12 @@ TEST(HalfSpace3, BuildFromPoints) {
 
   EXPECT_TRUE(plane.normal().IsSameDir(Vector3<>(0, 0, 1)));
 
-  // included
-  EXPECT_GT(plane.Compare(Point3<>(/*x=*/100, /*y=*/100, /*z=*/1)), 0);
+  // excluded
+  EXPECT_LT(plane.Compare(Point3<>(/*x=*/100, /*y=*/100, /*z=*/1)), 0);
   // coincident
   EXPECT_EQ(plane.Compare(Point3<>(/*x=*/500, /*y=*/100, /*z=*/5)), 0);
-  // excluded
-  EXPECT_LT(plane.Compare(Point3<>(/*x=*/600, /*y=*/100, /*z=*/6)), 0);
+  // included
+  EXPECT_GT(plane.Compare(Point3<>(/*x=*/600, /*y=*/100, /*z=*/6)), 0);
 }
 
 TEST(HalfSpace3, HalfSpacesDistinct) {
