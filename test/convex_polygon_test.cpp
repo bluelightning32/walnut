@@ -136,6 +136,25 @@ TEST(ConvexPolygon, ClockwiseTriangleXZPlane) {
   }
 }
 
+TEST(ConvexPolygon, ClockwiseSquareYZPlane) {
+  Point3<32> input[] = {
+    Point3<32>(0, 0, 0),
+    Point3<32>(0, 10, 1),
+    Point3<32>(10, 10, 1),
+    Point3<32>(10, 0, 0),
+  };
+
+  ConvexPolygon<32> polygon = MakeConvexPolygon(input);
+  EXPECT_EQ(polygon.plane(),
+            HalfSpace3<>(/*x=*/0, /*y=*/1, /*z=*/-10, /*dist=*/0));
+
+  EXPECT_FALSE(polygon.plane().normal().IsZero());
+
+  for (const Point3<32>& v : input) {
+    EXPECT_TRUE(polygon.plane().IsCoincident(v));
+  }
+}
+
 TEST(ConvexPolygon, CopyConstructor) {
   Point3<32> input[] = {
     Point3<32>(0, 0, 10),

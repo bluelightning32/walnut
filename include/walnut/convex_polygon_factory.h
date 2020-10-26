@@ -39,7 +39,7 @@ class ConvexPolygon<point3_bits_template>::Factory :
         monotone_dimension = 0;
       }
       plane_orientation_ =
-        plane_.normal().coords()[drop_dimension_].GetSign() < 0 ? 1 : -1;
+        GetPlaneOrientationAfterProjection(plane_.normal(), drop_dimension_);
       typename PlanarRangeRep::OutputIterator planar_begin =
         planar_range.begin();
       typename PlanarRangeRep::OutputIterator planar_end =
@@ -61,6 +61,23 @@ class ConvexPolygon<point3_bits_template>::Factory :
                       chain1_end, chain2_begin, chain2_end);
       }
     }
+  }
+
+  // Determines whether the vertex is reflex or not after projection.
+  //
+  // cross_product is the cross product of 2 vectors coming out of the vertex.
+  // drop_dimension is the dimension that will be removed from the 3D to 2D
+  // projection.
+  //
+  // This function is likely only useful internally. It is publically exposed
+  // for testing purposes.
+  //
+  // Returns -1 if the vertex will be convex after projection, or 1 if the
+  // vertex will be reflex.
+  static int GetPlaneOrientationAfterProjection(
+      typename HalfSpace3Rep::VectorRep cross_product, int drop_dimension) {
+    return (cross_product.coords()[drop_dimension].GetSign() < 0) ^
+           (drop_dimension & 1) ? 1 : -1;
   }
  
  protected:

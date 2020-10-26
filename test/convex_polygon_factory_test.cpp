@@ -263,4 +263,28 @@ TEST(ConvexPolygonFactory, SelfIntersectingStartAtReflex) {
             ResultCollector::HalfSpace3Rep(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10));
 }
 
+TEST(ConvexPolygonFactory, GetPlaneOrientationAfterProjection) {
+  Point3<32> p[] = {
+    Point3<32>(10, 0, 1),
+    Point3<32>(0, 0, 0),
+    Point3<32>(0, 10, 1),
+  };
+
+  for (int drop_dimension = 0; drop_dimension < 3; ++drop_dimension) {
+    auto cross = HalfSpace3<>(p[0], p[1], p[2]).normal();
+
+    EXPECT_NE(cross.coords()[drop_dimension], 0);
+    int orientation =
+      ConvexPolygon<32>::Factory::GetPlaneOrientationAfterProjection(
+        cross, drop_dimension);
+
+    auto cross2 = (p[0] - p[1]).DropDimension(drop_dimension).Cross(
+        (p[2] - p[1]).DropDimension(drop_dimension));
+    EXPECT_GT(cross2 * orientation, 0)
+      << " drop_dimension=" << drop_dimension
+      << " orientation=" << orientation
+      << " cross2=" << cross2;
+  }
+}
+
 }  // walnut
