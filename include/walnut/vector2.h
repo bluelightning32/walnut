@@ -74,6 +74,10 @@ class Vector2 {
         /*y=*/y() - other.y());
   }
 
+  static Vector2 Zero() {
+    return Vector2(/*x=*/0, /*y=*/0);
+  }
+
   // Return true if the vectors have the same direction and only differ in
   // magnitude.
   //
@@ -203,6 +207,14 @@ inline bool Vector2<coord_bits_template>::IsSameOrOppositeDir(
 
   return x().Multiply(scale_mine) == other.x().Multiply(scale_other) &&
          y().Multiply(scale_mine) == other.y().Multiply(scale_other);
+}
+
+template <int coord_bits>
+std::ostream& operator<<(std::ostream& out, const Vector2<coord_bits>& v) {
+  return out << "{ "
+             << v.coords()[0] << ", "
+             << v.coords()[1]
+             << " }";
 }
 
 }  // walnut

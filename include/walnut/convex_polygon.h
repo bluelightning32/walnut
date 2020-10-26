@@ -175,9 +175,44 @@ class ConvexPolygon {
   // binary search to find the edges. This algorithm is good for ConvexPolgyons
   // with many vertices, but a regular linear search is faster for
   // ConvexPolygons with fewer vertices (roughly 10 or fewer vertices).
+  //
+  // If `v` is Zero, this returns static_cast<size_t>(-1).
   template <int vector_bits>
   size_t GetExtremeIndexBisect(const Vector2<vector_bits>& v,
                                int drop_dimension) const;
+
+  // Returns the index of the vertex that is farthest in the `v` direction
+  // using a binary search.
+  //
+  // The furthest vertex is the one whose vector from the origin has the
+  // greatest dot product with `v`. If is a tie for vertex with the furthest
+  // distance, then the lowest index is returned. If there is a tie between the
+  // last vertex in the list and the 0th vertex, then the last vertex is
+  // considered to have the lower index.
+  //
+  // The bisect part of the function name refers to how this function uses a
+  // binary search to find the edges. This algorithm is good for ConvexPolgyons
+  // with many vertices, but a regular linear search is faster for
+  // ConvexPolygons with fewer vertices (roughly 10 or fewer vertices).
+  //
+  // If `v` is Zero or perpendicular to the polygon plane, this returns
+  // static_cast<size_t>(-1).
+  template <int vector_bits>
+  size_t GetExtremeIndexBisect(const Vector3<vector_bits>& v) const {
+    auto v_projected = v.DropDimension(drop_dimension()).Scale(
+        plane().normal().coords()[drop_dimension()]);
+    auto normal_projected = plane().normal().DropDimension(
+        drop_dimension()).Scale(v.coords()[drop_dimension()]);
+    auto new_vector = v_projected - normal_projected;
+    // sign_adjust is -1 if the drop dimension in the plane normal is negative,
+    // and 1 otherwise.
+    int sign_adjust = (plane().normal().coords()[drop_dimension()].GetSign() >>
+                       (sizeof(BigIntWord) * 8 - 1)) | 1;
+    new_vector = new_vector * sign_adjust;
+    return GetExtremeIndexBisect(new_vector,
+                                 drop_dimension());
+  }
+
 
  private:
   template <int other_point3_bits>
@@ -302,6 +337,8 @@ template <int point3_bits>
 template <int vector_bits>
 size_t ConvexPolygon<point3_bits>::GetExtremeIndexBisect(
     const Vector2<vector_bits>& v, int drop_dimension) const {
+  if (v.IsZero()) return -1;
+
   std::pair<size_t, size_t> dir_indices =
     GetOppositeEdgeIndicesBisect(v, drop_dimension);
 

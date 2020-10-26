@@ -450,4 +450,110 @@ TEST(ConvexPolygon, ClockwiseSquareGetExtremeIndexBisect) {
   }
 }
 
+TEST(ConvexPolygon, CounterClockwiseSquareGetExtremeIndexBisect3D) {
+  // p[3] <- p[2]
+  //  |       ^
+  //  v       |
+  // p[0] -> p[1]
+  Point3<32> p[] = {
+    Point3<32>(0, 0, 0),
+    Point3<32>(1, 0, 10),
+    Point3<32>(1, 1, 10),
+    Point3<32>(0, 1, 0),
+  };
+
+  ConvexPolygon<32> polygon = MakeConvexPolygon(p);
+
+  Vector3<> to_corner[] = {
+    Vector3<>(-1, -1, -1),
+    Vector3<>(1, -1, 1),
+    Vector3<>(1, 1, 1),
+    Vector3<>(-1, 1, -1),
+  };
+
+  for (int i = 0; i < 4; ++i) {
+    EXPECT_EQ(polygon.GetExtremeIndexBisect(to_corner[i]), i);
+  }
+}
+
+TEST(ConvexPolygon, ClockwiseSquareGetExtremeIndexBisect3D) {
+  // p[1] -> p[2]
+  //  ^       |
+  //  |       v
+  // p[0] <- p[3]
+  Point3<32> p[] = {
+    Point3<32>(0, 0, 0),
+    Point3<32>(0, 1, 10),
+    Point3<32>(1, 1, 10),
+    Point3<32>(1, 0, 0),
+  };
+
+  ConvexPolygon<32> polygon = MakeConvexPolygon(p);
+  EXPECT_LT(polygon.plane().normal().z(), 0);
+
+  Vector3<> to_corner[] = {
+    Vector3<>(-1, -1, -1),
+    Vector3<>(-1, 1, 1),
+    Vector3<>(1, 1, 1),
+    Vector3<>(1, -1, -1),
+  };
+
+  for (int i = 0; i < 4; ++i) {
+    EXPECT_EQ(polygon.GetExtremeIndexBisect(to_corner[i]), i);
+  }
+}
+
+TEST(ConvexPolygon, GetExtremeIndexBisect3DIsNot2DProjection) {
+  // This test case shows that the GetExtremeIndexBisect is not as simple as
+  // projecting the vector to 2D.
+  //
+  // If the polygon was rotated to be flat on the XY plane, it would look like
+  // this:
+  //
+  //      p[3]
+  //   /       \
+  // p[4]      p[2]
+  //  |          ^
+  //  |          |
+  //  v          |
+  // p[0] ---> p[1]
+  //
+  // However, dropping the X dimension (so that Y and Z are remaining, and Z
+  // was a fraction of X) also effectively non-uniformly scales the polygon,
+  // squishing horizontally so that it looks like this:
+  //
+  //      p[3]
+  //    /     \
+  //   /       \
+  // p[4]      p[2]
+  //  |          ^
+  //  |          |
+  //  |          |
+  //  |          |
+  //  |          |
+  //  v          |
+  // p[0] ---> p[1]
+  //
+  // So for a vector from p[0] to p[2], in the first polygon, p[2] is the
+  // extreme index, but for the below diagram, p[3] is the extreme index. This
+  // happens because distances lines are effectively drawn perpendicular to the
+  // vector, and the non-uniform scaling does not update the 90 degree angle.
+  // So whether the 90 degree angle is taken before or after the non-uniform
+  // scaling affects the result.
+
+  Point3<32> p[] = {
+    Point3<32>(0, 0, 0),
+    Point3<32>(40, 0, 4),
+    Point3<32>(40, 40, 4),
+    Point3<32>(20, 45, 2),
+    Point3<32>(0, 40, 0),
+  };
+  ConvexPolygon<32> polygon = MakeConvexPolygon(p);
+
+  EXPECT_EQ(polygon.GetExtremeIndexBisect(p[2] - p[0]), 2);
+
+  EXPECT_EQ(polygon.GetExtremeIndexBisect((p[2] - p[0]).DropDimension(0),
+                                          /*drop_dimension=*/0), 3);
+}
+
 }  // walnut
