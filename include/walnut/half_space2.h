@@ -149,6 +149,12 @@ class HalfSpace2 {
     dist_.Negate();
   }
 
+  // This function could potentially overflow. The caller must ensure there is
+  // sufficient bitspace.
+  HalfSpace2 operator-() const {
+    return HalfSpace2(-normal_, -dist_);
+  }
+
  private:
   VectorRep normal_;
   DistInt dist_;

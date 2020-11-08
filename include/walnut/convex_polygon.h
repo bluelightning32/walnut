@@ -252,6 +252,45 @@ class ConvexPolygon {
       const HalfSpace2<vector_bits, dist_bits>& half_space, int drop_dimension,
       size_t same_dir_index, size_t opp_dir_index) const;
 
+  // Returns the index of the vertex that is outside the given HalfSpace2, if any
+  // exist.
+  //
+  // Specifically the first element of the returned pair indicates whether any
+  // vertices exist in the negative half-space:
+  //   -1 : the second element of the return value is the index of a vertex
+  //       in the negative half-space.
+  //   0 : no vertices exist in the negative half-space. The returned vertex
+  //       index is on the plane. If there are multiple vertices on the plane,
+  //       the vertex with the lowest index is returned. If there is a tie
+  //       between the last vertex in the list and the 0th vertex, then the
+  //       last vertex is considered to have the lower index than the 0th.
+  //   1:  no vertices exist in the negative half-space. The returned vertex
+  //       index is in the positive half-space, but it is the closest vertex
+  //       to the negative half-space. If there is a tie for closest between
+  //       multiple vertices, the vertex with the lowest index is returned. If
+  //       there is a tie between the last vertex in the list and the 0th
+  //       vertex, then the last vertex is considered to have the lower index
+  //       than the 0th.
+  //
+  // This function projects all of the vertices to 2D by dropping the
+  // `drop_dimension`. That's why the input half-space is a HalfSpace2 instead
+  // of a HalfSpace3. `drop_dimension` must refer to a non-zero component of
+  // the plane normal.
+  //
+  // same_dir_index must be the edge source index of an edge pointing roughly
+  // in the same direction as the half-space normal, and opp_dir_index must be
+  // the edge source index of an edge pointing in roughtly the opposite
+  // direction as the half-space normal. same_dir_index and opp_dir_index may
+  // be obtained from `GetOppositeEdgeIndicesBisect`.
+  //
+  // The vertex is found using a binary search. This algorithm is good for
+  // ConvexPolgyons with many vertices, but a regular linear search is faster
+  // for ConvexPolygons with fewer vertices (roughly 5 or fewer vertices).
+  template <int vector_bits, int dist_bits>
+  std::pair<int, size_t> GetNegSideVertex(
+      const HalfSpace2<vector_bits, dist_bits>& half_space, int drop_dimension,
+      size_t same_dir_index, size_t opp_dir_index) const;
+
  private:
   template <int other_point3_bits>
   ConvexPolygon(const HalfSpace3Rep& plane, int drop_dimension,
@@ -437,6 +476,16 @@ std::pair<int, size_t> ConvexPolygon<point3_bits>::GetPosSideVertex(
   return std::make_pair(
       half_space.Compare(vertices()[end].vertex.DropDimension(drop_dimension)),
       end);
+}
+
+template <int point3_bits>
+template <int vector_bits, int dist_bits>
+std::pair<int, size_t> ConvexPolygon<point3_bits>::GetNegSideVertex(
+    const HalfSpace2<vector_bits, dist_bits>& half_space, int drop_dimension,
+    size_t same_dir_index, size_t opp_dir_index) const {
+  const auto opp_result = GetPosSideVertex(-half_space, drop_dimension,
+                                           opp_dir_index, same_dir_index);
+  return std::make_pair(-opp_result.first, opp_result.second);
 }
 
 }  // walnut

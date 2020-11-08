@@ -472,6 +472,67 @@ TEST(ConvexPolygon, CounterClockwiseSquareGetPosSideVertex) {
   }
 }
 
+TEST(ConvexPolygon, CounterClockwiseSquareGetNegSideVertex) {
+  // p[3] <- p[2]
+  //  |       ^
+  //  v       |
+  // p[0] -> p[1]
+  Point3<32> p[] = {
+    Point3<32>(0, 0, 10),
+    Point3<32>(1, 0, 10),
+    Point3<32>(1, 1, 10),
+    Point3<32>(0, 1, 10),
+  };
+
+  ConvexPolygon<32> polygon = MakeConvexPolygon(p);
+
+  HalfSpace2<> only_corner[] = {
+    HalfSpace2<>(p[3].DropDimension(2), p[1].DropDimension(2)),
+    HalfSpace2<>(p[0].DropDimension(2), p[2].DropDimension(2)),
+    HalfSpace2<>(p[1].DropDimension(2), p[3].DropDimension(2)),
+    HalfSpace2<>(p[2].DropDimension(2), p[0].DropDimension(2)),
+  };
+
+  for (int i = 0; i < 4; ++i) {
+    std::pair<size_t, size_t> dir_indices =
+      polygon.GetOppositeEdgeIndicesBisect(only_corner[i].normal(),
+                                           /*drop_dimension=*/2);
+    EXPECT_EQ(polygon.GetNegSideVertex(only_corner[i],
+                                       /*drop_dimension=*/2,
+                                       dir_indices.first,
+                                       dir_indices.second).first, -1);
+    EXPECT_EQ(polygon.GetNegSideVertex(only_corner[i],
+                                       /*drop_dimension=*/2,
+                                       dir_indices.first,
+                                       dir_indices.second).second, i);
+  }
+
+  // p[3] <- p[2]
+  //  |       ^
+  //  v       |
+  // p[0] -> p[1]
+  HalfSpace2<> on_plane[] = {
+    HalfSpace2<>(p[0].DropDimension(2), p[1].DropDimension(2)),
+    HalfSpace2<>(p[1].DropDimension(2), p[2].DropDimension(2)),
+    HalfSpace2<>(p[2].DropDimension(2), p[3].DropDimension(2)),
+    HalfSpace2<>(p[3].DropDimension(2), p[0].DropDimension(2)),
+  };
+
+  for (int i = 0; i < 4; ++i) {
+    std::pair<size_t, size_t> dir_indices =
+      polygon.GetOppositeEdgeIndicesBisect(only_corner[i].normal(),
+                                           /*drop_dimension=*/2);
+    EXPECT_EQ(polygon.GetNegSideVertex(on_plane[i],
+                                       /*drop_dimension=*/2,
+                                       dir_indices.first,
+                                       dir_indices.second).first, 0);
+    EXPECT_EQ(polygon.GetNegSideVertex(on_plane[i],
+                                       /*drop_dimension=*/2,
+                                       dir_indices.first,
+                                       dir_indices.second).second, i);
+  }
+}
+
 TEST(ConvexPolygon, ClockwiseSquareGetExtremeIndexBisect) {
   // p[1] -> p[2]
   //  ^       |

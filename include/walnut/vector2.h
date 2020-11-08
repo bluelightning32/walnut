@@ -158,6 +158,12 @@ class Vector2 {
     }
   }
 
+  // This function could potentially overflow. The caller must ensure there is
+  // sufficient bitspace.
+  Vector2 operator-() const {
+    return Vector2(-x(), -y());
+  }
+
   // Verifies the fields are in their supported ranges.
   //
   // The BigInts can sometimes internally support a larger range than what is
