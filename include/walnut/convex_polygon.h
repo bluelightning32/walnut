@@ -321,12 +321,6 @@ class ConvexPolygon {
       size_t neg_side_index, int neg_side_type, size_t pos_side_index) const;
 
  private:
-  template <int other_point3_bits>
-  ConvexPolygon(const HalfSpace3Rep& plane, int drop_dimension,
-                const std::vector<Vector3<other_point3_bits>>& vertices) :
-    plane_(plane), drop_dimension_(drop_dimension),
-    vertices_(vertices.begin(), vertices.end()) { }
-
   ConvexPolygon(const HalfSpace3Rep& plane, int drop_dimension,
                 std::vector<VertexInfo> vertices) :
     plane_(plane), drop_dimension_(drop_dimension),
