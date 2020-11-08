@@ -4,16 +4,20 @@
 // MonotoneTriangulator takes the top and bottom chain from a monotone polygon
 // and converts them intro triangles.
 
+#include <type_traits>
 #include <vector>
 
 #include "walnut/point3.h"
 
 namespace walnut {
 
-template <int point3_bits_template = 32>
+template <typename Point3RepTemplate = Point3<32>>
 class MonotoneTriangulator {
  public:
-  using Point3Rep = Point3<point3_bits_template>;
+  using Point3Rep = Point3RepTemplate;
+  static_assert(std::is_base_of<Point3<Point3Rep::coord_bits>,
+                                Point3Rep>::value,
+                "Point3Rep must be derived from Point3.");
 
   // Given a monotone polygon in the form of an iterator range for its top
   // chain and an iterator range for its bottom chain, this converts the
@@ -90,9 +94,9 @@ class MonotoneTriangulator {
   bool top_chain_is_current_;
 };
 
-template <int point3_bits_template>
+template <typename Point3RepTemplate>
 template <typename TopIterator, typename BottomIterator>
-void MonotoneTriangulator<point3_bits_template>::Build(
+void MonotoneTriangulator<Point3RepTemplate>::Build(
     int drop_dimension, int monotone_dimension,
     TopIterator top_begin, TopIterator top_end,
     BottomIterator bottom_begin, BottomIterator bottom_end) {
@@ -146,8 +150,8 @@ void MonotoneTriangulator<point3_bits_template>::Build(
   reflex_stack_.clear();
 }
 
-template <int point3_bits_template>
-void MonotoneTriangulator<point3_bits_template>::ProcessVertex(
+template <typename Point3RepTemplate>
+void MonotoneTriangulator<Point3RepTemplate>::ProcessVertex(
     int drop_dimension, bool is_top, const Point3Rep& v) {
   assert(reflex_stack_.size() >= 2);
 
@@ -179,8 +183,8 @@ void MonotoneTriangulator<point3_bits_template>::ProcessVertex(
   reflex_stack_.push_back(&v);
 }
 
-template <int point3_bits_template>
-void MonotoneTriangulator<point3_bits_template>::SwitchChains(
+template <typename Point3RepTemplate>
+void MonotoneTriangulator<Point3RepTemplate>::SwitchChains(
     const Point3Rep& next) {
   const Point3Rep* reflex_back = reflex_stack_.back();
   for (int i = 0; i < reflex_stack_.size() - 1; ++i) {
