@@ -291,6 +291,35 @@ class ConvexPolygon {
       const HalfSpace2<vector_bits, dist_bits>& half_space, int drop_dimension,
       size_t same_dir_index, size_t opp_dir_index) const;
 
+  // Returns the greatest index of a vertex in the negative side of the
+  // half-space, or on the plane, such that the index is within:
+  //   [neg_side_index, GetGreaterCycleIndex(neg_side_index), pos_side_index)
+  //
+  // Although the return value is actually modded by the number of vertices.
+  // Specifically the first element of the returned pair will be less than 0 if
+  // the last index is inside the negative half-space, or 0 if it is on the
+  // plane. The second element of the returned pair is the index of the last
+  // negative side vertex. The last vertex comes from the range
+  // [neg_side_index, GetGreaterCycleIndex(neg_side_index), pos_side_index),
+  // although the value is modded by the number of vertices in the polygon
+  // before it is returned. vertices exist in the negative half-space:
+  //
+  // `neg_side_index` is the index of a vertex on the negative side of the
+  // half-space, or on the plane. `neg_side_type` must be less than 0 if
+  // `neg_side_index` refers to a vertex in the negative half-space, or it must
+  // be 0 if `neg_side_index` refers to a vertex on the plane.
+  //
+  // `pos_side_index` is the index of a vertex on the positive side of the
+  // half-space, or on the plane.
+  //
+  // The vertex is found using a binary search. This algorithm is good for
+  // ConvexPolgyons with many vertices, but a regular linear search is faster
+  // for ConvexPolygons with fewer vertices (roughly 5 or fewer vertices).
+  template <int vector_bits, int dist_bits>
+  std::pair<int, size_t> GetLastNegSideVertex(
+      const HalfSpace2<vector_bits, dist_bits>& half_space, int drop_dimension,
+      size_t neg_side_index, int neg_side_type, size_t pos_side_index) const;
+
  private:
   template <int other_point3_bits>
   ConvexPolygon(const HalfSpace3Rep& plane, int drop_dimension,
@@ -486,6 +515,37 @@ std::pair<int, size_t> ConvexPolygon<point3_bits>::GetNegSideVertex(
   const auto opp_result = GetPosSideVertex(-half_space, drop_dimension,
                                            opp_dir_index, same_dir_index);
   return std::make_pair(-opp_result.first, opp_result.second);
+}
+
+template <int point3_bits>
+template <int vector_bits, int dist_bits>
+std::pair<int, size_t> ConvexPolygon<point3_bits>::GetLastNegSideVertex(
+    const HalfSpace2<vector_bits, dist_bits>& half_space, int drop_dimension,
+    size_t neg_side_index, int neg_side_type, size_t pos_side_index) const {
+  // Current range being considered by the binary search. The range includes
+  // the begin side but excludes the end side.
+  //
+  // INVARIANT: `begin` is the index of a vertex in the negative half-space or
+  // on the plane. `begin_type` is less than 0 if `begin` is in the negative
+  // half-space, otherwise it is 0.
+  // INVARIANT: `end` is the index of a vertex in the positive half-space.
+  size_t begin = neg_side_index;
+  int begin_type = neg_side_type;
+  size_t end = GetGreaterCycleIndex(begin, pos_side_index);
+  assert(begin_type <= 0);
+
+  while (begin + 1 < end) {
+    size_t mid = (begin + end) / 2;
+    int mid_type = half_space.Compare(vertices()[
+          mid % vertices().size()].vertex.DropDimension(drop_dimension));
+    if (mid_type <= 0) {
+      begin = mid;
+      begin_type = mid_type;
+    } else {
+      end = mid;
+    }
+  }
+  return std::make_pair(begin_type, begin % vertices().size());
 }
 
 }  // walnut

@@ -678,4 +678,90 @@ TEST(ConvexPolygon, GetExtremeIndexBisect3DIsNot2DProjection) {
                                           /*drop_dimension=*/0), 3);
 }
 
+TEST(ConvexPolygon, GetLastNegSideVertexOnPlane) {
+  // p[8] <- p[7] <- p[6] <- p[5]
+  //  |                       ^     ^
+  //  v                       |     | pos half-space
+  // p[9] ------------------ p[4] ------------------
+  //  |                       ^
+  //  v                       |
+  // p[0] -> p[1] -> p[2] -> p[3]
+  Point3<32> p[] = {
+    /*p[0]=*/Point3<32>(0, 0, 10),
+    /*p[1]=*/Point3<32>(1, 0, 10),
+    /*p[2]=*/Point3<32>(2, 0, 10),
+    /*p[3]=*/Point3<32>(3, 0, 10),
+    /*p[4]=*/Point3<32>(3, 1, 10),
+    /*p[5]=*/Point3<32>(3, 2, 10),
+    /*p[6]=*/Point3<32>(2, 2, 10),
+    /*p[7]=*/Point3<32>(1, 2, 10),
+    /*p[8]=*/Point3<32>(0, 2, 10),
+    /*p[9]=*/Point3<32>(0, 1, 10),
+  };
+
+  const ConvexPolygon<32> polygon = MakeConvexPolygon(p);
+  HalfSpace2<> half_space(p[9].DropDimension(2), p[4].DropDimension(2));
+
+  for (size_t neg_side_index = 0; neg_side_index < 4; neg_side_index++) {
+    for (size_t pos_side_index = 5; pos_side_index <= 9; pos_side_index++) {
+      auto result = polygon.GetLastNegSideVertex(half_space,
+                                                 /*drop_dimension=*/2,
+                                                 neg_side_index,
+                                                 /*neg_side_type=*/-1,
+                                                 pos_side_index);
+      EXPECT_EQ(result.first, 0);
+      EXPECT_EQ(result.second, 4);
+    }
+  }
+  auto result = polygon.GetLastNegSideVertex(half_space, /*drop_dimension=*/2,
+                                             /*neg_side_index=*/9,
+                                             /*neg_side_type=*/0,
+                                             /*pos_side_index=*/7);
+  EXPECT_EQ(result.first, 0);
+  EXPECT_EQ(result.second, 4);
+  result = polygon.GetLastNegSideVertex(half_space, /*drop_dimension=*/2,
+                                        /*neg_side_index=*/4,
+                                        /*neg_side_type=*/0,
+                                        /*pos_side_index=*/7);
+  EXPECT_EQ(result.first, 0);
+  EXPECT_EQ(result.second, 4);
+}
+
+TEST(ConvexPolygon, GetLastNegSideVertex) {
+  // p[8] <- p[7] <- p[6] <- p[5]   ^
+  //  |                       ^     | pos half-space
+  //  | --------------------- | --------------------
+  //  v                       |
+  // p[9]                    p[4]
+  //  |                       ^
+  //  v                       |
+  // p[0] -> p[1] -> p[2] -> p[3]
+  Point3<32> p[] = {
+    /*p[0]=*/Point3<32>(0, 0, 10),
+    /*p[1]=*/Point3<32>(1, 0, 10),
+    /*p[2]=*/Point3<32>(2, 0, 10),
+    /*p[3]=*/Point3<32>(3, 0, 10),
+    /*p[4]=*/Point3<32>(3, 1, 10),
+    /*p[5]=*/Point3<32>(3, 3, 10),
+    /*p[6]=*/Point3<32>(2, 3, 10),
+    /*p[7]=*/Point3<32>(1, 3, 10),
+    /*p[8]=*/Point3<32>(0, 3, 10),
+    /*p[9]=*/Point3<32>(0, 1, 10),
+  };
+
+  const ConvexPolygon<32> polygon = MakeConvexPolygon(p);
+  HalfSpace2<> half_space(Point2<>(0, 2), Point2<>(1, 2));
+
+  for (size_t neg_side_index = 9; neg_side_index <= 9 + 4; neg_side_index++) {
+    for (size_t pos_side_index = 5; pos_side_index <= 8; pos_side_index++) {
+      auto result = polygon.GetLastNegSideVertex(half_space,
+          /*drop_dimension=*/2, neg_side_index % polygon.vertex_count(),
+          /*neg_side_type=*/-1, pos_side_index);
+      EXPECT_EQ(result.first, -1);
+      EXPECT_EQ(result.second, 4);
+    }
+  }
+}
+
+
 }  // walnut
