@@ -10,7 +10,7 @@ namespace walnut {
 
 template <int point3_bits_template>
 class ConvexPolygon<point3_bits_template>::Factory :
-  private OrientingMonotoneDecomposer<point3_bits_template> {
+  private OrientingMonotoneDecomposer<Point3<point3_bits_template>> {
  public:
   using Point3Rep = ConvexPolygon::Point3Rep;
   using ConvexPolygonRep = ConvexPolygon<point3_bits_template>;
@@ -84,7 +84,7 @@ class ConvexPolygon<point3_bits_template>::Factory :
   virtual void Emit(ConvexPolygon&& polygon) = 0;
 
  private:
-  using Parent = OrientingMonotoneDecomposer<point3_bits_template>;
+  using Parent = OrientingMonotoneDecomposer<Point3<point3_bits_template>>;
 
   void EmitOriented(int orientation,
                     typename Parent::const_reverse_iterator range1_begin,

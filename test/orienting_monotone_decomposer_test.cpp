@@ -12,7 +12,7 @@ struct PolygonResult {
   std::vector<Point3<32>> vertices;
 };
 
-class ResultCollector : public OrientingMonotoneDecomposer<32> {
+class ResultCollector : public OrientingMonotoneDecomposer<Point3<32>> {
  public:
   std::vector<std::vector<Point3<32>>> GetSortedPolygonResult() {
     for (PolygonResult& polygon : result_) {

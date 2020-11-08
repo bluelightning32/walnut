@@ -20,11 +20,11 @@
 
 namespace walnut {
 
-template <int point3_bits_template = 32>
+template <typename Point3RepTemplate = Point3<32>>
 class OrientingMonotoneDecomposer :
-  public MonotoneDecomposer<Point3<point3_bits_template>> {
+  public MonotoneDecomposer<Point3RepTemplate> {
  public:
-  using Parent = MonotoneDecomposer<Point3<point3_bits_template>>;
+  using Parent = MonotoneDecomposer<Point3RepTemplate>;
   using Point3Rep = typename Parent::Point3Rep;
   using const_iterator = typename std::vector<Point3Rep>::const_iterator;
   using const_reverse_iterator = typename
@@ -152,9 +152,9 @@ class OrientingMonotoneDecomposer :
   bool flipped_;
 };
 
-template <int point3_bits_template>
+template <typename Point3RepTemplate>
 template <typename Chain1Iterator, typename Chain2Iterator>
-bool OrientingMonotoneDecomposer<point3_bits_template>::DetectOrientation(
+bool OrientingMonotoneDecomposer<Point3RepTemplate>::DetectOrientation(
     int drop_dimension, int monotone_dimension, Chain1Iterator chain1_begin,
     Chain1Iterator chain1_end, Chain2Iterator chain2_begin,
     Chain2Iterator chain2_end) {
