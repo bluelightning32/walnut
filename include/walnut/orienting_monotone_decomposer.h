@@ -22,9 +22,9 @@ namespace walnut {
 
 template <int point3_bits_template = 32>
 class OrientingMonotoneDecomposer :
-  public MonotoneDecomposer<point3_bits_template> {
+  public MonotoneDecomposer<Point3<point3_bits_template>> {
  public:
-  using Parent = MonotoneDecomposer<point3_bits_template>;
+  using Parent = MonotoneDecomposer<Point3<point3_bits_template>>;
   using Point3Rep = typename Parent::Point3Rep;
   using const_iterator = typename std::vector<Point3Rep>::const_iterator;
   using const_reverse_iterator = typename

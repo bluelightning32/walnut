@@ -7,7 +7,7 @@ namespace walnut {
 
 using testing::ElementsAre;
 
-class ResultCollector : public MonotoneDecomposer<32> {
+class ResultCollector : public MonotoneDecomposer<Point3<32>> {
  public:
   std::vector<std::vector<Point3<32>>> GetSortedPolygonResult() {
     for (std::pair<int, std::vector<Point3<32>>>& polygon : result_) {
