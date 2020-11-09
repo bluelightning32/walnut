@@ -15,9 +15,13 @@ namespace walnut {
 template <int point3_bits_template = 32>
 class ConvexPolygon {
  public:
-  // Defined in convex_polygon_factory.h
-  class Factory;
+  // Defined in convex_polygon_factory.h. Use the alias `Factory` instead.
+  template <typename Point3RepTemplate>
+  class GenericFactory;
+
   using Point3Rep = Point3<point3_bits_template>;
+  // Include convex_polygon_factory.h to use this.
+  using Factory = GenericFactory<Point3Rep>;
   using HomoPoint3Rep = HomoPoint3<(point3_bits_template - 1)*7 + 10,
                              (point3_bits_template - 1)*6 + 10>;
   using HalfSpace3Rep =
