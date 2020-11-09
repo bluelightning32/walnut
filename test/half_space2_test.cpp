@@ -33,6 +33,9 @@ TEST(HalfSpace3, CompareHomoPoint2) {
   // included
   EXPECT_GT(half_space.Compare(HomoPoint2<>(/*x=*/6, /*y=*/100, /*w=*/1)), 0);
   EXPECT_GT(half_space.Compare(HomoPoint2<>(/*x=*/11, /*y=*/100, /*w=*/2)), 0);
+
+  // excluded
+  EXPECT_LT(half_space.Compare(HomoPoint2<>(/*x=*/-1, /*y=*/100, /*w=*/-1)), 0);
 }
 
 TEST(HalfSpace2, BuildFromPoints) {
