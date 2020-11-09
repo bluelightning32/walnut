@@ -572,7 +572,7 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
   }
 
   constexpr BigIntImpl<max_words> abs() const {
-    if (used_ == sizeof(BigIntHalfWord)) {
+    if (used_ <= bytes_per_word) {
       return BigIntImpl<max_words>(BigIntWord{words_[0].SignedAbs()});
     }
     if (BigIntWord{words_[used_words() - 1]} >= 0) {
