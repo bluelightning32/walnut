@@ -2,6 +2,7 @@
 #define WALNUT_CONVEX_POLYGON_H__
 
 #include <vector>
+#include <tuple>
 #include <utility>
 
 #include "walnut/half_space3.h"
@@ -11,17 +12,42 @@
 
 namespace walnut {
 
-// A 2D ConvexPolygon inside of R^3. The vertices are stored using homogeneous coordinates.
-template <int point3_bits_template = 32>
+// A 2D ConvexPolygon inside of R^3. The vertices are stored using homogeneous
+// coordinates.
+//
+// `VertexDataTemplate` specifies additional data that the caller can associate
+// with each vertex. The type must be copy-constructible.
+template <int point3_bits_template = 32,
+          typename VertexDataTemplate = std::tuple<>>
 class ConvexPolygon {
  public:
+  using Point3Rep = Point3<point3_bits_template>;
+  using VertexData = VertexDataTemplate;
+  // This is used by FactoryWithVertexData to construct a ConvexPolygon and
+  // specify the inital values of the vertex data.
+  struct Point3WithVertexData : public Point3Rep {
+    using Point3Rep::Point3Rep;
+
+    Point3WithVertexData(int x, int y, int z, VertexData data) :
+      Point3Rep(x, y, z), data(data) { }
+
+    VertexData data;
+  };
+
   // Defined in convex_polygon_factory.h. Use the alias `Factory` instead.
   template <typename Point3RepTemplate>
   class GenericFactory;
 
-  using Point3Rep = Point3<point3_bits_template>;
+  // A class to build ConvexPolygons from iterators that produce Point3s.
+  // VertexData must be default-constructible to use this factory.
+  //
   // Include convex_polygon_factory.h to use this.
   using Factory = GenericFactory<Point3Rep>;
+  // A class to build ConvexPolygons from iterators that produce Point3WithVertexDatas.
+  //
+  // Include convex_polygon_factory.h to use this.
+  using FactoryWithVertexData = GenericFactory<Point3WithVertexData>;
+
   using HomoPoint3Rep = HomoPoint3<(point3_bits_template - 1)*7 + 10,
                              (point3_bits_template - 1)*6 + 10>;
   using HalfSpace3Rep =
@@ -30,10 +56,15 @@ class ConvexPolygon {
     point3_bits_template>::PluckerLineRep;
 
   struct VertexInfo {
+    // VertexData must be default-constructible to use this constructor.
     template <int other_point3_bits>
     VertexInfo(const Point3<other_point3_bits>& vertex,
                const Point3<other_point3_bits>& next_vertex) :
       vertex(vertex), edge(vertex, next_vertex) { }
+
+    VertexInfo(const Point3WithVertexData& vertex,
+               const Point3WithVertexData& next_vertex) :
+      vertex(vertex), edge(vertex, next_vertex), data(vertex.data) { }
 
     static bool LexicographicallyLt(const VertexInfo& a, const VertexInfo& b) {
       return HomoPoint3Rep::LexicographicallyLt(a.vertex, b.vertex);
@@ -46,6 +77,8 @@ class ConvexPolygon {
     // Notably:
     //   next_vertex == vertex + edge.d()
     LineRep edge;
+
+    VertexData data;
   };
 
   // The minimum number of bits to support for each coordinate of the vertex3's
@@ -62,8 +95,10 @@ class ConvexPolygon {
 
   ConvexPolygon() : plane_(HalfSpace3Rep::Zero()), drop_dimension_(-1) { }
 
-  template <int other_point3_bits>
-  ConvexPolygon(const ConvexPolygon<other_point3_bits>& other) :
+  // `VertexData` must be constructible from `OtherVertexData`.
+  template <int other_point3_bits, typename OtherVertexData>
+  ConvexPolygon(const ConvexPolygon<other_point3_bits,
+                                    OtherVertexData>& other) :
     plane_(other.plane_), drop_dimension_(other.drop_dimension_),
     vertices_(other.vertices_) { }
 
@@ -73,6 +108,10 @@ class ConvexPolygon {
 
   const HomoPoint3Rep& vertex(size_t index) const {
     return vertices_[index].vertex;
+  }
+
+  VertexData& vertex_data(size_t index) {
+    return vertices_[index].data;
   }
 
   const LineRep& edge(size_t index) const {
@@ -118,8 +157,9 @@ class ConvexPolygon {
   //    - the vertices are in a cycle. It's okay if the polygon cycles start at
   //      different indices.
   //    - it's okay of the homogenous vertices have a different scale.
-  template <int other_point3_bits>
-  bool operator==(const ConvexPolygon<other_point3_bits>& other) const;
+  template <int other_point3_bits, typename OtherVertexData>
+  bool operator==(const ConvexPolygon<other_point3_bits,
+                                      OtherVertexData>& other) const;
 
   // Returns the source index of an edge pointing in roughly the same direction
   // as `v` and one pointing in the roughly opposite direction, using a binary
@@ -338,10 +378,10 @@ class ConvexPolygon {
   std::vector<VertexInfo> vertices_;
 };
 
-template <int point3_bits>
-template <int other_point3_bits>
-bool ConvexPolygon<point3_bits>::operator==(
-    const ConvexPolygon<other_point3_bits>& other) const {
+template <int point3_bits, typename VertexData>
+template <int other_point3_bits, typename OtherVertexData>
+bool ConvexPolygon<point3_bits, VertexData>::operator==(
+    const ConvexPolygon<other_point3_bits, OtherVertexData>& other) const {
   if (plane_ != other.plane()) {
     return false;
   }
@@ -365,10 +405,10 @@ bool ConvexPolygon<point3_bits>::operator==(
   return true;
 }
 
-template <int point3_bits>
+template <int point3_bits, typename VertexData>
 template <int vector_bits>
 std::pair<size_t, size_t>
-ConvexPolygon<point3_bits>::GetOppositeEdgeIndicesBisect(
+ConvexPolygon<point3_bits, VertexData>::GetOppositeEdgeIndicesBisect(
     const Vector2<vector_bits>& v, int drop_dimension) const {
   int initial_dir_sign = vertices()[0].edge.d().DropDimension(drop_dimension)
                                       .Dot(v).GetSign();
@@ -437,9 +477,9 @@ ConvexPolygon<point3_bits>::GetOppositeEdgeIndicesBisect(
   }
 }
 
-template <int point3_bits>
+template <int point3_bits, typename VertexData>
 template <int vector_bits>
-size_t ConvexPolygon<point3_bits>::GetExtremeIndexBisect(
+size_t ConvexPolygon<point3_bits, VertexData>::GetExtremeIndexBisect(
     const Vector2<vector_bits>& v, int drop_dimension) const {
   if (v.IsZero()) return -1;
 
@@ -469,9 +509,9 @@ size_t ConvexPolygon<point3_bits>::GetExtremeIndexBisect(
   return end % vertices().size();
 }
 
-template <int point3_bits>
+template <int point3_bits, typename VertexData>
 template <int vector_bits, int dist_bits>
-std::pair<int, size_t> ConvexPolygon<point3_bits>::GetPosSideVertex(
+std::pair<int, size_t> ConvexPolygon<point3_bits, VertexData>::GetPosSideVertex(
     const HalfSpace2<vector_bits, dist_bits>& half_space, int drop_dimension,
     size_t same_dir_index, size_t opp_dir_index) const {
   // Current range being considered by the binary search. The range excludes
@@ -505,9 +545,9 @@ std::pair<int, size_t> ConvexPolygon<point3_bits>::GetPosSideVertex(
       end);
 }
 
-template <int point3_bits>
+template <int point3_bits, typename VertexData>
 template <int vector_bits, int dist_bits>
-std::pair<int, size_t> ConvexPolygon<point3_bits>::GetNegSideVertex(
+std::pair<int, size_t> ConvexPolygon<point3_bits, VertexData>::GetNegSideVertex(
     const HalfSpace2<vector_bits, dist_bits>& half_space, int drop_dimension,
     size_t same_dir_index, size_t opp_dir_index) const {
   const auto opp_result = GetPosSideVertex(-half_space, drop_dimension,
@@ -515,9 +555,10 @@ std::pair<int, size_t> ConvexPolygon<point3_bits>::GetNegSideVertex(
   return std::make_pair(-opp_result.first, opp_result.second);
 }
 
-template <int point3_bits>
+template <int point3_bits, typename VertexData>
 template <int vector_bits, int dist_bits>
-std::pair<int, size_t> ConvexPolygon<point3_bits>::GetLastNegSideVertex(
+std::pair<int, size_t>
+ConvexPolygon<point3_bits, VertexData>::GetLastNegSideVertex(
     const HalfSpace2<vector_bits, dist_bits>& half_space, int drop_dimension,
     size_t neg_side_index, int neg_side_type, size_t pos_side_index) const {
   // Current range being considered by the binary search. The range includes

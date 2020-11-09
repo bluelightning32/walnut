@@ -8,15 +8,17 @@
 
 namespace walnut {
 
-template <int point3_bits_template>
+template <int point3_bits_template, typename VertexDataTemplate>
 template <typename Point3RepTemplate>
-class ConvexPolygon<point3_bits_template>::GenericFactory :
+class ConvexPolygon<point3_bits_template, VertexDataTemplate>::GenericFactory :
   private OrientingMonotoneDecomposer<Point3RepTemplate> {
  public:
   using Point3Rep = Point3RepTemplate;
-  using ConvexPolygonRep = ConvexPolygon<point3_bits_template>;
+  using VertexData = VertexDataTemplate;
+  using ConvexPolygonRep = ConvexPolygon<point3_bits_template, VertexData>;
   using HalfSpace3Rep = typename ConvexPolygonRep::HalfSpace3Rep;
 
+  // `Point3Iterator` should produce Point3Reps.
   template <typename Point3Iterator>
   void Build(Point3Iterator begin, Point3Iterator end) {
     using PlanarRangeRep = PlanarRange<Point3Iterator>;
@@ -80,6 +82,8 @@ class ConvexPolygon<point3_bits_template>::GenericFactory :
     return (cross_product.coords()[drop_dimension].GetSign() < 0) ^
            (drop_dimension & 1) ? 1 : -1;
   }
+
+  static constexpr int point3_bits = point3_bits_template;
  
  protected:
   virtual void Emit(ConvexPolygon&& polygon) = 0;
