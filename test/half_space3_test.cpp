@@ -35,6 +35,39 @@ TEST(HalfSpace3, CompareHomoPoint3) {
   EXPECT_GT(plane.Compare(HomoPoint3<>(/*x=*/11, /*y=*/100, /*z=*/100, /*w=*/2)), 0);
 }
 
+TEST(HalfSpace3, ComparePosHomoPoint3NegDist) {
+  // Anything with x<5 is included in the half space.
+  HalfSpace3<> plane(/*normal=*/Vector3<>(/*x=*/-2, /*y=*/0, /*z=*/0),
+                     /*dist=*/BigInt<32>(-10));
+
+  // included
+  EXPECT_GT(plane.Compare(HomoPoint3<>(/*x=*/1, /*y=*/100, /*z=*/100, /*w=*/1)), 0);
+  // excluded
+  EXPECT_LT(plane.Compare(HomoPoint3<>(/*x=*/6, /*y=*/100, /*z=*/100, /*w=*/1)), 0);
+}
+
+TEST(HalfSpace3, CompareNegHomoPoint3PosDist) {
+  // Anything with x>5 is included in the half space.
+  HalfSpace3<> plane(/*normal=*/Vector3<>(/*x=*/2, /*y=*/0, /*z=*/0),
+                     /*dist=*/BigInt<32>(10));
+
+  // excluded
+  EXPECT_LT(plane.Compare(HomoPoint3<>(/*x=*/1, /*y=*/100, /*z=*/100, /*w=*/-1)), 0);
+  // included
+  EXPECT_GT(plane.Compare(HomoPoint3<>(/*x=*/-6, /*y=*/100, /*z=*/100, /*w=*/-1)), 0);
+}
+
+TEST(HalfSpace3, CompareNegHomoPoint3NegDist) {
+  // Anything with x<5 is included in the half space.
+  HalfSpace3<> plane(/*normal=*/Vector3<>(/*x=*/-2, /*y=*/0, /*z=*/0),
+                     /*dist=*/BigInt<32>(-10));
+
+  // included
+  EXPECT_GT(plane.Compare(HomoPoint3<>(/*x=*/1, /*y=*/100, /*z=*/100, /*w=*/-1)), 0);
+  // excluded
+  EXPECT_LT(plane.Compare(HomoPoint3<>(/*x=*/-6, /*y=*/100, /*z=*/100, /*w=*/-1)), 0);
+}
+
 TEST(HalfSpace3, BuildFromPoints) {
   // Build from the triangle:
   // [0, 0, 5], [1, 0, 5], [0, 1, 5]

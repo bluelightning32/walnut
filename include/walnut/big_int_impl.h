@@ -600,6 +600,13 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     return BigIntWord{words_[i]} | i;
   }
 
+  // Returns 1 if this is greater than or equal to 0.
+  // Returns -1 if this is less than 0.
+  constexpr int GetAbsMult() const {
+    return static_cast<int>(
+        BigIntWord(words_[used_words() - 1].SignExtension())) | 1;
+  }
+
   template <int other_words>
   constexpr bool HasSameSign(const BigIntImpl<other_words>& other) const {
     return GetSign() ^ other.GetSign() >= 0;

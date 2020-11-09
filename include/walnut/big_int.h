@@ -217,6 +217,12 @@ class BigInt {
     return rep_.GetSign();
   }
 
+  // Returns 1 if this is greater than or equal to 0.
+  // Returns -1 if this is less than 0.
+  constexpr int GetAbsMult() const {
+    return rep_.GetAbsMult();
+  }
+
   constexpr bool IsZero() const {
     return GetSign() == 0;
   }
