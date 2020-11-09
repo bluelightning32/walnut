@@ -93,7 +93,7 @@ class HalfSpace3 {
   // Returns >0 if `v` is in the half-space, 0 if `v` is coincident with the
   // plane, or <0 if `v` is outside of the half-space.
   template <int v_num_bits, int v_denom_bits>
-  int Compare(const HomoPoint3<v_num_bits, v_denom_bits>& v) {
+  int Compare(const HomoPoint3<v_num_bits, v_denom_bits>& v) const {
     return normal_.Dot(v.vector_from_origin()).Compare(
         v.dist_denom() * dist_) * v.dist_denom().GetAbsMult();
   }
@@ -102,6 +102,25 @@ class HalfSpace3 {
   template <int v_num_bits, int v_denom_bits>
   bool IsCoincident(const HomoPoint3<v_num_bits, v_denom_bits>& v) const {
     return Compare(v) == 0;
+  }
+
+  // Determines which side of this half-space a parallel plane is one.
+  //
+  // Returns:
+  //   >0:  if `p` is parallel to this half-space's plane and is fully
+  //         contained within the positive half-space
+  //    0:  if `p` is in the same plane as this half-space
+  //   <0:  if `p` is parallel to this half-space's plane and is fully
+  //        contained within the negative half-space.
+  //
+  // The return value is undefined if `p` is not parallel to this half-space,
+  // or if the normal coordinate with index `nonzero_dimension` is zero.
+  template <int other_vector_bits, int other_dist_bits>
+  int Compare(const HalfSpace3<other_vector_bits, other_dist_bits>& p,
+              int nonzero_dimension) const {
+    return (d() * p.normal().coords()[nonzero_dimension]).Compare(
+        p.d() * normal_.coords()[nonzero_dimension]) *
+      p.normal().coords()[nonzero_dimension].GetAbsMult();
   }
 
   // Returns a plane with an invalid 0 normal vector and a 0 distance.
@@ -163,6 +182,13 @@ class HalfSpace3 {
   void Negate() {
     normal_.Negate();
     dist_.Negate();
+  }
+
+  // This could overflow. It is the caller's responsibility to ensure that none
+  // of the normal components are equal to their min_value and that dist is not
+  // equal to its min_value.
+  HalfSpace3 operator-() const {
+    return HalfSpace3(-normal(), -d());
   }
 
  private:

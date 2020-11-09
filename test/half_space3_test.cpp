@@ -68,6 +68,67 @@ TEST(HalfSpace3, CompareNegHomoPoint3NegDist) {
   EXPECT_LT(plane.Compare(HomoPoint3<>(/*x=*/-6, /*y=*/100, /*z=*/100, /*w=*/-1)), 0);
 }
 
+TEST(HalfSpace3, CompareParallelPlane) {
+  // These are in sorted order.
+  std::vector<HalfSpace3<>> positive_half_spaces = {
+    HalfSpace3<>(/*normal=*/Vector3<>(/*x=*/1, /*y=*/0, /*z=*/0),
+                 /*dist=*/BigInt<32>(-2)),
+    HalfSpace3<>(/*normal=*/Vector3<>(/*x=*/1, /*y=*/0, /*z=*/0),
+                 /*dist=*/BigInt<32>(-1)),
+    HalfSpace3<>(/*normal=*/Vector3<>(/*x=*/2, /*y=*/0, /*z=*/0),
+                 /*dist=*/BigInt<32>(-1)),
+    HalfSpace3<>(/*normal=*/Vector3<>(/*x=*/1, /*y=*/0, /*z=*/0),
+                 /*dist=*/BigInt<32>(0)),
+    HalfSpace3<>(/*normal=*/Vector3<>(/*x=*/2, /*y=*/0, /*z=*/0),
+                 /*dist=*/BigInt<32>(1)),
+    HalfSpace3<>(/*normal=*/Vector3<>(/*x=*/1, /*y=*/0, /*z=*/0),
+                 /*dist=*/BigInt<32>(1)),
+    HalfSpace3<>(/*normal=*/Vector3<>(/*x=*/1, /*y=*/0, /*z=*/0),
+                 /*dist=*/BigInt<32>(2)),
+  };
+  std::vector<HalfSpace3<>> negative_half_spaces;
+  for (const HalfSpace3<>& h : positive_half_spaces) {
+    negative_half_spaces.push_back(-h);
+  }
+
+  for (int i = 0; i < positive_half_spaces.size(); ++i) {
+    for (int j = 0; j < positive_half_spaces.size(); ++j) {
+      if (i < j) {
+        EXPECT_LT(positive_half_spaces[i].Compare(positive_half_spaces[j],
+                                                  /*nonzero_dimension=*/0), 0)
+          << "i=" << i << " j=" << j;
+        EXPECT_LT(positive_half_spaces[i].Compare(negative_half_spaces[j],
+                                                  /*nonzero_dimension=*/0), 0)
+          << "i=" << i << " j=" << j;
+        EXPECT_GT(negative_half_spaces[i].Compare(positive_half_spaces[j],
+                                                  /*nonzero_dimension=*/0), 0)
+          << "i=" << i << " j=" << j;
+        EXPECT_GT(negative_half_spaces[i].Compare(negative_half_spaces[j],
+                                                  /*nonzero_dimension=*/0), 0)
+          << "i=" << i << " j=" << j;
+      } else if (i == j) {
+        EXPECT_EQ(positive_half_spaces[i].Compare(positive_half_spaces[j],
+                                                  /*nonzero_dimension=*/0), 0);
+        EXPECT_EQ(positive_half_spaces[i].Compare(negative_half_spaces[j],
+                                                  /*nonzero_dimension=*/0), 0);
+        EXPECT_EQ(negative_half_spaces[i].Compare(positive_half_spaces[j],
+                                                  /*nonzero_dimension=*/0), 0);
+        EXPECT_EQ(negative_half_spaces[i].Compare(negative_half_spaces[j],
+                                                  /*nonzero_dimension=*/0), 0);
+      } else {
+        EXPECT_GT(positive_half_spaces[i].Compare(positive_half_spaces[j],
+                                                  /*nonzero_dimension=*/0), 0);
+        EXPECT_GT(positive_half_spaces[i].Compare(negative_half_spaces[j],
+                                                  /*nonzero_dimension=*/0), 0);
+        EXPECT_LT(negative_half_spaces[i].Compare(positive_half_spaces[j],
+                                                  /*nonzero_dimension=*/0), 0);
+        EXPECT_LT(negative_half_spaces[i].Compare(negative_half_spaces[j],
+                                                  /*nonzero_dimension=*/0), 0);
+      }
+    }
+  }
+}
+
 TEST(HalfSpace3, BuildFromPoints) {
   // Build from the triangle:
   // [0, 0, 5], [1, 0, 5], [0, 1, 5]

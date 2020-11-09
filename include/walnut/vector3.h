@@ -200,6 +200,12 @@ class Vector3 {
     }
   }
 
+  // This could overflow. It is the caller's responsibility to ensure that none
+  // of the components are equal to their min_value.
+  Vector3 operator-() const {
+    return Vector3(-x(), -y(), -z());
+  }
+
  private:
   std::array<BigIntRep, 3> coords_;
 };
