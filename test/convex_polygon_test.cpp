@@ -185,10 +185,10 @@ TEST(ConvexPolygon, CounterClockwiseTriangleEdges) {
     const Point3<32>& input_vertex = input[i];
     const Point3<32>& next_input_vertex = input[
         (i + 1) % polygon.vertex_count()];
-    EXPECT_TRUE(polygon.edge(i).IsOnLine(vertex));
-    EXPECT_TRUE(polygon.edge(i).IsOnLine(next_vertex));
-    EXPECT_TRUE(polygon.edge(i).IsOnLine(input_vertex));
-    EXPECT_TRUE(polygon.edge(i).IsOnLine(next_input_vertex));
+    EXPECT_TRUE(polygon.edge(i).IsCoincident(vertex));
+    EXPECT_TRUE(polygon.edge(i).IsCoincident(next_vertex));
+    EXPECT_TRUE(polygon.edge(i).IsCoincident(input_vertex));
+    EXPECT_TRUE(polygon.edge(i).IsCoincident(next_input_vertex));
     EXPECT_GT((next_input_vertex - input_vertex).Dot(polygon.edge(i).d()), 0);
   }
 }
@@ -212,10 +212,10 @@ TEST(ConvexPolygon, CounterClockwiseSquareEdges) {
     const Point3<32>& input_vertex = input[i];
     const Point3<32>& next_input_vertex = input[
         (i + 1) % polygon.vertex_count()];
-    EXPECT_TRUE(polygon.edge(i).IsOnLine(vertex));
-    EXPECT_TRUE(polygon.edge(i).IsOnLine(next_vertex));
-    EXPECT_TRUE(polygon.edge(i).IsOnLine(input_vertex));
-    EXPECT_TRUE(polygon.edge(i).IsOnLine(next_input_vertex));
+    EXPECT_TRUE(polygon.edge(i).IsCoincident(vertex));
+    EXPECT_TRUE(polygon.edge(i).IsCoincident(next_vertex));
+    EXPECT_TRUE(polygon.edge(i).IsCoincident(input_vertex));
+    EXPECT_TRUE(polygon.edge(i).IsCoincident(next_input_vertex));
     EXPECT_GT((next_input_vertex - input_vertex).Dot(polygon.edge(i).d()), 0);
   }
 }
@@ -239,10 +239,10 @@ TEST(ConvexPolygon, ClockwiseSquareEdges) {
     const Point3<32>& input_vertex = input[i];
     const Point3<32>& next_input_vertex = input[
         (i + 1) % polygon.vertex_count()];
-    EXPECT_TRUE(polygon.edge(i).IsOnLine(vertex));
-    EXPECT_TRUE(polygon.edge(i).IsOnLine(next_vertex));
-    EXPECT_TRUE(polygon.edge(i).IsOnLine(input_vertex));
-    EXPECT_TRUE(polygon.edge(i).IsOnLine(next_input_vertex));
+    EXPECT_TRUE(polygon.edge(i).IsCoincident(vertex));
+    EXPECT_TRUE(polygon.edge(i).IsCoincident(next_vertex));
+    EXPECT_TRUE(polygon.edge(i).IsCoincident(input_vertex));
+    EXPECT_TRUE(polygon.edge(i).IsCoincident(next_input_vertex));
     EXPECT_GT((next_input_vertex - input_vertex).Dot(polygon.edge(i).d()), 0);
   }
 }
@@ -270,10 +270,10 @@ TEST(ConvexPolygon, RedundantEdges) {
     const Point3<32>& input_vertex = input[i];
     const Point3<32>& next_input_vertex = input[
         (i + 1) % polygon.vertex_count()];
-    EXPECT_TRUE(polygon.edge(i).IsOnLine(vertex));
-    EXPECT_TRUE(polygon.edge(i).IsOnLine(next_vertex));
-    EXPECT_TRUE(polygon.edge(i).IsOnLine(input_vertex));
-    EXPECT_TRUE(polygon.edge(i).IsOnLine(next_input_vertex));
+    EXPECT_TRUE(polygon.edge(i).IsCoincident(vertex));
+    EXPECT_TRUE(polygon.edge(i).IsCoincident(next_vertex));
+    EXPECT_TRUE(polygon.edge(i).IsCoincident(input_vertex));
+    EXPECT_TRUE(polygon.edge(i).IsCoincident(next_input_vertex));
     EXPECT_GT((next_input_vertex - input_vertex).Dot(polygon.edge(i).d()), 0);
   }
 }

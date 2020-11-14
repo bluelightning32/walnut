@@ -110,7 +110,7 @@ class PluckerLine {
 
   // Returns true if `p` is on the line.
   template <int v_bits>
-  bool IsOnLine(const Point3<v_bits>& p) const {
+  bool IsCoincident(const Point3<v_bits>& p) const {
     /*
      * p x (p + d) == m
      * p x p + p x d == m
@@ -121,7 +121,7 @@ class PluckerLine {
 
   // Returns true if `p` is on the line.
   template <int num_bits, int denom_bits>
-  bool IsOnLine(const HomoPoint3<num_bits, denom_bits>& p) const {
+  bool IsCoincident(const HomoPoint3<num_bits, denom_bits>& p) const {
     /*
      * p x (p + p.dist*d) == m
      * p x p + p x (p.dist*d) == m

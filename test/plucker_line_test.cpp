@@ -14,40 +14,40 @@ TEST(PluckerLine, FromPointsDirection) {
   EXPECT_EQ((p2 - p1).Cross(line.d()), Vector3<>::Zero());
 }
 
-TEST(PluckerLine, IsOnLine) {
+TEST(PluckerLine, IsCoincidentPoint3) {
   const Point3<> p1(1, 2, 3);
   const Point3<> p2(5, 7, 11);
   PluckerLine<> line(p1, p2);
 
-  EXPECT_TRUE(line.IsOnLine(p1));
-  EXPECT_TRUE(line.IsOnLine(p2));
+  EXPECT_TRUE(line.IsCoincident(p1));
+  EXPECT_TRUE(line.IsCoincident(p2));
 
   const Point3<> p3(p2 + (p2 - p1));
-  EXPECT_TRUE(line.IsOnLine(p3));
+  EXPECT_TRUE(line.IsCoincident(p3));
 
   const HomoPoint3<> doubled_p3(p3.vector_from_origin().Scale(2), BigInt<8>(2));
-  EXPECT_TRUE(line.IsOnLine(doubled_p3));
+  EXPECT_TRUE(line.IsCoincident(doubled_p3));
 
   const Point3<> p4(p1 - (p2 - p1));
-  EXPECT_TRUE(line.IsOnLine(p4));
+  EXPECT_TRUE(line.IsCoincident(p4));
 
   const Point3<> p5(17, 23, 31);
-  EXPECT_FALSE(line.IsOnLine(p5));
+  EXPECT_FALSE(line.IsCoincident(p5));
 
   const HomoPoint3<> doubled_p5(p5.vector_from_origin().Scale(2), BigInt<8>(2));
-  EXPECT_FALSE(line.IsOnLine(doubled_p5));
+  EXPECT_FALSE(line.IsCoincident(doubled_p5));
 }
 
-TEST(PluckerLine, IsOnLineThroughOrigin) {
+TEST(PluckerLine, IsCoincidentThroughOrigin) {
   const Point3<> p1(1, 2, 3);
   const Point3<> p2(0, 0, 0);
   PluckerLine<> line(p1, p2);
 
-  EXPECT_TRUE(line.IsOnLine(p1));
-  EXPECT_TRUE(line.IsOnLine(p2));
+  EXPECT_TRUE(line.IsCoincident(p1));
+  EXPECT_TRUE(line.IsCoincident(p2));
 
   const Point3<> p3(p2 + (p2 - p1));
-  EXPECT_TRUE(line.IsOnLine(p3));
+  EXPECT_TRUE(line.IsCoincident(p3));
 }
 
 TEST(PluckerLine, Equality) {
@@ -80,8 +80,8 @@ TEST(PluckerLine, ConstructFromPlanes) {
 
   EXPECT_EQ(line_from_planes, line_from_points);
 
-  EXPECT_TRUE(line_from_planes.IsOnLine(p1));
-  EXPECT_TRUE(line_from_planes.IsOnLine(p2));
+  EXPECT_TRUE(line_from_planes.IsCoincident(p1));
+  EXPECT_TRUE(line_from_planes.IsCoincident(p2));
 }
 
 TEST(PluckerLine, ConstructFromPlanesOrientation) {
@@ -142,14 +142,14 @@ TEST(PluckerLine, IntersectPlane) {
   const Point3<> p3(6, 8, 12);
   const Point3<> p4(6, 9, 11);
 
-  EXPECT_FALSE(line.IsOnLine(p3));
-  EXPECT_FALSE(line.IsOnLine(p4));
+  EXPECT_FALSE(line.IsCoincident(p3));
+  EXPECT_FALSE(line.IsCoincident(p4));
 
   HalfSpace3<> plane(p2, p3, p4);
 
   auto intersect_point = line.Intersect(plane);
   EXPECT_EQ(intersect_point, HomoPoint3<>(p2));
-  EXPECT_TRUE(line.IsOnLine(intersect_point));
+  EXPECT_TRUE(line.IsCoincident(intersect_point));
 }
 
 TEST(PluckerLine, Project2D) {
@@ -159,9 +159,9 @@ TEST(PluckerLine, Project2D) {
 
   const Point3<> p3(41, 103, 73);
 
-  EXPECT_TRUE(line.IsOnLine(p1));
-  EXPECT_TRUE(line.IsOnLine(p2));
-  EXPECT_FALSE(line.IsOnLine(p3));
+  EXPECT_TRUE(line.IsCoincident(p1));
+  EXPECT_TRUE(line.IsCoincident(p2));
+  EXPECT_FALSE(line.IsCoincident(p3));
 
   for (int dimension = 0; dimension < 3; ++dimension) {
     auto line2d = line.Project2D(dimension);
