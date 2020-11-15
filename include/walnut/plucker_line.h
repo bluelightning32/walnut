@@ -130,6 +130,12 @@ class PluckerLine {
     return p.vector_from_origin().Cross(d_) == m() * p.dist_denom();
   }
 
+  // Returns true if the line is on the plane.
+  template <int vector_bits, int dist_bits>
+  bool IsCoincident(const HalfSpace3<vector_bits, dist_bits>& p) const {
+    return d().Dot(p.normal()).IsZero();
+  }
+
   // Returns true when the lines match
   //
   // Two plucker lines are considered equal if they describe the same set

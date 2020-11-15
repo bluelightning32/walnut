@@ -50,6 +50,20 @@ TEST(PluckerLine, IsCoincidentThroughOrigin) {
   EXPECT_TRUE(line.IsCoincident(p3));
 }
 
+TEST(PluckerLine, IsCoincidentHalfSpace3) {
+  const Point3<> p1(1, 2, 3);
+  const Point3<> p2(5, 7, 11);
+  PluckerLine<> line(p1, p2);
+
+  const Point3<> p3(6, 8, 14);
+  HalfSpace3<> a(p1, p2, p3);
+  const Point3<> p4(7, 9, 15);
+  HalfSpace3<> b(p1, p3, p4);
+
+  EXPECT_TRUE(line.IsCoincident(a));
+  EXPECT_FALSE(line.IsCoincident(b));
+}
+
 TEST(PluckerLine, Equality) {
   const Point3<> p1(1, 2, 3);
   const Vector3<> d(5, 7, 11);
