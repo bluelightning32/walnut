@@ -188,6 +188,44 @@ TEST(PluckerLine, Project2D) {
   }
 }
 
+TEST(PluckerLine, Project2DDropYSideness) {
+  const Point3<> p1(0, 1, 1);
+  const Point3<> p2(1, 1, 1);
+
+  const Point3<> origin(0, 0, 0);
+
+  {
+    const PluckerLine<> line(p1, p2);
+    auto line2d = line.Project2D(/*dimension=*/1);
+    EXPECT_LT(line2d.Compare(origin.DropDimension(1)), 0);
+  }
+
+  {
+    const PluckerLine<> line(p2, p1);
+    auto line2d = line.Project2D(/*dimension=*/1);
+    EXPECT_GT(line2d.Compare(origin.DropDimension(1)), 0);
+  }
+}
+
+TEST(PluckerLine, Project2DDropZSideness) {
+  const Point3<> p1(0, 1, 1);
+  const Point3<> p2(1, 1, 1);
+
+  const Point3<> origin(0, 0, 0);
+
+  {
+    const PluckerLine<> line(p1, p2);
+    auto line2d = line.Project2D(/*dimension=*/2);
+    EXPECT_LT(line2d.Compare(origin.DropDimension(2)), 0);
+  }
+
+  {
+    const PluckerLine<> line(p2, p1);
+    auto line2d = line.Project2D(/*dimension=*/2);
+    EXPECT_GT(line2d.Compare(origin.DropDimension(2)), 0);
+  }
+}
+
 template <int point3_bits>
 void TestCorrectOutputBitsFromVertices() {
   using Builder = PluckerLineFromPoint3sBuilder<point3_bits>;
