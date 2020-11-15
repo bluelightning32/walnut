@@ -78,7 +78,7 @@ class PluckerLine {
   // Constructs the line for the intersection of the two planes, `a` and `b`.
   //
   // Both `a` and `b` must be valid (have non-zero normals), and they must be
-  // non-equal.
+  // non-equal, otherwise `IsValid` will return false on the constructed line.
   template <int vector_bits, int dist_bits>
   PluckerLine(const HalfSpace3<vector_bits, dist_bits>& a,
               const HalfSpace3<vector_bits, dist_bits>& b) :

@@ -53,10 +53,24 @@ class HalfSpace3 {
   // Leaves the coordinates in an undefined state
   HalfSpace3() = default;
 
+  // Constructs a half-space a the normal and distance from the origin along
+  // that normal.
+  //
+  // normal * dist a vector that goes from the origin to a point on the plane.
+  // From that point, everything in the normal direction is considered in the
+  // positive half-space and everything opposite to the normal direction is
+  // considered in the negative half-space.
   template <int other_vector_bits>
   HalfSpace3(const Vector3<other_vector_bits>& normal, const DistInt& dist) :
     normal_(normal), dist_(dist) { }
 
+  // Constructs a half-space from a normal in component form and distance from
+  // the origin along that normal.
+  //
+  // normal * dist a vector that goes from the origin to a point on the plane.
+  // From that point, everything in the normal direction is considered in the
+  // positive half-space and everything opposite to the normal direction is
+  // considered in the negative half-space.
   HalfSpace3(const VectorInt& x, const VectorInt& y, const VectorInt& z,
         const DistInt& dist) :
     normal_(x, y, z), dist_(dist) { }
@@ -90,8 +104,8 @@ class HalfSpace3 {
     return Compare(v) == 0;
   }
 
-  // Returns >0 if `v` is in the half-space, 0 if `v` is coincident with the
-  // plane, or <0 if `v` is outside of the half-space.
+  // Returns >0 if `v` is in the positive half-space, 0 if `v` is coincident
+  // with the plane, or <0 if `v` is in the negative half-space.
   template <int v_num_bits, int v_denom_bits>
   int Compare(const HomoPoint3<v_num_bits, v_denom_bits>& v) const {
     return normal_.Dot(v.vector_from_origin()).Compare(
