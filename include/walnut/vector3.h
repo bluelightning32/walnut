@@ -167,16 +167,8 @@ class Vector3 {
   }
 
   Vector2<coord_bits> DropDimension(int drop_dimension) const {
-    switch (drop_dimension) {
-      case 0:
-        return Vector2<coord_bits>(coords()[1], coords()[2]);
-      case 1:
-        return Vector2<coord_bits>(coords()[0], coords()[2]);
-      case 2:
-        return Vector2<coord_bits>(coords()[0], coords()[1]);
-      default:
-        assert(false);
-    }
+    return Vector2<coord_bits>(coords()[(drop_dimension + 1) % 3],
+                               coords()[(drop_dimension + 2) % 3]);
   }
 
   // Verifies the fields are in their supported ranges.

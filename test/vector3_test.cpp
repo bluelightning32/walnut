@@ -169,4 +169,26 @@ TEST(Vector3, CrossMax) {
   EXPECT_GE(allowed_max, expected_z);
 }
 
+TEST(Vector3, DropDimensionSideness) {
+  Vector3<> a3(1, 2, 1);
+  Vector3<> b3(2, 1, 3);
+
+  Vector3<> c3 = a3.Cross(b3);
+
+  for (int dimension = 0; dimension < 3; ++dimension) {
+    Vector2<> a2 = a3.DropDimension(dimension);
+    Vector2<> b2 = b3.DropDimension(dimension);
+
+    BigInt<32> c = a2.Cross(b2);
+
+    EXPECT_FALSE(c3.coords()[dimension].IsZero())
+      << "dimension=" << dimension;
+    if (c3.coords()[dimension] > 0) {
+      EXPECT_GT(c, 0) << "dimension=" << dimension;
+    } else {
+      EXPECT_LT(c, 0) << "dimension=" << dimension;
+    }
+  }
+}
+
 }  // walnut

@@ -201,7 +201,9 @@ class PluckerLine {
   // of p1 and p2 will be coincident on the projected half-space. The normal of
   // the half-space will point a quarter turn from the vector (p2-p1). That
   // means the positive half-space will be counter-clockwise from the line p1
-  // to p2.
+  // to p2. Note that when dimension 1 is dropped, the vector components go
+  // from (x, y, z) to (z, x). The quarter turn is performed after the
+  // projection.
   //
   // At least one of the remaining coordinates of d() must be non-zero for the
   // resulting HalfSpace2 to be valid.
@@ -209,10 +211,9 @@ class PluckerLine {
   // Note that this may overflow if some of the components of d() equal
   // DVector::BigIntRep::min_value().
   HalfSpace2<d_bits, m_bits> Project2D(int drop_dimension) const {
-    int dist_scale = drop_dimension & 1 ? 1 : -1;
     return HalfSpace2<d_bits, m_bits>(
         /*normal=*/d().DropDimension(drop_dimension).GetPerpendicular(),
-        /*dist=*/m_.coords()[drop_dimension] * dist_scale);
+        /*dist=*/-m_.coords()[drop_dimension]);
   }
 
  private:

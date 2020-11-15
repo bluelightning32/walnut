@@ -189,21 +189,29 @@ TEST(PluckerLine, Project2D) {
 }
 
 TEST(PluckerLine, Project2DDropYSideness) {
-  const Point3<> p1(0, 1, 1);
-  const Point3<> p2(1, 1, 1);
+  const Point3<> p1(0, 1, 2);
+  const Point3<> p2(1, 1, 2);
 
   const Point3<> origin(0, 0, 0);
 
   {
     const PluckerLine<> line(p1, p2);
     auto line2d = line.Project2D(/*dimension=*/1);
-    EXPECT_LT(line2d.Compare(origin.DropDimension(1)), 0);
+    // The `line` goes from (0, 1, 2) to (1, 1, 2). After dropping the y
+    // coordinate and swapping x and z, `line2d` goes from (2, 0) to (2, 1). A
+    // clockwise quarter turn from that line points from (2, 0) towards the
+    // origin.
+    EXPECT_GT(line2d.Compare(origin.DropDimension(1)), 0);
   }
 
   {
     const PluckerLine<> line(p2, p1);
     auto line2d = line.Project2D(/*dimension=*/1);
-    EXPECT_GT(line2d.Compare(origin.DropDimension(1)), 0);
+    // The `line` goes from (1, 1, 2) to (0, 1, 2). After dropping the y
+    // coordinate and swapping x and z, `line2d` goes from (2, 1) to (2, 0). A
+    // clockwise quarter turn from that line points from (2, 0) away from the
+    // origin.
+    EXPECT_LT(line2d.Compare(origin.DropDimension(1)), 0);
   }
 }
 
