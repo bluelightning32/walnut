@@ -185,11 +185,12 @@ TEST(ConvexPolygon, CounterClockwiseTriangleEdges) {
     const Point3<32>& input_vertex = input[i];
     const Point3<32>& next_input_vertex = input[
         (i + 1) % polygon.vertex_count()];
-    EXPECT_TRUE(polygon.edge(i).IsCoincident(vertex));
-    EXPECT_TRUE(polygon.edge(i).IsCoincident(next_vertex));
-    EXPECT_TRUE(polygon.edge(i).IsCoincident(input_vertex));
-    EXPECT_TRUE(polygon.edge(i).IsCoincident(next_input_vertex));
-    EXPECT_GT((next_input_vertex - input_vertex).Dot(polygon.edge(i).d()), 0);
+    EXPECT_TRUE(polygon.edge(i).line.IsCoincident(vertex));
+    EXPECT_TRUE(polygon.edge(i).line.IsCoincident(next_vertex));
+    EXPECT_TRUE(polygon.edge(i).line.IsCoincident(input_vertex));
+    EXPECT_TRUE(polygon.edge(i).line.IsCoincident(next_input_vertex));
+    EXPECT_GT((next_input_vertex - input_vertex).Dot(polygon.edge(i).line.d()),
+              0);
   }
 }
 
@@ -212,11 +213,12 @@ TEST(ConvexPolygon, CounterClockwiseSquareEdges) {
     const Point3<32>& input_vertex = input[i];
     const Point3<32>& next_input_vertex = input[
         (i + 1) % polygon.vertex_count()];
-    EXPECT_TRUE(polygon.edge(i).IsCoincident(vertex));
-    EXPECT_TRUE(polygon.edge(i).IsCoincident(next_vertex));
-    EXPECT_TRUE(polygon.edge(i).IsCoincident(input_vertex));
-    EXPECT_TRUE(polygon.edge(i).IsCoincident(next_input_vertex));
-    EXPECT_GT((next_input_vertex - input_vertex).Dot(polygon.edge(i).d()), 0);
+    EXPECT_TRUE(polygon.edge(i).line.IsCoincident(vertex));
+    EXPECT_TRUE(polygon.edge(i).line.IsCoincident(next_vertex));
+    EXPECT_TRUE(polygon.edge(i).line.IsCoincident(input_vertex));
+    EXPECT_TRUE(polygon.edge(i).line.IsCoincident(next_input_vertex));
+    EXPECT_GT((next_input_vertex - input_vertex).Dot(polygon.edge(i).line.d()),
+              0);
   }
 }
 
@@ -239,11 +241,12 @@ TEST(ConvexPolygon, ClockwiseSquareEdges) {
     const Point3<32>& input_vertex = input[i];
     const Point3<32>& next_input_vertex = input[
         (i + 1) % polygon.vertex_count()];
-    EXPECT_TRUE(polygon.edge(i).IsCoincident(vertex));
-    EXPECT_TRUE(polygon.edge(i).IsCoincident(next_vertex));
-    EXPECT_TRUE(polygon.edge(i).IsCoincident(input_vertex));
-    EXPECT_TRUE(polygon.edge(i).IsCoincident(next_input_vertex));
-    EXPECT_GT((next_input_vertex - input_vertex).Dot(polygon.edge(i).d()), 0);
+    EXPECT_TRUE(polygon.edge(i).line.IsCoincident(vertex));
+    EXPECT_TRUE(polygon.edge(i).line.IsCoincident(next_vertex));
+    EXPECT_TRUE(polygon.edge(i).line.IsCoincident(input_vertex));
+    EXPECT_TRUE(polygon.edge(i).line.IsCoincident(next_input_vertex));
+    EXPECT_GT((next_input_vertex - input_vertex).Dot(polygon.edge(i).line.d()),
+              0);
   }
 }
 
@@ -270,11 +273,12 @@ TEST(ConvexPolygon, RedundantEdges) {
     const Point3<32>& input_vertex = input[i];
     const Point3<32>& next_input_vertex = input[
         (i + 1) % polygon.vertex_count()];
-    EXPECT_TRUE(polygon.edge(i).IsCoincident(vertex));
-    EXPECT_TRUE(polygon.edge(i).IsCoincident(next_vertex));
-    EXPECT_TRUE(polygon.edge(i).IsCoincident(input_vertex));
-    EXPECT_TRUE(polygon.edge(i).IsCoincident(next_input_vertex));
-    EXPECT_GT((next_input_vertex - input_vertex).Dot(polygon.edge(i).d()), 0);
+    EXPECT_TRUE(polygon.edge(i).line.IsCoincident(vertex));
+    EXPECT_TRUE(polygon.edge(i).line.IsCoincident(next_vertex));
+    EXPECT_TRUE(polygon.edge(i).line.IsCoincident(input_vertex));
+    EXPECT_TRUE(polygon.edge(i).line.IsCoincident(next_input_vertex));
+    EXPECT_GT((next_input_vertex - input_vertex).Dot(polygon.edge(i).line.d()),
+              0);
   }
 }
 
@@ -306,17 +310,17 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesBisectStartPerp) {
   std::pair<size_t, size_t> opp_edges = polygon.GetOppositeEdgeIndicesBisect(
       vector, /*drop_dimension=*/2);
 
-  EXPECT_GT(polygon.vertices()[opp_edges.first].edge.d().DropDimension(2)
+  EXPECT_GT(polygon.edge(opp_edges.first).line.d().DropDimension(2)
                    .Dot(vector), 0);
-  EXPECT_LT(polygon.vertices()[opp_edges.second].edge.d().DropDimension(2)
+  EXPECT_LT(polygon.edge(opp_edges.second).line.d().DropDimension(2)
                    .Dot(vector), 0);
 
   vector.Negate();
   opp_edges = polygon.GetOppositeEdgeIndicesBisect(vector,
                                                    /*drop_dimension=*/2);
-  EXPECT_GT(polygon.vertices()[opp_edges.first].edge.d().DropDimension(2)
+  EXPECT_GT(polygon.edge(opp_edges.first).line.d().DropDimension(2)
                    .Dot(vector), 0);
-  EXPECT_LT(polygon.vertices()[opp_edges.second].edge.d().DropDimension(2)
+  EXPECT_LT(polygon.edge(opp_edges.second).line.d().DropDimension(2)
                    .Dot(vector), 0);
 }
 
@@ -343,9 +347,9 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesBisect) {
     std::pair<size_t, size_t> opp_edges = polygon.GetOppositeEdgeIndicesBisect(
         vector, /*drop_dimension=*/2);
 
-    EXPECT_GT(polygon.vertices()[opp_edges.first].edge.d().DropDimension(2)
+    EXPECT_GT(polygon.edge(opp_edges.first).line.d().DropDimension(2)
                      .Dot(vector), 0);
-    EXPECT_LT(polygon.vertices()[opp_edges.second].edge.d().DropDimension(2)
+    EXPECT_LT(polygon.edge(opp_edges.second).line.d().DropDimension(2)
                      .Dot(vector), 0);
 
     std::rotate(std::begin(p), std::begin(p) + 1, std::end(p));
@@ -362,12 +366,12 @@ TEST(ConvexPolygon, GetGreaterCycleIndex) {
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
 
-  for (int a = 0; a < polygon.vertices().size(); ++a) {
-    for (int b = 0; b < polygon.vertices().size(); ++b) {
+  for (int a = 0; a < polygon.vertex_count(); ++a) {
+    for (int b = 0; b < polygon.vertex_count(); ++b) {
       size_t ret = polygon.GetGreaterCycleIndex(a, b);
       EXPECT_GE(ret, a);
-      EXPECT_LT(ret, a + polygon.vertices().size());
-      EXPECT_EQ(ret % polygon.vertices().size(), b);
+      EXPECT_LT(ret, a + polygon.vertex_count());
+      EXPECT_EQ(ret % polygon.vertex_count(), b);
     }
   }
 }
@@ -763,5 +767,33 @@ TEST(ConvexPolygon, GetLastNegSideVertex) {
   }
 }
 
+TEST(ConvexPolygon, ConvertVertexData) {
+  Point3<32> input[] = {
+    Point3<32>(0, 0, 10),
+    Point3<32>(1, 0, 10),
+    Point3<32>(1, 1, 10),
+  };
+
+  struct VertexData {
+    VertexData() = default;
+    VertexData(const std::tuple<>&) { }
+
+    bool extra = false;
+
+    bool operator!=(const std::tuple<>&) const {
+      return false;
+    }
+  };
+
+  ConvexPolygon<32> polygon_raw = MakeConvexPolygon(input);
+  ConvexPolygon<32, VertexData> polygon = polygon_raw;
+
+  EXPECT_EQ(polygon, polygon_raw);
+  ASSERT_EQ(polygon.vertex_count(), 3);
+
+  EXPECT_FALSE(polygon.vertex_data(0).extra);
+  polygon.vertex_data(0).extra = true;
+  EXPECT_TRUE(polygon.vertex_data(0).extra);
+}
 
 }  // walnut

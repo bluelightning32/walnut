@@ -12,17 +12,17 @@
 
 namespace walnut {
 
-// A 2D ConvexPolygon inside of R^3. The vertices are stored using homogeneous
-// coordinates.
-//
-// `VertexDataTemplate` specifies additional data that the caller can associate
-// with each vertex. The type must be copy-constructible.
+// An edge of a ConvexPolygon
 template <int point3_bits_template = 32,
           typename VertexDataTemplate = std::tuple<>>
-class ConvexPolygon {
- public:
+struct ConvexPolygonEdge {
   using Point3Rep = Point3<point3_bits_template>;
+  using HomoPoint3Rep = HomoPoint3<(point3_bits_template - 1)*7 + 10,
+                                   (point3_bits_template - 1)*6 + 10>;
+  using LineRep = typename PluckerLineFromPlanesFromPoint3sBuilder<
+    point3_bits_template>::PluckerLineRep;
   using VertexData = VertexDataTemplate;
+
   // This is used by FactoryWithVertexData to construct a ConvexPolygon and
   // specify the inital values of the vertex data.
   struct Point3WithVertexData : public Point3Rep {
@@ -33,6 +33,49 @@ class ConvexPolygon {
 
     VertexData data;
   };
+
+  // VertexData must be default-constructible to use this constructor.
+  template <int other_point3_bits>
+  ConvexPolygonEdge(const Point3<other_point3_bits>& vertex,
+                    const Point3<other_point3_bits>& next_vertex) :
+    vertex(vertex), line(vertex, next_vertex) { }
+
+  ConvexPolygonEdge(const Point3WithVertexData& vertex,
+                    const Point3WithVertexData& next_vertex) :
+    vertex(vertex), line(vertex, next_vertex), data(vertex.data) { }
+
+  template <int other_point3_bits,
+            typename OtherVertexData>
+  ConvexPolygonEdge(const ConvexPolygonEdge<other_point3_bits,
+                                            OtherVertexData>& other) :
+    vertex(other.vertex), line(other.line), data(other.data) { }
+
+  static bool LexicographicallyLt(const ConvexPolygonEdge& a, const ConvexPolygonEdge& b) {
+    return HomoPoint3Rep::LexicographicallyLt(a.vertex, b.vertex);
+  }
+
+  HomoPoint3Rep vertex;
+  // This line starts at `vertex` and goes to the next vertex in the polygon.
+  //
+  // Notably:
+  //   next_vertex == vertex + line.d()
+  LineRep line;
+
+  VertexData data;
+};
+
+// A 2D ConvexPolygon embedded in R^3. The vertices are stored using homogeneous
+// coordinates.
+//
+// `VertexDataTemplate` specifies additional data that the caller can associate
+// with each vertex. The type must be copy-constructible.
+template <int point3_bits_template = 32,
+          typename VertexDataTemplate = std::tuple<>>
+class ConvexPolygon {
+ public:
+  using Point3Rep = Point3<point3_bits_template>;
+  using VertexData = VertexDataTemplate;
+  using EdgeRep = ConvexPolygonEdge<point3_bits_template, VertexDataTemplate>;
 
   // Defined in convex_polygon_factory.h. Use the alias `Factory` instead.
   template <typename Point3RepTemplate>
@@ -46,7 +89,7 @@ class ConvexPolygon {
   // A class to build ConvexPolygons from iterators that produce Point3WithVertexDatas.
   //
   // Include convex_polygon_factory.h to use this.
-  using FactoryWithVertexData = GenericFactory<Point3WithVertexData>;
+  using FactoryWithVertexData = GenericFactory<typename EdgeRep::Point3WithVertexData>;
 
   using HomoPoint3Rep = HomoPoint3<(point3_bits_template - 1)*7 + 10,
                              (point3_bits_template - 1)*6 + 10>;
@@ -54,32 +97,6 @@ class ConvexPolygon {
     typename HalfSpace3FromPoint3Builder<point3_bits_template>::HalfSpace3Rep;
   using LineRep = typename PluckerLineFromPlanesFromPoint3sBuilder<
     point3_bits_template>::PluckerLineRep;
-
-  struct VertexInfo {
-    // VertexData must be default-constructible to use this constructor.
-    template <int other_point3_bits>
-    VertexInfo(const Point3<other_point3_bits>& vertex,
-               const Point3<other_point3_bits>& next_vertex) :
-      vertex(vertex), edge(vertex, next_vertex) { }
-
-    VertexInfo(const Point3WithVertexData& vertex,
-               const Point3WithVertexData& next_vertex) :
-      vertex(vertex), edge(vertex, next_vertex), data(vertex.data) { }
-
-    static bool LexicographicallyLt(const VertexInfo& a, const VertexInfo& b) {
-      return HomoPoint3Rep::LexicographicallyLt(a.vertex, b.vertex);
-    }
-
-    HomoPoint3Rep vertex;
-    // This is the line for the edge that starts at vertex and ends at
-    // the next vertex in the cycle.
-    //
-    // Notably:
-    //   next_vertex == vertex + edge.d()
-    LineRep edge;
-
-    VertexData data;
-  };
 
   // The minimum number of bits to support for each coordinate of the vertex3's
   // that the polygon is built from.
@@ -99,27 +116,31 @@ class ConvexPolygon {
   template <int other_point3_bits, typename OtherVertexData>
   ConvexPolygon(const ConvexPolygon<other_point3_bits,
                                     OtherVertexData>& other) :
-    plane_(other.plane_), drop_dimension_(other.drop_dimension_),
-    vertices_(other.vertices_) { }
+    plane_(other.plane()), drop_dimension_(other.drop_dimension()),
+    edges_(other.edges().begin(), other.edges().end()) { }
 
   size_t vertex_count() const {
-    return vertices_.size();
+    return edges_.size();
   }
 
   const HomoPoint3Rep& vertex(size_t index) const {
-    return vertices_[index].vertex;
+    return edges_[index].vertex;
   }
 
   VertexData& vertex_data(size_t index) {
-    return vertices_[index].data;
+    return edges_[index].data;
   }
 
-  const LineRep& edge(size_t index) const {
-    return vertices_[index].edge;
+  const VertexData& vertex_data(size_t index) const {
+    return edges_[index].data;
   }
 
-  const std::vector<VertexInfo>& vertices() const {
-    return vertices_;
+  const EdgeRep& edge(size_t index) const {
+    return edges_[index];
+  }
+
+  const std::vector<EdgeRep>& edges() const {
+    return edges_;
   }
 
   const HalfSpace3Rep& plane() const { return plane_; }
@@ -131,7 +152,7 @@ class ConvexPolygon {
   // Gets the index of the lexicographically smallest vertex.
   size_t GetMinimumIndex() const {
     size_t min = 0;
-    for (size_t i = 1; i < vertices_.size(); ++i) {
+    for (size_t i = 1; i < edges_.size(); ++i) {
       if (HomoPoint3Rep::LexicographicallyLt(vertex(i), vertex(min))) {
         min = i;
       }
@@ -139,24 +160,25 @@ class ConvexPolygon {
     return min;
   }
 
-  // Sorts `vertices_`, such that the lexicographically minimum vertex comes
+  // Sorts `edges_`, such that the lexicographically minimum vertex comes
   // first.
   //
   // Sorting the vertices does not affect the shape of the polygon.
   void SortVertices() {
-    std::rotate(vertices_.begin(), vertices_.begin() + GetMinimumIndex(),
-                vertices_.end());
+    std::rotate(edges_.begin(), edges_.begin() + GetMinimumIndex(),
+                edges_.end());
   }
 
   // Returns true of the other polygon is the same as this.
   //
-  // Two polygons are considered equal if:
-  // 1. their planes are the same
+  // Two polygons are considered equal if all of the following are true:
+  // 1. Their planes are the same
   //    - different scales are okay.
-  // 2. they have the same vertices in the same order
+  // 2. They have the same vertices in the same order
   //    - the vertices are in a cycle. It's okay if the polygon cycles start at
   //      different indices.
   //    - it's okay of the homogenous vertices have a different scale.
+  // 3. The VertexData matches for each vertex.
   template <int other_point3_bits, typename OtherVertexData>
   bool operator==(const ConvexPolygon<other_point3_bits,
                                       OtherVertexData>& other) const;
@@ -198,8 +220,8 @@ class ConvexPolygon {
   // This precondition must be true:
   //   b + vertices.size >= a
   constexpr size_t GetGreaterCycleIndex(size_t a, size_t b) const {
-    assert(b + vertices().size() >= a);
-    return a + (b - a + vertices().size())%vertices().size();
+    assert(b + vertex_count() >= a);
+    return a + (b - a + vertex_count())%vertex_count();
   }
 
   // Returns the index of the vertex that is farthest in the `v` direction
@@ -344,9 +366,9 @@ class ConvexPolygon {
   // the last index is inside the negative half-space, or 0 if it is on the
   // plane. The second element of the returned pair is the index of the last
   // negative side vertex. The last vertex comes from the range
-  // [neg_side_index, GetGreaterCycleIndex(neg_side_index), pos_side_index),
+  // [neg_side_index, GetGreaterCycleIndex(neg_side_index), pos_side_index)),
   // although the value is modded by the number of vertices in the polygon
-  // before it is returned. vertices exist in the negative half-space:
+  // before it is returned.
   //
   // `neg_side_index` is the index of a vertex on the negative side of the
   // half-space, or on the plane. `neg_side_type` must be less than 0 if
@@ -366,16 +388,16 @@ class ConvexPolygon {
 
  private:
   ConvexPolygon(const HalfSpace3Rep& plane, int drop_dimension,
-                std::vector<VertexInfo> vertices) :
+                std::vector<EdgeRep> edges) :
     plane_(plane), drop_dimension_(drop_dimension),
-    vertices_(std::move(vertices)) { }
+    edges_(std::move(edges)) { }
 
   // The plane that all of the vertices are in.
   HalfSpace3Rep plane_;
   // When this dimension is projected to 0, 'dropped', the vertices will not
   // become collinear (assuming they were not already collinear).
   int drop_dimension_;
-  std::vector<VertexInfo> vertices_;
+  std::vector<EdgeRep> edges_;
 };
 
 template <int point3_bits, typename VertexData>
@@ -397,8 +419,11 @@ bool ConvexPolygon<point3_bits, VertexData>::operator==(
       break;
     }
   }
-  for (size_t i = 1, j = match_offset + 1; i < vertices_.size(); ++i, ++j) {
+  for (size_t i = 1, j = match_offset + 1; i < vertex_count(); ++i, ++j) {
     if (vertex(i) != other.vertex(j)) {
+      return false;
+    }
+    if (vertex_data(i) != other.vertex_data(j)) {
       return false;
     }
   }
@@ -410,26 +435,25 @@ template <int vector_bits>
 std::pair<size_t, size_t>
 ConvexPolygon<point3_bits, VertexData>::GetOppositeEdgeIndicesBisect(
     const Vector2<vector_bits>& v, int drop_dimension) const {
-  int initial_dir_sign = vertices()[0].edge.d().DropDimension(drop_dimension)
-                                      .Dot(v).GetSign();
+  int initial_dir_sign = edge(0).line.d().DropDimension(drop_dimension)
+                                .Dot(v).GetSign();
   if (initial_dir_sign == 0) {
     // The 0th edge is perpendicular to `v`. Find the first non-perpendicular
     // edge before and after `v`.
-    int before = vertices().size() - 1;
+    int before = vertex_count() - 1;
     int before_sign;
     while (true) {
       // A well formed ConvexPolygon with a valid drop_dimension should always
       // find a match.
       assert(before > 0);
-      before_sign = vertices()[before].edge.d().DropDimension(drop_dimension)
-                                      .Dot(v).GetSign();
+      before_sign = edge(before).line.d().DropDimension(drop_dimension)
+                                .Dot(v).GetSign();
       if (before_sign != 0) break;
       --before;
     }
     int after = 1;
-    while (vertices()[after].edge.d().DropDimension(drop_dimension)
-                            .Dot(v).IsZero()) {
-      assert(after < vertices().size());
+    while (edge(after).line.d().DropDimension(drop_dimension).Dot(v).IsZero()) {
+      assert(after < vertex_count());
       ++after;
     }
     assert(before_sign != 0);
@@ -445,27 +469,26 @@ ConvexPolygon<point3_bits, VertexData>::GetOppositeEdgeIndicesBisect(
   bool flipped = initial_dir_sign < 0;
   Vector2<vector_bits> v_flipped = v;
   if (flipped) v_flipped.Negate();
-  auto initial_dist = vertices()[0].vertex.vector_from_origin()
-                                   .DropDimension(drop_dimension)
-                                   .Dot(v_flipped);
+  auto initial_dist = edge(0).vertex.vector_from_origin()
+                             .DropDimension(drop_dimension).Dot(v_flipped);
 
   // Current range being considered by the binary search. The range includes
   // the begin side but excludes the end side.
   size_t begin = 1;
-  size_t end = vertices().size();
+  size_t end = vertex_count();
 
   while (true) {
     size_t mid = (begin + end) / 2;
-    if (vertices()[mid].edge.d().DropDimension(drop_dimension)
-                       .Dot(v_flipped).GetSign() < 0) {
+    if (edge(mid).line.d().DropDimension(drop_dimension)
+                 .Dot(v_flipped).GetSign() < 0) {
       if (flipped) {
         return std::make_pair(mid, 0);
       } else {
         return std::make_pair(0, mid);
       }
     }
-    auto dist = vertices()[mid].vertex.vector_from_origin()
-                               .DropDimension(drop_dimension).Dot(v_flipped);
+    auto dist = edge(mid).vertex.vector_from_origin()
+                         .DropDimension(drop_dimension).Dot(v_flipped);
     // This check works as long as there are no duplicate vertices in the
     // polygon. Coincident vertices are okay.
     assert (dist != initial_dist);
@@ -498,15 +521,14 @@ size_t ConvexPolygon<point3_bits, VertexData>::GetExtremeIndexBisect(
 
   while (begin + 1 < end) {
     size_t mid = (begin + end) / 2;
-    if (vertices()[mid % vertices().size()].edge.d()
-                                           .DropDimension(drop_dimension)
-                                           .Dot(v).GetSign() > 0) {
+    if (edge(mid % vertex_count()).line.d().DropDimension(drop_dimension)
+                                  .Dot(v).GetSign() > 0) {
       begin = mid;
     } else {
       end = mid;
     }
   }
-  return end % vertices().size();
+  return end % vertex_count();
 }
 
 template <int point3_bits, typename VertexData>
@@ -526,23 +548,20 @@ std::pair<int, size_t> ConvexPolygon<point3_bits, VertexData>::GetPosSideVertex(
 
   while (begin + 1 < end) {
     size_t mid = (begin + end) / 2;
-    if (half_space.Compare(vertices()[
-          mid % vertices().size()].vertex.DropDimension(drop_dimension)) > 0) {
+    if (half_space.Compare(vertex(
+          mid % vertex_count()).DropDimension(drop_dimension)) > 0) {
       return std::make_pair(1, mid);
     }
-    if (vertices()[mid % vertices().size()].edge.d()
-                                           .DropDimension(drop_dimension)
-                                           .Dot(half_space.normal())
-                                           .GetSign() > 0) {
+    if (edge(mid % vertex_count()).line.d().DropDimension(drop_dimension)
+                                  .Dot(half_space.normal()).GetSign() > 0) {
       begin = mid;
     } else {
       end = mid;
     }
   }
-  end %= vertices().size();
+  end %= vertex_count();
   return std::make_pair(
-      half_space.Compare(vertices()[end].vertex.DropDimension(drop_dimension)),
-      end);
+      half_space.Compare(vertex(end).DropDimension(drop_dimension)), end);
 }
 
 template <int point3_bits, typename VertexData>
@@ -575,8 +594,8 @@ ConvexPolygon<point3_bits, VertexData>::GetLastNegSideVertex(
 
   while (begin + 1 < end) {
     size_t mid = (begin + end) / 2;
-    int mid_type = half_space.Compare(vertices()[
-          mid % vertices().size()].vertex.DropDimension(drop_dimension));
+    int mid_type = half_space.Compare(
+        vertex(mid % vertex_count()).DropDimension(drop_dimension));
     if (mid_type <= 0) {
       begin = mid;
       begin_type = mid_type;
@@ -584,7 +603,7 @@ ConvexPolygon<point3_bits, VertexData>::GetLastNegSideVertex(
       end = mid;
     }
   }
-  return std::make_pair(begin_type, begin % vertices().size());
+  return std::make_pair(begin_type, begin % vertex_count());
 }
 
 }  // walnut

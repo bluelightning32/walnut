@@ -100,7 +100,7 @@ class ConvexPolygon<point3_bits_template, VertexDataTemplate>::GenericFactory :
       // Skip collinear polygons
       return;
     }
-    std::vector<ConvexPolygonRep::VertexInfo> vertices;
+    std::vector<ConvexPolygonRep::EdgeRep> vertices;
     vertices.reserve((range1_end - range1_begin) + (range2_end - range2_begin));
     const Point3Rep* prev;
     const Point3Rep* first;

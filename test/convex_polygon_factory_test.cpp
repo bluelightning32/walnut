@@ -41,10 +41,10 @@ class ResultCollector : public Factory {
 
   static bool PolygonLt(const ConvexPolygonRep& a,
                         const ConvexPolygonRep& b) {
-    return std::lexicographical_compare(a.vertices().begin(),
-        a.vertices().end(),
-        b.vertices().begin(), b.vertices().end(),
-        ConvexPolygonRep::VertexInfo::LexicographicallyLt);
+    return std::lexicographical_compare(a.edges().begin(),
+        a.edges().end(),
+        b.edges().begin(), b.edges().end(),
+        ConvexPolygonRep::EdgeRep::LexicographicallyLt);
   }
 
   // Check that every vertex in every convex polygon really is a convex vertex.
@@ -278,7 +278,8 @@ TEST(ConvexPolygonFactory, VertexData) {
     NoDefaultConstructor() = delete;
   };
   using ConvexPolygonRep = ConvexPolygon<32, NoDefaultConstructor>;
-  using Point3WithString = ConvexPolygonRep::Point3WithVertexData;
+  using ConvexPolygonEdgeRep = ConvexPolygonRep::EdgeRep;
+  using Point3WithString = ConvexPolygonEdgeRep::Point3WithVertexData;
   Point3WithString input[] = {
     Point3WithString(0, 0, 10, "p0"),
     Point3WithString(1, 0, 10, "p1"),
@@ -295,12 +296,12 @@ TEST(ConvexPolygonFactory, VertexData) {
   ConvexPolygonRep polygon = collector.GetSortedPolygonResult()[0];
 
   ASSERT_EQ(polygon.vertex_count(), 3);
-  EXPECT_EQ(polygon.vertices()[0].data, input[0].data);
-  EXPECT_EQ(polygon.vertices()[1].data, input[1].data);
-  EXPECT_EQ(polygon.vertices()[2].data, input[2].data);
+  EXPECT_EQ(polygon.edges()[0].data, input[0].data);
+  EXPECT_EQ(polygon.edges()[1].data, input[1].data);
+  EXPECT_EQ(polygon.edges()[2].data, input[2].data);
 
   polygon.vertex_data(2) = "new p2";
-  EXPECT_EQ(polygon.vertices()[2].data, "new p2");
+  EXPECT_EQ(polygon.edges()[2].data, "new p2");
 }
 
 TEST(ConvexPolygonFactory, GetPlaneOrientationAfterProjection) {
