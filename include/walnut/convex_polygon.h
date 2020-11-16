@@ -629,6 +629,36 @@ ConvexPolygon<point3_bits, VertexData>::GetLastNegSideVertex(
   return std::make_pair(begin_type, begin % vertex_count());
 }
 
+template <int point3_bits, typename VertexData>
+std::ostream& operator<<(
+    std::ostream& out, const ConvexPolygonEdge<point3_bits, VertexData>& edge) {
+  out << edge.vertex << ": " << edge.data;
+  return out;
+}
+
+template <int point3_bits>
+std::ostream& operator<<(
+    std::ostream& out,
+    const ConvexPolygonEdge<point3_bits, std::tuple<>>& edge) {
+  out << edge.vertex;
+  return out;
+}
+
+template <int point3_bits, typename VertexData>
+std::ostream& operator<<(
+    std::ostream& out,
+    const ConvexPolygon<point3_bits, VertexData>& polygon) {
+  out << "[";
+  bool first = true;
+  for (const auto& edge : polygon.edges()) {
+    if (!first) out << ", ";
+    first = false;
+    out << edge.vertex;
+  }
+  out << "]";
+  return out;
+}
+
 }  // walnut
 
 #endif // WALNUT_CONVEX_POLYGON_H__

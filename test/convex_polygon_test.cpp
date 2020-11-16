@@ -223,6 +223,19 @@ TEST(ConvexPolygon, EqualityOperator) {
     EXPECT_NE(polygon1, polygon5);
     EXPECT_NE(polygon5, polygon1);
   }
+
+  // Same as input1, but with vertex indices rotated
+  {
+    Point3<32> compare_input[] = {
+      input1[1],
+      input1[2],
+      input1[0],
+    };
+    ConvexPolygon<32> compare_polygon =
+      MakeConvexPolygon(compare_input);
+    EXPECT_EQ(polygon1, compare_polygon);
+    EXPECT_EQ(compare_polygon, polygon1);
+  }
 }
 
 TEST(ConvexPolygon, CounterClockwiseTriangleEdges) {
