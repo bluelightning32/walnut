@@ -71,13 +71,15 @@ TEST(PluckerLine, Equality) {
 
   const PluckerLine<> line2(p1 + d.Scale(5),
                             p1 + d.Scale(3));
-
   EXPECT_EQ(line, line2);
 
   const PluckerLine<> line3(p1,
                             Point3<>(p1 + d.Scale(-3)));
-
   EXPECT_EQ(line, line3);
+
+  const PluckerLine<> line4(Point3<>(p1 + d.Scale(2)), p1);
+  EXPECT_EQ(line, line4);
+  EXPECT_EQ(line4, line);
 }
 
 TEST(PluckerLine, ConstructFromPlanes) {

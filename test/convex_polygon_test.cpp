@@ -2,10 +2,14 @@
 
 #include <iterator>
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "walnut/convex_polygon_factory.h"
 
 namespace walnut {
+
+using testing::AnyOf;
+using testing::Eq;
 
 template<typename Container>
 auto
@@ -852,6 +856,44 @@ TEST(ConvexPolygon, GetLastNegSideVertex) {
   }
 }
 
+struct VertexData {
+  VertexData() = default;
+  explicit VertexData(const std::tuple<>&) { }
+
+  bool operator!=(const std::tuple<>&) const {
+    return false;
+  }
+
+  bool operator!=(const VertexData& other) const {
+    return on_split != other.on_split;
+  }
+
+  bool on_split = false;
+};
+
+std::ostream& operator<<(std::ostream& out, const VertexData& data) {
+  out << data.on_split;
+  return out;
+}
+
+struct NoVertexData {
+  NoVertexData() = default;
+  explicit NoVertexData(const VertexData&) { }
+
+  bool operator!=(const NoVertexData&) const {
+    return false;
+  }
+
+  bool operator!=(const VertexData& other) const {
+    return false;
+  }
+};
+
+std::ostream& operator<<(std::ostream& out, const NoVertexData& data) {
+  out << "-";
+  return out;
+}
+
 TEST(ConvexPolygon, ConvertVertexData) {
   Point3<32> input[] = {
     Point3<32>(0, 0, 10),
@@ -859,26 +901,276 @@ TEST(ConvexPolygon, ConvertVertexData) {
     Point3<32>(1, 1, 10),
   };
 
-  struct VertexData {
-    VertexData() = default;
-    VertexData(const std::tuple<>&) { }
-
-    bool extra = false;
-
-    bool operator!=(const std::tuple<>&) const {
-      return false;
-    }
-  };
-
   ConvexPolygon<32> polygon_raw = MakeConvexPolygon(input);
-  ConvexPolygon<32, VertexData> polygon = polygon_raw;
+  ConvexPolygon<32, VertexData> polygon(polygon_raw);
 
   EXPECT_EQ(polygon, polygon_raw);
   ASSERT_EQ(polygon.vertex_count(), 3);
 
-  EXPECT_FALSE(polygon.vertex_data(0).extra);
-  polygon.vertex_data(0).extra = true;
-  EXPECT_TRUE(polygon.vertex_data(0).extra);
+  EXPECT_FALSE(polygon.vertex_data(0).on_split);
+  polygon.vertex_data(0).on_split = true;
+  EXPECT_TRUE(polygon.vertex_data(0).on_split);
+}
+
+TEST(ConvexPolygon, SplitBisectOnPosSide) {
+  Point3<32> input[2][3] = {
+    // counter-clockwise
+    {
+      Point3<32>(0, 0, 10),
+      Point3<32>(1, 0, 10),
+      Point3<32>(1, 1, 10),
+    },
+    // clockwise
+    {
+      Point3<32>(0, 0, 10),
+      Point3<32>(1, 1, 10),
+      Point3<32>(1, 0, 10),
+    }
+  };
+
+  for (int i = 0; i < 2; ++i) {
+    ConvexPolygon<32, VertexData> polygon(MakeConvexPolygon(input[i]));
+
+    ConvexPolygon<32, VertexData> unused;
+    auto allocate_neg_side = [&]() -> ConvexPolygon<32, VertexData>& {
+      EXPECT_TRUE(false);
+      return unused;
+    };
+    ConvexPolygon<32, VertexData> pos_side;
+    bool allocated = false;
+    auto allocate_pos_side = [&]() -> ConvexPolygon<32, VertexData>& {
+      allocated = true;
+      return pos_side;
+    };
+    int vertices_on_split = 0;
+    auto vertex_on_split = [&](ConvexPolygon<32, VertexData>& output,
+                               size_t index) {
+      EXPECT_EQ(vertices_on_split, 0);
+      ++vertices_on_split;
+      EXPECT_EQ(index, 0);
+      output.vertex_data(index).on_split = true;
+    };
+
+    // Test where the polygon is completely in the positive half-space.
+    {
+      // All points with x>-1 are on the positive side of the half-space from
+      // projecting this line to 2D by dropping the Z coordinate.
+      Point3<32> p1(-1, 1, 0);
+      Point3<32> p2(-1, 0, 0);
+      Point3<32> p3(-1, 0, 1);
+      HalfSpace3<> half_space(p1, p2, p3);
+      PluckerLine<> line(p1, p2);
+
+      polygon.SplitBisect(half_space, line, /*drop_dimension=*/2,
+                          allocate_neg_side, allocate_pos_side,
+                          vertex_on_split);
+      EXPECT_TRUE(allocated);
+      EXPECT_EQ((ConvexPolygon<32, NoVertexData>(pos_side)), polygon);
+      EXPECT_EQ(vertices_on_split, 0);
+    }
+
+    // Test where the polygon is in the positive half-space, but vertex 0
+    // touches the line.
+    {
+      // All points with x>0 are on the positive side of the half-space from
+      // projecting this line to 2D by dropping the Z coordinate.
+      Point3<32> p1(0, 1, 0);
+      Point3<32> p2(0, 0, 0);
+      Point3<32> p3(0, 0, 1);
+      HalfSpace3<> half_space(p1, p2, p3);
+      PluckerLine<> line(p1, p2);
+
+      polygon.SplitBisect(half_space, line, /*drop_dimension=*/2,
+                          allocate_neg_side, allocate_pos_side,
+                          vertex_on_split);
+      ASSERT_EQ((ConvexPolygon<32, NoVertexData>(pos_side)), polygon);
+      EXPECT_TRUE(pos_side.vertex_data(0).on_split);
+    }
+  }
+}
+
+TEST(ConvexPolygon, SplitBisectAtExistingVertices) {
+  //
+  // p[3] <--- p[2]
+  //  | pos -/   ^
+  //  |   -/     |
+  //  v  /       |
+  // p[0] ---> p[1]
+  //
+  Point3<32> p[] = {
+    /*p[0]=*/Point3<32>(0, 0, 10),
+    /*p[1]=*/Point3<32>(1, 0, 10),
+    /*p[2]=*/Point3<32>(1, 1, 10),
+    /*p[3]=*/Point3<32>(0, 1, 10),
+  };
+
+  Point3<32> neg_side_p[] = { p[0], p[1], p[2] };
+  Point3<32> pos_side_p[] = { p[0], p[2], p[3] };
+
+  Point3<32> above(0, 0, 11);
+  HalfSpace3<> half_space(p[0], p[2], above);
+  PluckerLine<> line(p[0], p[2]);
+
+  ConvexPolygon<32, VertexData> polygon(MakeConvexPolygon(p));
+  ConvexPolygon<32, VertexData> expected_neg_side(
+      MakeConvexPolygon(neg_side_p));
+  ConvexPolygon<32, VertexData> expected_pos_side(
+      MakeConvexPolygon(pos_side_p));
+
+  for (ConvexPolygon<32, VertexData>* side : {&expected_neg_side,
+                                              &expected_pos_side}) {
+    for (int i = 0; i < side->vertex_count(); ++i) {
+      if (side->vertex(i) == p[0] || side->vertex(i) == p[2]) {
+        side->vertex_data(i).on_split = true;
+      }
+    }
+  }
+
+  ConvexPolygon<32, VertexData> neg_side;
+  int neg_allocated = 0;
+  ConvexPolygon<32, VertexData> pos_side;
+  int pos_allocated = 0;
+  auto allocate_neg_side = [&]() -> ConvexPolygon<32, VertexData>& {
+    ++neg_allocated;
+    return neg_side;
+  };
+  auto allocate_pos_side = [&]() -> ConvexPolygon<32, VertexData>& {
+    ++pos_allocated;
+    return pos_side;
+  };
+  int vertices_on_split = 0;
+  auto vertex_on_split = [&](ConvexPolygon<32, VertexData>& output,
+                             size_t index) {
+    ++vertices_on_split;
+    output.vertex_data(index).on_split = true;
+  };
+
+  polygon.SplitBisect(half_space, line, /*drop_dimension=*/2,
+                      allocate_neg_side, allocate_pos_side,
+                      vertex_on_split);
+  EXPECT_EQ(neg_allocated, 1);
+  EXPECT_EQ(pos_allocated, 1);
+  EXPECT_EQ(neg_side.plane(), expected_neg_side.plane());
+  ASSERT_EQ(neg_side, expected_neg_side);
+  ASSERT_EQ(pos_side, expected_pos_side);
+  EXPECT_EQ(vertices_on_split, 4);
+
+  // Check all of the line directions.
+  expected_neg_side.SortVertices();
+  neg_side.SortVertices();
+  for (int i = 0; i < neg_side.vertex_count(); ++i) {
+    EXPECT_EQ(neg_side.edge(i).line, expected_neg_side.edge(i).line);
+    EXPECT_TRUE(neg_side.edge(i).line.d().IsSameDir(
+          expected_neg_side.edge(i).line.d()));
+  }
+  expected_pos_side.SortVertices();
+  pos_side.SortVertices();
+  for (int i = 0; i < pos_side.vertex_count(); ++i) {
+    EXPECT_EQ(pos_side.edge(i).line, expected_pos_side.edge(i).line);
+    EXPECT_TRUE(pos_side.edge(i).line.d().IsSameDir(
+          expected_pos_side.edge(i).line.d()));
+  }
+}
+
+TEST(ConvexPolygon, SplitBisectAtNewVertices) {
+  //
+  // p[3] <--- p[2]  pos
+  //  |          ^    ^
+  //  v          |    |
+  // n[0] ---- n[1] -----
+  //  |          ^
+  //  v          |
+  // p[0] ---> p[1]
+  //
+  Point3<32> p[] = {
+    /*p[0]=*/Point3<32>(0, 0, 0),
+    /*p[1]=*/Point3<32>(1, 0, 1),
+    /*p[2]=*/Point3<32>(1, 2, 3),
+    /*p[3]=*/Point3<32>(0, 2, 2),
+  };
+
+  Point3<32> n[] = {
+    /*n[0]=*/Point3<32>(0, 1, 1),
+    /*n[1]=*/Point3<32>(1, 1, 2),
+  };
+
+  Point3<32> neg_side_p[] = { p[0], p[1], n[1], n[0] };
+  Point3<32> pos_side_p[] = { p[2], p[3], n[0], n[1] };
+
+  Point3<32> above(0, 1, 10);
+  HalfSpace3<> half_space(n[0], n[1], above);
+
+  ConvexPolygon<32, VertexData> polygon(MakeConvexPolygon(p));
+  ConvexPolygon<32, VertexData> expected_neg_side(
+      MakeConvexPolygon(neg_side_p));
+  ConvexPolygon<32, VertexData> expected_pos_side(
+      MakeConvexPolygon(pos_side_p));
+
+  for (ConvexPolygon<32, VertexData>* side : {&expected_neg_side,
+                                              &expected_pos_side}) {
+    for (int i = 0; i < side->vertex_count(); ++i) {
+      if (side->vertex(i) == n[0] || side->vertex(i) == n[1]) {
+        side->vertex_data(i).on_split = true;
+      }
+    }
+  }
+
+  for (int drop_dimension = 0; drop_dimension < 3; ++drop_dimension) {
+    PluckerLine<> line;
+    EXPECT_FALSE(
+        polygon.plane().normal().components()[drop_dimension].IsZero());
+    if (polygon.plane().normal().components()[drop_dimension] < 0) {
+      line = PluckerLine<>(n[1], n[0]);
+    } else {
+      line = PluckerLine<>(n[0], n[1]);
+    }
+
+    ConvexPolygon<32, VertexData> neg_side;
+    int neg_allocated = 0;
+    ConvexPolygon<32, VertexData> pos_side;
+    int pos_allocated = 0;
+    auto allocate_neg_side = [&]() -> ConvexPolygon<32, VertexData>& {
+      ++neg_allocated;
+      return neg_side;
+    };
+    auto allocate_pos_side = [&]() -> ConvexPolygon<32, VertexData>& {
+      ++pos_allocated;
+      return pos_side;
+    };
+    int vertices_on_split = 0;
+    auto vertex_on_split = [&](ConvexPolygon<32, VertexData>& output,
+                               size_t index) {
+      ++vertices_on_split;
+      output.vertex_data(index).on_split = true;
+    };
+
+    polygon.SplitBisect(half_space, line, drop_dimension,
+                        allocate_neg_side, allocate_pos_side,
+                        vertex_on_split);
+    EXPECT_EQ(neg_allocated, 1);
+    EXPECT_EQ(pos_allocated, 1);
+    EXPECT_EQ(neg_side.plane(), expected_neg_side.plane());
+    ASSERT_EQ(neg_side, expected_neg_side)
+      << "drop_dimension=" << drop_dimension;
+    ASSERT_EQ(pos_side, expected_pos_side);
+    EXPECT_EQ(vertices_on_split, 4);
+
+    // Check all of the line directions.
+    expected_neg_side.SortVertices();
+    neg_side.SortVertices();
+    for (int i = 0; i < neg_side.vertex_count(); ++i) {
+      EXPECT_EQ(neg_side.edge(i).line, expected_neg_side.edge(i).line);
+      EXPECT_TRUE(neg_side.edge(i).line.d().IsSameDir(
+            expected_neg_side.edge(i).line.d()));
+    }
+    expected_pos_side.SortVertices();
+    pos_side.SortVertices();
+    for (int i = 0; i < pos_side.vertex_count(); ++i) {
+      EXPECT_EQ(pos_side.edge(i).line, expected_pos_side.edge(i).line);
+      EXPECT_TRUE(pos_side.edge(i).line.d().IsSameDir(
+            expected_pos_side.edge(i).line.d()));
+    }
+  }
 }
 
 }  // walnut

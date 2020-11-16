@@ -217,6 +217,12 @@ class PluckerLine {
         /*dist=*/-m_.components()[drop_dimension]);
   }
 
+  // This could overflow. It is the caller's responsibility to ensure that none
+  // of the components are equal to their min_value.
+  PluckerLine operator-() const {
+    return PluckerLine(-d(), -m());
+  }
+
  private:
   DVector d_;
   MVector m_;
@@ -294,6 +300,12 @@ class PluckerLineFromPlanesFromPoint3sBuilder {
     return PluckerLineRep(p1, p2);
   }
 };
+
+template <int d_bits, int m_bits>
+std::ostream& operator<<(std::ostream& out,
+                         const PluckerLine<d_bits, m_bits>& line) {
+  return out << "{ d=" << line.d() << " m=" << line.m() << " }";
+}
 
 }  // walnut
 

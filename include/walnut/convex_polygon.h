@@ -40,14 +40,22 @@ struct ConvexPolygonEdge {
                     const Point3<other_point3_bits>& next_vertex) :
     vertex(vertex), line(vertex, next_vertex) { }
 
+  // VertexData must be default-constructible to use this constructor.
+  //
+  // `line` should be in the direction from `vertex` to the next vertex in the
+  // polygon.
+  ConvexPolygonEdge(const HomoPoint3Rep& vertex, const LineRep& line) :
+    vertex(vertex), line(line) { }
+
   ConvexPolygonEdge(const Point3WithVertexData& vertex,
                     const Point3WithVertexData& next_vertex) :
     vertex(vertex), line(vertex, next_vertex), data(vertex.data) { }
 
   template <int other_point3_bits,
             typename OtherVertexData>
-  ConvexPolygonEdge(const ConvexPolygonEdge<other_point3_bits,
-                                            OtherVertexData>& other) :
+  explicit ConvexPolygonEdge(
+      const ConvexPolygonEdge<other_point3_bits,
+                              OtherVertexData>& other) :
     vertex(other.vertex), line(other.line), data(other.data) { }
 
   static bool LexicographicallyLt(const ConvexPolygonEdge& a,
@@ -118,8 +126,8 @@ class ConvexPolygon {
 
   // `VertexData` must be constructible from `OtherVertexData`.
   template <int other_point3_bits, typename OtherVertexData>
-  ConvexPolygon(const ConvexPolygon<other_point3_bits,
-                                    OtherVertexData>& other) :
+  explicit ConvexPolygon(const ConvexPolygon<other_point3_bits,
+                                             OtherVertexData>& other) :
     plane_(other.plane()), drop_dimension_(other.drop_dimension()),
     edges_(other.edges().begin(), other.edges().end()) { }
 
@@ -406,6 +414,76 @@ class ConvexPolygon {
       const HalfSpace2<vector_bits, dist_bits>& half_space, int drop_dimension,
       size_t neg_side_index, int neg_side_type, size_t pos_side_index) const;
 
+  // Returns the greatest index of a vertex in the positive side of the
+  // half-space, or on the plane, such that the index is within:
+  //   [pos_side_index, GetGreaterCycleIndex(pos_side_index), neg_side_index)
+  //
+  // Although the return value is actually modded by the number of vertices.
+  // Specifically the first element of the returned pair will be greater than 0
+  // if the last index is inside the positive half-space, or 0 if it is on the
+  // plane. The second element of the returned pair is the index of the last
+  // positive side vertex. The last vertex comes from the range
+  // [pos_side_index, GetGreaterCycleIndex(pos_side_index, neg_side_index)),
+  // although the value is modded by the number of vertices in the polygon
+  // before it is returned.
+  //
+  // `neg_side_index` is the index of a vertex on the negative side of the
+  // half-space, or on the plane.
+  //
+  // `pos_side_type` must be greater than 0 if `pos_side_index` refers to a
+  // vertex in the positive half-space, or it must be 0 if `pos_side_index`
+  // refers to a vertex on the plane.
+  //
+  // The vertex is found using a binary search. This algorithm is good for
+  // ConvexPolgyons with many vertices, but a regular linear search is faster
+  // for ConvexPolygons with fewer vertices (roughly 5 or fewer vertices).
+  template <int vector_bits, int dist_bits>
+  std::pair<int, size_t> GetLastPosSideVertex(
+      const HalfSpace2<vector_bits, dist_bits>& half_space, int drop_dimension,
+      size_t neg_side_index, size_t pos_side_index, int pos_side_type) const {
+    std::pair<int, size_t> flipped = GetLastNegSideVertex(
+        -half_space, drop_dimension, pos_side_index,
+        /*neg_side_type=*/-pos_side_type, neg_side_index);
+    return std::make_pair(-flipped.first, flipped.second);
+  }
+
+  // Splits a ConvexPolygon by a plucker line into the positive and the
+  // negative side ConvexPolygons.
+  //
+  // `Split` should be called instead of this function. This function is only
+  // exposed for testing purposes.
+  //
+  // The plucker line must be on the polygon's plane. The plucker line must
+  // also be in the plane of `half_space3`, and half_space3 must not be
+  // parallel to the polygon's plane.
+  //
+  // The plane normal must be non-zero in the `drop_dimension` component.
+  //
+  // One of the positive or negative sides may be ommitted if the source
+  // polygon is only present on one side of the line.
+  //
+  // `allocate_neg_side` is a function object that takes 0 arguments must
+  // return a `ConvexPolygon&` if it is called. It will be called exactly once
+  // if the polygon is present on the negative side, and zero times otherwise.
+  // `allocate_pos_side` is similarly for the positive side of the polygon.
+  //
+  // `vertex_on_split` is a function object, and it is called once for each
+  // output vertex that is touching the plucker line. It is passed a reference
+  // to the output ConvexPolygon and an index for the vertex on the edge within
+  // that output ConvexPolygon. `vertex_on_split` is not called if the polygon
+  // is completely on one side of `line`.
+  //
+  // The vertex is found using a binary search. This algorithm is good for
+  // ConvexPolgyons with many vertices, but a regular linear search is faster
+  // for ConvexPolygons with fewer vertices (roughly 10 or fewer vertices).
+  template <typename AllocateNegSide, typename AllocatePosSide,
+            typename VertexOnSplit>
+  void SplitBisect(const HalfSpace3Rep& half_space3,
+                   const LineRep& line, int drop_dimension,
+                   AllocateNegSide allocate_neg_side,
+                   AllocatePosSide allocate_pos_side,
+                   VertexOnSplit vertex_on_split) const;
+
  private:
   ConvexPolygon(const HalfSpace3Rep& plane, int drop_dimension,
                 std::vector<EdgeRep> edges) :
@@ -630,6 +708,185 @@ ConvexPolygon<point3_bits, VertexData>::GetLastNegSideVertex(
 }
 
 template <int point3_bits, typename VertexData>
+template <typename AllocateNegSide, typename AllocatePosSide,
+          typename VertexOnSplit>
+void ConvexPolygon<point3_bits, VertexData>::SplitBisect(
+    const HalfSpace3Rep& half_space3, const LineRep& line, int drop_dimension,
+    AllocateNegSide allocate_neg_side, AllocatePosSide allocate_pos_side,
+    VertexOnSplit vertex_on_split) const {
+  assert(line.IsValid());
+  assert(line.IsCoincident(plane()));
+  assert(!plane().normal().components()[drop_dimension].IsZero());
+  assert(line.IsCoincident(half_space3));
+  assert(half_space3.IsValid());
+  assert(!half_space3.normal().IsSameOrOppositeDir(plane().normal()));
+
+  auto half_space2 = line.Project2D(drop_dimension);
+  assert(half_space2.IsValid());
+  std::pair<size_t, size_t> opposite_edges = GetOppositeEdgeIndicesBisect(
+      /*v=*/half_space2.normal(), drop_dimension);
+
+  std::pair<int, size_t> neg_side_vertex = GetNegSideVertex(
+      half_space2, drop_dimension,
+      /*same_dir_index=*/opposite_edges.first,
+      /*opp_dir_index=*/opposite_edges.second);
+
+  if (neg_side_vertex.first >= 0) {
+    // The source polygon is entirely in the positive half-space. Some of the
+    // vertices may be coincident with the plane. The first such coincident
+    // vertex index is neg_side_vertex.second.
+    ConvexPolygon& output = allocate_pos_side();
+    output = *this;
+
+    if (neg_side_vertex.first == 0) {
+      // One or more vertices are coincident with the plane.
+      size_t on_plane_index = neg_side_vertex.second;
+      assert(half_space2.IsCoincident(
+            vertex(on_plane_index).DropDimension(drop_dimension)));
+      do {
+        vertex_on_split(output, on_plane_index);
+        ++on_plane_index;
+        on_plane_index %= vertex_count();
+      } while (half_space2.IsCoincident(
+            vertex(on_plane_index).DropDimension(drop_dimension)));
+    }
+    return;
+  }
+
+  std::pair<int, size_t> pos_side_vertex = GetPosSideVertex(
+      half_space2, drop_dimension,
+      /*same_dir_index=*/opposite_edges.first,
+      /*opp_dir_index=*/opposite_edges.second);
+
+  if (pos_side_vertex.first <= 0) {
+    // The source polygon is entirely in the negative half-space. Some of the
+    // vertices may be coincident with the plane. The first such coincident
+    // vertex index is pos_side_vertex.second.
+    ConvexPolygon& output = allocate_neg_side();
+    output = *this;
+
+    if (pos_side_vertex.first == 0) {
+      // One or more vertices are coincident with the plane.
+      size_t on_plane_index = pos_side_vertex.second;
+      assert(half_space2.IsCoincident(
+            vertex(on_plane_index).DropDimension(drop_dimension)));
+      do {
+        vertex_on_split(output, on_plane_index);
+        ++on_plane_index;
+        on_plane_index %= vertex_count();
+      } while (half_space2.IsCoincident(
+            vertex(on_plane_index).DropDimension(drop_dimension)));
+    }
+    return;
+  }
+
+  std::pair<int, size_t> neg_before_split = GetLastNegSideVertex(
+      half_space2, drop_dimension, neg_side_vertex.second,
+      /*neg_side_type=*/-1, pos_side_vertex.second);
+
+  std::pair<int, size_t> pos_before_split = GetLastPosSideVertex(
+      half_space2, drop_dimension, neg_side_vertex.second,
+      pos_side_vertex.second, /*pos_side_type=*/1);
+
+  ConvexPolygon& neg_output = allocate_neg_side();
+  neg_output.edges_.clear();
+  neg_output.plane_ = plane_;
+  neg_output.drop_dimension_ = drop_dimension_;
+
+  ConvexPolygon& pos_output = allocate_pos_side();
+  pos_output.edges_.clear();
+  pos_output.plane_ = plane_;
+  pos_output.drop_dimension_ = drop_dimension_;
+
+  size_t neg_cycle_greater = GetGreaterCycleIndex(pos_before_split.second,
+                                                  neg_before_split.second);
+
+  // The negative side polygon needs these vertices:
+  // - if pos_before_split.first is 0, then pos_before_split.second, else a new
+  //   vertex between pos_before.second and pos_before.second + 1
+  // - if neg_before_split.first is 0, then the range
+  //   [pos_before_split.second + 1, neg_cycle_greater)
+  //   else
+  //   [pos_before_split.second + 1, neg_cycle_greater]
+  // - if neg_before_split.first is 0, then neg_before_split.second with the
+  //   new plucker line (possibly flipped), else a new vertex between
+  //   neg_before.second and neg_before.second + 1 with plucker line (possibly
+  //   flipped)
+  //
+  // The positive side polygon needs these vertices:
+  // - if neg_before_split.first is 0, then neg_before_split.second, else a new
+  //   vertex between neg_before.second and neg_before.second + 1
+  // - if pos_before_split.first is 0, then the range
+  //   [neg_before_split.second + 1, pos_cycle_greater)
+  //   else
+  //   [neg_before_split.second + 1, pos_cycle_greater]
+  // - if pos_before_split.first is 0, then pos_before_split.second with the
+  //   new plucker line (possibly flipped), else a new vertex between
+  //   pos_before_split.second and pos_before_split.second + 1 with plucker
+  //   line (possibly flipped)
+  //
+  // To reduce the number of if statements by combining the negative and
+  // positive side if statements, the negative side vertices can be cycled to
+  // this value.
+  // - if neg_before_split.first is 0, then the range
+  //   [pos_before_split.second + 1, neg_cycle_greater)
+  //   else
+  //   [pos_before_split.second + 1, neg_cycle_greater]
+  // - if neg_before_split.first is 0, then neg_before_split.second with the
+  //   new plucker line (possibly flipped), else a new vertex between
+  //   neg_before_split.second and neg_before_split.second + 1 with plucker
+  //   line (possibly flipped)
+  // - if pos_before_split.first is 0, then pos_before_split.second, else a new
+  //   vertex between pos_before.second and pos_before.second + 1
+
+  neg_output.edges_.reserve(neg_cycle_greater - pos_before_split.second +
+                            (pos_before_split.second != 0));
+  for (size_t i = pos_before_split.second + 1; i <= neg_cycle_greater; ++i) {
+    neg_output.edges_.push_back(edge(i % vertex_count()));
+  }
+
+  size_t pos_cycle_greater = GetGreaterCycleIndex(neg_before_split.second,
+                                                  pos_before_split.second);
+  pos_output.edges_.reserve(pos_cycle_greater - neg_before_split.second +
+                            (neg_before_split.second != 0));
+  // If the input polygon is counter-clockwise in its projected form, then
+  // `line` is in the correct orientation for the positive output polygon.
+  int neg_line_mult =
+    -plane().normal().components()[drop_dimension].GetAbsMult();
+  LineRep neg_line(line.d() * neg_line_mult, line.m() * neg_line_mult);
+  if (neg_before_split.first == 0) {
+    neg_output.edges_.back().line = neg_line;
+    pos_output.edges_.push_back(edge(neg_before_split.second));
+  } else {
+    HomoPoint3Rep new_point =
+      edge(neg_before_split.second).line.Intersect(half_space3);
+    neg_output.edges_.emplace_back(new_point, neg_line);
+    pos_output.edges_.emplace_back(new_point,
+                                   edge(neg_before_split.second).line);
+  }
+
+  for (size_t i = neg_before_split.second + 1; i <= pos_cycle_greater; ++i) {
+    pos_output.edges_.push_back(edge(i % vertex_count()));
+  }
+
+  if (pos_before_split.first == 0) {
+    pos_output.edges_.back().line = -neg_line;
+    neg_output.edges_.push_back(edge(pos_before_split.second));
+  } else {
+    HomoPoint3Rep new_point =
+      edge(pos_before_split.second).line.Intersect(half_space3);
+    pos_output.edges_.emplace_back(new_point, -neg_line);
+    neg_output.edges_.emplace_back(new_point,
+                                   edge(pos_before_split.second).line);
+  }
+
+  vertex_on_split(neg_output, neg_output.vertex_count() - 2);
+  vertex_on_split(neg_output, neg_output.vertex_count() - 1);
+  vertex_on_split(pos_output, 0);
+  vertex_on_split(pos_output, pos_output.vertex_count() - 1);
+}
+
+template <int point3_bits, typename VertexData>
 std::ostream& operator<<(
     std::ostream& out, const ConvexPolygonEdge<point3_bits, VertexData>& edge) {
   out << edge.vertex << ": " << edge.data;
@@ -653,7 +910,7 @@ std::ostream& operator<<(
   for (const auto& edge : polygon.edges()) {
     if (!first) out << ", ";
     first = false;
-    out << edge.vertex;
+    out << edge;
   }
   out << "]";
   return out;
