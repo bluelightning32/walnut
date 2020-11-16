@@ -443,10 +443,10 @@ bool ConvexPolygon<point3_bits, VertexData>::operator==(
   }
   for (size_t i = 1, j = match_offset + 1; i < vertex_count(); ++i, ++j) {
     if (vertex(i).DropDimension(drop_dimension()) !=
-        other.vertex(j).DropDimension(drop_dimension())) {
+        other.vertex(j % vertex_count()).DropDimension(drop_dimension())) {
       return false;
     }
-    if (vertex_data(i) != other.vertex_data(j)) {
+    if (vertex_data(i) != other.vertex_data(j % vertex_count())) {
       return false;
     }
   }

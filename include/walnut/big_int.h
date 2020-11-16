@@ -241,7 +241,7 @@ class BigInt {
   }
 
   constexpr int used_bytes() const {
-    return rep_.used_;
+    return rep_.used_bytes();
   }
 
   constexpr const BigUIntWord* words() const {

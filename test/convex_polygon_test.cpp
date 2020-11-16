@@ -9,7 +9,7 @@ namespace walnut {
 
 template<typename Container>
 auto
-MakeConvexPolygon(const Container& vertices) ->
+MakeUnsortedConvexPolygon(const Container& vertices) ->
 ConvexPolygon<std::iterator_traits<
     decltype(std::begin(vertices))>::value_type::component_bits> {
   using Iterator = decltype(std::begin(vertices));
@@ -22,7 +22,6 @@ ConvexPolygon<std::iterator_traits<
 
     ConvexPolygonRep&& GetResult() {
       EXPECT_EQ(received_, 1);
-      result_.SortVertices();
       return std::move(result_);
     }
 
@@ -41,6 +40,17 @@ ConvexPolygon<std::iterator_traits<
   CollectOne collector;
   collector.Build(std::begin(vertices), std::end(vertices));
   return collector.GetResult();
+}
+
+
+template<typename Container>
+auto
+MakeConvexPolygon(const Container& vertices) ->
+ConvexPolygon<std::iterator_traits<
+    decltype(std::begin(vertices))>::value_type::component_bits> {
+  auto result = MakeUnsortedConvexPolygon(vertices);
+  result.SortVertices();
+  return result;
 }
 
 TEST(ConvexPolygon, TrianglePlane) {
@@ -173,7 +183,7 @@ TEST(ConvexPolygon, EqualityOperator) {
     Point3<32>(1, 0, 10),
     Point3<32>(1, 1, 10),
   };
-  ConvexPolygon<32> polygon1 = MakeConvexPolygon(input1);
+  ConvexPolygon<32> polygon1 = MakeUnsortedConvexPolygon(input1);
   EXPECT_EQ(polygon1, polygon1);
 
   // different plane
@@ -183,7 +193,7 @@ TEST(ConvexPolygon, EqualityOperator) {
       Point3<32>(1, 0, 11),
       Point3<32>(1, 1, 11),
     };
-    ConvexPolygon<32> polygon2 = MakeConvexPolygon(input2);
+    ConvexPolygon<32> polygon2 = MakeUnsortedConvexPolygon(input2);
     EXPECT_NE(polygon1, polygon2);
     EXPECT_NE(polygon2, polygon1);
   }
@@ -195,7 +205,7 @@ TEST(ConvexPolygon, EqualityOperator) {
       Point3<32>(2, 0, 10),
       Point3<32>(2, 1, 10),
     };
-    ConvexPolygon<32> polygon3 = MakeConvexPolygon(input3);
+    ConvexPolygon<32> polygon3 = MakeUnsortedConvexPolygon(input3);
     EXPECT_NE(polygon1, polygon3);
     EXPECT_NE(polygon3, polygon1);
   }
@@ -207,7 +217,7 @@ TEST(ConvexPolygon, EqualityOperator) {
       input1[1],
       Point3<32>(2, 1, 10),
     };
-    ConvexPolygon<32> polygon4 = MakeConvexPolygon(input4);
+    ConvexPolygon<32> polygon4 = MakeUnsortedConvexPolygon(input4);
     EXPECT_NE(polygon1, polygon4);
     EXPECT_NE(polygon4, polygon1);
   }
@@ -219,7 +229,7 @@ TEST(ConvexPolygon, EqualityOperator) {
       input1[1],
       input1[0],
     };
-    ConvexPolygon<32> polygon5 = MakeConvexPolygon(input5);
+    ConvexPolygon<32> polygon5 = MakeUnsortedConvexPolygon(input5);
     EXPECT_NE(polygon1, polygon5);
     EXPECT_NE(polygon5, polygon1);
   }
@@ -232,7 +242,11 @@ TEST(ConvexPolygon, EqualityOperator) {
       input1[0],
     };
     ConvexPolygon<32> compare_polygon =
-      MakeConvexPolygon(compare_input);
+      MakeUnsortedConvexPolygon(compare_input);
+    EXPECT_EQ(polygon1, compare_polygon);
+    EXPECT_EQ(compare_polygon, polygon1);
+
+    compare_polygon.SortVertices();
     EXPECT_EQ(polygon1, compare_polygon);
     EXPECT_EQ(compare_polygon, polygon1);
   }
