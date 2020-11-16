@@ -51,7 +51,7 @@ class ResultCollector : public Factory {
   void VerifyAllConvexVertices() const {
     for (const ConvexPolygonRep& polygon : result_) {
       typename HalfSpace3Rep::VectorInt drop_dim_value =
-        polygon.plane().normal().coords()[polygon.drop_dimension()];
+        polygon.plane().normal().components()[polygon.drop_dimension()];
       ASSERT_NE(drop_dim_value, 0);
       const int orientation = drop_dim_value.GetSign();
       const size_t vertex_count = polygon.vertex_count();
@@ -257,9 +257,12 @@ TEST(ConvexPolygonFactory, SelfIntersectingStartAtReflex) {
   ResultCollector<> collector;
   collector.Build(std::begin(input), std::end(input));
   ASSERT_THAT(collector.GetSortedPolygonVertices(), ElementsAre(
-        std::vector<Point3<32>>{input[(0 + 2)%5], input[(3 + 2)%5], input[(4 + 2)%5]},
-        std::vector<Point3<32>>{input[(0 + 2)%5], input[(1 + 2)%5], input[(3 + 2)%5]},
-        std::vector<Point3<32>>{input[(3 + 2)%5], input[(1 + 2)%5], input[(2 + 2)%5]}
+        std::vector<Point3<32>>{input[(0 + 2)%5], input[(3 + 2)%5],
+                                input[(4 + 2)%5]},
+        std::vector<Point3<32>>{input[(0 + 2)%5], input[(1 + 2)%5],
+                                input[(3 + 2)%5]},
+        std::vector<Point3<32>>{input[(3 + 2)%5], input[(1 + 2)%5],
+                                input[(2 + 2)%5]}
         ));
   EXPECT_EQ(collector.GetSortedPolygonResult()[0].plane(),
             ResultCollector<>::HalfSpace3Rep(/*x=*/0, /*y=*/0, /*z=*/1,
@@ -314,7 +317,7 @@ TEST(ConvexPolygonFactory, GetPlaneOrientationAfterProjection) {
   for (int drop_dimension = 0; drop_dimension < 3; ++drop_dimension) {
     auto cross = HalfSpace3<>(p[0], p[1], p[2]).normal();
 
-    EXPECT_NE(cross.coords()[drop_dimension], 0);
+    EXPECT_NE(cross.components()[drop_dimension], 0);
     int orientation =
       ConvexPolygon<32>::Factory::GetPlaneOrientationAfterProjection(
         cross, drop_dimension);

@@ -50,7 +50,8 @@ struct ConvexPolygonEdge {
                                             OtherVertexData>& other) :
     vertex(other.vertex), line(other.line), data(other.data) { }
 
-  static bool LexicographicallyLt(const ConvexPolygonEdge& a, const ConvexPolygonEdge& b) {
+  static bool LexicographicallyLt(const ConvexPolygonEdge& a,
+                                  const ConvexPolygonEdge& b) {
     return HomoPoint3Rep::LexicographicallyLt(a.vertex, b.vertex);
   }
 
@@ -86,10 +87,12 @@ class ConvexPolygon {
   //
   // Include convex_polygon_factory.h to use this.
   using Factory = GenericFactory<Point3Rep>;
-  // A class to build ConvexPolygons from iterators that produce Point3WithVertexDatas.
+  // A class to build ConvexPolygons from iterators that produce
+  // Point3WithVertexDatas.
   //
   // Include convex_polygon_factory.h to use this.
-  using FactoryWithVertexData = GenericFactory<typename EdgeRep::Point3WithVertexData>;
+  using FactoryWithVertexData =
+    GenericFactory<typename EdgeRep::Point3WithVertexData>;
 
   using HomoPoint3Rep = HomoPoint3<(point3_bits_template - 1)*7 + 10,
                              (point3_bits_template - 1)*6 + 10>;
@@ -98,17 +101,18 @@ class ConvexPolygon {
   using LineRep = typename PluckerLineFromPlanesFromPoint3sBuilder<
     point3_bits_template>::PluckerLineRep;
 
-  // The minimum number of bits to support for each coordinate of the vertex3's
+  // The minimum number of bits to support for each component of the vertex3's
   // that the polygon is built from.
   static constexpr int point3_bits = point3_bits_template;
 
   // The minimum number of bits to support for each of the x, y, and z
-  // coordinates for each vertex, after an arbitrary number of splits from
+  // components for each vertex, after an arbitrary number of splits from
   // planes of the type HalfSpace3Rep.
   static constexpr int homo_point3_num_bits = HomoPoint3Rep::num_bits;
-  // The minimum number of bits to support the w coordinate for each vertex,
+  // The minimum number of bits to support the w component for each vertex,
   // after an arbitrary number of splits from planes of the type HalfSpace3Rep.
-  static constexpr int homo_point3_denom_bits = HomoPoint3Rep::denom_bits_template;
+  static constexpr int homo_point3_denom_bits =
+    HomoPoint3Rep::denom_bits_template;
 
   ConvexPolygon() : plane_(HalfSpace3Rep::Zero()), drop_dimension_(-1) { }
 
@@ -266,14 +270,14 @@ class ConvexPolygon {
   template <int vector_bits>
   size_t GetExtremeIndexBisect(const Vector3<vector_bits>& v) const {
     auto v_projected = v.DropDimension(drop_dimension()).Scale(
-        plane().normal().coords()[drop_dimension()]);
+        plane().normal().components()[drop_dimension()]);
     auto normal_projected = plane().normal().DropDimension(
-        drop_dimension()).Scale(v.coords()[drop_dimension()]);
+        drop_dimension()).Scale(v.components()[drop_dimension()]);
     auto new_vector = v_projected - normal_projected;
     // sign_adjust is -1 if the drop dimension in the plane normal is negative,
     // and 1 otherwise.
-    int sign_adjust = (plane().normal().coords()[drop_dimension()].GetSign() >>
-                       (sizeof(BigIntWord) * 8 - 1)) | 1;
+    int sign_adjust =
+      plane().normal().components()[drop_dimension()].GetAbsMult();
     new_vector = new_vector * sign_adjust;
     return GetExtremeIndexBisect(new_vector,
                                  drop_dimension());
@@ -318,8 +322,8 @@ class ConvexPolygon {
       const HalfSpace2<vector_bits, dist_bits>& half_space, int drop_dimension,
       size_t same_dir_index, size_t opp_dir_index) const;
 
-  // Returns the index of the vertex that is outside the given HalfSpace2, if any
-  // exist.
+  // Returns the index of the vertex that is outside the given HalfSpace2, if
+  // any exist.
   //
   // Specifically the first element of the returned pair indicates whether any
   // vertices exist in the negative half-space:

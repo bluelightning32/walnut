@@ -263,19 +263,19 @@ void TestCorrectOutputBitsFromVertices() {
     int remaining = i;
     Point3Rep p[2];
     for (int j = 0; j < 2; ++j) {
-      BigIntRep coords[3];
+      BigIntRep components[3];
       for (int k = 0; k < 3; ++k) {
         switch (remaining % 2) {
           case 0:
-            coords[k] = BigIntRep::min_value();
+            components[k] = BigIntRep::min_value();
             break;
           case 1:
-            coords[k] = BigIntRep::max_value();
+            components[k] = BigIntRep::max_value();
             break;
         }
         remaining /= 2;
       }
-      p[j] = Point3Rep(coords[0], coords[1], coords[2]);
+      p[j] = Point3Rep(components[0], components[1], components[2]);
     }
     PluckerLineRep line = Builder::Build(p[0], p[1]);
     // A PluckerLine type with double the required bits.
@@ -288,14 +288,14 @@ void TestCorrectOutputBitsFromVertices() {
     EXPECT_TRUE(line.IsValidState());
     for (int j = 0; j < 3; ++j) {
       smallest_d_coord[j] = std::min(smallest_d_coord[j],
-                                     line.d().coords()[j]);
+                                     line.d().components()[j]);
       largest_d_coord[j] = std::max(largest_d_coord[j],
-                                    line.d().coords()[j]);
+                                    line.d().components()[j]);
 
       smallest_m_coord[j] = std::min(smallest_m_coord[j],
-                                     line.m().coords()[j]);
+                                     line.m().components()[j]);
       largest_m_coord[j] = std::max(largest_m_coord[j],
-                                    line.m().coords()[j]);
+                                    line.m().components()[j]);
     }
   }
   for (int j = 0; j < 3; ++j) {
@@ -356,14 +356,14 @@ void TestCorrectOutputBitsFromPlanesFromPoint3s() {
     int remaining = i;
     HalfSpace3Rep plane[2];
     for (int j = 0; j < 2; ++j) {
-      VectorInt normal_coords[3];
+      VectorInt normal_components[3];
       for (int k = 0; k < 3; ++k) {
         switch (remaining % 2) {
           case 0:
-            normal_coords[k] = HalfSpace3Builder::normal_component_min();
+            normal_components[k] = HalfSpace3Builder::normal_component_min();
             break;
           case 1:
-            normal_coords[k] = HalfSpace3Builder::normal_component_max();
+            normal_components[k] = HalfSpace3Builder::normal_component_max();
             break;
         }
         remaining /= 2;
@@ -378,9 +378,9 @@ void TestCorrectOutputBitsFromPlanesFromPoint3s() {
           break;
       }
       remaining /= 2;
-      typename HalfSpace3Rep::VectorRep normal(normal_coords[0],
-                                          normal_coords[1],
-                                          normal_coords[2]);
+      typename HalfSpace3Rep::VectorRep normal(normal_components[0],
+                                          normal_components[1],
+                                          normal_components[2]);
       plane[j] = HalfSpace3Rep(normal, dist);
     }
     if (!plane[0].IsValid() || !plane[1].IsValid()) {
@@ -401,14 +401,14 @@ void TestCorrectOutputBitsFromPlanesFromPoint3s() {
     EXPECT_TRUE(line.IsValidState());
     for (int j = 0; j < 3; ++j) {
       smallest_d_coord[j] = std::min(smallest_d_coord[j],
-                                     line.d().coords()[j]);
+                                     line.d().components()[j]);
       largest_d_coord[j] = std::max(largest_d_coord[j],
-                                    line.d().coords()[j]);
+                                    line.d().components()[j]);
 
       smallest_m_coord[j] = std::min(smallest_m_coord[j],
-                                     line.m().coords()[j]);
+                                     line.m().components()[j]);
       largest_m_coord[j] = std::max(largest_m_coord[j],
-                                    line.m().coords()[j]);
+                                    line.m().components()[j]);
     }
   }
   for (int j = 0; j < 3; ++j) {

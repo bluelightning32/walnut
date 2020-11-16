@@ -53,8 +53,10 @@ class ResultCollector : public OrientingMonotoneDecomposer<Point3<32>> {
   }
 
   static bool PointLt(const Point3<32>& a, const Point3<32>& b) {
-    return std::lexicographical_compare(a.coords().begin(), a.coords().end(),
-                                        b.coords().begin(), b.coords().end());
+    return std::lexicographical_compare(a.components().begin(),
+                                        a.components().end(),
+                                        b.components().begin(),
+                                        b.components().end());
   }
 
   static bool PolygonLt(const PolygonResult& a,

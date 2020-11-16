@@ -8,7 +8,8 @@
 
 namespace walnut {
 
-// Plücker coordinates are a way to store a R^3 line with homogeneous coordinates.
+// Plücker coordinates are a way to store a R^3 line with homogeneous
+// coordinates.
 template <int d_bits_template = 31*2 + 1, int m_bits_template = 31*2 + 3>
 class PluckerLine {
  public:
@@ -191,7 +192,7 @@ class PluckerLine {
   Intersect(const HalfSpace3<vector_bits, dist_bits>& p) const {
     auto vector = p.normal().Cross(m()) + d().Scale(p.d());
     auto w = p.normal().Dot(d());
-    return HomoPoint3<decltype(vector)::coord_bits, decltype(w)::bits>(
+    return HomoPoint3<decltype(vector)::component_bits, decltype(w)::bits>(
                        vector, w);
   }
 
@@ -205,7 +206,7 @@ class PluckerLine {
   // from (x, y, z) to (z, x). The quarter turn is performed after the
   // projection.
   //
-  // At least one of the remaining coordinates of d() must be non-zero for the
+  // At least one of the remaining components of d() must be non-zero for the
   // resulting HalfSpace2 to be valid.
   //
   // Note that this may overflow if some of the components of d() equal
@@ -213,7 +214,7 @@ class PluckerLine {
   HalfSpace2<d_bits, m_bits> Project2D(int drop_dimension) const {
     return HalfSpace2<d_bits, m_bits>(
         /*normal=*/d().DropDimension(drop_dimension).GetPerpendicular(),
-        /*dist=*/-m_.coords()[drop_dimension]);
+        /*dist=*/-m_.components()[drop_dimension]);
   }
 
  private:

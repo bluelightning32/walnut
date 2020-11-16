@@ -80,7 +80,7 @@ class ConvexPolygon<point3_bits_template, VertexDataTemplate>::GenericFactory :
   // cross_product.IsZero().
   static int GetPlaneOrientationAfterProjection(
       typename HalfSpace3Rep::VectorRep cross_product, int drop_dimension) {
-    return -cross_product.coords()[drop_dimension].GetAbsMult();
+    return -cross_product.components()[drop_dimension].GetAbsMult();
   }
 
   static constexpr int point3_bits = point3_bits_template;

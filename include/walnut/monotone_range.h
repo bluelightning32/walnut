@@ -66,13 +66,14 @@ class MonotoneRange {
   void GetChains(typename ConcatRangeRep::const_iterator& chain1_start,
                  typename ConcatRangeRep::const_iterator& chain1_end,
                  typename ConcatRangeRep::const_reverse_iterator& chain2_begin,
-                 typename ConcatRangeRep::const_reverse_iterator& chain2_end) const;
+                 typename ConcatRangeRep::const_reverse_iterator& chain2_end)
+    const;
 
  private:
   // Gets the direction of the first vertices of remaining_begin relative to
   // `*prev`, in the monontone dimension.
   //
-  // `remaining_begin` will be advanced until it has a different coordinate
+  // `remaining_begin` will be advanced until it has a different component
   // than `prev` in the monotone dimension. If `remaining_begin` reaches
   // `remaining_end` before finding a vertex different from `prev`, then 0 is
   // returned instead.
@@ -84,7 +85,7 @@ class MonotoneRange {
   // Returns:
   // * 1 if the first vertices of `remaining_begin` are increasing in the
   //   monotone dimension.
-  // * 0 if all vertices of `remaining_begin` have the same coordinate as prev
+  // * 0 if all vertices of `remaining_begin` have the same component as prev
   //   in the monotone dimension.
   // * -1 if the first vertices of `remaining_begin` are decreasing in the
   //   monotone dimension.
@@ -147,7 +148,7 @@ class MonotoneRange {
   // 1 if chain1 is increasing in the monotone dimension and chain2 is
   // decreasing in the monotone dimension.
   //
-  // 0 if all of vertices in both chains all have the same monotone coordinate.
+  // 0 if all of vertices in both chains all have the same monotone component.
   //
   // -1 if chain1 is decreasing in the monotone dimension and chain2 is
   // increasing in the monotone dimension.
@@ -168,8 +169,8 @@ inline int MonotoneRange<Point3Iterator>::GetDir(
   // Find the first vertex that has a different value in the monotone dimension
   // than *remaining_end. This is necessary to find out if the vertices are
   // initially increasing or decreasing in the monotone dimension.
-  while (remaining_begin->coords()[monotone_dimension] ==
-         prev->coords()[monotone_dimension]) {
+  while (remaining_begin->components()[monotone_dimension] ==
+         prev->components()[monotone_dimension]) {
     ++remaining_begin;
     if (remaining_begin == remaining_end) {
       return 0;
@@ -178,16 +179,17 @@ inline int MonotoneRange<Point3Iterator>::GetDir(
 
   // Verified by previous loop
   assert(remaining_begin != remaining_end);
-  return prev->coords()[monotone_dimension] <
-         remaining_begin->coords()[monotone_dimension] ? 1 : -1;
+  return prev->components()[monotone_dimension] <
+         remaining_begin->components()[monotone_dimension] ? 1 : -1;
 }
 
 template <typename Point3Iterator>
 inline void MonotoneRange<Point3Iterator>::FollowDirReverse(
     int monotone_dimension, int dir, const Point3Rep* next,
     Point3Iterator& remaining_end) {
-  while ((next->coords()[monotone_dimension] -
-          remaining_end->coords()[monotone_dimension]).GetSign() * dir >= 0) {
+  while ((next->components()[monotone_dimension] -
+          remaining_end->components()[monotone_dimension]).GetSign() * dir >=
+      0) {
     next = &*remaining_end;
     --remaining_end;
   }
@@ -201,8 +203,8 @@ template <typename Point3Iterator>
 inline void MonotoneRange<Point3Iterator>::FollowDir(
     int monotone_dimension, int dir, const Point3Rep* prev,
     Point3Iterator& remaining_begin) {
-  while ((remaining_begin->coords()[monotone_dimension] -
-          prev->coords()[monotone_dimension]).GetSign() * dir >= 0) {
+  while ((remaining_begin->components()[monotone_dimension] -
+          prev->components()[monotone_dimension]).GetSign() * dir >= 0) {
     prev = &*remaining_begin;
     ++remaining_begin;
   }
@@ -212,10 +214,11 @@ template <typename Point3Iterator>
 inline void MonotoneRange<Point3Iterator>::FollowDirUpTo(
     int monotone_dimension, int dir, const Point3Rep* prev,
     Point3Iterator& remaining_begin, const Point3Rep* up_to) {
-  while ((up_to->coords()[monotone_dimension] -
-          remaining_begin->coords()[monotone_dimension]).GetSign() * dir > 0 &&
-         (remaining_begin->coords()[monotone_dimension] -
-          prev->coords()[monotone_dimension]).GetSign() * dir >= 0) {
+  while (
+      (up_to->components()[monotone_dimension] -
+       remaining_begin->components()[monotone_dimension]).GetSign() * dir > 0 &&
+      (remaining_begin->components()[monotone_dimension] -
+       prev->components()[monotone_dimension]).GetSign() * dir >= 0) {
     prev = &*remaining_begin;
     ++remaining_begin;
   }
@@ -225,10 +228,11 @@ template <typename Point3Iterator>
 inline void MonotoneRange<Point3Iterator>::FollowDirUpToReverse(
     int monotone_dimension, int dir, const Point3Rep* next,
     Point3Iterator& remaining_end, const Point3Rep* up_to) {
-  while ((next->coords()[monotone_dimension] -
-          remaining_end->coords()[monotone_dimension]).GetSign() * dir >= 0 &&
-         (remaining_end->coords()[monotone_dimension] -
-          up_to->coords()[monotone_dimension]).GetSign() * dir > 0) {
+  while (
+      (next->components()[monotone_dimension] -
+       remaining_end->components()[monotone_dimension]).GetSign() * dir >= 0 &&
+      (remaining_end->components()[monotone_dimension] -
+       up_to->components()[monotone_dimension]).GetSign() * dir > 0) {
     next = &*remaining_end;
     --remaining_end;
   }
@@ -253,7 +257,10 @@ inline void MonotoneRange<Point3Iterator>::Build(
 
   // Step 1. determine chain_dir_.
   Point3Iterator range_begin = remaining_begin;
-  chain_dir_ = MonotoneRange<Point3Iterator>::GetDir(monotone_dimension, /*prev=*/&*remaining_end, remaining_begin, remaining_end);
+  chain_dir_ = MonotoneRange<Point3Iterator>::GetDir(monotone_dimension,
+                                                     /*prev=*/&*remaining_end,
+                                                     remaining_begin,
+                                                     remaining_end);
   if (chain_dir_ == 0) {
     // All of the vertices are collinear.
     chain1_.Append(range_begin, range_end);
@@ -261,7 +268,7 @@ inline void MonotoneRange<Point3Iterator>::Build(
     // the end of chain2_) or at the end of chain1_ (and at the beginning of
     // chain1_). The maximum vertex must be on the opposite end of chain1_ and
     // chain2_. Since chain_dir_ == 0, all of the input vertices have the same
-    // coordinate in the monotone dimension. So any 2 of them could be declared
+    // component in the monotone dimension. So any 2 of them could be declared
     // the minimum or maximum. For simplicity, we'll choose the start of
     // chain1_ as the minimum and the end of chain1_ as the maximum.
     //
@@ -333,8 +340,8 @@ inline void MonotoneRange<Point3Iterator>::Build(
   //   range_begin < remaining_begin <= remaining_end
   assert(remaining_begin != range_begin);
   while (remaining_begin != remaining_end &&
-         (remaining_begin->coords()[monotone_dimension] ==
-          remaining_end->coords()[monotone_dimension])) {
+         (remaining_begin->components()[monotone_dimension] ==
+          remaining_end->components()[monotone_dimension])) {
     ++remaining_begin;
   }
   chain2_.Append(range_begin, remaining_begin);
@@ -351,13 +358,13 @@ inline void MonotoneRange<Point3Iterator>::Build(
   --remaining_end;
   Point3Iterator last_accepted = remaining_begin;
   --last_accepted;
-  FollowDirUpToReverse(monotone_dimension, /*dir=*/-chain_dir_, next, remaining_end,
-                       /*up_to=*/&*last_accepted);
+  FollowDirUpToReverse(monotone_dimension, /*dir=*/-chain_dir_, next,
+                       remaining_end, /*up_to=*/&*last_accepted);
   if (remaining_begin != remaining_end) {
     --remaining_end;
     while (remaining_begin != remaining_end &&
-           (last_accepted->coords()[monotone_dimension] ==
-            remaining_end->coords()[monotone_dimension])) {
+           (last_accepted->components()[monotone_dimension] ==
+            remaining_end->components()[monotone_dimension])) {
       --remaining_end;
     }
     ++remaining_end;

@@ -25,14 +25,20 @@ TEST(HalfSpace3, CompareHomoPoint3) {
                      /*dist=*/BigInt<32>(10));
 
   // excluded
-  EXPECT_LT(plane.Compare(HomoPoint3<>(/*x=*/1, /*y=*/100, /*z=*/100, /*w=*/1)), 0);
-  EXPECT_LT(plane.Compare(HomoPoint3<>(/*x=*/9, /*y=*/100, /*z=*/100, /*w=*/2)), 0);
+  EXPECT_LT(plane.Compare(HomoPoint3<>(/*x=*/1, /*y=*/100, /*z=*/100,
+                                       /*w=*/1)), 0);
+  EXPECT_LT(plane.Compare(HomoPoint3<>(/*x=*/9, /*y=*/100, /*z=*/100,
+                                       /*w=*/2)), 0);
   // coincident
-  EXPECT_EQ(plane.Compare(HomoPoint3<>(/*x=*/5, /*y=*/100, /*z=*/100, /*w=*/1)), 0);
-  EXPECT_EQ(plane.Compare(HomoPoint3<>(/*x=*/10, /*y=*/100, /*z=*/100, /*w=*/2)), 0);
+  EXPECT_EQ(plane.Compare(HomoPoint3<>(/*x=*/5, /*y=*/100, /*z=*/100,
+                                       /*w=*/1)), 0);
+  EXPECT_EQ(plane.Compare(HomoPoint3<>(/*x=*/10, /*y=*/100, /*z=*/100,
+                                       /*w=*/2)), 0);
   // included
-  EXPECT_GT(plane.Compare(HomoPoint3<>(/*x=*/6, /*y=*/100, /*z=*/100, /*w=*/1)), 0);
-  EXPECT_GT(plane.Compare(HomoPoint3<>(/*x=*/11, /*y=*/100, /*z=*/100, /*w=*/2)), 0);
+  EXPECT_GT(plane.Compare(HomoPoint3<>(/*x=*/6, /*y=*/100, /*z=*/100,
+                                       /*w=*/1)), 0);
+  EXPECT_GT(plane.Compare(HomoPoint3<>(/*x=*/11, /*y=*/100, /*z=*/100,
+                                       /*w=*/2)), 0);
 }
 
 TEST(HalfSpace3, ComparePosHomoPoint3NegDist) {
@@ -41,9 +47,11 @@ TEST(HalfSpace3, ComparePosHomoPoint3NegDist) {
                      /*dist=*/BigInt<32>(-10));
 
   // included
-  EXPECT_GT(plane.Compare(HomoPoint3<>(/*x=*/1, /*y=*/100, /*z=*/100, /*w=*/1)), 0);
+  EXPECT_GT(plane.Compare(HomoPoint3<>(/*x=*/1, /*y=*/100, /*z=*/100,
+                                       /*w=*/1)), 0);
   // excluded
-  EXPECT_LT(plane.Compare(HomoPoint3<>(/*x=*/6, /*y=*/100, /*z=*/100, /*w=*/1)), 0);
+  EXPECT_LT(plane.Compare(HomoPoint3<>(/*x=*/6, /*y=*/100, /*z=*/100,
+                                       /*w=*/1)), 0);
 }
 
 TEST(HalfSpace3, CompareNegHomoPoint3PosDist) {
@@ -52,9 +60,11 @@ TEST(HalfSpace3, CompareNegHomoPoint3PosDist) {
                      /*dist=*/BigInt<32>(10));
 
   // excluded
-  EXPECT_LT(plane.Compare(HomoPoint3<>(/*x=*/1, /*y=*/100, /*z=*/100, /*w=*/-1)), 0);
+  EXPECT_LT(plane.Compare(HomoPoint3<>(/*x=*/1, /*y=*/100, /*z=*/100,
+                                       /*w=*/-1)), 0);
   // included
-  EXPECT_GT(plane.Compare(HomoPoint3<>(/*x=*/-6, /*y=*/100, /*z=*/100, /*w=*/-1)), 0);
+  EXPECT_GT(plane.Compare(HomoPoint3<>(/*x=*/-6, /*y=*/100, /*z=*/100,
+                                       /*w=*/-1)), 0);
 }
 
 TEST(HalfSpace3, CompareNegHomoPoint3NegDist) {
@@ -63,9 +73,11 @@ TEST(HalfSpace3, CompareNegHomoPoint3NegDist) {
                      /*dist=*/BigInt<32>(-10));
 
   // included
-  EXPECT_GT(plane.Compare(HomoPoint3<>(/*x=*/1, /*y=*/100, /*z=*/100, /*w=*/-1)), 0);
+  EXPECT_GT(plane.Compare(HomoPoint3<>(/*x=*/1, /*y=*/100, /*z=*/100,
+                                       /*w=*/-1)), 0);
   // excluded
-  EXPECT_LT(plane.Compare(HomoPoint3<>(/*x=*/-6, /*y=*/100, /*z=*/100, /*w=*/-1)), 0);
+  EXPECT_LT(plane.Compare(HomoPoint3<>(/*x=*/-6, /*y=*/100, /*z=*/100,
+                                       /*w=*/-1)), 0);
 }
 
 TEST(HalfSpace3, CompareParallelPlane) {
@@ -159,7 +171,8 @@ void TestCorrectOutputBits() {
   using HalfSpace3Rep = typename Builder::HalfSpace3Rep;
   // A plane type with double the required bits.
   using HalfSpace3ExtraBits =
-    HalfSpace3<HalfSpace3Rep::VectorInt::bits*2, HalfSpace3Rep::DistInt::bits*2>;
+    HalfSpace3<HalfSpace3Rep::VectorInt::bits*2,
+               HalfSpace3Rep::DistInt::bits*2>;
   using Point3Rep = typename Builder::Point3Rep;
   using VectorInt = typename HalfSpace3Rep::VectorInt;
   using DistInt = typename HalfSpace3Rep::DistInt;
@@ -183,19 +196,19 @@ void TestCorrectOutputBits() {
     int remaining = i;
     Point3Rep p[3];
     for (int j = 0; j < 3; ++j) {
-      BigIntRep coords[3];
+      BigIntRep components[3];
       for (int k = 0; k < 3; ++k) {
         switch (remaining % 2) {
           case 0:
-            coords[k] = BigIntRep::min_value();
+            components[k] = BigIntRep::min_value();
             break;
           case 1:
-            coords[k] = BigIntRep::max_value();
+            components[k] = BigIntRep::max_value();
             break;
         }
         remaining /= 2;
       }
-      p[j] = Point3Rep(coords[0], coords[1], coords[2]);
+      p[j] = Point3Rep(components[0], components[1], components[2]);
     }
     HalfSpace3Rep plane = Builder::Build(p[0], p[1], p[2]);
     HalfSpace3ExtraBits plane_extra(p[0], p[1], p[2]);
@@ -204,9 +217,9 @@ void TestCorrectOutputBits() {
     EXPECT_TRUE(plane.IsValidState());
     for (int j = 0; j < 3; ++j) {
       smallest_normal_coord[j] = std::min(smallest_normal_coord[j],
-                                          plane.normal().coords()[j]);
+                                          plane.normal().components()[j]);
       largest_normal_coord[j] = std::max(largest_normal_coord[j],
-                                         plane.normal().coords()[j]);
+                                         plane.normal().components()[j]);
     }
     smallest_dist = std::min(smallest_dist, plane.d());
     largest_dist = std::max(largest_dist, plane.d());

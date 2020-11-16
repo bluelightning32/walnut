@@ -11,10 +11,10 @@ template<typename Container>
 auto
 MakeConvexPolygon(const Container& vertices) ->
 ConvexPolygon<std::iterator_traits<
-    decltype(std::begin(vertices))>::value_type::coord_bits> {
+    decltype(std::begin(vertices))>::value_type::component_bits> {
   using Iterator = decltype(std::begin(vertices));
   using Point3Rep = typename std::iterator_traits<Iterator>::value_type;
-  using ConvexPolygonRep = ConvexPolygon<Point3Rep::coord_bits>;
+  using ConvexPolygonRep = ConvexPolygon<Point3Rep::component_bits>;
 
   class CollectOne : public ConvexPolygonRep::Factory {
    public:

@@ -181,9 +181,9 @@ TEST(Vector3, DropDimensionSideness) {
 
     BigInt<32> c = a2.Cross(b2);
 
-    EXPECT_FALSE(c3.coords()[dimension].IsZero())
+    EXPECT_FALSE(c3.components()[dimension].IsZero())
       << "dimension=" << dimension;
-    if (c3.coords()[dimension] > 0) {
+    if (c3.components()[dimension] > 0) {
       EXPECT_GT(c, 0) << "dimension=" << dimension;
     } else {
       EXPECT_LT(c, 0) << "dimension=" << dimension;

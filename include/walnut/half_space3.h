@@ -10,16 +10,18 @@ namespace walnut {
 // Sometimes this class is used just to represent a plane in R^3. Other times
 // it is used to represent the positive half-space created by dividing R^3 in
 // half at that plane.
-template <int vector_bits_template = 31*2 + 3, int dist_bits_template = 31*3 + 3>
+template <int vector_bits_template = 31*2 + 3,
+          int dist_bits_template = 31*3 + 3>
 class HalfSpace3 {
  public:
   using VectorRep = Vector3<vector_bits_template>;
   using VectorInt = typename VectorRep::BigIntRep;
   using DistInt = BigInt<dist_bits_template>;
 
-  // The minimum number of bits to support for each of the x, y, and z coordinates.
+  // The minimum number of bits to support for each of the x, y, and z
+  // components.
   static constexpr int vector_bits = vector_bits_template;
-  // The minimum number of bits to support for the d coordinate.
+  // The minimum number of bits to support for the d component.
   static constexpr int dist_bits = dist_bits_template;
 
   const VectorInt& x() const {
@@ -50,7 +52,7 @@ class HalfSpace3 {
     return !normal_.IsZero();
   }
 
-  // Leaves the coordinates in an undefined state
+  // Leaves the components in an undefined state
   HalfSpace3() = default;
 
   // Constructs a half-space a the normal and distance from the origin along
@@ -128,13 +130,13 @@ class HalfSpace3 {
   //        contained within the negative half-space.
   //
   // The return value is undefined if `p` is not parallel to this half-space,
-  // or if the normal coordinate with index `nonzero_dimension` is zero.
+  // or if the normal component with index `nonzero_dimension` is zero.
   template <int other_vector_bits, int other_dist_bits>
   int Compare(const HalfSpace3<other_vector_bits, other_dist_bits>& p,
               int nonzero_dimension) const {
-    return (d() * p.normal().coords()[nonzero_dimension]).Compare(
-        p.d() * normal_.coords()[nonzero_dimension]) *
-      p.normal().coords()[nonzero_dimension].GetAbsMult();
+    return (d() * p.normal().components()[nonzero_dimension]).Compare(
+        p.d() * normal_.components()[nonzero_dimension]) *
+      p.normal().components()[nonzero_dimension].GetAbsMult();
   }
 
   // Returns a plane with an invalid 0 normal vector and a 0 distance.
@@ -210,8 +212,8 @@ class HalfSpace3 {
   DistInt dist_;
 };
 
-// This is a wrapper around the HalfSpace3 constructor that takes 3 Point3's. The
-// only reason to use this wrapper is that it figures out how many bits are
+// This is a wrapper around the HalfSpace3 constructor that takes 3 Point3's.
+// The only reason to use this wrapper is that it figures out how many bits are
 // necessary in the worst case for the plane numerator and denominator, given
 // the number of bits in each Point3.
 template <int point3_bits_template = 32>

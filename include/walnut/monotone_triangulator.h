@@ -15,7 +15,7 @@ template <typename Point3RepTemplate = Point3<32>>
 class MonotoneTriangulator {
  public:
   using Point3Rep = Point3RepTemplate;
-  static_assert(std::is_base_of<Point3<Point3Rep::coord_bits>,
+  static_assert(std::is_base_of<Point3<Point3Rep::component_bits>,
                                 Point3Rep>::value,
                 "Point3Rep must be derived from Point3.");
 
@@ -59,12 +59,13 @@ class MonotoneTriangulator {
   // Called to emit a triangle.
   //
   // [p1, p2, p3] will be in counter-clockwise order, when viewed with the
-  // `drop_dimension` coordinate set to 0.
+  // `drop_dimension` component set to 0.
   //
   // `p1` and `p2` come from `reflex_stack`. `p3` is a newer vertex from one
   // of the chains. `p3_is_top_chain` is set to true when `p3` comes from the
   // top chain, or false if it comes from the bottom chain.
-  virtual void Emit(bool p3_is_top_chain, const Point3Rep& p1, const Point3Rep& p2, const Point3Rep& p3) = 0;
+  virtual void Emit(bool p3_is_top_chain, const Point3Rep& p1,
+                    const Point3Rep& p2, const Point3Rep& p3) = 0;
 
  private:
   void ProcessVertex(int drop_dimension, bool is_top, const Point3Rep& v);
@@ -77,9 +78,9 @@ class MonotoneTriangulator {
 
   // This is a stack of vertices that must be closed to form triangles.
   //
-  // The stack has at least 2 elements in it (except temporarily before the new vertex
-  // has been pushed on, or at the end of `Build` when then whole polygon has
-  // been processed).
+  // The stack has at least 2 elements in it (except temporarily before the new
+  // vertex has been pushed on, or at the end of `Build` when then whole
+  // polygon has been processed).
   //
   // reflex_stack_[0] is that last vertex from the previous chain (or the
   // minimum vertex if the opposite chain has not been visited yet).
@@ -113,8 +114,8 @@ void MonotoneTriangulator<Point3RepTemplate>::Build(
   // Bottom chain must contain the maximum vertex.
   assert(bottom_pos != bottom_end);
   if (top_pos == top_end ||
-      bottom_pos->coords()[monotone_dimension] <
-      top_pos->coords()[monotone_dimension]) {
+      bottom_pos->components()[monotone_dimension] <
+      top_pos->components()[monotone_dimension]) {
     reflex_stack_.push_back(&*bottom_pos);
     ++bottom_pos;
     top_chain_is_current_ = false;
@@ -127,8 +128,8 @@ void MonotoneTriangulator<Point3RepTemplate>::Build(
   while (top_pos != top_end) {
     // The bottom chain must have the maximum vertex remaining.
     assert(bottom_pos != bottom_end);
-    if (bottom_pos->coords()[monotone_dimension] <
-        top_pos->coords()[monotone_dimension]) {
+    if (bottom_pos->components()[monotone_dimension] <
+        top_pos->components()[monotone_dimension]) {
       ProcessVertex(drop_dimension, /*is_top=*/false, *bottom_pos);
       ++bottom_pos;
     } else {

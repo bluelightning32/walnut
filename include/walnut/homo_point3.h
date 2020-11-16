@@ -7,8 +7,8 @@
 
 namespace walnut {
 
-// 3D point represented with homogeneous coordinates. The w coordinate acts
-// like a divisor for the x, y, and z coordinates.
+// 3D point represented with homogeneous coordinates. The w component acts
+// like a divisor for the x, y, and z component.
 template <int num_bits_template = 32*7 + 9, int denom_bits_template = 32*6 + 7>
 class HomoPoint3 {
  public:
@@ -16,13 +16,14 @@ class HomoPoint3 {
   using NumInt = typename VectorRep::BigIntRep;
   using DenomInt = BigInt<denom_bits_template>;
 
-  // The minimum number of bits to support for each of the x, y, and z coordinates.
+  // The minimum number of bits to support for each of the x, y, and z
+  // components.
   static constexpr int num_bits = num_bits_template;
-  // The maximum number of bits supported for the x, y, and z coordinates.
+  // The maximum number of bits supported for the x, y, and z components.
   static constexpr int max_num_bits = NumInt::max_bits;
-  // The minimum number of bits to support for the w coordinate.
+  // The minimum number of bits to support for the w component.
   static constexpr int denom_bits = denom_bits_template;
-  // The maximum number of bits supported for the w coordinate.
+  // The maximum number of bits supported for the w component.
   static constexpr int max_denom_bits = DenomInt::max_bits;
 
   NumInt& x() {
@@ -73,12 +74,13 @@ class HomoPoint3 {
     return dist_denom_;
   }
 
-  // Leaves the coordinates in an undefined state
+  // Leaves the components in an undefined state
   HomoPoint3() = default;
 
   template <int other_num_bits, int other_denom_bits>
   HomoPoint3(const HomoPoint3<other_num_bits, other_denom_bits>& other) :
-    vector_from_origin_(other.vector_from_origin_), dist_denom_(other.dist_denom_) { }
+    vector_from_origin_(other.vector_from_origin_),
+    dist_denom_(other.dist_denom_) { }
 
   template <int other_num_bits, int other_denom_bits>
   HomoPoint3(const BigInt<other_num_bits>& x,
@@ -104,10 +106,10 @@ class HomoPoint3 {
       const HomoPoint3<other_num_bits, other_denom_bits>& b) {
     auto a_scaled = a.vector_from_origin() * b.dist_denom();
     auto b_scaled = b.vector_from_origin() * a.dist_denom();
-    return std::lexicographical_compare(a_scaled.coords().begin(),
-                                        a_scaled.coords().end(),
-                                        b_scaled.coords().begin(),
-                                        b_scaled.coords().end());
+    return std::lexicographical_compare(a_scaled.components().begin(),
+                                        a_scaled.components().end(),
+                                        b_scaled.components().begin(),
+                                        b_scaled.components().end());
   }
 
   // Returns 0 if (p1, `this`, p3) are collinear.
@@ -188,7 +190,8 @@ bool operator==(const Point3<a_bits>& a,
 }
 
 template <int num_bits, int denom_bits>
-std::ostream& operator<<(std::ostream& out, const HomoPoint3<num_bits, denom_bits>& p) {
+std::ostream& operator<<(std::ostream& out,
+                         const HomoPoint3<num_bits, denom_bits>& p) {
   return out << "{ ["
              << p.x() << ", "
              << p.y() << ", "
