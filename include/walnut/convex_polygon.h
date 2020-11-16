@@ -468,6 +468,38 @@ class ConvexPolygon {
   // `allocate_pos_side` is similarly for the positive side of the polygon.
   //
   // `vertex_on_split` is a function object, and it is called once for each
+  // output vertex that is touching the half-space's plane. It is passed a
+  // reference to the output ConvexPolygon and an index for the vertex on the
+  // edge within that output ConvexPolygon. `vertex_on_split` is not called if
+  // the polygon is coincident with `half_space`.
+  template <int vector_bits, int dist_bits, typename AllocateNegSide,
+            typename AllocatePosSide, typename VertexOnSplit>
+  bool Split(const HalfSpace3<vector_bits, dist_bits>& half_space,
+             AllocateNegSide allocate_neg_side,
+             AllocatePosSide allocate_pos_side,
+             VertexOnSplit vertex_on_split) const;
+
+  // Splits a ConvexPolygon by a plucker line into the positive and the
+  // negative side ConvexPolygons.
+  //
+  // `Split` should be called instead of this function. This function is only
+  // exposed for testing purposes.
+  //
+  // The plucker line must be on the polygon's plane. The plucker line must
+  // also be in the plane of `half_space3`, and half_space3 must not be
+  // parallel to the polygon's plane.
+  //
+  // The plane normal must be non-zero in the `drop_dimension` component.
+  //
+  // One of the positive or negative sides may be ommitted if the source
+  // polygon is only present on one side of the line.
+  //
+  // `allocate_neg_side` is a function object that takes 0 arguments must
+  // return a `ConvexPolygon&` if it is called. It will be called exactly once
+  // if the polygon is present on the negative side, and zero times otherwise.
+  // `allocate_pos_side` is similarly for the positive side of the polygon.
+  //
+  // `vertex_on_split` is a function object, and it is called once for each
   // output vertex that is touching the plucker line. It is passed a reference
   // to the output ConvexPolygon and an index for the vertex on the edge within
   // that output ConvexPolygon. `vertex_on_split` is not called if the polygon
@@ -705,6 +737,29 @@ ConvexPolygon<point3_bits, VertexData>::GetLastNegSideVertex(
     }
   }
   return std::make_pair(begin_type, begin % vertex_count());
+}
+
+template <int point3_bits, typename VertexData>
+template <int vector_bits, int dist_bits, typename AllocateNegSide,
+          typename AllocatePosSide, typename VertexOnSplit>
+bool ConvexPolygon<point3_bits, VertexData>::Split(
+    const HalfSpace3<vector_bits, dist_bits>& half_space,
+    AllocateNegSide allocate_neg_side, AllocatePosSide allocate_pos_side,
+    VertexOnSplit vertex_on_split) const {
+
+  using PluckerLineBuilder =
+    PluckerLineFromPlanesFromPoint3sBuilder<point3_bits>;
+  using PluckerLineRep = typename PluckerLineBuilder::PluckerLineRep;
+  PluckerLineRep line = PluckerLineBuilder::Build(plane_, half_space);
+  if (!line.IsValid())
+  {
+    // half_space is parallel to plane_.
+    return false;
+  }
+
+  SplitBisect(half_space, line, drop_dimension(), allocate_neg_side,
+              allocate_pos_side, vertex_on_split);
+  return true;
 }
 
 template <int point3_bits, typename VertexData>

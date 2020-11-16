@@ -1173,4 +1173,73 @@ TEST(ConvexPolygon, SplitBisectAtNewVertices) {
   }
 }
 
+TEST(ConvexPolygon, SplitOnPlane) {
+  Point3<32> input[] = {
+    Point3<32>(0, 0, 10),
+    Point3<32>(1, 0, 11),
+    Point3<32>(1, 1, 12),
+  };
+
+  ConvexPolygon<32> polygon = MakeConvexPolygon(input);
+  ConvexPolygon<32> unused;
+  auto allocate_neg_side = [&]() -> ConvexPolygon<32>& {
+    EXPECT_TRUE(false);
+    return unused;
+  };
+  auto allocate_pos_side = [&]() -> ConvexPolygon<32>& {
+    EXPECT_TRUE(false);
+    return unused;
+  };
+  auto vertex_on_split = [](ConvexPolygon<32>&, size_t index) {
+    EXPECT_TRUE(false);
+  };
+  EXPECT_FALSE(polygon.Split(polygon.plane(), allocate_neg_side,
+                             allocate_pos_side, vertex_on_split));
+
+  EXPECT_FALSE(polygon.Split(-polygon.plane(), allocate_neg_side,
+                             allocate_pos_side, vertex_on_split));
+}
+
+TEST(ConvexPolygon, SplitAtExistingVertices) {
+  //
+  // p[3] <--- p[2]
+  //  | pos -/   ^
+  //  |   -/     |
+  //  v  /       |
+  // p[0] ---> p[1]
+  //
+  Point3<32> p[] = {
+    /*p[0]=*/Point3<32>(0, 0, 10),
+    /*p[1]=*/Point3<32>(1, 0, 10),
+    /*p[2]=*/Point3<32>(1, 1, 10),
+    /*p[3]=*/Point3<32>(0, 1, 10),
+  };
+
+  Point3<32> neg_side_p[] = { p[0], p[1], p[2] };
+  Point3<32> pos_side_p[] = { p[0], p[2], p[3] };
+
+  Point3<32> above(0, 0, 11);
+  HalfSpace3<> half_space(p[0], p[2], above);
+
+  ConvexPolygon<> polygon(MakeConvexPolygon(p));
+  ConvexPolygon<> expected_neg_side(MakeConvexPolygon(neg_side_p));
+  ConvexPolygon<> expected_pos_side(MakeConvexPolygon(pos_side_p));
+
+  ConvexPolygon<> neg_side;
+  ConvexPolygon<> pos_side;
+  auto allocate_neg_side = [&]() -> ConvexPolygon<>& {
+    return neg_side;
+  };
+  auto allocate_pos_side = [&]() -> ConvexPolygon<>& {
+    return pos_side;
+  };
+  auto vertex_on_split = [&](ConvexPolygon<>&, size_t) { };
+
+  polygon.Split(half_space, allocate_neg_side, allocate_pos_side,
+                vertex_on_split);
+  EXPECT_EQ(neg_side.plane(), expected_neg_side.plane());
+  ASSERT_EQ(neg_side, expected_neg_side);
+  ASSERT_EQ(pos_side, expected_pos_side);
+}
+
 }  // walnut
