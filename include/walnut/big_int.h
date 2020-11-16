@@ -223,6 +223,12 @@ class BigInt {
     return rep_.GetAbsMult();
   }
 
+  // Returns 0 if this is greater than or equal to 0.
+  // Returns -1 if this is less than 0.
+  constexpr BigIntWord SignExtension() const {
+    return BigIntWord{rep_.SignExtension()};
+  }
+
   constexpr bool IsZero() const {
     return GetSign() == 0;
   }

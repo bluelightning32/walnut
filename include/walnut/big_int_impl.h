@@ -241,8 +241,8 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     for (; i < common_words && i < rw; i++) {
       result.words_[i] = words_[i].Add(other.words_[i], carry, &carry);
     }
-    BigUIntWord this_extension = SignExtension();
-    BigUIntWord other_extension = other.SignExtension();
+    BigUIntWord this_extension(SignExtension());
+    BigUIntWord other_extension(other.SignExtension());
     for (; i < std::min(used_ / bytes_per_word, rw); i++) {
       result.words_[i] = words_[i].Add(other_extension, carry, &carry);
     }
@@ -277,8 +277,8 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     int i = 0;
     bool carry = false;
     int common_words = GetCommonWordCount(other);
-    BigUIntWord this_extension = SignExtension();
-    BigUIntWord other_extension = other.SignExtension();
+    BigUIntWord this_extension(SignExtension());
+    BigUIntWord other_extension(other.SignExtension());
     assert(("overflow", other.used_ <= max_bytes));
     for (; i < common_words && i < max_words; i++) {
       words_[i] = words_[i].Add(other.words_[i], carry, &carry);
@@ -312,8 +312,8 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     for (; i < common_words && i < rw; i++) {
       result.words_[i] = words_[i].Subtract(other.words_[i], carry, &carry);
     }
-    BigUIntWord this_extension = SignExtension();
-    BigUIntWord other_extension = other.SignExtension();
+    BigUIntWord this_extension(SignExtension());
+    BigUIntWord other_extension(other.SignExtension());
     for (; i < std::min(used_ / bytes_per_word, rw); i++) {
       result.words_[i] = words_[i].Subtract(other_extension, carry, &carry);
     }
@@ -612,6 +612,10 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     return GetSign() ^ other.GetSign() >= 0;
   }
 
+  constexpr BigIntWord SignExtension() const {
+    return BigIntWord{words_[used_words() - 1].SignExtension()};
+  }
+
  protected:
   using Parent::Trim;
   using Parent::used_;
@@ -619,10 +623,6 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
 
   using Parent::used_words;
   using Parent::GetCommonWordCount;
-
-  constexpr BigUIntWord SignExtension() const {
-    return words_[used_words() - 1].SignExtension();
-  }
 
   // Mask everyone of `other` words with `mask`, then subtract other_masked *
   // 2^(shift_left_words * bits_per_word) from this.
@@ -634,12 +634,12 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
   template <int other_words>
   constexpr void SubtractLeftShiftedMasked(const BigIntImpl<other_words>& other,
                                            int shift_left_words,
-                                           BigUIntWord mask) {
+                                           BigIntWord mask) {
     int i = 0, j = shift_left_words;
     bool carry = false;
     for (int i = 0, j = shift_left_words; i < other.used_words(); i++, j++) {
       assert(j < used_words());
-      words_[j] = words_[j].Subtract(other.words_[i] & mask,
+      words_[j] = words_[j].Subtract(other.words_[i] & BigUIntWord{mask},
                                      carry, &carry);
     }
   }

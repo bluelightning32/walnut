@@ -104,8 +104,13 @@ class HomoPoint3 {
   template <int other_num_bits=num_bits, int other_denom_bits=denom_bits>
   static bool LexicographicallyLt(const HomoPoint3& a,
       const HomoPoint3<other_num_bits, other_denom_bits>& b) {
-    auto a_scaled = a.vector_from_origin() * b.dist_denom();
-    auto b_scaled = b.vector_from_origin() * a.dist_denom();
+    // a.v / a.w <?> b.v / b.w
+    // a.v <?> b.v * a.w / b.w (maybe flip sign)
+    // a.v * b.w <?> b.v * a.w (maybe flip sign)
+    int sign_flip = (b.dist_denom().SignExtension() ^
+                     a.dist_denom().SignExtension()) | 1;
+    auto a_scaled = a.vector_from_origin() * (b.dist_denom() * sign_flip);
+    auto b_scaled = b.vector_from_origin() * (a.dist_denom() * sign_flip);
     return std::lexicographical_compare(a_scaled.components().begin(),
                                         a_scaled.components().end(),
                                         b_scaled.components().begin(),

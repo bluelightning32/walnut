@@ -30,4 +30,25 @@ TEST(HomoPoint3, EqualityOperator) {
   }
 }
 
+TEST(HomoPoint3, LexicographicallyLtBasic) {
+  HomoPoint3<> p1(0, 0, 1, 1);
+  HomoPoint3<> p2(0, 0, 2, 1);
+  EXPECT_TRUE(HomoPoint3<>::LexicographicallyLt(p1, p2));
+  EXPECT_FALSE(HomoPoint3<>::LexicographicallyLt(p2, p1));
+}
+
+TEST(HomoPoint3, LexicographicallyLtDifferentDist) {
+  HomoPoint3<> p1(0, 0, 3, 5);
+  HomoPoint3<> p2(0, 0, 3, 2);
+  EXPECT_TRUE(HomoPoint3<>::LexicographicallyLt(p1, p2));
+  EXPECT_FALSE(HomoPoint3<>::LexicographicallyLt(p2, p1));
+}
+
+TEST(HomoPoint3, LexicographicallyLtDifferentDistSign) {
+  HomoPoint3<> p1(0, 0, 1, 1);
+  HomoPoint3<> p2(0, 0, -2, -1);
+  EXPECT_TRUE(HomoPoint3<>::LexicographicallyLt(p1, p2));
+  EXPECT_FALSE(HomoPoint3<>::LexicographicallyLt(p2, p1));
+}
+
 }  // walnut
