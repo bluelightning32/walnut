@@ -173,7 +173,7 @@ class ConvexPolygon {
                 edges_.end());
   }
 
-  // Returns true of the other polygon is the same as this.
+  // Returns true if the other polygon is the same as this.
   //
   // Two polygons are considered equal if all of the following are true:
   // 1. Their planes are the same
@@ -186,6 +186,22 @@ class ConvexPolygon {
   template <int other_point3_bits, typename OtherVertexData>
   bool operator==(const ConvexPolygon<other_point3_bits,
                                       OtherVertexData>& other) const;
+
+  // Returns false if the other polygon is the same as this.
+  //
+  // Two polygons are considered equal if all of the following are true:
+  // 1. Their planes are the same
+  //    - different scales are okay.
+  // 2. They have the same vertices in the same order
+  //    - the vertices are in a cycle. It's okay if the polygon cycles start at
+  //      different indices.
+  //    - it's okay of the homogenous vertices have a different scale.
+  // 3. The VertexData matches for each vertex.
+  template <int other_point3_bits, typename OtherVertexData>
+  bool operator!=(const ConvexPolygon<other_point3_bits,
+                                      OtherVertexData>& other) const {
+    return !(*this == other);
+  }
 
   // Returns the source index of an edge pointing in roughly the same direction
   // as `v` and one pointing in the roughly opposite direction, using a binary
@@ -419,12 +435,15 @@ bool ConvexPolygon<point3_bits, VertexData>::operator==(
     if (match_offset == vertex_count()) {
       return false;
     }
-    if (other.vertex(match_offset) == vertex(0)) {
+    if (other.vertex(match_offset).DropDimension(drop_dimension()) ==
+        vertex(0).DropDimension(drop_dimension())) {
       break;
     }
+    ++match_offset;
   }
   for (size_t i = 1, j = match_offset + 1; i < vertex_count(); ++i, ++j) {
-    if (vertex(i) != other.vertex(j)) {
+    if (vertex(i).DropDimension(drop_dimension()) !=
+        other.vertex(j).DropDimension(drop_dimension())) {
       return false;
     }
     if (vertex_data(i) != other.vertex_data(j)) {

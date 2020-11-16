@@ -167,6 +167,64 @@ TEST(ConvexPolygon, CopyConstructor) {
   EXPECT_EQ(polygon2, polygon1);
 }
 
+TEST(ConvexPolygon, EqualityOperator) {
+  Point3<32> input1[] = {
+    Point3<32>(0, 0, 10),
+    Point3<32>(1, 0, 10),
+    Point3<32>(1, 1, 10),
+  };
+  ConvexPolygon<32> polygon1 = MakeConvexPolygon(input1);
+  EXPECT_EQ(polygon1, polygon1);
+
+  // different plane
+  {
+    Point3<32> input2[] = {
+      Point3<32>(0, 0, 11),
+      Point3<32>(1, 0, 11),
+      Point3<32>(1, 1, 11),
+    };
+    ConvexPolygon<32> polygon2 = MakeConvexPolygon(input2);
+    EXPECT_NE(polygon1, polygon2);
+    EXPECT_NE(polygon2, polygon1);
+  }
+
+  // Same plane as input1, but translated
+  {
+    Point3<32> input3[] = {
+      Point3<32>(1, 0, 10),
+      Point3<32>(2, 0, 10),
+      Point3<32>(2, 1, 10),
+    };
+    ConvexPolygon<32> polygon3 = MakeConvexPolygon(input3);
+    EXPECT_NE(polygon1, polygon3);
+    EXPECT_NE(polygon3, polygon1);
+  }
+
+  // First 2 points the same as input1, but different 3rd point
+  {
+    Point3<32> input4[] = {
+      input1[0],
+      input1[1],
+      Point3<32>(2, 1, 10),
+    };
+    ConvexPolygon<32> polygon4 = MakeConvexPolygon(input4);
+    EXPECT_NE(polygon1, polygon4);
+    EXPECT_NE(polygon4, polygon1);
+  }
+
+  // Flipped version of input1
+  {
+    Point3<32> input5[] = {
+      input1[2],
+      input1[1],
+      input1[0],
+    };
+    ConvexPolygon<32> polygon5 = MakeConvexPolygon(input5);
+    EXPECT_NE(polygon1, polygon5);
+    EXPECT_NE(polygon5, polygon1);
+  }
+}
+
 TEST(ConvexPolygon, CounterClockwiseTriangleEdges) {
   Point3<32> input[] = {
     Point3<32>(0, 0, 10),
