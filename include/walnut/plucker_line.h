@@ -76,6 +76,14 @@ class PluckerLine {
               const Point3<point_bits>& p2) :
     d_(p2 - p1), m_(p1.vector_from_origin().Cross(p2.vector_from_origin())) { }
 
+  template <int num_bits, int denom_bits>
+  PluckerLine(const HomoPoint3<num_bits, denom_bits>& p1,
+              const HomoPoint3<num_bits, denom_bits>& p2) :
+    d_((p2.vector_from_origin().Scale(p1.w()) -
+        p1.vector_from_origin().Scale(p2.w())) * p1.w().GetAbsMult(p2.w())),
+    m_(p1.vector_from_origin().Cross(p2.vector_from_origin()) *
+       (p1.w().GetAbsMult(p2.w()))) { }
+
   // Constructs the line for the intersection of the two planes, `a` and `b`.
   //
   // Both `a` and `b` must be valid (have non-zero normals), and they must be

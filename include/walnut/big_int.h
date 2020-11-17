@@ -223,6 +223,13 @@ class BigInt {
     return rep_.GetAbsMult();
   }
 
+  // Returns 1 if (this * other) >= 0,
+  // else returns -1 if (this * other) < 0.
+  template <int other_bits>
+  constexpr int GetAbsMult(const BigInt<other_bits>& other) const {
+    return (SignExtension() ^ other.SignExtension()) | 1;
+  }
+
   // Returns 0 if this is greater than or equal to 0.
   // Returns -1 if this is less than 0.
   constexpr BigIntWord SignExtension() const {

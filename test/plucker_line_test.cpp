@@ -133,6 +133,28 @@ TEST(PluckerLine, ConstructFromPlanesOrientation) {
   EXPECT_EQ(line_b_a.d(), neg_d);
 }
 
+TEST(PluckerLine, ConstructFromHomoPoint3) {
+  const Point3<> p1(1, 2, 3);
+  const Point3<> p2(5, 7, 11);
+  PluckerLine<> line(p1, p2);
+
+  const HomoPoint3<> homo_p1(1 * 11, 2 * 11, 3 * 11, 11);
+  const HomoPoint3<> homo_p2(5 * 13, 7 * 13, 11 * 13, 13);
+  PluckerLine<> from_homo_points(homo_p1, homo_p2);
+
+  const HomoPoint3<> homo_p1_neg(1 * -11, 2 * -11, 3 * -11, -11);
+  const HomoPoint3<> homo_p2_neg(5 * -13, 7 * -13, 11 * -13, -13);
+  PluckerLine<> from_homo_points2(homo_p1_neg, homo_p2);
+  PluckerLine<> from_homo_points3(homo_p1_neg, homo_p2_neg);
+
+  EXPECT_EQ(from_homo_points, line);
+  EXPECT_TRUE(from_homo_points.d().IsSameDir(line.d()));
+  EXPECT_EQ(from_homo_points2, line);
+  EXPECT_TRUE(from_homo_points2.d().IsSameDir(line.d()));
+  EXPECT_EQ(from_homo_points3, line);
+  EXPECT_TRUE(from_homo_points3.d().IsSameDir(line.d()));
+}
+
 TEST(PluckerLine, FromPlanesDirection) {
   const Point3<> p1(1, 2, 3);
   const Point3<> p2(5, 7, 11);
