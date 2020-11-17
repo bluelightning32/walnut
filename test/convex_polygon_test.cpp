@@ -858,9 +858,9 @@ TEST(ConvexPolygon, GetLastNegSideVertex) {
 
 struct VertexData {
   VertexData() = default;
-  explicit VertexData(const std::tuple<>&) { }
+  explicit VertexData(const NoVertexData&) { }
 
-  bool operator!=(const std::tuple<>&) const {
+  bool operator!=(const NoVertexData&) const {
     return false;
   }
 
@@ -873,24 +873,6 @@ struct VertexData {
 
 std::ostream& operator<<(std::ostream& out, const VertexData& data) {
   out << data.on_split;
-  return out;
-}
-
-struct NoVertexData {
-  NoVertexData() = default;
-  explicit NoVertexData(const VertexData&) { }
-
-  bool operator!=(const NoVertexData&) const {
-    return false;
-  }
-
-  bool operator!=(const VertexData& other) const {
-    return false;
-  }
-};
-
-std::ostream& operator<<(std::ostream& out, const NoVertexData& data) {
-  out << "-";
   return out;
 }
 
@@ -1200,6 +1182,58 @@ TEST(ConvexPolygon, SplitOnPlane) {
                              allocate_pos_side, vertex_on_split));
 }
 
+// Helper for a polygon that is expected to split into 2 pieces
+void SplitHelper(const ConvexPolygon<>& polygon,
+                 const HalfSpace3<>& half_space,
+                 ConvexPolygon<>& neg_side,
+                 ConvexPolygon<>& pos_side) {
+  ConvexPolygon<32, VertexData> neg_side_with_vertex_data;
+  ConvexPolygon<32, VertexData> pos_side_with_vertex_data;
+  int neg_allocated = 0;
+  int pos_allocated = 0;
+  auto allocate_neg_side = [&]() -> ConvexPolygon<32, VertexData>& {
+    ++neg_allocated;
+    return neg_side_with_vertex_data;
+  };
+  auto allocate_pos_side = [&]() -> ConvexPolygon<32, VertexData>& {
+    ++pos_allocated;
+    return pos_side_with_vertex_data;
+  };
+  int vertices_on_split = 0;
+  auto vertex_on_split = [&](ConvexPolygon<32, VertexData>& output,
+                             size_t index) {
+    ++vertices_on_split;
+    output.vertex_data(index).on_split = true;
+  };
+
+  ConvexPolygon<32, VertexData> polygon_with_vertex_data(polygon);
+  polygon_with_vertex_data.Split(half_space, allocate_neg_side,
+                                 allocate_pos_side, vertex_on_split);
+  EXPECT_EQ(neg_allocated, 1);
+  EXPECT_EQ(pos_allocated, 1);
+  EXPECT_EQ(neg_side_with_vertex_data.plane(), polygon.plane());
+  EXPECT_EQ(pos_side_with_vertex_data.plane(), polygon.plane());
+  EXPECT_EQ(vertices_on_split, 4);
+
+  for (const ConvexPolygon<32, VertexData>* output : {
+      &neg_side_with_vertex_data, &pos_side_with_vertex_data}) {
+    // Check that on_split is correct for each output vertex.
+    for (const auto& edge : output->edges()) {
+      EXPECT_EQ(edge.data.on_split, half_space.IsCoincident(edge.vertex));
+    }
+
+    for (size_t i = 0; i < output->vertex_count(); ++i) {
+      PluckerLine<> expected_line(
+          output->vertex(i), output->vertex((i + 1) % output->vertex_count()));
+      EXPECT_EQ(output->edge(i).line, expected_line);
+      EXPECT_TRUE(output->edge(i).line.d().IsSameDir(expected_line.d()));
+    }
+  }
+
+  neg_side = neg_side_with_vertex_data;
+  pos_side = pos_side_with_vertex_data;
+}
+
 TEST(ConvexPolygon, SplitAtExistingVertices) {
   //
   // p[3] <--- p[2]
@@ -1227,19 +1261,9 @@ TEST(ConvexPolygon, SplitAtExistingVertices) {
 
   ConvexPolygon<> neg_side;
   ConvexPolygon<> pos_side;
-  auto allocate_neg_side = [&]() -> ConvexPolygon<>& {
-    return neg_side;
-  };
-  auto allocate_pos_side = [&]() -> ConvexPolygon<>& {
-    return pos_side;
-  };
-  auto vertex_on_split = [&](ConvexPolygon<>&, size_t) { };
-
-  polygon.Split(half_space, allocate_neg_side, allocate_pos_side,
-                vertex_on_split);
-  EXPECT_EQ(neg_side.plane(), expected_neg_side.plane());
-  ASSERT_EQ(neg_side, expected_neg_side);
-  ASSERT_EQ(pos_side, expected_pos_side);
+  SplitHelper(polygon, half_space, neg_side, pos_side);
+  EXPECT_EQ(neg_side, expected_neg_side);
+  EXPECT_EQ(pos_side, expected_pos_side);
 }
 
 }  // walnut

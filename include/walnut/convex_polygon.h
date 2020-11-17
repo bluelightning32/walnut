@@ -2,7 +2,6 @@
 #define WALNUT_CONVEX_POLYGON_H__
 
 #include <vector>
-#include <tuple>
 #include <utility>
 
 #include "walnut/half_space3.h"
@@ -12,9 +11,25 @@
 
 namespace walnut {
 
+struct NoVertexData {
+  constexpr NoVertexData() = default;
+  template <typename Other>
+  constexpr explicit NoVertexData(const Other&) { }
+
+  template <typename Other>
+  constexpr bool operator!=(const Other& other) const {
+    return false;
+  }
+
+  template <typename Other>
+  constexpr NoVertexData& operator=(const Other& other) {
+    return *this;
+  }
+};
+
 // An edge of a ConvexPolygon
 template <int point3_bits_template = 32,
-          typename VertexDataTemplate = std::tuple<>>
+          typename VertexDataTemplate = NoVertexData>
 struct ConvexPolygonEdge {
   using Point3Rep = Point3<point3_bits_template>;
   using HomoPoint3Rep = HomoPoint3<(point3_bits_template - 1)*7 + 10,
@@ -51,12 +66,21 @@ struct ConvexPolygonEdge {
                     const Point3WithVertexData& next_vertex) :
     vertex(vertex), line(vertex, next_vertex), data(vertex.data) { }
 
-  template <int other_point3_bits,
-            typename OtherVertexData>
+  template <int other_point3_bits, typename OtherVertexData>
   explicit ConvexPolygonEdge(
       const ConvexPolygonEdge<other_point3_bits,
                               OtherVertexData>& other) :
     vertex(other.vertex), line(other.line), data(other.data) { }
+
+  template <int other_point3_bits, typename OtherVertexData>
+  ConvexPolygonEdge& operator=(
+      const ConvexPolygonEdge<other_point3_bits,
+                              OtherVertexData>& other) {
+    vertex = other.vertex;
+    line = other.line;
+    data = other.data;
+    return *this;
+  }
 
   static bool LexicographicallyLt(const ConvexPolygonEdge& a,
                                   const ConvexPolygonEdge& b) {
@@ -79,7 +103,7 @@ struct ConvexPolygonEdge {
 // `VertexDataTemplate` specifies additional data that the caller can associate
 // with each vertex. The type must be copy-constructible.
 template <int point3_bits_template = 32,
-          typename VertexDataTemplate = std::tuple<>>
+          typename VertexDataTemplate = NoVertexData>
 class ConvexPolygon {
  public:
   using Point3Rep = Point3<point3_bits_template>;
@@ -130,6 +154,16 @@ class ConvexPolygon {
                                              OtherVertexData>& other) :
     plane_(other.plane()), drop_dimension_(other.drop_dimension()),
     edges_(other.edges().begin(), other.edges().end()) { }
+
+  // `VertexData` must be assignable from `OtherVertexData`.
+  template <int other_point3_bits, typename OtherVertexData>
+  ConvexPolygon& operator=(const ConvexPolygon<other_point3_bits,
+                                               OtherVertexData>& other) {
+    plane_ = other.plane();
+    drop_dimension_ = other.drop_dimension();
+    edges_.assign(other.edges().begin(), other.edges().end());
+    return *this;
+  }
 
   size_t vertex_count() const {
     return edges_.size();
@@ -951,7 +985,7 @@ std::ostream& operator<<(
 template <int point3_bits>
 std::ostream& operator<<(
     std::ostream& out,
-    const ConvexPolygonEdge<point3_bits, std::tuple<>>& edge) {
+    const ConvexPolygonEdge<point3_bits, NoVertexData>& edge) {
   out << edge.vertex;
   return out;
 }
