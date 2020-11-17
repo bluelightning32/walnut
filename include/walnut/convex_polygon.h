@@ -780,13 +780,15 @@ bool ConvexPolygon<point3_bits, VertexData>::Split(
     const HalfSpace3<vector_bits, dist_bits>& half_space,
     AllocateNegSide allocate_neg_side, AllocatePosSide allocate_pos_side,
     VertexOnSplit vertex_on_split) const {
-
   using PluckerLineBuilder =
     PluckerLineFromPlanesFromPoint3sBuilder<point3_bits>;
   using PluckerLineRep = typename PluckerLineBuilder::PluckerLineRep;
-  PluckerLineRep line = PluckerLineBuilder::Build(plane_, half_space);
-  if (!line.IsValid())
-  {
+
+  int flip = plane().normal().components()[drop_dimension()].GetAbsMult();
+  PluckerLineRep line = PluckerLineBuilder::Build(
+      plane_, HalfSpace3<vector_bits, dist_bits>(half_space.normal() * flip,
+                                                 half_space.d() * flip));
+  if (!line.IsValid()) {
     // half_space is parallel to plane_.
     return false;
   }

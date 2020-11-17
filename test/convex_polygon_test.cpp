@@ -1207,8 +1207,9 @@ void SplitHelper(const ConvexPolygon<>& polygon,
   };
 
   ConvexPolygon<32, VertexData> polygon_with_vertex_data(polygon);
-  polygon_with_vertex_data.Split(half_space, allocate_neg_side,
-                                 allocate_pos_side, vertex_on_split);
+  EXPECT_TRUE(polygon_with_vertex_data.Split(half_space, allocate_neg_side,
+                                             allocate_pos_side,
+                                             vertex_on_split));
   EXPECT_EQ(neg_allocated, 1);
   EXPECT_EQ(pos_allocated, 1);
   EXPECT_EQ(neg_side_with_vertex_data.plane(), polygon.plane());
@@ -1262,6 +1263,46 @@ TEST(ConvexPolygon, SplitAtExistingVertices) {
   ConvexPolygon<> neg_side;
   ConvexPolygon<> pos_side;
   SplitHelper(polygon, half_space, neg_side, pos_side);
+  EXPECT_EQ(neg_side, expected_neg_side);
+  EXPECT_EQ(pos_side, expected_pos_side);
+
+  SplitHelper(polygon, -half_space, pos_side, neg_side);
+  EXPECT_EQ(neg_side, expected_neg_side);
+  EXPECT_EQ(pos_side, expected_pos_side);
+}
+
+TEST(ConvexPolygon, SplitAtExistingVerticesCW) {
+  //
+  // p[1] ---> p[2]
+  //  ^ pos -/   |
+  //  |   -/     |
+  //  |  /       v
+  // p[0] <--- p[3]
+  //
+  Point3<32> p[] = {
+    /*p[0]=*/Point3<32>(0, 0, 10),
+    /*p[1]=*/Point3<32>(0, 1, 10),
+    /*p[2]=*/Point3<32>(1, 1, 10),
+    /*p[3]=*/Point3<32>(1, 0, 10),
+  };
+
+  Point3<32> neg_side_p[] = { p[0], p[2], p[3] };
+  Point3<32> pos_side_p[] = { p[0], p[1], p[2] };
+
+  Point3<32> above(0, 0, 11);
+  HalfSpace3<> half_space(p[0], p[2], above);
+
+  ConvexPolygon<> polygon(MakeConvexPolygon(p));
+  ConvexPolygon<> expected_neg_side(MakeConvexPolygon(neg_side_p));
+  ConvexPolygon<> expected_pos_side(MakeConvexPolygon(pos_side_p));
+
+  ConvexPolygon<> neg_side;
+  ConvexPolygon<> pos_side;
+  SplitHelper(polygon, half_space, neg_side, pos_side);
+  EXPECT_EQ(neg_side, expected_neg_side);
+  EXPECT_EQ(pos_side, expected_pos_side);
+
+  SplitHelper(polygon, -half_space, pos_side, neg_side);
   EXPECT_EQ(neg_side, expected_neg_side);
   EXPECT_EQ(pos_side, expected_pos_side);
 }
