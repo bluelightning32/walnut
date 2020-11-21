@@ -230,7 +230,7 @@ class ConcatRangeIteratorHelper {
   }
 
   ValueType* operator->() const {
-    return *&pos_;
+    return &*pos_;
   }
 
   // prefix decrement

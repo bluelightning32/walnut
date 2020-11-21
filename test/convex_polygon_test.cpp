@@ -1307,4 +1307,88 @@ TEST(ConvexPolygon, SplitAtExistingVerticesCW) {
   EXPECT_EQ(pos_side, expected_pos_side);
 }
 
+TEST(ConvexPolygon, SplitOnParallelPlane) {
+  Point3<32> ccw_input[] = {
+    Point3<32>(0, 0, 10),
+    Point3<32>(1, 0, 10),
+    Point3<32>(1, 1, 10),
+  };
+
+  std::vector<Point3<32>> cw_input(std::begin(ccw_input), std::end(ccw_input));
+  std::reverse(cw_input.begin(), cw_input.end());
+
+  ConvexPolygon<32> ccw_polygon = MakeConvexPolygon(ccw_input);
+  ConvexPolygon<32> cw_polygon = MakeConvexPolygon(cw_input);
+
+  ConvexPolygon<32> neg_side;
+  bool set_neg_side = false;
+  auto allocate_neg_side = [&]() -> ConvexPolygon<32>& {
+    set_neg_side = true;
+    return neg_side;
+  };
+  ConvexPolygon<32> pos_side;
+  bool set_pos_side = false;
+  auto allocate_pos_side = [&]() -> ConvexPolygon<32>& {
+    set_pos_side = true;
+    return pos_side;
+  };
+  auto vertex_on_split = [](ConvexPolygon<32>&, size_t index) {
+    EXPECT_TRUE(false);
+  };
+
+  HalfSpace3<> above_up(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/11);
+  EXPECT_TRUE(above_up.normal().IsSameDir(ccw_polygon.plane().normal()));
+
+  set_neg_side = false;
+  set_pos_side = false;
+  EXPECT_TRUE(ccw_polygon.Split(above_up, allocate_neg_side,
+                                allocate_pos_side, vertex_on_split));
+  EXPECT_TRUE(set_neg_side);
+  EXPECT_FALSE(set_pos_side);
+  EXPECT_EQ(neg_side, ccw_polygon);
+
+  set_neg_side = false;
+  set_pos_side = false;
+  EXPECT_TRUE(cw_polygon.Split(above_up, allocate_neg_side,
+                               allocate_pos_side, vertex_on_split));
+  EXPECT_TRUE(set_neg_side);
+  EXPECT_FALSE(set_pos_side);
+  EXPECT_EQ(neg_side, cw_polygon);
+
+  HalfSpace3<> above_down(/*x=*/0, /*y=*/0, /*z=*/-1, /*dist=*/-11);
+  EXPECT_TRUE(above_down.normal().IsSameDir(-above_up.normal()));
+
+  set_neg_side = false;
+  set_pos_side = false;
+  EXPECT_TRUE(ccw_polygon.Split(above_down, allocate_neg_side,
+                                allocate_pos_side, vertex_on_split));
+  EXPECT_FALSE(set_neg_side);
+  EXPECT_TRUE(set_pos_side);
+  EXPECT_EQ(pos_side, ccw_polygon);
+
+  set_neg_side = false;
+  set_pos_side = false;
+  EXPECT_TRUE(cw_polygon.Split(above_down, allocate_neg_side,
+                               allocate_pos_side, vertex_on_split));
+  EXPECT_FALSE(set_neg_side);
+  EXPECT_TRUE(set_pos_side);
+  EXPECT_EQ(pos_side, cw_polygon);
+
+  HalfSpace3<> below_up(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/9);
+
+  set_neg_side = false;
+  set_pos_side = false;
+  EXPECT_TRUE(ccw_polygon.Split(below_up, allocate_neg_side,
+                                allocate_pos_side, vertex_on_split));
+  EXPECT_FALSE(set_neg_side);
+  EXPECT_TRUE(set_pos_side);
+
+  set_neg_side = false;
+  set_pos_side = false;
+  EXPECT_TRUE(cw_polygon.Split(below_up, allocate_neg_side,
+                               allocate_pos_side, vertex_on_split));
+  EXPECT_FALSE(set_neg_side);
+  EXPECT_TRUE(set_pos_side);
+}
+
 }  // walnut

@@ -484,16 +484,7 @@ class ConvexPolygon {
   // Splits a ConvexPolygon by a plucker line into the positive and the
   // negative side ConvexPolygons.
   //
-  // `Split` should be called instead of this function. This function is only
-  // exposed for testing purposes.
-  //
-  // The plucker line must be on the polygon's plane. The plucker line must
-  // also be in the plane of `half_space3`, and half_space3 must not be
-  // parallel to the polygon's plane.
-  //
-  // The plane normal must be non-zero in the `drop_dimension` component.
-  //
-  // One of the positive or negative sides may be ommitted if the source
+  // One of the positive or negative sides may be omitted if the source
   // polygon is only present on one side of the line.
   //
   // `allocate_neg_side` is a function object that takes 0 arguments must
@@ -525,7 +516,7 @@ class ConvexPolygon {
   //
   // The plane normal must be non-zero in the `drop_dimension` component.
   //
-  // One of the positive or negative sides may be ommitted if the source
+  // One of the positive or negative sides may be omitted if the source
   // polygon is only present on one side of the line.
   //
   // `allocate_neg_side` is a function object that takes 0 arguments must
@@ -790,6 +781,20 @@ bool ConvexPolygon<point3_bits, VertexData>::Split(
                                                  half_space.d() * flip));
   if (!line.IsValid()) {
     // half_space is parallel to plane_.
+    int half_space_abs_mult =
+      half_space.normal().components()[drop_dimension()].GetAbsMult();
+    int compare = (plane().normal().components()[drop_dimension()] *
+                   plane().d()).Compare(
+                     half_space.normal().components()[drop_dimension()] *
+                     half_space.d()) * half_space_abs_mult;
+    if (compare < 0) {
+      allocate_neg_side() = *this;
+      return true;
+    }
+    if (compare > 0) {
+      allocate_pos_side() = *this;
+      return true;
+    }
     return false;
   }
 
