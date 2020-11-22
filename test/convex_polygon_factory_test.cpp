@@ -299,12 +299,12 @@ TEST(ConvexPolygonFactory, VertexData) {
   ConvexPolygonRep polygon = collector.GetSortedPolygonResult()[0];
 
   ASSERT_EQ(polygon.vertex_count(), 3);
-  EXPECT_EQ(polygon.edges()[0].data, input[0].data);
-  EXPECT_EQ(polygon.edges()[1].data, input[1].data);
-  EXPECT_EQ(polygon.edges()[2].data, input[2].data);
+  EXPECT_EQ(polygon.edges()[0].data(), input[0].data);
+  EXPECT_EQ(polygon.edges()[1].data(), input[1].data);
+  EXPECT_EQ(polygon.edges()[2].data(), input[2].data);
 
   polygon.vertex_data(2) = "new p2";
-  EXPECT_EQ(polygon.edges()[2].data, "new p2");
+  EXPECT_EQ(polygon.edges()[2].data(), "new p2");
 }
 
 TEST(ConvexPolygonFactory, GetPlaneOrientationAfterProjection) {

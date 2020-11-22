@@ -30,7 +30,7 @@ struct NoVertexData {
 // An edge of a ConvexPolygon
 template <int point3_bits_template = 32,
           typename VertexDataTemplate = NoVertexData>
-struct ConvexPolygonEdge {
+struct ConvexPolygonEdge : private VertexDataTemplate {
   using Point3Rep = Point3<point3_bits_template>;
   using HomoPoint3Rep = HomoPoint3<(point3_bits_template - 1)*7 + 10,
                                    (point3_bits_template - 1)*6 + 10>;
@@ -64,13 +64,13 @@ struct ConvexPolygonEdge {
 
   ConvexPolygonEdge(const Point3WithVertexData& vertex,
                     const Point3WithVertexData& next_vertex) :
-    vertex(vertex), line(vertex, next_vertex), data(vertex.data) { }
+    VertexData(vertex.data), vertex(vertex), line(vertex, next_vertex) { }
 
   template <int other_point3_bits, typename OtherVertexData>
   explicit ConvexPolygonEdge(
       const ConvexPolygonEdge<other_point3_bits,
                               OtherVertexData>& other) :
-    vertex(other.vertex), line(other.line), data(other.data) { }
+    VertexData(other.data()), vertex(other.vertex), line(other.line) { }
 
   template <int other_point3_bits, typename OtherVertexData>
   ConvexPolygonEdge& operator=(
@@ -78,7 +78,7 @@ struct ConvexPolygonEdge {
                               OtherVertexData>& other) {
     vertex = other.vertex;
     line = other.line;
-    data = other.data;
+    data() = other.data();
     return *this;
   }
 
@@ -87,14 +87,20 @@ struct ConvexPolygonEdge {
     return HomoPoint3Rep::LexicographicallyLt(a.vertex, b.vertex);
   }
 
+  VertexData& data() {
+    return *this;
+  }
+
+  const VertexData& data() const {
+    return *this;
+  }
+
   HomoPoint3Rep vertex;
   // This line starts at `vertex` and goes to the next vertex in the polygon.
   //
   // Notably:
   //   next_vertex == vertex + line.d()
   LineRep line;
-
-  VertexData data;
 };
 
 // A 2D ConvexPolygon embedded in R^3. The vertices are stored using homogeneous
@@ -174,11 +180,11 @@ class ConvexPolygon {
   }
 
   VertexData& vertex_data(size_t index) {
-    return edges_[index].data;
+    return edges_[index].data();
   }
 
   const VertexData& vertex_data(size_t index) const {
-    return edges_[index].data;
+    return edges_[index].data();
   }
 
   const EdgeRep& edge(size_t index) const {
@@ -985,7 +991,7 @@ void ConvexPolygon<point3_bits, VertexData>::SplitBisect(
 template <int point3_bits, typename VertexData>
 std::ostream& operator<<(
     std::ostream& out, const ConvexPolygonEdge<point3_bits, VertexData>& edge) {
-  out << edge.vertex << ": " << edge.data;
+  out << edge.vertex << ": " << edge.data();
   return out;
 }
 

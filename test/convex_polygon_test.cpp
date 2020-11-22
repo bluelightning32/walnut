@@ -1220,7 +1220,7 @@ void SplitHelper(const ConvexPolygon<>& polygon,
       &neg_side_with_vertex_data, &pos_side_with_vertex_data}) {
     // Check that on_split is correct for each output vertex.
     for (const auto& edge : output->edges()) {
-      EXPECT_EQ(edge.data.on_split, half_space.IsCoincident(edge.vertex));
+      EXPECT_EQ(edge.data().on_split, half_space.IsCoincident(edge.vertex));
     }
 
     for (size_t i = 0; i < output->vertex_count(); ++i) {
