@@ -915,7 +915,7 @@ TEST(ConvexPolygon, SplitBisectOnPosSide) {
 
     ConvexPolygon<32, VertexData> unused;
     auto allocate_neg_side = [&]() -> ConvexPolygon<32, VertexData>& {
-      EXPECT_TRUE(false);
+      EXPECT_TRUE(false) << "direction=" << i;
       return unused;
     };
     ConvexPolygon<32, VertexData> pos_side;

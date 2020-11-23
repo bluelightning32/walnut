@@ -103,6 +103,74 @@ struct ConvexPolygonEdge : private VertexDataTemplate {
   LineRep line;
 };
 
+// Stores information about which vertex indexes should be included in the
+// child ConvexPolygons created from a split.
+struct SplitIndices {
+  bool IsValid() const {
+    if (neg_need_new_vertex) {
+      if (neg_shared_begin != neg_begin) return false;
+    }
+    if (!(neg_shared_begin <= neg_begin)) return false;
+    if (!(neg_begin <= neg_end)) return false;
+
+    if (pos_need_new_vertex) {
+      if (pos_shared_begin != pos_begin) return false;
+    }
+    if (!(pos_shared_begin <= pos_begin)) return false;
+    if (!(pos_begin <= pos_end)) return false;
+
+    return true;
+  }
+
+  bool ShouldEmitNegativeChild() const {
+    return neg_begin != neg_end;
+  }
+
+  size_t NegVertexCount() const {
+    return neg_need_new_vertex + (neg_end - neg_shared_begin) +
+          (pos_begin - pos_shared_begin) + pos_need_new_vertex;
+  }
+
+  bool ShouldEmitPositiveChild() const {
+    return pos_begin != pos_end;
+  }
+
+  size_t PosVertexCount() const {
+    return pos_need_new_vertex + (pos_end - pos_shared_begin) +
+          (neg_begin - neg_shared_begin) + neg_need_new_vertex;
+  }
+
+  // If this is true, a new shared vertex should be inserted into the positive
+  // child after pos_end, and into the negative child before neg_begin.
+  bool neg_need_new_vertex = false;
+  // [neg_shared_begin, neg_begin) should be part of each child (if the child
+  // also has some vertices that are solely part of it).
+  size_t neg_shared_begin = 0;
+  // [neg_begin, neg_end) should be part of only the negative child.
+  //
+  // This is the index of the first vertex that should be included in the
+  // negative child. If neg_begin == neg_end, then no negative child should be
+  // emitted.
+  size_t neg_begin = 0;
+  // This is the first index that is not solely part of the negative child.
+  size_t neg_end = 0;
+
+  // If this is true, a new shared vertex should be inserted into the negative
+  // child after neg_end, and into the positive child before pos_begin.
+  bool pos_need_new_vertex = false;
+  // [pos_shared_begin, pos_begin) should be part of each child (if the child
+  // also has some vertices that are solely part of it).
+  size_t pos_shared_begin = 0;
+  // [pos_begin, pos_end) should be part of only the positive child.
+  //
+  // This is the index of the first vertex that should be included in the
+  // positive child. If neg_begin == neg_end, then no negative child should be
+  // emitted.
+  size_t pos_begin = 0;
+  // This is the first index that is not solely part of the positive child.
+  size_t pos_end = 0;
+};
+
 // A 2D ConvexPolygon embedded in R^3. The vertices are stored using homogeneous
 // coordinates.
 //
@@ -547,6 +615,9 @@ class ConvexPolygon {
                    AllocatePosSide allocate_pos_side,
                    VertexOnSplit vertex_on_split) const;
 
+  SplitIndices SplitBisectInternal(const LineRep& line,
+                                   int drop_dimension) const;
+
  private:
   ConvexPolygon(const HalfSpace3Rep& plane, int drop_dimension,
                 std::vector<EdgeRep> edges) :
@@ -816,12 +887,97 @@ void ConvexPolygon<point3_bits, VertexData>::SplitBisect(
     const HalfSpace3Rep& half_space3, const LineRep& line, int drop_dimension,
     AllocateNegSide allocate_neg_side, AllocatePosSide allocate_pos_side,
     VertexOnSplit vertex_on_split) const {
-  assert(line.IsValid());
-  assert(line.IsCoincident(plane()));
-  assert(!plane().normal().components()[drop_dimension].IsZero());
   assert(line.IsCoincident(half_space3));
   assert(half_space3.IsValid());
   assert(!half_space3.normal().IsSameOrOppositeDir(plane().normal()));
+
+  SplitIndices indices = SplitBisectInternal(line, drop_dimension);
+
+  if (!indices.ShouldEmitPositiveChild()) {
+    assert(indices.ShouldEmitNegativeChild());
+    ConvexPolygon& neg_output = allocate_neg_side();
+    neg_output = *this;
+    for (size_t i = indices.neg_shared_begin; i < indices.neg_begin; ++i) {
+      vertex_on_split(neg_output, i % vertex_count());
+    }
+    return;
+  }
+
+  if (!indices.ShouldEmitNegativeChild()) {
+    assert(indices.ShouldEmitPositiveChild());
+    ConvexPolygon& pos_output = allocate_pos_side();
+    pos_output = *this;
+    for (size_t i = indices.pos_shared_begin; i < indices.pos_begin; ++i) {
+      vertex_on_split(pos_output, i % vertex_count());
+    }
+    return;
+  }
+
+  ConvexPolygon& neg_output = allocate_neg_side();
+  neg_output.edges_.clear();
+  neg_output.edges_.reserve(indices.NegVertexCount());
+  neg_output.plane_ = plane_;
+  neg_output.drop_dimension_ = drop_dimension_;
+
+  ConvexPolygon& pos_output = allocate_pos_side();
+  pos_output.edges_.clear();
+  pos_output.edges_.reserve(indices.PosVertexCount());
+  pos_output.plane_ = plane_;
+  pos_output.drop_dimension_ = drop_dimension_;
+
+  for (size_t i = indices.neg_begin; i < indices.neg_end; ++i) {
+    neg_output.edges_.push_back(edge(i % vertex_count()));
+  }
+
+  // If the input polygon is counter-clockwise in its projected form, then
+  // `line` is in the correct orientation for the positive output polygon.
+  int neg_line_mult =
+    -plane().normal().components()[drop_dimension].GetAbsMult();
+  LineRep neg_line(line.d() * neg_line_mult, line.m() * neg_line_mult);
+
+  if (!indices.pos_need_new_vertex) {
+    neg_output.edges_.emplace_back(
+        vertex(indices.pos_shared_begin % vertex_count()), neg_line);
+    pos_output.edges_.push_back(
+        edge(indices.pos_shared_begin % vertex_count()));
+  } else {
+    size_t last_neg_index = (indices.neg_end + vertex_count() - 1) %
+                            vertex_count();
+    HomoPoint3Rep new_point = edge(last_neg_index).line.Intersect(half_space3);
+    neg_output.edges_.emplace_back(new_point, neg_line);
+    pos_output.edges_.emplace_back(new_point, edge(last_neg_index).line);
+  }
+
+  for (size_t i = indices.pos_begin; i < indices.pos_end; ++i) {
+    pos_output.edges_.push_back(edge(i % vertex_count()));
+  }
+
+  if (!indices.neg_need_new_vertex) {
+    pos_output.edges_.emplace_back(
+        vertex(indices.neg_shared_begin % vertex_count()), -neg_line);
+    neg_output.edges_.push_back(
+        edge(indices.neg_shared_begin % vertex_count()));
+  } else {
+    size_t last_pos_index = (indices.pos_end + vertex_count() - 1) %
+                            vertex_count();
+    HomoPoint3Rep new_point = edge(last_pos_index).line.Intersect(half_space3);
+    pos_output.edges_.emplace_back(new_point, -neg_line);
+    neg_output.edges_.emplace_back(new_point,
+                                   edge(last_pos_index).line);
+  }
+
+  vertex_on_split(neg_output, neg_output.vertex_count() - 2);
+  vertex_on_split(neg_output, neg_output.vertex_count() - 1);
+  vertex_on_split(pos_output, 0);
+  vertex_on_split(pos_output, pos_output.vertex_count() - 1);
+}
+
+template <int point3_bits, typename VertexData>
+SplitIndices ConvexPolygon<point3_bits, VertexData>::SplitBisectInternal(
+    const LineRep& line, int drop_dimension) const {
+  assert(line.IsValid());
+  assert(line.IsCoincident(plane()));
+  assert(!plane().normal().components()[drop_dimension].IsZero());
 
   auto half_space2 = line.Project2D(drop_dimension);
   assert(half_space2.IsValid());
@@ -836,23 +992,24 @@ void ConvexPolygon<point3_bits, VertexData>::SplitBisect(
   if (neg_side_vertex.first >= 0) {
     // The source polygon is entirely in the positive half-space. Some of the
     // vertices may be coincident with the plane. The first such coincident
-    // vertex index is neg_side_vertex.second.
-    ConvexPolygon& output = allocate_pos_side();
-    output = *this;
+    // vertex index (if any) is neg_side_vertex.second.
+    SplitIndices indices;
+    size_t index = neg_side_vertex.second;
+    indices.pos_shared_begin = index;
 
     if (neg_side_vertex.first == 0) {
       // One or more vertices are coincident with the plane.
-      size_t on_plane_index = neg_side_vertex.second;
       assert(half_space2.IsCoincident(
-            vertex(on_plane_index).DropDimension(drop_dimension)));
+            vertex(index).DropDimension(drop_dimension)));
       do {
-        vertex_on_split(output, on_plane_index);
-        ++on_plane_index;
-        on_plane_index %= vertex_count();
+        ++index;
       } while (half_space2.IsCoincident(
-            vertex(on_plane_index).DropDimension(drop_dimension)));
+            vertex(index % vertex_count()).DropDimension(drop_dimension)));
     }
-    return;
+    indices.pos_begin = index;
+    index += vertex_count();
+    indices.pos_end = index;
+    return indices;
   }
 
   std::pair<int, size_t> pos_side_vertex = GetPosSideVertex(
@@ -863,23 +1020,24 @@ void ConvexPolygon<point3_bits, VertexData>::SplitBisect(
   if (pos_side_vertex.first <= 0) {
     // The source polygon is entirely in the negative half-space. Some of the
     // vertices may be coincident with the plane. The first such coincident
-    // vertex index is pos_side_vertex.second.
-    ConvexPolygon& output = allocate_neg_side();
-    output = *this;
+    // vertex index (if any) is pos_side_vertex.second.
+    SplitIndices indices;
+    size_t index = pos_side_vertex.second;
+    indices.neg_shared_begin = index;
 
     if (pos_side_vertex.first == 0) {
       // One or more vertices are coincident with the plane.
-      size_t on_plane_index = pos_side_vertex.second;
       assert(half_space2.IsCoincident(
-            vertex(on_plane_index).DropDimension(drop_dimension)));
+            vertex(index).DropDimension(drop_dimension)));
       do {
-        vertex_on_split(output, on_plane_index);
-        ++on_plane_index;
-        on_plane_index %= vertex_count();
+        ++index;
       } while (half_space2.IsCoincident(
-            vertex(on_plane_index).DropDimension(drop_dimension)));
+            vertex(index % vertex_count()).DropDimension(drop_dimension)));
     }
-    return;
+    indices.neg_begin = index;
+    index += vertex_count();
+    indices.neg_end = index;
+    return indices;
   }
 
   std::pair<int, size_t> neg_before_split = GetLastNegSideVertex(
@@ -890,102 +1048,24 @@ void ConvexPolygon<point3_bits, VertexData>::SplitBisect(
       half_space2, drop_dimension, neg_side_vertex.second,
       pos_side_vertex.second, /*pos_side_type=*/1);
 
-  ConvexPolygon& neg_output = allocate_neg_side();
-  neg_output.edges_.clear();
-  neg_output.plane_ = plane_;
-  neg_output.drop_dimension_ = drop_dimension_;
+  SplitIndices indices;
 
-  ConvexPolygon& pos_output = allocate_pos_side();
-  pos_output.edges_.clear();
-  pos_output.plane_ = plane_;
-  pos_output.drop_dimension_ = drop_dimension_;
+  indices.neg_need_new_vertex = (pos_before_split.first != 0);
+  indices.neg_shared_begin = pos_before_split.second +
+                             (pos_before_split.first != 0);
+  indices.neg_begin = pos_before_split.second + 1;
+  indices.neg_end = GetGreaterCycleIndex(pos_before_split.second,
+                                         neg_before_split.second) +
+                    (neg_before_split.first != 0);
 
-  size_t neg_cycle_greater = GetGreaterCycleIndex(pos_before_split.second,
-                                                  neg_before_split.second);
-
-  // The negative side polygon needs these vertices:
-  // - if pos_before_split.first is 0, then pos_before_split.second, else a new
-  //   vertex between pos_before.second and pos_before.second + 1
-  // - if neg_before_split.first is 0, then the range
-  //   [pos_before_split.second + 1, neg_cycle_greater)
-  //   else
-  //   [pos_before_split.second + 1, neg_cycle_greater]
-  // - if neg_before_split.first is 0, then neg_before_split.second with the
-  //   new plucker line (possibly flipped), else a new vertex between
-  //   neg_before.second and neg_before.second + 1 with plucker line (possibly
-  //   flipped)
-  //
-  // The positive side polygon needs these vertices:
-  // - if neg_before_split.first is 0, then neg_before_split.second, else a new
-  //   vertex between neg_before.second and neg_before.second + 1
-  // - if pos_before_split.first is 0, then the range
-  //   [neg_before_split.second + 1, pos_cycle_greater)
-  //   else
-  //   [neg_before_split.second + 1, pos_cycle_greater]
-  // - if pos_before_split.first is 0, then pos_before_split.second with the
-  //   new plucker line (possibly flipped), else a new vertex between
-  //   pos_before_split.second and pos_before_split.second + 1 with plucker
-  //   line (possibly flipped)
-  //
-  // To reduce the number of if statements by combining the negative and
-  // positive side if statements, the negative side vertices can be cycled to
-  // this value.
-  // - if neg_before_split.first is 0, then the range
-  //   [pos_before_split.second + 1, neg_cycle_greater)
-  //   else
-  //   [pos_before_split.second + 1, neg_cycle_greater]
-  // - if neg_before_split.first is 0, then neg_before_split.second with the
-  //   new plucker line (possibly flipped), else a new vertex between
-  //   neg_before_split.second and neg_before_split.second + 1 with plucker
-  //   line (possibly flipped)
-  // - if pos_before_split.first is 0, then pos_before_split.second, else a new
-  //   vertex between pos_before.second and pos_before.second + 1
-
-  neg_output.edges_.reserve(neg_cycle_greater - pos_before_split.second +
-                            (pos_before_split.second != 0));
-  for (size_t i = pos_before_split.second + 1; i <= neg_cycle_greater; ++i) {
-    neg_output.edges_.push_back(edge(i % vertex_count()));
-  }
-
-  size_t pos_cycle_greater = GetGreaterCycleIndex(neg_before_split.second,
-                                                  pos_before_split.second);
-  pos_output.edges_.reserve(pos_cycle_greater - neg_before_split.second +
-                            (neg_before_split.second != 0));
-  // If the input polygon is counter-clockwise in its projected form, then
-  // `line` is in the correct orientation for the positive output polygon.
-  int neg_line_mult =
-    -plane().normal().components()[drop_dimension].GetAbsMult();
-  LineRep neg_line(line.d() * neg_line_mult, line.m() * neg_line_mult);
-  if (neg_before_split.first == 0) {
-    neg_output.edges_.back().line = neg_line;
-    pos_output.edges_.push_back(edge(neg_before_split.second));
-  } else {
-    HomoPoint3Rep new_point =
-      edge(neg_before_split.second).line.Intersect(half_space3);
-    neg_output.edges_.emplace_back(new_point, neg_line);
-    pos_output.edges_.emplace_back(new_point,
-                                   edge(neg_before_split.second).line);
-  }
-
-  for (size_t i = neg_before_split.second + 1; i <= pos_cycle_greater; ++i) {
-    pos_output.edges_.push_back(edge(i % vertex_count()));
-  }
-
-  if (pos_before_split.first == 0) {
-    pos_output.edges_.back().line = -neg_line;
-    neg_output.edges_.push_back(edge(pos_before_split.second));
-  } else {
-    HomoPoint3Rep new_point =
-      edge(pos_before_split.second).line.Intersect(half_space3);
-    pos_output.edges_.emplace_back(new_point, -neg_line);
-    neg_output.edges_.emplace_back(new_point,
-                                   edge(pos_before_split.second).line);
-  }
-
-  vertex_on_split(neg_output, neg_output.vertex_count() - 2);
-  vertex_on_split(neg_output, neg_output.vertex_count() - 1);
-  vertex_on_split(pos_output, 0);
-  vertex_on_split(pos_output, pos_output.vertex_count() - 1);
+  indices.pos_need_new_vertex = (neg_before_split.first != 0);
+  indices.pos_shared_begin = neg_before_split.second +
+                             (neg_before_split.first != 0);
+  indices.pos_begin = neg_before_split.second + 1;
+  indices.pos_end = GetGreaterCycleIndex(neg_before_split.second,
+                                         pos_before_split.second) +
+                    (pos_before_split.first != 0);
+  return indices;
 }
 
 template <int point3_bits, typename VertexData>
