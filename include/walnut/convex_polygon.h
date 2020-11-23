@@ -548,14 +548,15 @@ class ConvexPolygon {
              AllocatePosSide allocate_pos_side,
              VertexOnSplit vertex_on_split) const;
 
-  // Splits a ConvexPolygon by a plucker line into the positive and the
-  // negative side ConvexPolygons.
+  // Returns the vertex indices for the positive and negative sides of a
+  // ConvexPolygon split by a 2D half-space.
   //
   // `Split` should be called instead of this function. This function is only
   // exposed for testing purposes.
   //
-  // The plucker line must be on the polygon's plane. The plane normal must be
-  // non-zero in the `drop_dimension` component.
+  // The polygon's vertices are first projected to 2D by dropping
+  // `drop_dimension` before comparing them against `half_space2`. The
+  // polygon's plane normal must be non-zero in the `drop_dimension` component.
   //
   // The vertex is found using a binary search. This algorithm is good for
   // ConvexPolgyons with many vertices, but a regular linear search is faster
