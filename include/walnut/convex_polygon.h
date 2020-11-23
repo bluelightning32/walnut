@@ -107,16 +107,8 @@ struct ConvexPolygonEdge : private VertexDataTemplate {
 // child ConvexPolygons created from a split.
 struct SplitIndices {
   bool IsValid() const {
-    if (neg_need_new_vertex) {
-      if (neg_shared_begin != neg_begin) return false;
-    }
-    if (!(neg_shared_begin <= neg_begin)) return false;
     if (!(neg_begin <= neg_end)) return false;
 
-    if (pos_need_new_vertex) {
-      if (pos_shared_begin != pos_begin) return false;
-    }
-    if (!(pos_shared_begin <= pos_begin)) return false;
     if (!(pos_begin <= pos_end)) return false;
 
     return true;
@@ -124,11 +116,6 @@ struct SplitIndices {
 
   bool ShouldEmitNegativeChild() const {
     return neg_begin != neg_end;
-  }
-
-  size_t NegVertexCount() const {
-    return neg_need_new_vertex + (neg_end - neg_shared_begin) +
-          (pos_begin - pos_shared_begin) + pos_need_new_vertex;
   }
 
   // Returns true if a new shared vertex should be inserted into the negative
@@ -141,11 +128,6 @@ struct SplitIndices {
     return pos_begin != pos_end;
   }
 
-  size_t PosVertexCount() const {
-    return pos_need_new_vertex + (pos_end - pos_shared_begin) +
-          (neg_begin - neg_shared_begin) + neg_need_new_vertex;
-  }
-
   // Returns true if a new shared vertex should be inserted into the positive
   // child after pos_end, and into the negative child before neg_begin.
   bool PosNeedNewVertex() const {
@@ -155,9 +137,6 @@ struct SplitIndices {
   // If this is true, a new shared vertex should be inserted into the positive
   // child after pos_end, and into the negative child before neg_begin.
   bool neg_need_new_vertex = false;
-  // [neg_shared_begin, neg_begin) should be part of each child (if the child
-  // also has some vertices that are solely part of it).
-  size_t neg_shared_begin = 0;
   // [neg_begin, neg_end) should be part of only the negative child.
   //
   // This is the index of the first vertex that should be included in the
@@ -170,9 +149,6 @@ struct SplitIndices {
   // If this is true, a new shared vertex should be inserted into the negative
   // child after neg_end, and into the positive child before pos_begin.
   bool pos_need_new_vertex = false;
-  // [pos_shared_begin, pos_begin) should be part of each child (if the child
-  // also has some vertices that are solely part of it).
-  size_t pos_shared_begin = 0;
   // [pos_begin, pos_end) should be part of only the positive child.
   //
   // This is the index of the first vertex that should be included in the
@@ -931,13 +907,13 @@ void ConvexPolygon<point3_bits, VertexData>::SplitBisect(
 
   ConvexPolygon& neg_output = allocate_neg_side();
   neg_output.edges_.clear();
-  neg_output.edges_.reserve(indices.NegVertexCount());
+  neg_output.edges_.reserve(indices.neg_end - indices.neg_begin + 2);
   neg_output.plane_ = plane_;
   neg_output.drop_dimension_ = drop_dimension_;
 
   ConvexPolygon& pos_output = allocate_pos_side();
   pos_output.edges_.clear();
-  pos_output.edges_.reserve(indices.PosVertexCount());
+  neg_output.edges_.reserve(indices.pos_end - indices.pos_begin + 2);
   pos_output.plane_ = plane_;
   pos_output.drop_dimension_ = drop_dimension_;
 
@@ -1009,7 +985,6 @@ SplitIndices ConvexPolygon<point3_bits, VertexData>::SplitBisectInternal(
     // vertex index (if any) is neg_side_vertex.second.
     SplitIndices indices;
     size_t index = neg_side_vertex.second;
-    indices.pos_shared_begin = index;
     indices.pos_end = index + vertex_count();
 
     if (neg_side_vertex.first == 0) {
@@ -1036,7 +1011,6 @@ SplitIndices ConvexPolygon<point3_bits, VertexData>::SplitBisectInternal(
     // vertex index (if any) is pos_side_vertex.second.
     SplitIndices indices;
     size_t index = pos_side_vertex.second;
-    indices.neg_shared_begin = index;
     indices.neg_end = index + vertex_count();
 
     if (pos_side_vertex.first == 0) {
@@ -1063,16 +1037,12 @@ SplitIndices ConvexPolygon<point3_bits, VertexData>::SplitBisectInternal(
   SplitIndices indices;
 
   indices.neg_need_new_vertex = (pos_before_split.first != 0);
-  indices.neg_shared_begin = pos_before_split.second +
-                             (pos_before_split.first != 0);
   indices.neg_begin = pos_before_split.second + 1;
   indices.neg_end = GetGreaterCycleIndex(pos_before_split.second,
                                          neg_before_split.second) +
                     (neg_before_split.first != 0);
 
   indices.pos_need_new_vertex = (neg_before_split.first != 0);
-  indices.pos_shared_begin = neg_before_split.second +
-                             (neg_before_split.first != 0);
   indices.pos_begin = neg_before_split.second + 1;
   indices.pos_end = GetGreaterCycleIndex(neg_before_split.second,
                                          pos_before_split.second) +
