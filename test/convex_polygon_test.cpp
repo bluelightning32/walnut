@@ -927,7 +927,8 @@ TEST(ConvexPolygon, SplitBisectOnPosSide) {
       EXPECT_FALSE(indices.ShouldEmitNegativeChild());
       EXPECT_TRUE(indices.ShouldEmitPositiveChild());
       // There are 0 vertices on the plane.
-      EXPECT_EQ(indices.pos_end, indices.pos_begin + polygon.vertex_count());
+      EXPECT_EQ(indices.pos_range.second,
+                indices.pos_range.first + polygon.vertex_count());
     }
 
     // Test where the polygon is in the positive half-space, but vertex 0
@@ -945,11 +946,11 @@ TEST(ConvexPolygon, SplitBisectOnPosSide) {
       EXPECT_FALSE(indices.ShouldEmitNegativeChild());
       EXPECT_TRUE(indices.ShouldEmitPositiveChild());
       polygon.SortVertices();
-      // pos_end points to the vertex on the plane, which is index 0.
-      EXPECT_EQ(indices.pos_end % polygon.vertex_count(), 0);
+      // pos_range.second points to the vertex on the plane, which is index 0.
+      EXPECT_EQ(indices.pos_range.second % polygon.vertex_count(), 0);
       // There is 1 vertex on the plane.
-      EXPECT_EQ(indices.pos_end,
-                indices.pos_begin + polygon.vertex_count() - 1);
+      EXPECT_EQ(indices.pos_range.second,
+                indices.pos_range.first + polygon.vertex_count() - 1);
     }
   }
 }
@@ -978,10 +979,10 @@ TEST(ConvexPolygon, SplitBisectAtExistingVertices) {
                         /*drop_dimension=*/2);
   EXPECT_TRUE(indices.ShouldEmitNegativeChild());
   EXPECT_TRUE(indices.ShouldEmitPositiveChild());
-  EXPECT_EQ(indices.neg_begin, 1);
-  EXPECT_EQ(indices.neg_end, 2);
-  EXPECT_EQ(indices.pos_begin, 3);
-  EXPECT_EQ(indices.pos_end, 4);
+  EXPECT_EQ(indices.neg_range.first, 1);
+  EXPECT_EQ(indices.neg_range.second, 2);
+  EXPECT_EQ(indices.pos_range.first, 3);
+  EXPECT_EQ(indices.pos_range.second, 4);
 }
 
 TEST(ConvexPolygon, SplitBisectAtNewVertices) {
@@ -1026,10 +1027,10 @@ TEST(ConvexPolygon, SplitBisectAtNewVertices) {
                           drop_dimension);
     EXPECT_TRUE(indices.ShouldEmitNegativeChild());
     EXPECT_TRUE(indices.ShouldEmitPositiveChild());
-    EXPECT_EQ(indices.neg_begin % polygon.vertex_count(), 0);
-    EXPECT_EQ(indices.neg_end % polygon.vertex_count(), 2);
-    EXPECT_EQ(indices.pos_begin, 2);
-    EXPECT_EQ(indices.pos_end, 4);
+    EXPECT_EQ(indices.neg_range.first % polygon.vertex_count(), 0);
+    EXPECT_EQ(indices.neg_range.second % polygon.vertex_count(), 2);
+    EXPECT_EQ(indices.pos_range.first, 2);
+    EXPECT_EQ(indices.pos_range.second, 4);
   }
 }
 
