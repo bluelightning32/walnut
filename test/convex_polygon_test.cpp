@@ -894,7 +894,25 @@ TEST(ConvexPolygon, ConvertVertexData) {
   EXPECT_TRUE(polygon.vertex_data(0).on_split);
 }
 
-TEST(ConvexPolygon, SplitBisectOnPosSide) {
+using FindSplitRangesFunc = SplitRanges (ConvexPolygon<32>::*)(
+    const HalfSpace2<32, 32>&, int) const;
+
+// Overload the << operator for FindSplitRangesFunc so that Google Test doesn't
+// pick very long test name.
+std::ostream& operator<<(std::ostream& out, FindSplitRangesFunc func) {
+  if (func == &ConvexPolygon<32>::SplitBisect<32, 32>) {
+    out << "Bisect";
+  } else {
+    out << "Unknown";
+  }
+  return out;
+}
+
+class ConvexPolygonFindSplitRanges :
+  public testing::TestWithParam<FindSplitRangesFunc> {
+};
+
+TEST_P(ConvexPolygonFindSplitRanges, OnPosSide) {
   Point3<32> input[2][3] = {
     // counter-clockwise
     {
@@ -922,8 +940,8 @@ TEST(ConvexPolygon, SplitBisectOnPosSide) {
       PluckerLine<> line(p1, p2);
 
       SplitRanges indices =
-        polygon.SplitBisect(line.Project2D(/*drop_dimension=*/2),
-                            /*drop_dimension=*/2);
+        (polygon.*GetParam())(line.Project2D(/*drop_dimension=*/2),
+                              /*drop_dimension=*/2);
       EXPECT_FALSE(indices.ShouldEmitNegativeChild());
       EXPECT_TRUE(indices.ShouldEmitPositiveChild());
       // There are 0 vertices on the plane.
@@ -941,8 +959,8 @@ TEST(ConvexPolygon, SplitBisectOnPosSide) {
       PluckerLine<> line(p1, p2);
 
       SplitRanges indices =
-        polygon.SplitBisect(line.Project2D(/*drop_dimension=*/2),
-                            /*drop_dimension=*/2);
+        (polygon.*GetParam())(line.Project2D(/*drop_dimension=*/2),
+                              /*drop_dimension=*/2);
       EXPECT_FALSE(indices.ShouldEmitNegativeChild());
       EXPECT_TRUE(indices.ShouldEmitPositiveChild());
       polygon.SortVertices();
@@ -955,7 +973,7 @@ TEST(ConvexPolygon, SplitBisectOnPosSide) {
   }
 }
 
-TEST(ConvexPolygon, SplitBisectAtExistingVertices) {
+TEST_P(ConvexPolygonFindSplitRanges, AtExistingVertices) {
   //
   // p[3] <--- p[2]
   //  | pos -/   ^
@@ -975,8 +993,8 @@ TEST(ConvexPolygon, SplitBisectAtExistingVertices) {
   ConvexPolygon<32> polygon(MakeConvexPolygon(p));
 
   SplitRanges indices =
-    polygon.SplitBisect(line.Project2D(/*drop_dimension=*/2),
-                        /*drop_dimension=*/2);
+    (polygon.*GetParam())(line.Project2D(/*drop_dimension=*/2),
+                          /*drop_dimension=*/2);
   EXPECT_TRUE(indices.ShouldEmitNegativeChild());
   EXPECT_TRUE(indices.ShouldEmitPositiveChild());
   EXPECT_EQ(indices.neg_range.first, 1);
@@ -985,7 +1003,7 @@ TEST(ConvexPolygon, SplitBisectAtExistingVertices) {
   EXPECT_EQ(indices.pos_range.second, 4);
 }
 
-TEST(ConvexPolygon, SplitBisectAtNewVertices) {
+TEST_P(ConvexPolygonFindSplitRanges, AtNewVertices) {
   //
   // p[3] <--- p[2]  pos
   //  |          ^    ^
@@ -1023,8 +1041,8 @@ TEST(ConvexPolygon, SplitBisectAtNewVertices) {
     }
 
     SplitRanges indices =
-      polygon.SplitBisect(line.Project2D(drop_dimension),
-                          drop_dimension);
+      (polygon.*GetParam())(line.Project2D(drop_dimension),
+                            drop_dimension);
     EXPECT_TRUE(indices.ShouldEmitNegativeChild());
     EXPECT_TRUE(indices.ShouldEmitPositiveChild());
     EXPECT_EQ(indices.neg_range.first % polygon.vertex_count(), 0);
@@ -1033,6 +1051,9 @@ TEST(ConvexPolygon, SplitBisectAtNewVertices) {
     EXPECT_EQ(indices.pos_range.second, 4);
   }
 }
+
+INSTANTIATE_TEST_SUITE_P(, ConvexPolygonFindSplitRanges,
+    testing::Values(&ConvexPolygon<32>::SplitBisect<32, 32>));
 
 TEST(ConvexPolygon, SplitOnPlane) {
   Point3<32> input[] = {
