@@ -118,25 +118,10 @@ struct SplitIndices {
     return neg_begin != neg_end;
   }
 
-  // Returns true if a new shared vertex should be inserted into the negative
-  // child after neg_end, and into the positive child before pos_begin.
-  bool NegNeedNewVertex() const {
-    return neg_need_new_vertex;
-  }
-
   bool ShouldEmitPositiveChild() const {
     return pos_begin != pos_end;
   }
 
-  // Returns true if a new shared vertex should be inserted into the positive
-  // child after pos_end, and into the negative child before neg_begin.
-  bool PosNeedNewVertex() const {
-    return pos_need_new_vertex;
-  }
-
-  // If this is true, a new shared vertex should be inserted into the positive
-  // child after pos_end, and into the negative child before neg_begin.
-  bool neg_need_new_vertex = false;
   // [neg_begin, neg_end) should be part of only the negative child.
   //
   // This is the index of the first vertex that should be included in the
@@ -146,9 +131,6 @@ struct SplitIndices {
   // This is the first index that is not solely part of the negative child.
   size_t neg_end = 0;
 
-  // If this is true, a new shared vertex should be inserted into the negative
-  // child after neg_end, and into the positive child before pos_begin.
-  bool pos_need_new_vertex = false;
   // [pos_begin, pos_end) should be part of only the positive child.
   //
   // This is the index of the first vertex that should be included in the
@@ -927,7 +909,9 @@ void ConvexPolygon<point3_bits, VertexData>::SplitBisect(
     -plane().normal().components()[drop_dimension].GetAbsMult();
   LineRep neg_line(line.d() * neg_line_mult, line.m() * neg_line_mult);
 
-  if (!indices.PosNeedNewVertex()) {
+  if (indices.neg_end % vertex_count() != indices.pos_begin % vertex_count()) {
+    // The range [neg_end, pos_begin) is non-empty, holds exactly 1 vertex, and
+    // is shared between the negative and positive children.
     neg_output.edges_.emplace_back(
         vertex(indices.neg_end % vertex_count()), neg_line);
     pos_output.edges_.push_back(edge(indices.neg_end % vertex_count()));
@@ -943,7 +927,9 @@ void ConvexPolygon<point3_bits, VertexData>::SplitBisect(
     pos_output.edges_.push_back(edge(i % vertex_count()));
   }
 
-  if (!indices.NegNeedNewVertex()) {
+  if (indices.pos_end % vertex_count() != indices.neg_begin % vertex_count()) {
+    // The range [pos_end, neg_begin) is non-empty, holds exactly 1 vertex, and
+    // is shared between the negative and positive children.
     pos_output.edges_.emplace_back(
         vertex(indices.pos_end % vertex_count()), -neg_line);
     neg_output.edges_.push_back(edge(indices.pos_end % vertex_count()));
@@ -1036,13 +1022,11 @@ SplitIndices ConvexPolygon<point3_bits, VertexData>::SplitBisectInternal(
 
   SplitIndices indices;
 
-  indices.neg_need_new_vertex = (pos_before_split.first != 0);
   indices.neg_begin = pos_before_split.second + 1;
   indices.neg_end = GetGreaterCycleIndex(pos_before_split.second,
                                          neg_before_split.second) +
                     (neg_before_split.first != 0);
 
-  indices.pos_need_new_vertex = (neg_before_split.first != 0);
   indices.pos_begin = neg_before_split.second + 1;
   indices.pos_end = GetGreaterCycleIndex(neg_before_split.second,
                                          pos_before_split.second) +
