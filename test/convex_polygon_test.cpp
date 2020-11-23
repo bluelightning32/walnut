@@ -921,7 +921,7 @@ TEST(ConvexPolygon, SplitBisectOnPosSide) {
       Point3<32> p2(-1, 0, 0);
       PluckerLine<> line(p1, p2);
 
-      SplitIndices indices =
+      SplitRanges indices =
         polygon.SplitBisect(line.Project2D(/*drop_dimension=*/2),
                             /*drop_dimension=*/2);
       EXPECT_FALSE(indices.ShouldEmitNegativeChild());
@@ -940,7 +940,7 @@ TEST(ConvexPolygon, SplitBisectOnPosSide) {
       Point3<32> p2(0, 0, 0);
       PluckerLine<> line(p1, p2);
 
-      SplitIndices indices =
+      SplitRanges indices =
         polygon.SplitBisect(line.Project2D(/*drop_dimension=*/2),
                             /*drop_dimension=*/2);
       EXPECT_FALSE(indices.ShouldEmitNegativeChild());
@@ -974,7 +974,7 @@ TEST(ConvexPolygon, SplitBisectAtExistingVertices) {
 
   ConvexPolygon<32> polygon(MakeConvexPolygon(p));
 
-  SplitIndices indices =
+  SplitRanges indices =
     polygon.SplitBisect(line.Project2D(/*drop_dimension=*/2),
                         /*drop_dimension=*/2);
   EXPECT_TRUE(indices.ShouldEmitNegativeChild());
@@ -1022,7 +1022,7 @@ TEST(ConvexPolygon, SplitBisectAtNewVertices) {
       line = PluckerLine<>(n[0], n[1]);
     }
 
-    SplitIndices indices =
+    SplitRanges indices =
       polygon.SplitBisect(line.Project2D(drop_dimension),
                           drop_dimension);
     EXPECT_TRUE(indices.ShouldEmitNegativeChild());

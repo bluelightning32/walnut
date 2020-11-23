@@ -105,7 +105,7 @@ struct ConvexPolygonEdge : private VertexDataTemplate {
 
 // Stores information about which vertex indexes should be included in the
 // child ConvexPolygons created from a split.
-struct SplitIndices {
+struct SplitRanges {
   bool IsValid() const {
     if (!(neg_range.first <= neg_range.second)) return false;
 
@@ -560,7 +560,7 @@ class ConvexPolygon {
   // ConvexPolgyons with many vertices, but a regular linear search is faster
   // for ConvexPolygons with fewer vertices (roughly 10 or fewer vertices).
   template <int vector_bits, int dist_bits>
-  SplitIndices SplitBisect(
+  SplitRanges SplitBisect(
       const HalfSpace2<vector_bits, dist_bits>& half_space2,
       int drop_dimension) const;
 
@@ -822,7 +822,7 @@ bool ConvexPolygon<point3_bits, VertexData>::Split(
   }
 
   auto half_space2 = line.Project2D(drop_dimension());
-  SplitIndices indices = SplitBisect(half_space2, drop_dimension());
+  SplitRanges indices = SplitBisect(half_space2, drop_dimension());
 
   if (!indices.ShouldEmitPositiveChild()) {
     assert(indices.ShouldEmitNegativeChild());
@@ -922,7 +922,7 @@ bool ConvexPolygon<point3_bits, VertexData>::Split(
 
 template <int point3_bits, typename VertexData>
 template <int vector_bits, int dist_bits>
-SplitIndices ConvexPolygon<point3_bits, VertexData>::SplitBisect(
+SplitRanges ConvexPolygon<point3_bits, VertexData>::SplitBisect(
     const HalfSpace2<vector_bits, dist_bits>& half_space2,
     int drop_dimension) const {
   assert(!plane().normal().components()[drop_dimension].IsZero());
@@ -939,7 +939,7 @@ SplitIndices ConvexPolygon<point3_bits, VertexData>::SplitBisect(
     // The source polygon is entirely in the positive half-space. Some of the
     // vertices may be coincident with the plane. The first such coincident
     // vertex index (if any) is neg_side_vertex.second.
-    SplitIndices indices;
+    SplitRanges indices;
     size_t index = neg_side_vertex.second;
     indices.pos_range.second = index + vertex_count();
 
@@ -965,7 +965,7 @@ SplitIndices ConvexPolygon<point3_bits, VertexData>::SplitBisect(
     // The source polygon is entirely in the negative half-space. Some of the
     // vertices may be coincident with the plane. The first such coincident
     // vertex index (if any) is pos_side_vertex.second.
-    SplitIndices indices;
+    SplitRanges indices;
     size_t index = pos_side_vertex.second;
     indices.neg_range.second = index + vertex_count();
 
@@ -990,7 +990,7 @@ SplitIndices ConvexPolygon<point3_bits, VertexData>::SplitBisect(
       half_space2, drop_dimension, neg_side_vertex.second,
       pos_side_vertex.second, /*pos_side_type=*/1);
 
-  SplitIndices indices;
+  SplitRanges indices;
 
   indices.neg_range.first = pos_before_split.second + 1;
   indices.neg_range.second = GetGreaterCycleIndex(pos_before_split.second,
