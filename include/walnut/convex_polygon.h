@@ -131,6 +131,12 @@ struct SplitIndices {
           (pos_begin - pos_shared_begin) + pos_need_new_vertex;
   }
 
+  // Returns true if a new shared vertex should be inserted into the negative
+  // child after neg_end, and into the positive child before pos_begin.
+  bool NegNeedNewVertex() const {
+    return neg_need_new_vertex;
+  }
+
   bool ShouldEmitPositiveChild() const {
     return pos_begin != pos_end;
   }
@@ -138,6 +144,12 @@ struct SplitIndices {
   size_t PosVertexCount() const {
     return pos_need_new_vertex + (pos_end - pos_shared_begin) +
           (neg_begin - neg_shared_begin) + neg_need_new_vertex;
+  }
+
+  // Returns true if a new shared vertex should be inserted into the positive
+  // child after pos_end, and into the negative child before neg_begin.
+  bool PosNeedNewVertex() const {
+    return pos_need_new_vertex;
   }
 
   // If this is true, a new shared vertex should be inserted into the positive
@@ -897,7 +909,9 @@ void ConvexPolygon<point3_bits, VertexData>::SplitBisect(
     assert(indices.ShouldEmitNegativeChild());
     ConvexPolygon& neg_output = allocate_neg_side();
     neg_output = *this;
-    for (size_t i = indices.neg_shared_begin; i < indices.neg_begin; ++i) {
+    for (size_t i = indices.neg_end;
+         i < GetGreaterCycleIndex(indices.neg_end, indices.neg_begin);
+         ++i) {
       vertex_on_split(neg_output, i % vertex_count());
     }
     return;
@@ -907,7 +921,9 @@ void ConvexPolygon<point3_bits, VertexData>::SplitBisect(
     assert(indices.ShouldEmitPositiveChild());
     ConvexPolygon& pos_output = allocate_pos_side();
     pos_output = *this;
-    for (size_t i = indices.pos_shared_begin; i < indices.pos_begin; ++i) {
+    for (size_t i = indices.pos_end;
+         i < GetGreaterCycleIndex(indices.pos_end, indices.pos_begin);
+         ++i) {
       vertex_on_split(pos_output, i % vertex_count());
     }
     return;
@@ -935,11 +951,10 @@ void ConvexPolygon<point3_bits, VertexData>::SplitBisect(
     -plane().normal().components()[drop_dimension].GetAbsMult();
   LineRep neg_line(line.d() * neg_line_mult, line.m() * neg_line_mult);
 
-  if (!indices.pos_need_new_vertex) {
+  if (!indices.PosNeedNewVertex()) {
     neg_output.edges_.emplace_back(
-        vertex(indices.pos_shared_begin % vertex_count()), neg_line);
-    pos_output.edges_.push_back(
-        edge(indices.pos_shared_begin % vertex_count()));
+        vertex(indices.neg_end % vertex_count()), neg_line);
+    pos_output.edges_.push_back(edge(indices.neg_end % vertex_count()));
   } else {
     size_t last_neg_index = (indices.neg_end + vertex_count() - 1) %
                             vertex_count();
@@ -952,11 +967,10 @@ void ConvexPolygon<point3_bits, VertexData>::SplitBisect(
     pos_output.edges_.push_back(edge(i % vertex_count()));
   }
 
-  if (!indices.neg_need_new_vertex) {
+  if (!indices.NegNeedNewVertex()) {
     pos_output.edges_.emplace_back(
-        vertex(indices.neg_shared_begin % vertex_count()), -neg_line);
-    neg_output.edges_.push_back(
-        edge(indices.neg_shared_begin % vertex_count()));
+        vertex(indices.pos_end % vertex_count()), -neg_line);
+    neg_output.edges_.push_back(edge(indices.pos_end % vertex_count()));
   } else {
     size_t last_pos_index = (indices.pos_end + vertex_count() - 1) %
                             vertex_count();
@@ -996,6 +1010,7 @@ SplitIndices ConvexPolygon<point3_bits, VertexData>::SplitBisectInternal(
     SplitIndices indices;
     size_t index = neg_side_vertex.second;
     indices.pos_shared_begin = index;
+    indices.pos_end = index + vertex_count();
 
     if (neg_side_vertex.first == 0) {
       // One or more vertices are coincident with the plane.
@@ -1007,8 +1022,6 @@ SplitIndices ConvexPolygon<point3_bits, VertexData>::SplitBisectInternal(
             vertex(index % vertex_count()).DropDimension(drop_dimension)));
     }
     indices.pos_begin = index;
-    index += vertex_count();
-    indices.pos_end = index;
     return indices;
   }
 
@@ -1024,6 +1037,7 @@ SplitIndices ConvexPolygon<point3_bits, VertexData>::SplitBisectInternal(
     SplitIndices indices;
     size_t index = pos_side_vertex.second;
     indices.neg_shared_begin = index;
+    indices.neg_end = index + vertex_count();
 
     if (pos_side_vertex.first == 0) {
       // One or more vertices are coincident with the plane.
@@ -1035,8 +1049,6 @@ SplitIndices ConvexPolygon<point3_bits, VertexData>::SplitBisectInternal(
             vertex(index % vertex_count()).DropDimension(drop_dimension)));
     }
     indices.neg_begin = index;
-    index += vertex_count();
-    indices.neg_end = index;
     return indices;
   }
 

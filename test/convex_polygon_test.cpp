@@ -966,6 +966,7 @@ TEST(ConvexPolygon, SplitBisectOnPosSide) {
                           allocate_neg_side, allocate_pos_side,
                           vertex_on_split);
       ASSERT_EQ((ConvexPolygon<32, NoVertexData>(pos_side)), polygon);
+      polygon.SortVertices();
       EXPECT_TRUE(pos_side.vertex_data(0).on_split);
     }
   }
