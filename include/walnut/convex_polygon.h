@@ -556,11 +556,29 @@ class ConvexPolygon {
   // `drop_dimension` before comparing them against `half_space2`. The
   // polygon's plane normal must be non-zero in the `drop_dimension` component.
   //
-  // The vertex is found using a binary search. This algorithm is good for
+  // The ranges are found using a binary search. This algorithm is good for
   // ConvexPolgyons with many vertices, but a regular linear search is faster
   // for ConvexPolygons with fewer vertices (roughly 10 or fewer vertices).
   template <int vector_bits, int dist_bits>
-  SplitRanges SplitBisect(
+  SplitRanges FindSplitRangesBisect(
+      const HalfSpace2<vector_bits, dist_bits>& half_space2,
+      int drop_dimension) const;
+
+  // Returns the vertex indices for the positive and negative sides of a
+  // ConvexPolygon split by a 2D half-space.
+  //
+  // `Split` should be called instead of this function. This function is only
+  // exposed for testing purposes.
+  //
+  // The polygon's vertices are first projected to 2D by dropping
+  // `drop_dimension` before comparing them against `half_space2`. The
+  // polygon's plane normal must be non-zero in the `drop_dimension` component.
+  //
+  // The ranges are found using a linear search. This algorithm is good for
+  // ConvexPolgyons with few vertices, but a bisect search is faster for
+  // ConvexPolygons with more vertices (roughly 10 or more vertices).
+  template <int vector_bits, int dist_bits>
+  SplitRanges FindSplitRangesLinear(
       const HalfSpace2<vector_bits, dist_bits>& half_space2,
       int drop_dimension) const;
 
@@ -822,7 +840,9 @@ bool ConvexPolygon<point3_bits, VertexData>::Split(
   }
 
   auto half_space2 = line.Project2D(drop_dimension());
-  SplitRanges indices = SplitBisect(half_space2, drop_dimension());
+  SplitRanges indices = vertex_count() < 10 ?
+    FindSplitRangesLinear(half_space2, drop_dimension()) :
+    FindSplitRangesBisect(half_space2, drop_dimension());
 
   if (!indices.ShouldEmitPositiveChild()) {
     assert(indices.ShouldEmitNegativeChild());
@@ -922,7 +942,7 @@ bool ConvexPolygon<point3_bits, VertexData>::Split(
 
 template <int point3_bits, typename VertexData>
 template <int vector_bits, int dist_bits>
-SplitRanges ConvexPolygon<point3_bits, VertexData>::SplitBisect(
+SplitRanges ConvexPolygon<point3_bits, VertexData>::FindSplitRangesBisect(
     const HalfSpace2<vector_bits, dist_bits>& half_space2,
     int drop_dimension) const {
   assert(!plane().normal().components()[drop_dimension].IsZero());
@@ -1002,6 +1022,172 @@ SplitRanges ConvexPolygon<point3_bits, VertexData>::SplitBisect(
                                                   pos_before_split.second) +
                              (pos_before_split.first != 0);
   return indices;
+}
+
+template <int point3_bits, typename VertexData>
+template <int vector_bits, int dist_bits>
+SplitRanges ConvexPolygon<point3_bits, VertexData>::FindSplitRangesLinear(
+    const HalfSpace2<vector_bits, dist_bits>& half_space2,
+    int drop_dimension) const {
+  assert(!plane().normal().components()[drop_dimension].IsZero());
+  assert(half_space2.IsValid());
+  assert(vertex_count() > 0);
+
+  int initial_compare =
+    half_space2.Compare(vertex(0).DropDimension(drop_dimension));
+
+  if (initial_compare == 0) {
+    // The ConvexPolygon started with a vertex on the line. First find the
+    // first vertex that is not on the line.
+    size_t index = 1;
+    while (true) {
+      // A valid ConvexPolygon is not entirely collinear.
+      assert (index != vertex_count());
+      initial_compare =
+        half_space2.Compare(vertex(index).DropDimension(drop_dimension));
+      if (initial_compare != 0) break;
+      ++index;
+    }
+    SplitRanges result;
+    std::pair<size_t, size_t>* first_side;
+    std::pair<size_t, size_t>* second_side;
+    if (initial_compare < 0) {
+      first_side = &result.neg_range;
+      second_side = &result.pos_range;
+    } else {
+      first_side = &result.pos_range;
+      second_side = &result.neg_range;
+    }
+    first_side->first = index;
+
+    // Keep looping until index points to a vertex on the other side.
+    // first_side->second is set before leaving the loop.
+    int compare;
+    while (true) {
+      ++index;
+      if (index == vertex_count()) {
+        first_side->second = index;
+        return result;
+      }
+      compare =
+        half_space2.Compare(vertex(index).DropDimension(drop_dimension));
+      if (compare == 0) {
+        // This vertex is on the line. Skip past any more vertices that are on
+        // the line before leaving the parent while loop.
+        first_side->second = index;
+        while (true) {
+          ++index;
+          if (index == vertex_count()) {
+            return result;
+          }
+          compare =
+            half_space2.Compare(vertex(index).DropDimension(drop_dimension));
+          if (compare != 0) break;
+        }
+        break;
+      } else if ((initial_compare ^ compare) < 0) {
+        first_side->second = index;
+        break;
+      }
+    }
+
+    assert(compare != 0);
+    second_side->first = index;
+    // Keep looping as long as the vertex is on the second side.
+    while (true) {
+      ++index;
+      if (index == vertex_count()) {
+        break;
+      }
+      compare =
+        half_space2.Compare(vertex(index).DropDimension(drop_dimension));
+      if (compare == 0) {
+        break;
+      }
+    }
+    second_side->second = index;
+    return result;
+  }
+
+  // The ConvexPolygon started with a vertex not on the line.
+  SplitRanges result;
+  std::pair<size_t, size_t>* first_side;
+  std::pair<size_t, size_t>* second_side;
+  if (initial_compare < 0) {
+    first_side = &result.neg_range;
+    second_side = &result.pos_range;
+  } else {
+    first_side = &result.pos_range;
+    second_side = &result.neg_range;
+  }
+
+  // Keep looping until index points to a vertex on the other side.
+  // first_side->second is set before leaving the loop.
+  int compare;
+  size_t index = 1;
+  while (true) {
+    if (index == vertex_count()) {
+      first_side->second = index;
+      return result;
+    }
+    compare = half_space2.Compare(vertex(index).DropDimension(drop_dimension));
+    if (compare == 0) {
+      // This vertex is on the line. Skip past any more vertices that are on
+      // the line before leaving the parent while loop.
+      first_side->second = index;
+      while (true) {
+        ++index;
+        if (index == vertex_count()) {
+          return result;
+        }
+        compare =
+          half_space2.Compare(vertex(index).DropDimension(drop_dimension));
+        if (compare != 0) break;
+      }
+      if ((initial_compare ^ compare) >= 0) {
+        // We're back to the first side again. The polygon is completely on one
+        // side.
+        first_side->first = index;
+        return result;
+      }
+      break;
+    } else if ((initial_compare ^ compare) < 0) {
+      first_side->second = index;
+      break;
+    }
+    ++index;
+  }
+
+  assert(compare != 0);
+  assert((initial_compare ^ compare) < 0);
+  second_side->first = index;
+  // Keep looping until the next on line vertex is found.
+  while (true) {
+    ++index;
+    if (index == vertex_count()) {
+      second_side->second = index;
+      return result;
+    }
+    compare = half_space2.Compare(vertex(index).DropDimension(drop_dimension));
+    if (compare == 0) {
+      break;
+    }
+  }
+
+  // Keep looping until the next vertex back on the first side is found.
+  while (true) {
+    ++index;
+    if (index == vertex_count()) {
+      return result;
+    }
+    compare =
+      half_space2.Compare(vertex(index).DropDimension(drop_dimension));
+    if (compare != 0) break;
+  }
+  assert((initial_compare ^ compare) >= 0);
+  first_side->first = index;
+  first_side->second += vertex_count();
+  return result;
 }
 
 template <int point3_bits, typename VertexData>

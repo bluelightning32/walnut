@@ -900,8 +900,10 @@ using FindSplitRangesFunc = SplitRanges (ConvexPolygon<32>::*)(
 // Overload the << operator for FindSplitRangesFunc so that Google Test doesn't
 // pick very long test name.
 std::ostream& operator<<(std::ostream& out, FindSplitRangesFunc func) {
-  if (func == &ConvexPolygon<32>::SplitBisect<32, 32>) {
+  if (func == &ConvexPolygon<32>::FindSplitRangesBisect<32, 32>) {
     out << "Bisect";
+  } else if (func == &ConvexPolygon<32>::FindSplitRangesLinear<32, 32>) {
+    out << "Linear";
   } else {
     out << "Unknown";
   }
@@ -992,9 +994,14 @@ TEST_P(ConvexPolygonFindSplitRanges, AtExistingVertices) {
 
   ConvexPolygon<32> polygon(MakeConvexPolygon(p));
 
-  SplitRanges indices =
-    (polygon.*GetParam())(line.Project2D(/*drop_dimension=*/2),
-                          /*drop_dimension=*/2);
+  // Run it in a loop a few times to get a sense of how fast the
+  // function is from the overall test time.
+  SplitRanges indices;
+  for (int i = 0; i < 10000; ++i) {
+    indices =
+      (polygon.*GetParam())(line.Project2D(/*drop_dimension=*/2),
+                            /*drop_dimension=*/2);
+  }
   EXPECT_TRUE(indices.ShouldEmitNegativeChild());
   EXPECT_TRUE(indices.ShouldEmitPositiveChild());
   EXPECT_EQ(indices.neg_range.first, 1);
@@ -1053,7 +1060,8 @@ TEST_P(ConvexPolygonFindSplitRanges, AtNewVertices) {
 }
 
 INSTANTIATE_TEST_SUITE_P(, ConvexPolygonFindSplitRanges,
-    testing::Values(&ConvexPolygon<32>::SplitBisect<32, 32>));
+    testing::Values(&ConvexPolygon<32>::FindSplitRangesBisect<32, 32>,
+                    &ConvexPolygon<32>::FindSplitRangesLinear<32, 32>));
 
 TEST(ConvexPolygon, SplitOnPlane) {
   Point3<32> input[] = {
