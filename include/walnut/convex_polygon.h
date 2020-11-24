@@ -194,6 +194,48 @@ class ConvexPolygon {
   using EdgeRep = ConvexPolygonEdge<point3_bits_template, VertexDataTemplate>;
   using SplitInfoRep = SplitInfo<point3_bits_template>;
 
+  // Stores information about how to build the ConvexPolygons on both sides of
+  // a plane.
+  //
+  // This is only constructed by GetSplitInfo.
+  template <typename Parent = const ConvexPolygon&>
+  class SplitKey {
+   public:
+    const SplitInfoRep& info() const {
+      return info_;
+    }
+
+    bool ShouldEmitNegativeChild() const {
+      return info().ShouldEmitNegativeChild();
+    }
+
+    bool ShouldEmitPositiveChild() const {
+      return info().ShouldEmitPositiveChild();
+    }
+
+    bool ShouldEmitOnPlane() const {
+      return info().ShouldEmitOnPlane();
+    }
+
+    const std::pair<size_t, size_t>& neg_range() const {
+      return info().ranges.neg_range;
+    }
+
+    const std::pair<size_t, size_t>& pos_range() const {
+      return info().ranges.pos_range;
+    }
+
+   private:
+    friend ConvexPolygon;
+
+    SplitKey(Parent parent, const SplitInfoRep& info) :
+      parent_(parent), info_(info) { }
+
+    Parent parent_;
+
+    SplitInfoRep info_;
+  };
+
   // Defined in convex_polygon_factory.h. Use the alias `Factory` instead.
   template <typename Point3RepTemplate>
   class GenericFactory;
@@ -594,6 +636,17 @@ class ConvexPolygon {
   // `Split` should be called instead of this function. This function is only
   // exposed for testing purposes.
   template <int vector_bits, int dist_bits>
+  SplitKey<const ConvexPolygon&> GetSplitKey(
+      const HalfSpace3<vector_bits, dist_bits>& half_space) const {
+    return SplitKey<const ConvexPolygon&>(*this, GetSplitInfo(half_space));
+  }
+
+  // Returns information about how to build the positive and negative sides of
+  // a ConvexPolygon split by a 3D half-space.
+  //
+  // `Split` should be called instead of this function. This function is only
+  // exposed for testing purposes.
+  template <int vector_bits, int dist_bits>
   SplitInfoRep GetSplitInfo(
       const HalfSpace3<vector_bits, dist_bits>& half_space) const;
 
@@ -863,30 +916,30 @@ bool ConvexPolygon<point3_bits, VertexData>::Split(
     const HalfSpace3<vector_bits, dist_bits>& half_space,
     AllocateNegSide allocate_neg_side, AllocatePosSide allocate_pos_side,
     VertexOnSplit vertex_on_split) const {
-  SplitInfoRep split_info = GetSplitInfo(half_space);
+  SplitKey<const ConvexPolygon&> key = GetSplitKey(half_space);
 
-  if (split_info.ShouldEmitOnPlane()) return false;
+  if (key.ShouldEmitOnPlane()) return false;
 
-  if (!split_info.ShouldEmitPositiveChild()) {
-    assert(split_info.ShouldEmitNegativeChild());
+  if (!key.ShouldEmitPositiveChild()) {
+    assert(key.ShouldEmitNegativeChild());
     ConvexPolygon& neg_output = allocate_neg_side();
     neg_output = *this;
-    for (size_t i = split_info.ranges.neg_range.second;
-         i < GetGreaterCycleIndex(split_info.ranges.neg_range.second,
-                                  split_info.ranges.neg_range.first);
+    for (size_t i = key.neg_range().second;
+         i < GetGreaterCycleIndex(key.neg_range().second,
+                                  key.neg_range().first);
          ++i) {
       vertex_on_split(neg_output, i % vertex_count());
     }
     return true;
   }
 
-  if (!split_info.ShouldEmitNegativeChild()) {
-    assert(split_info.ShouldEmitPositiveChild());
+  if (!key.ShouldEmitNegativeChild()) {
+    assert(key.ShouldEmitPositiveChild());
     ConvexPolygon& pos_output = allocate_pos_side();
     pos_output = *this;
-    for (size_t i = split_info.ranges.pos_range.second;
-         i < GetGreaterCycleIndex(split_info.ranges.pos_range.second,
-                                  split_info.ranges.pos_range.first);
+    for (size_t i = key.pos_range().second;
+         i < GetGreaterCycleIndex(key.pos_range().second,
+                                  key.pos_range().first);
          ++i) {
       vertex_on_split(pos_output, i % vertex_count());
     }
@@ -895,63 +948,61 @@ bool ConvexPolygon<point3_bits, VertexData>::Split(
 
   ConvexPolygon& neg_output = allocate_neg_side();
   neg_output.edges_.clear();
-  neg_output.edges_.reserve(split_info.ranges.neg_range.second -
-                            split_info.ranges.neg_range.first + 2);
+  neg_output.edges_.reserve(key.neg_range().second -
+                            key.neg_range().first + 2);
   neg_output.plane_ = plane_;
   neg_output.drop_dimension_ = drop_dimension_;
 
   ConvexPolygon& pos_output = allocate_pos_side();
   pos_output.edges_.clear();
-  neg_output.edges_.reserve(split_info.ranges.pos_range.second -
-                            split_info.ranges.pos_range.first + 2);
+  neg_output.edges_.reserve(key.pos_range().second -
+                            key.pos_range().first + 2);
   pos_output.plane_ = plane_;
   pos_output.drop_dimension_ = drop_dimension_;
 
-  for (size_t i = split_info.ranges.neg_range.first;
-       i < split_info.ranges.neg_range.second;
-       ++i) {
+  for (size_t i = key.neg_range().first; i < key.neg_range().second; ++i) {
     neg_output.edges_.push_back(edge(i % vertex_count()));
   }
 
-  if (!split_info.has_new_shared_point2) {
+  if (!key.info_.has_new_shared_point2) {
     // The range [neg_range.second, pos_range.first) is non-empty, holds
     // exactly 1 vertex, and is shared between the negative and positive
     // children.
     neg_output.edges_.emplace_back(
-        vertex(split_info.ranges.neg_range.second % vertex_count()),
-        split_info.new_line);
+        vertex(key.neg_range().second % vertex_count()),
+        key.info_.new_line);
     pos_output.edges_.push_back(edge(
-          split_info.ranges.neg_range.second % vertex_count()));
+          key.neg_range().second % vertex_count()));
   } else {
-    size_t last_neg_index = (split_info.ranges.neg_range.second +
+    size_t last_neg_index = (key.neg_range().second +
                              vertex_count() - 1) % vertex_count();
-    neg_output.edges_.emplace_back(split_info.new_shared_point2,
-                                   split_info.new_line);
-    pos_output.edges_.emplace_back(split_info.new_shared_point2,
+    neg_output.edges_.emplace_back(key.info_.new_shared_point2,
+                                   key.info_.new_line);
+    pos_output.edges_.emplace_back(key.info_.new_shared_point2,
                                    edge(last_neg_index).line);
   }
 
-  for (size_t i = split_info.ranges.pos_range.first;
-       i < split_info.ranges.pos_range.second;
+  for (size_t i = key.pos_range().first;
+       i < key.pos_range().second;
        ++i) {
     pos_output.edges_.push_back(edge(i % vertex_count()));
   }
 
-  if (!split_info.has_new_shared_point1) {
+  if (!key.info_.has_new_shared_point1) {
     // The range [pos_range.second, neg_range.first) is non-empty, holds
     // exactly 1 vertex, and is shared between the negative and positive
     // children.
     pos_output.edges_.emplace_back(
-        vertex(split_info.ranges.pos_range.second % vertex_count()),
-        -split_info.new_line);
+        vertex(key.pos_range().second % vertex_count()),
+        -key.info_.new_line);
     neg_output.edges_.push_back(edge(
-          split_info.ranges.pos_range.second % vertex_count()));
+          key.pos_range().second % vertex_count()));
   } else {
-    size_t last_pos_index = (split_info.ranges.pos_range.second +
+    size_t last_pos_index = (key.pos_range().second +
                              vertex_count() - 1) % vertex_count();
-    pos_output.edges_.emplace_back(split_info.new_shared_point1,
-                                   -split_info.new_line);
-    neg_output.edges_.emplace_back(split_info.new_shared_point1,
+    pos_output.edges_.emplace_back(key.info_.new_shared_point1,
+                                   -key.info_.new_line);
+    neg_output.edges_.emplace_back(key.info_.new_shared_point1,
                                    edge(last_pos_index).line);
   }
 
