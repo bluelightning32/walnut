@@ -128,7 +128,7 @@ struct SplitRanges {
   // This is the index of the first vertex that should be included in the
   // negative child. If neg_range.first == neg_range.second, then no negative
   // child should be emitted.
-  std::pair<size_t, size_t> neg_range;
+  std::pair<size_t, size_t> neg_range{0, 0};
 
   // [pos_range.first, pos_range.second) should be part of only the positive
   // child.
@@ -136,7 +136,7 @@ struct SplitRanges {
   // This is the index of the first vertex that should be included in the
   // positive child. If pos_range.first == pos_range.second, then no positive
   // child should be emitted.
-  std::pair<size_t, size_t> pos_range;
+  std::pair<size_t, size_t> pos_range{0, 0};
 };
 
 // A 2D ConvexPolygon embedded in R^3. The vertices are stored using homogeneous
