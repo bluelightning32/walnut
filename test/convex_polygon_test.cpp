@@ -1071,23 +1071,19 @@ TEST(ConvexPolygon, SplitOnPlane) {
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
-  ConvexPolygon<32> unused;
-  auto allocate_neg_side = [&]() -> ConvexPolygon<32>& {
-    EXPECT_TRUE(false);
-    return unused;
-  };
-  auto allocate_pos_side = [&]() -> ConvexPolygon<32>& {
-    EXPECT_TRUE(false);
-    return unused;
-  };
-  auto vertex_on_split = [](ConvexPolygon<32>&, size_t index) {
-    EXPECT_TRUE(false);
-  };
-  EXPECT_FALSE(polygon.Split(polygon.plane(), allocate_neg_side,
-                             allocate_pos_side, vertex_on_split));
+  {
+    auto key = polygon.GetSplitKey(polygon.plane());
+    EXPECT_FALSE(key.ShouldEmitNegativeChild());
+    EXPECT_FALSE(key.ShouldEmitPositiveChild());
+    EXPECT_TRUE(key.ShouldEmitOnPlane());
+  }
 
-  EXPECT_FALSE(polygon.Split(-polygon.plane(), allocate_neg_side,
-                             allocate_pos_side, vertex_on_split));
+  {
+    auto key = polygon.GetSplitKey(-polygon.plane());
+    EXPECT_FALSE(key.ShouldEmitNegativeChild());
+    EXPECT_FALSE(key.ShouldEmitPositiveChild());
+    EXPECT_TRUE(key.ShouldEmitOnPlane());
+  }
 }
 
 // Helper for a polygon that is expected to split into 2 pieces
@@ -1095,42 +1091,32 @@ void SplitHelper(const ConvexPolygon<>& polygon,
                  const HalfSpace3<>& half_space,
                  ConvexPolygon<>& neg_side,
                  ConvexPolygon<>& pos_side) {
-  ConvexPolygon<32, VertexData> neg_side_with_vertex_data;
-  ConvexPolygon<32, VertexData> pos_side_with_vertex_data;
-  int neg_allocated = 0;
-  int pos_allocated = 0;
-  auto allocate_neg_side = [&]() -> ConvexPolygon<32, VertexData>& {
-    ++neg_allocated;
-    return neg_side_with_vertex_data;
-  };
-  auto allocate_pos_side = [&]() -> ConvexPolygon<32, VertexData>& {
-    ++pos_allocated;
-    return pos_side_with_vertex_data;
-  };
-  int vertices_on_split = 0;
-  auto vertex_on_split = [&](ConvexPolygon<32, VertexData>& output,
-                             size_t index) {
-    ++vertices_on_split;
-    output.vertex_data(index).on_split = true;
-  };
+  auto key = polygon.GetSplitKey(half_space);
+  ASSERT_TRUE(key.ShouldEmitNegativeChild());
+  ASSERT_TRUE(key.ShouldEmitPositiveChild());
 
-  ConvexPolygon<32, VertexData> polygon_with_vertex_data(polygon);
-  EXPECT_TRUE(polygon_with_vertex_data.Split(half_space, allocate_neg_side,
-                                             allocate_pos_side,
-                                             vertex_on_split));
-  EXPECT_EQ(neg_allocated, 1);
-  EXPECT_EQ(pos_allocated, 1);
-  EXPECT_EQ(neg_side_with_vertex_data.plane(), polygon.plane());
-  EXPECT_EQ(pos_side_with_vertex_data.plane(), polygon.plane());
-  EXPECT_EQ(vertices_on_split, 4);
+  ConvexPolygon<32>::GetSplitChildren(key, neg_side, pos_side);
+  EXPECT_EQ(neg_side.plane(), polygon.plane());
+  EXPECT_EQ(pos_side.plane(), polygon.plane());
 
-  for (const ConvexPolygon<32, VertexData>* output : {
-      &neg_side_with_vertex_data, &pos_side_with_vertex_data}) {
-    // Check that on_split is correct for each output vertex.
-    for (const auto& edge : output->edges()) {
-      EXPECT_EQ(edge.data().on_split, half_space.IsCoincident(edge.vertex));
-    }
+  ASSERT_GE(neg_side.vertex_count(), 3);
+  EXPECT_TRUE(half_space.IsCoincident(neg_side.vertex(
+          neg_side.vertex_count() - 2)));
+  EXPECT_TRUE(half_space.IsCoincident(neg_side.vertex(
+          neg_side.vertex_count() - 1)));
+  for (size_t i = 0; i < neg_side.vertex_count() - 2; ++i) {
+    EXPECT_FALSE(half_space.IsCoincident(neg_side.vertex(i)));
+  }
 
+  ASSERT_GE(pos_side.vertex_count(), 3);
+  EXPECT_TRUE(half_space.IsCoincident(pos_side.vertex(0)));
+  EXPECT_TRUE(half_space.IsCoincident(pos_side.vertex(
+          pos_side.vertex_count() - 1)));
+  for (size_t i = 1; i < pos_side.vertex_count() - 1; ++i) {
+    EXPECT_FALSE(half_space.IsCoincident(pos_side.vertex(i)));
+  }
+
+  for (const ConvexPolygon<32>* output : {&neg_side, &pos_side}) {
     for (size_t i = 0; i < output->vertex_count(); ++i) {
       PluckerLine<> expected_line(
           output->vertex(i), output->vertex((i + 1) % output->vertex_count()));
@@ -1138,9 +1124,6 @@ void SplitHelper(const ConvexPolygon<>& polygon,
       EXPECT_TRUE(output->edge(i).line.d().IsSameDir(expected_line.d()));
     }
   }
-
-  neg_side = neg_side_with_vertex_data;
-  pos_side = pos_side_with_vertex_data;
 }
 
 TEST(ConvexPolygon, SplitAtExistingVertices) {
@@ -1228,75 +1211,62 @@ TEST(ConvexPolygon, SplitOnParallelPlane) {
   ConvexPolygon<32> ccw_polygon = MakeConvexPolygon(ccw_input);
   ConvexPolygon<32> cw_polygon = MakeConvexPolygon(cw_input);
 
-  ConvexPolygon<32> neg_side;
-  bool set_neg_side = false;
-  auto allocate_neg_side = [&]() -> ConvexPolygon<32>& {
-    set_neg_side = true;
-    return neg_side;
-  };
-  ConvexPolygon<32> pos_side;
-  bool set_pos_side = false;
-  auto allocate_pos_side = [&]() -> ConvexPolygon<32>& {
-    set_pos_side = true;
-    return pos_side;
-  };
-  auto vertex_on_split = [](ConvexPolygon<32>&, size_t index) {
-    EXPECT_TRUE(false);
-  };
-
   HalfSpace3<> above_up(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/11);
   EXPECT_TRUE(above_up.normal().IsSameDir(ccw_polygon.plane().normal()));
+  {
+    auto key = ccw_polygon.GetSplitKey(above_up);
+    EXPECT_TRUE(key.ShouldEmitNegativeChild());
+    EXPECT_FALSE(key.ShouldEmitPositiveChild());
 
-  set_neg_side = false;
-  set_pos_side = false;
-  EXPECT_TRUE(ccw_polygon.Split(above_up, allocate_neg_side,
-                                allocate_pos_side, vertex_on_split));
-  EXPECT_TRUE(set_neg_side);
-  EXPECT_FALSE(set_pos_side);
-  EXPECT_EQ(neg_side, ccw_polygon);
+    EXPECT_EQ(key.neg_range().first, 0);
+    EXPECT_EQ(key.neg_range().second, ccw_polygon.vertex_count());
+  }
+  {
+    auto key = cw_polygon.GetSplitKey(above_up);
+    EXPECT_TRUE(key.ShouldEmitNegativeChild());
+    EXPECT_FALSE(key.ShouldEmitPositiveChild());
 
-  set_neg_side = false;
-  set_pos_side = false;
-  EXPECT_TRUE(cw_polygon.Split(above_up, allocate_neg_side,
-                               allocate_pos_side, vertex_on_split));
-  EXPECT_TRUE(set_neg_side);
-  EXPECT_FALSE(set_pos_side);
-  EXPECT_EQ(neg_side, cw_polygon);
+    EXPECT_EQ(key.neg_range().first, 0);
+    EXPECT_EQ(key.neg_range().second, cw_polygon.vertex_count());
+  }
 
   HalfSpace3<> above_down(/*x=*/0, /*y=*/0, /*z=*/-1, /*dist=*/-11);
   EXPECT_TRUE(above_down.normal().IsSameDir(-above_up.normal()));
 
-  set_neg_side = false;
-  set_pos_side = false;
-  EXPECT_TRUE(ccw_polygon.Split(above_down, allocate_neg_side,
-                                allocate_pos_side, vertex_on_split));
-  EXPECT_FALSE(set_neg_side);
-  EXPECT_TRUE(set_pos_side);
-  EXPECT_EQ(pos_side, ccw_polygon);
+  {
+    auto key = ccw_polygon.GetSplitKey(above_down);
+    EXPECT_FALSE(key.ShouldEmitNegativeChild());
+    EXPECT_TRUE(key.ShouldEmitPositiveChild());
 
-  set_neg_side = false;
-  set_pos_side = false;
-  EXPECT_TRUE(cw_polygon.Split(above_down, allocate_neg_side,
-                               allocate_pos_side, vertex_on_split));
-  EXPECT_FALSE(set_neg_side);
-  EXPECT_TRUE(set_pos_side);
-  EXPECT_EQ(pos_side, cw_polygon);
+    EXPECT_EQ(key.pos_range().first, 0);
+    EXPECT_EQ(key.pos_range().second, ccw_polygon.vertex_count());
+  }
+  {
+    auto key = cw_polygon.GetSplitKey(above_down);
+    EXPECT_FALSE(key.ShouldEmitNegativeChild());
+    EXPECT_TRUE(key.ShouldEmitPositiveChild());
+
+    EXPECT_EQ(key.pos_range().first, 0);
+    EXPECT_EQ(key.pos_range().second, cw_polygon.vertex_count());
+  }
 
   HalfSpace3<> below_up(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/9);
+  {
+    auto key = ccw_polygon.GetSplitKey(below_up);
+    EXPECT_FALSE(key.ShouldEmitNegativeChild());
+    EXPECT_TRUE(key.ShouldEmitPositiveChild());
 
-  set_neg_side = false;
-  set_pos_side = false;
-  EXPECT_TRUE(ccw_polygon.Split(below_up, allocate_neg_side,
-                                allocate_pos_side, vertex_on_split));
-  EXPECT_FALSE(set_neg_side);
-  EXPECT_TRUE(set_pos_side);
+    EXPECT_EQ(key.pos_range().first, 0);
+    EXPECT_EQ(key.pos_range().second, ccw_polygon.vertex_count());
+  }
+  {
+    auto key = cw_polygon.GetSplitKey(below_up);
+    EXPECT_FALSE(key.ShouldEmitNegativeChild());
+    EXPECT_TRUE(key.ShouldEmitPositiveChild());
 
-  set_neg_side = false;
-  set_pos_side = false;
-  EXPECT_TRUE(cw_polygon.Split(below_up, allocate_neg_side,
-                               allocate_pos_side, vertex_on_split));
-  EXPECT_FALSE(set_neg_side);
-  EXPECT_TRUE(set_pos_side);
+    EXPECT_EQ(key.pos_range().first, 0);
+    EXPECT_EQ(key.pos_range().second, cw_polygon.vertex_count());
+  }
 }
 
 }  // walnut

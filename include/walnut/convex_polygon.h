@@ -607,28 +607,27 @@ class ConvexPolygon {
     return std::make_pair(-flipped.first, flipped.second);
   }
 
-  // Splits a ConvexPolygon by a plucker line into the positive and the
-  // negative side ConvexPolygons.
+  // Returns information about how to build the positive and negative sides of
+  // a ConvexPolygon split by a 3D half-space.
   //
-  // One of the positive or negative sides may be omitted if the source
-  // polygon is only present on one side of the line.
+  // On the returned key, `ShouldEmitOnPlane`, `ShouldEmitNegativeChild`, and
+  // `ShouldEmitPositiveChild` indicate which sides of `half_space` the polygon
+  // is present on.
   //
-  // `allocate_neg_side` is a function object that takes 0 arguments must
-  // return a `ConvexPolygon&` if it is called. It will be called exactly once
-  // if the polygon is present on the negative side, and zero times otherwise.
-  // `allocate_pos_side` is similarly for the positive side of the polygon.
+  // If exactly one of `ShouldEmitOnPlane`, `ShouldEmitNegativeChild`, or
+  // `ShouldEmitPositiveChild` returns true, then the input polygon should be
+  // copied entirely to that child. For a negative or positive child, any
+  // vertex not within that range of the returned key is a vertex that touches
+  // the plane.
   //
-  // `vertex_on_split` is a function object, and it is called once for each
-  // output vertex that is touching the half-space's plane. It is passed a
-  // reference to the output ConvexPolygon and an index for the vertex on the
-  // edge within that output ConvexPolygon. `vertex_on_split` is not called if
-  // the polygon is coincident with `half_space`.
-  template <int vector_bits, int dist_bits, typename AllocateNegSide,
-            typename AllocatePosSide, typename VertexOnSplit>
-  bool Split(const HalfSpace3<vector_bits, dist_bits>& half_space,
-             AllocateNegSide allocate_neg_side,
-             AllocatePosSide allocate_pos_side,
-             VertexOnSplit vertex_on_split) const;
+  // Otherwise if `ShouldEmitNegativeChild` and `ShouldEmitPositiveChild` both
+  // return true, the key should be passed to `GetSplitChildren` to create both
+  // children.
+  template <int vector_bits, int dist_bits>
+  SplitKey<const ConvexPolygon&> GetSplitKey(
+      const HalfSpace3<vector_bits, dist_bits>& half_space) const {
+    return SplitKey<const ConvexPolygon&>(*this, GetSplitInfo(half_space));
+  }
 
   // Creates the split children from a SplitKey.
   //
@@ -645,19 +644,8 @@ class ConvexPolygon {
   // Returns information about how to build the positive and negative sides of
   // a ConvexPolygon split by a 3D half-space.
   //
-  // `Split` should be called instead of this function. This function is only
-  // exposed for testing purposes.
-  template <int vector_bits, int dist_bits>
-  SplitKey<const ConvexPolygon&> GetSplitKey(
-      const HalfSpace3<vector_bits, dist_bits>& half_space) const {
-    return SplitKey<const ConvexPolygon&>(*this, GetSplitInfo(half_space));
-  }
-
-  // Returns information about how to build the positive and negative sides of
-  // a ConvexPolygon split by a 3D half-space.
-  //
-  // `Split` should be called instead of this function. This function is only
-  // exposed for testing purposes.
+  // `GetSplitKey` should be called instead of this function. This function is
+  // only exposed for testing purposes.
   template <int vector_bits, int dist_bits>
   SplitInfoRep GetSplitInfo(
       const HalfSpace3<vector_bits, dist_bits>& half_space) const;
@@ -665,8 +653,8 @@ class ConvexPolygon {
   // Returns the vertex indices for the positive and negative sides of a
   // ConvexPolygon split by a 2D half-space.
   //
-  // `Split` should be called instead of this function. This function is only
-  // exposed for testing purposes.
+  // `GetSplitKey` should be called instead of this function. This function is
+  // only exposed for testing purposes.
   //
   // The polygon's vertices are first projected to 2D by dropping
   // `drop_dimension` before comparing them against `half_space2`. The
@@ -683,8 +671,8 @@ class ConvexPolygon {
   // Returns the vertex indices for the positive and negative sides of a
   // ConvexPolygon split by a 2D half-space.
   //
-  // `Split` should be called instead of this function. This function is only
-  // exposed for testing purposes.
+  // `GetSplitKey` should be called instead of this function. This function is
+  // only exposed for testing purposes.
   //
   // The polygon's vertices are first projected to 2D by dropping
   // `drop_dimension` before comparing them against `half_space2`. The
@@ -919,54 +907,6 @@ ConvexPolygon<point3_bits, VertexData>::GetLastNegSideVertex(
     }
   }
   return std::make_pair(begin_type, begin % vertex_count());
-}
-
-template <int point3_bits, typename VertexData>
-template <int vector_bits, int dist_bits, typename AllocateNegSide,
-          typename AllocatePosSide, typename VertexOnSplit>
-bool ConvexPolygon<point3_bits, VertexData>::Split(
-    const HalfSpace3<vector_bits, dist_bits>& half_space,
-    AllocateNegSide allocate_neg_side, AllocatePosSide allocate_pos_side,
-    VertexOnSplit vertex_on_split) const {
-  SplitKey<const ConvexPolygon&> key = GetSplitKey(half_space);
-
-  if (key.ShouldEmitOnPlane()) return false;
-
-  if (!key.ShouldEmitPositiveChild()) {
-    assert(key.ShouldEmitNegativeChild());
-    ConvexPolygon& neg_output = allocate_neg_side();
-    neg_output = *this;
-    for (size_t i = key.neg_range().second;
-         i < GetGreaterCycleIndex(key.neg_range().second,
-                                  key.neg_range().first);
-         ++i) {
-      vertex_on_split(neg_output, i % vertex_count());
-    }
-    return true;
-  }
-
-  if (!key.ShouldEmitNegativeChild()) {
-    assert(key.ShouldEmitPositiveChild());
-    ConvexPolygon& pos_output = allocate_pos_side();
-    pos_output = *this;
-    for (size_t i = key.pos_range().second;
-         i < GetGreaterCycleIndex(key.pos_range().second,
-                                  key.pos_range().first);
-         ++i) {
-      vertex_on_split(pos_output, i % vertex_count());
-    }
-    return true;
-  }
-
-  ConvexPolygon& neg_output = allocate_neg_side();
-  ConvexPolygon& pos_output = allocate_pos_side();
-  GetSplitChildren(key, neg_output, pos_output);
-
-  vertex_on_split(neg_output, neg_output.vertex_count() - 2);
-  vertex_on_split(neg_output, neg_output.vertex_count() - 1);
-  vertex_on_split(pos_output, 0);
-  vertex_on_split(pos_output, pos_output.vertex_count() - 1);
-  return true;
 }
 
 template <int point3_bits, typename VertexData>
