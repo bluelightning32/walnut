@@ -630,6 +630,18 @@ class ConvexPolygon {
              AllocatePosSide allocate_pos_side,
              VertexOnSplit vertex_on_split) const;
 
+  // Creates the split children from a SplitKey.
+  //
+  // `key` must meet this criteria to call the function:
+  //   key.ShouldEmitNegativeChild() && key.ShouldEmitPositiveChild()
+  //
+  // On the returned `neg_child`, the last 2 vertices will be on the split
+  // plane. Whereas for `pos_child`, the first and last vertices will be on
+  // the split plane.
+  static void GetSplitChildren(const SplitKey<const ConvexPolygon&> &key,
+                               ConvexPolygon& neg_child,
+                               ConvexPolygon& pos_child);
+
   // Returns information about how to build the positive and negative sides of
   // a ConvexPolygon split by a 3D half-space.
   //
@@ -947,70 +959,80 @@ bool ConvexPolygon<point3_bits, VertexData>::Split(
   }
 
   ConvexPolygon& neg_output = allocate_neg_side();
-  neg_output.edges_.clear();
-  neg_output.edges_.reserve(key.neg_range().second -
-                            key.neg_range().first + 2);
-  neg_output.plane_ = plane_;
-  neg_output.drop_dimension_ = drop_dimension_;
-
   ConvexPolygon& pos_output = allocate_pos_side();
-  pos_output.edges_.clear();
-  neg_output.edges_.reserve(key.pos_range().second -
-                            key.pos_range().first + 2);
-  pos_output.plane_ = plane_;
-  pos_output.drop_dimension_ = drop_dimension_;
-
-  for (size_t i = key.neg_range().first; i < key.neg_range().second; ++i) {
-    neg_output.edges_.push_back(edge(i % vertex_count()));
-  }
-
-  if (!key.info_.has_new_shared_point2) {
-    // The range [neg_range.second, pos_range.first) is non-empty, holds
-    // exactly 1 vertex, and is shared between the negative and positive
-    // children.
-    neg_output.edges_.emplace_back(
-        vertex(key.neg_range().second % vertex_count()),
-        key.info_.new_line);
-    pos_output.edges_.push_back(edge(
-          key.neg_range().second % vertex_count()));
-  } else {
-    size_t last_neg_index = (key.neg_range().second +
-                             vertex_count() - 1) % vertex_count();
-    neg_output.edges_.emplace_back(key.info_.new_shared_point2,
-                                   key.info_.new_line);
-    pos_output.edges_.emplace_back(key.info_.new_shared_point2,
-                                   edge(last_neg_index).line);
-  }
-
-  for (size_t i = key.pos_range().first;
-       i < key.pos_range().second;
-       ++i) {
-    pos_output.edges_.push_back(edge(i % vertex_count()));
-  }
-
-  if (!key.info_.has_new_shared_point1) {
-    // The range [pos_range.second, neg_range.first) is non-empty, holds
-    // exactly 1 vertex, and is shared between the negative and positive
-    // children.
-    pos_output.edges_.emplace_back(
-        vertex(key.pos_range().second % vertex_count()),
-        -key.info_.new_line);
-    neg_output.edges_.push_back(edge(
-          key.pos_range().second % vertex_count()));
-  } else {
-    size_t last_pos_index = (key.pos_range().second +
-                             vertex_count() - 1) % vertex_count();
-    pos_output.edges_.emplace_back(key.info_.new_shared_point1,
-                                   -key.info_.new_line);
-    neg_output.edges_.emplace_back(key.info_.new_shared_point1,
-                                   edge(last_pos_index).line);
-  }
+  GetSplitChildren(key, neg_output, pos_output);
 
   vertex_on_split(neg_output, neg_output.vertex_count() - 2);
   vertex_on_split(neg_output, neg_output.vertex_count() - 1);
   vertex_on_split(pos_output, 0);
   vertex_on_split(pos_output, pos_output.vertex_count() - 1);
   return true;
+}
+
+template <int point3_bits, typename VertexData>
+void ConvexPolygon<point3_bits, VertexData>::GetSplitChildren(
+    const SplitKey<const ConvexPolygon&> &key, ConvexPolygon& neg_child,
+    ConvexPolygon& pos_child) {
+  assert(key.ShouldEmitNegativeChild() && key.ShouldEmitPositiveChild());
+  const ConvexPolygon& parent = key.parent_;
+
+  neg_child.edges_.clear();
+  neg_child.edges_.reserve(key.neg_range().second -
+                            key.neg_range().first + 2);
+  neg_child.plane_ = parent.plane_;
+  neg_child.drop_dimension_ = parent.drop_dimension_;
+
+  pos_child.edges_.clear();
+  neg_child.edges_.reserve(key.pos_range().second -
+                           key.pos_range().first + 2);
+  pos_child.plane_ = parent.plane_;
+  pos_child.drop_dimension_ = parent.drop_dimension_;
+
+  for (size_t i = key.neg_range().first; i < key.neg_range().second; ++i) {
+    neg_child.edges_.push_back(parent.edge(i % parent.vertex_count()));
+  }
+
+  if (!key.info_.has_new_shared_point2) {
+    // The range [neg_range.second, pos_range.first) is non-empty, holds
+    // exactly 1 vertex, and is shared between the negative and positive
+    // children.
+    neg_child.edges_.emplace_back(
+        parent.vertex(key.neg_range().second % parent.vertex_count()),
+        key.info_.new_line);
+    pos_child.edges_.push_back(parent.edge(
+          key.neg_range().second % parent.vertex_count()));
+  } else {
+    size_t last_neg_index = (key.neg_range().second +
+                             parent.vertex_count() - 1) %
+                             parent.vertex_count();
+    neg_child.edges_.emplace_back(key.info_.new_shared_point2,
+                                  key.info_.new_line);
+    pos_child.edges_.emplace_back(key.info_.new_shared_point2,
+                                  parent.edge(last_neg_index).line);
+  }
+
+  for (size_t i = key.pos_range().first; i < key.pos_range().second; ++i) {
+    pos_child.edges_.push_back(parent.edge(i % parent.vertex_count()));
+  }
+
+  if (!key.info_.has_new_shared_point1) {
+    // The range [pos_range.second, neg_range.first) is non-empty, holds
+    // exactly 1 vertex, and is shared between the negative and positive
+    // children.
+    pos_child.edges_.emplace_back(
+        parent.vertex(key.pos_range().second % parent.vertex_count()),
+        -key.info_.new_line);
+    neg_child.edges_.push_back(parent.edge(
+          key.pos_range().second % parent.vertex_count()));
+  } else {
+    size_t last_pos_index = (key.pos_range().second +
+                             parent.vertex_count() - 1) %
+                            parent.vertex_count();
+    pos_child.edges_.emplace_back(key.info_.new_shared_point1,
+                                  -key.info_.new_line);
+    neg_child.edges_.emplace_back(key.info_.new_shared_point1,
+                                  parent.edge(last_pos_index).line);
+  }
 }
 
 template <int point3_bits, typename VertexData>
