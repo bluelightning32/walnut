@@ -1095,7 +1095,7 @@ void SplitHelper(const ConvexPolygon<>& polygon,
   ASSERT_TRUE(key.ShouldEmitNegativeChild());
   ASSERT_TRUE(key.ShouldEmitPositiveChild());
 
-  ConvexPolygon<32>::GetSplitChildren(key, neg_side, pos_side);
+  key.CreateSplitChildren(neg_side, pos_side);
   EXPECT_EQ(neg_side.plane(), polygon.plane());
   EXPECT_EQ(pos_side.plane(), polygon.plane());
 
@@ -1160,6 +1160,14 @@ TEST(ConvexPolygon, SplitAtExistingVertices) {
   SplitHelper(polygon, -half_space, pos_side, neg_side);
   EXPECT_EQ(neg_side, expected_neg_side);
   EXPECT_EQ(pos_side, expected_pos_side);
+
+  {
+    auto key = std::move(polygon).GetSplitKey(-half_space);
+    static_assert(std::is_rvalue_reference<decltype(key)::Parent>::value);
+    key.CreateSplitChildren(neg_side, pos_side);
+    EXPECT_EQ(neg_side.plane(), polygon.plane());
+    EXPECT_EQ(pos_side.plane(), polygon.plane());
+  }
 }
 
 TEST(ConvexPolygon, SplitAtExistingVerticesCW) {

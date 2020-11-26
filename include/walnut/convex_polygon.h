@@ -198,9 +198,11 @@ class ConvexPolygon {
   // a plane.
   //
   // This is only constructed by GetSplitInfo.
-  template <typename Parent = const ConvexPolygon&>
+  template <typename ParentTemplate = const ConvexPolygon&>
   class SplitKey {
    public:
+    using Parent = ParentTemplate;
+
     const SplitInfoRep& info() const {
       return info_;
     }
@@ -225,11 +227,82 @@ class ConvexPolygon {
       return info().ranges.pos_range;
     }
 
+    // Creates the negative child from the split.
+    //
+    // This function may only be called if `ShouldEmitNegativeChild`
+    // returns true and `ShouldEmitPositiveChild` returns false.
+    //
+    // If `Parent` is an rvalue reference, the parent is put into an
+    // unspecified state afterwards, such that it is only safe to call the
+    // destructor or assignment operator on the parent. Also if `Parent` is an
+    // rvalue reference, then this function can only be called once.
+    ConvexPolygon CreateNegativeChild() {
+      assert(ShouldEmitNegativeChild());
+      assert(!ShouldEmitPositiveChild());
+      return ConvexPolygon(std::forward<Parent>);
+    }
+
+    // Creates the positive child from the split.
+    //
+    // This function may only be called if `ShouldEmitNegativeChild`
+    // returns false and `ShouldEmitPositiveChild` returns true.
+    //
+    // If `Parent` is an rvalue reference, the parent is put into an
+    // unspecified state afterwards, such that it is only safe to call the
+    // destructor or assignment operator on the parent. Also if `Parent` is an
+    // rvalue reference, then this function can only be called once.
+    ConvexPolygon CreatePositiveChild() {
+      assert(!ShouldEmitNegativeChild());
+      assert(ShouldEmitPositiveChild());
+      return ConvexPolygon(std::forward<Parent>);
+    }
+
+    // Creates the on plane child from the split.
+    //
+    // This function may only be called if `ShouldEmitOnPlane` returns true.
+    //
+    // If `Parent` is an rvalue reference, the parent is put into an
+    // unspecified state afterwards, such that it is only safe to call the
+    // destructor or assignment operator on the parent. Also if `Parent` is an
+    // rvalue reference, then this function can only be called once.
+    ConvexPolygon CreateOnPlaneChild() {
+      assert(!ShouldEmitOnPlane());
+      return ConvexPolygon(std::forward<Parent>);
+    }
+
+    // Creates both split children.
+    //
+    // This function may only be called if `ShouldEmitNegativeChild`
+    // `ShouldEmitPositiveChild` both return true.
+    //
+    // On the returned `neg_child`, the last 2 vertices will be on the split
+    // plane. Whereas for `pos_child`, the first and last vertices will be on
+    // the split plane.
+    //
+    // If `Parent` is an rvalue reference, the parent is put into an
+    // unspecified state afterwards, such that it is only safe to call the
+    // destructor or assignment operator on the parent. Also if `Parent` is an
+    // rvalue reference, then this function can only be called once.
+    void CreateSplitChildren(ConvexPolygon& neg_child,
+                             ConvexPolygon& pos_child);
+
    private:
     friend ConvexPolygon;
 
+    template <typename T>
+    typename std::enable_if<std::is_rvalue_reference<Parent>::value, T&&>::type
+    MakeForward(T& t) const {
+      return std::move(t);
+    }
+
+    template <typename T>
+    typename std::enable_if<!std::is_rvalue_reference<Parent>::value, T&>::type
+    MakeForward(T& t) const {
+      return t;
+    }
+
     SplitKey(Parent parent, const SplitInfoRep& info) :
-      parent_(parent), info_(info) { }
+      parent_(std::forward<Parent>(parent)), info_(info) { }
 
     Parent parent_;
 
@@ -629,17 +702,13 @@ class ConvexPolygon {
     return SplitKey<const ConvexPolygon&>(*this, GetSplitInfo(half_space));
   }
 
-  // Creates the split children from a SplitKey.
-  //
-  // `key` must meet this criteria to call the function:
-  //   key.ShouldEmitNegativeChild() && key.ShouldEmitPositiveChild()
-  //
-  // On the returned `neg_child`, the last 2 vertices will be on the split
-  // plane. Whereas for `pos_child`, the first and last vertices will be on
-  // the split plane.
-  static void GetSplitChildren(const SplitKey<const ConvexPolygon&> &key,
-                               ConvexPolygon& neg_child,
-                               ConvexPolygon& pos_child);
+  // Overload that takes an rvalue reference
+  template <int vector_bits, int dist_bits>
+  SplitKey<ConvexPolygon&&> GetSplitKey(
+      const HalfSpace3<vector_bits, dist_bits>& half_space) && {
+    return SplitKey<ConvexPolygon&&>(std::move(*this),
+                                     GetSplitInfo(half_space));
+  }
 
   // Returns information about how to build the positive and negative sides of
   // a ConvexPolygon split by a 3D half-space.
@@ -910,68 +979,70 @@ ConvexPolygon<point3_bits, VertexData>::GetLastNegSideVertex(
 }
 
 template <int point3_bits, typename VertexData>
-void ConvexPolygon<point3_bits, VertexData>::GetSplitChildren(
-    const SplitKey<const ConvexPolygon&> &key, ConvexPolygon& neg_child,
-    ConvexPolygon& pos_child) {
-  assert(key.ShouldEmitNegativeChild() && key.ShouldEmitPositiveChild());
-  const ConvexPolygon& parent = key.parent_;
+template <typename Parent>
+void
+ConvexPolygon<point3_bits, VertexData>::SplitKey<Parent>::CreateSplitChildren(
+    ConvexPolygon& neg_child, ConvexPolygon& pos_child) {
+  assert(ShouldEmitNegativeChild() && ShouldEmitPositiveChild());
 
   neg_child.edges_.clear();
-  neg_child.edges_.reserve(key.neg_range().second -
-                            key.neg_range().first + 2);
-  neg_child.plane_ = parent.plane_;
-  neg_child.drop_dimension_ = parent.drop_dimension_;
+  neg_child.edges_.reserve(neg_range().second - neg_range().first + 2);
+  neg_child.plane_ = parent_.plane_;
+  neg_child.drop_dimension_ = parent_.drop_dimension_;
 
   pos_child.edges_.clear();
-  neg_child.edges_.reserve(key.pos_range().second -
-                           key.pos_range().first + 2);
-  pos_child.plane_ = parent.plane_;
-  pos_child.drop_dimension_ = parent.drop_dimension_;
+  neg_child.edges_.reserve(pos_range().second - pos_range().first + 2);
+  pos_child.plane_ = MakeForward(parent_.plane_);
+  pos_child.drop_dimension_ = parent_.drop_dimension_;
 
-  for (size_t i = key.neg_range().first; i < key.neg_range().second; ++i) {
-    neg_child.edges_.push_back(parent.edge(i % parent.vertex_count()));
+  for (size_t i = neg_range().first; i < neg_range().second; ++i) {
+    neg_child.edges_.push_back(MakeForward(parent_.edge(
+            i % parent_.vertex_count())));
   }
 
-  if (!key.info_.has_new_shared_point2) {
+  if (!info_.has_new_shared_point2) {
     // The range [neg_range.second, pos_range.first) is non-empty, holds
     // exactly 1 vertex, and is shared between the negative and positive
     // children.
     neg_child.edges_.emplace_back(
-        parent.vertex(key.neg_range().second % parent.vertex_count()),
-        key.info_.new_line);
-    pos_child.edges_.push_back(parent.edge(
-          key.neg_range().second % parent.vertex_count()));
+        parent_.vertex(neg_range().second % parent_.vertex_count()),
+        info_.new_line);
+    pos_child.edges_.push_back(MakeForward(parent_.edge(
+          neg_range().second % parent_.vertex_count())));
   } else {
-    size_t last_neg_index = (key.neg_range().second +
-                             parent.vertex_count() - 1) %
-                             parent.vertex_count();
-    neg_child.edges_.emplace_back(key.info_.new_shared_point2,
-                                  key.info_.new_line);
-    pos_child.edges_.emplace_back(key.info_.new_shared_point2,
-                                  parent.edge(last_neg_index).line);
+    size_t last_neg_index = (neg_range().second +
+                             parent_.vertex_count() - 1) %
+                             parent_.vertex_count();
+    neg_child.edges_.emplace_back(info_.new_shared_point2,
+                                  info_.new_line);
+    pos_child.edges_.emplace_back(
+        MakeForward(info_.new_shared_point2),
+        MakeForward(parent_.edge(last_neg_index).line));
   }
 
-  for (size_t i = key.pos_range().first; i < key.pos_range().second; ++i) {
-    pos_child.edges_.push_back(parent.edge(i % parent.vertex_count()));
+  for (size_t i = pos_range().first; i < pos_range().second; ++i) {
+    pos_child.edges_.push_back(MakeForward(parent_.edge(
+            i % parent_.vertex_count())));
   }
 
-  if (!key.info_.has_new_shared_point1) {
+  if (!info_.has_new_shared_point1) {
     // The range [pos_range.second, neg_range.first) is non-empty, holds
     // exactly 1 vertex, and is shared between the negative and positive
     // children.
     pos_child.edges_.emplace_back(
-        parent.vertex(key.pos_range().second % parent.vertex_count()),
-        -key.info_.new_line);
-    neg_child.edges_.push_back(parent.edge(
-          key.pos_range().second % parent.vertex_count()));
+        parent_.vertex(pos_range().second % parent_.vertex_count()),
+        -info_.new_line);
+    neg_child.edges_.push_back(MakeForward(parent_.edge(
+          pos_range().second % parent_.vertex_count())));
   } else {
-    size_t last_pos_index = (key.pos_range().second +
-                             parent.vertex_count() - 1) %
-                            parent.vertex_count();
-    pos_child.edges_.emplace_back(key.info_.new_shared_point1,
-                                  -key.info_.new_line);
-    neg_child.edges_.emplace_back(key.info_.new_shared_point1,
-                                  parent.edge(last_pos_index).line);
+    size_t last_pos_index = (pos_range().second +
+                             parent_.vertex_count() - 1) %
+                            parent_.vertex_count();
+    pos_child.edges_.emplace_back(info_.new_shared_point1,
+                                  -MakeForward(info_.new_line));
+    neg_child.edges_.emplace_back(
+        MakeForward(info_.new_shared_point1),
+        MakeForward(parent_.edge(last_pos_index).line));
   }
 }
 
