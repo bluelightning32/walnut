@@ -894,7 +894,7 @@ TEST(ConvexPolygon, ConvertVertexData) {
   EXPECT_TRUE(polygon.vertex_data(0).on_split);
 }
 
-using FindSplitRangesFunc = SplitRanges (ConvexPolygon<32>::*)(
+using FindSplitRangesFunc = ConvexPolygonSplitRanges (ConvexPolygon<32>::*)(
     const HalfSpace2<32, 32>&, int) const;
 
 // Overload the << operator for FindSplitRangesFunc so that Google Test doesn't
@@ -941,7 +941,7 @@ TEST_P(ConvexPolygonFindSplitRanges, OnPosSide) {
       Point3<32> p2(-1, 0, 0);
       PluckerLine<> line(p1, p2);
 
-      SplitRanges indices =
+      ConvexPolygonSplitRanges indices =
         (polygon.*GetParam())(line.Project2D(/*drop_dimension=*/2),
                               /*drop_dimension=*/2);
       EXPECT_FALSE(indices.ShouldEmitNegativeChild());
@@ -960,7 +960,7 @@ TEST_P(ConvexPolygonFindSplitRanges, OnPosSide) {
       Point3<32> p2(0, 0, 0);
       PluckerLine<> line(p1, p2);
 
-      SplitRanges indices =
+      ConvexPolygonSplitRanges indices =
         (polygon.*GetParam())(line.Project2D(/*drop_dimension=*/2),
                               /*drop_dimension=*/2);
       EXPECT_FALSE(indices.ShouldEmitNegativeChild());
@@ -996,7 +996,7 @@ TEST_P(ConvexPolygonFindSplitRanges, AtExistingVertices) {
 
   // Run it in a loop a few times to get a sense of how fast the
   // function is from the overall test time.
-  SplitRanges indices;
+  ConvexPolygonSplitRanges indices;
   for (int i = 0; i < 10000; ++i) {
     indices =
       (polygon.*GetParam())(line.Project2D(/*drop_dimension=*/2),
@@ -1047,7 +1047,7 @@ TEST_P(ConvexPolygonFindSplitRanges, AtNewVertices) {
       line = PluckerLine<>(n[0], n[1]);
     }
 
-    SplitRanges indices =
+    ConvexPolygonSplitRanges indices =
       (polygon.*GetParam())(line.Project2D(drop_dimension),
                             drop_dimension);
     EXPECT_TRUE(indices.ShouldEmitNegativeChild());

@@ -105,7 +105,7 @@ struct ConvexPolygonEdge : private VertexDataTemplate {
 
 // Stores information about which vertex indexes should be included in the
 // child ConvexPolygons created from a split.
-struct SplitRanges {
+struct ConvexPolygonSplitRanges {
   bool IsValid() const {
     if (!(neg_range.first <= neg_range.second)) return false;
 
@@ -142,7 +142,7 @@ struct SplitRanges {
 // Stores information about how to build the ConvexPolygons on both sides of a
 // plane.
 template <int point3_bits_template = 32>
-struct SplitInfo {
+struct ConvexPolygonSplitInfo {
   using HomoPoint3Rep = HomoPoint3<(point3_bits_template - 1)*7 + 10,
                              (point3_bits_template - 1)*6 + 10>;
   using LineRep = typename PluckerLineFromPlanesFromPoint3sBuilder<
@@ -161,7 +161,7 @@ struct SplitInfo {
            !ranges.ShouldEmitPositiveChild();
   }
 
-  SplitRanges ranges;
+  ConvexPolygonSplitRanges ranges;
 
   // A line that should used for the new edge in the negative child. -new_line
   // should be used for the positive child.
@@ -192,7 +192,7 @@ class ConvexPolygon {
   using Point3Rep = Point3<point3_bits_template>;
   using VertexData = VertexDataTemplate;
   using EdgeRep = ConvexPolygonEdge<point3_bits_template, VertexDataTemplate>;
-  using SplitInfoRep = SplitInfo<point3_bits_template>;
+  using SplitInfoRep = ConvexPolygonSplitInfo<point3_bits_template>;
 
   // Stores information about how to build the ConvexPolygons on both sides of
   // a plane.
@@ -664,7 +664,7 @@ class ConvexPolygon {
   // ConvexPolgyons with many vertices, but a regular linear search is faster
   // for ConvexPolygons with fewer vertices (roughly 10 or fewer vertices).
   template <int vector_bits, int dist_bits>
-  SplitRanges FindSplitRangesBisect(
+  ConvexPolygonSplitRanges FindSplitRangesBisect(
       const HalfSpace2<vector_bits, dist_bits>& half_space2,
       int drop_dimension) const;
 
@@ -682,7 +682,7 @@ class ConvexPolygon {
   // ConvexPolgyons with few vertices, but a bisect search is faster for
   // ConvexPolygons with more vertices (roughly 10 or more vertices).
   template <int vector_bits, int dist_bits>
-  SplitRanges FindSplitRangesLinear(
+  ConvexPolygonSplitRanges FindSplitRangesLinear(
       const HalfSpace2<vector_bits, dist_bits>& half_space2,
       int drop_dimension) const;
 
@@ -1045,7 +1045,8 @@ ConvexPolygon<point3_bits, VertexData>::GetSplitInfo(
 
 template <int point3_bits, typename VertexData>
 template <int vector_bits, int dist_bits>
-SplitRanges ConvexPolygon<point3_bits, VertexData>::FindSplitRangesBisect(
+ConvexPolygonSplitRanges
+ConvexPolygon<point3_bits, VertexData>::FindSplitRangesBisect(
     const HalfSpace2<vector_bits, dist_bits>& half_space2,
     int drop_dimension) const {
   assert(!plane().normal().components()[drop_dimension].IsZero());
@@ -1062,7 +1063,7 @@ SplitRanges ConvexPolygon<point3_bits, VertexData>::FindSplitRangesBisect(
     // The source polygon is entirely in the positive half-space. Some of the
     // vertices may be coincident with the plane. The first such coincident
     // vertex index (if any) is neg_side_vertex.second.
-    SplitRanges indices;
+    ConvexPolygonSplitRanges indices;
     size_t index = neg_side_vertex.second;
     indices.pos_range.second = index + vertex_count();
 
@@ -1088,7 +1089,7 @@ SplitRanges ConvexPolygon<point3_bits, VertexData>::FindSplitRangesBisect(
     // The source polygon is entirely in the negative half-space. Some of the
     // vertices may be coincident with the plane. The first such coincident
     // vertex index (if any) is pos_side_vertex.second.
-    SplitRanges indices;
+    ConvexPolygonSplitRanges indices;
     size_t index = pos_side_vertex.second;
     indices.neg_range.second = index + vertex_count();
 
@@ -1113,7 +1114,7 @@ SplitRanges ConvexPolygon<point3_bits, VertexData>::FindSplitRangesBisect(
       half_space2, drop_dimension, neg_side_vertex.second,
       pos_side_vertex.second, /*pos_side_type=*/1);
 
-  SplitRanges indices;
+  ConvexPolygonSplitRanges indices;
 
   indices.neg_range.first = pos_before_split.second + 1;
   indices.neg_range.second = GetGreaterCycleIndex(pos_before_split.second,
@@ -1129,7 +1130,8 @@ SplitRanges ConvexPolygon<point3_bits, VertexData>::FindSplitRangesBisect(
 
 template <int point3_bits, typename VertexData>
 template <int vector_bits, int dist_bits>
-SplitRanges ConvexPolygon<point3_bits, VertexData>::FindSplitRangesLinear(
+ConvexPolygonSplitRanges
+ConvexPolygon<point3_bits, VertexData>::FindSplitRangesLinear(
     const HalfSpace2<vector_bits, dist_bits>& half_space2,
     int drop_dimension) const {
   assert(!plane().normal().components()[drop_dimension].IsZero());
@@ -1151,7 +1153,7 @@ SplitRanges ConvexPolygon<point3_bits, VertexData>::FindSplitRangesLinear(
       if (initial_compare != 0) break;
       ++index;
     }
-    SplitRanges result;
+    ConvexPolygonSplitRanges result;
     std::pair<size_t, size_t>* first_side;
     std::pair<size_t, size_t>* second_side;
     if (initial_compare < 0) {
@@ -1213,7 +1215,7 @@ SplitRanges ConvexPolygon<point3_bits, VertexData>::FindSplitRangesLinear(
   }
 
   // The ConvexPolygon started with a vertex not on the line.
-  SplitRanges result;
+  ConvexPolygonSplitRanges result;
   std::pair<size_t, size_t>* first_side;
   std::pair<size_t, size_t>* second_side;
   if (initial_compare < 0) {
