@@ -969,8 +969,9 @@ ConvexPolygon<point3_bits, VertexData>::GetSplitInfo(
 
   int flip = plane().normal().components()[drop_dimension()].GetAbsMult();
   PluckerLineRep line = PluckerLineBuilder::Build(
-      plane_, HalfSpace3<vector_bits, dist_bits>(half_space.normal() * flip,
-                                                 half_space.d() * flip));
+      HalfSpace3<vector_bits, dist_bits>(half_space.normal() * flip,
+                                         half_space.d() * flip), plane_);
+
   if (!line.IsValid()) {
     // half_space is parallel to plane_.
     int half_space_abs_mult =

@@ -1067,8 +1067,7 @@ TEST_P(ConvexPolygonFindSplitRanges, AtNewVerticesXPlane) {
   //  v       |       |
   // p[0] ---------> p[1]
   //
-  Point3<32> p[4] =
-  {
+  Point3<32> p[4] = {
     Point3<32>(0, 0, 10),
     Point3<32>(2, 0, 10),
     Point3<32>(2, 1, 10),
@@ -1088,6 +1087,9 @@ TEST_P(ConvexPolygonFindSplitRanges, AtNewVerticesXPlane) {
   EXPECT_EQ(indices.neg_range.second % polygon.vertex_count(), 1);
   EXPECT_EQ(indices.pos_range.first, 1);
   EXPECT_EQ(indices.pos_range.second, 3);
+  EXPECT_GT(line.Project2D(polygon.drop_dimension()).Compare(
+        polygon.vertex(indices.pos_range.first).DropDimension(
+          polygon.drop_dimension())), 0);
 }
 
 INSTANTIATE_TEST_SUITE_P(, ConvexPolygonFindSplitRanges,
@@ -1176,7 +1178,7 @@ TEST(ConvexPolygon, SplitAtExistingVertices) {
   Point3<32> pos_side_p[] = { p[0], p[2], p[3] };
 
   Point3<32> above(0, 0, 11);
-  HalfSpace3<> half_space(p[0], p[2], above);
+  HalfSpace3<> half_space(p[0], above, p[2]);
 
   ConvexPolygon<> polygon(MakeConvexPolygon(p));
   ConvexPolygon<> expected_neg_side(MakeConvexPolygon(neg_side_p));
@@ -1220,7 +1222,52 @@ TEST(ConvexPolygon, SplitAtExistingVerticesCW) {
   Point3<32> pos_side_p[] = { p[0], p[1], p[2] };
 
   Point3<32> above(0, 0, 11);
-  HalfSpace3<> half_space(p[0], p[2], above);
+  HalfSpace3<> half_space(p[0], above, p[2]);
+
+  ConvexPolygon<> polygon(MakeConvexPolygon(p));
+  ConvexPolygon<> expected_neg_side(MakeConvexPolygon(neg_side_p));
+  ConvexPolygon<> expected_pos_side(MakeConvexPolygon(pos_side_p));
+
+  ConvexPolygon<> neg_side;
+  ConvexPolygon<> pos_side;
+  SplitHelper(polygon, half_space, neg_side, pos_side);
+  EXPECT_EQ(neg_side, expected_neg_side);
+  EXPECT_EQ(pos_side, expected_pos_side);
+
+  SplitHelper(polygon, -half_space, pos_side, neg_side);
+  EXPECT_EQ(neg_side, expected_neg_side);
+  EXPECT_EQ(pos_side, expected_pos_side);
+}
+
+TEST(ConvexPolygon, SplitAtNewVertices) {
+  //
+  // p[3] <--------- p[2]
+  //  |       |       ^
+  //  |       |pos->  |
+  //  v       |       |
+  // p[0] ---------> p[1]
+  //
+  Point3<32> p[4] = {
+    Point3<32>(0, 0, 10),
+    Point3<32>(2, 0, 10),
+    Point3<32>(2, 1, 10),
+    Point3<32>(0, 1, 10),
+  };
+
+  Point3<32> neg_side_p[] = {
+    p[0],
+    Point3<32>(1, 0, 10), 
+    Point3<32>(1, 1, 10), 
+    p[3],
+  };
+  Point3<32> pos_side_p[] = {
+    Point3<32>(1, 0, 10), 
+    p[1],
+    p[2],
+    Point3<32>(1, 1, 10), 
+  };
+
+  HalfSpace3<> half_space(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
 
   ConvexPolygon<> polygon(MakeConvexPolygon(p));
   ConvexPolygon<> expected_neg_side(MakeConvexPolygon(neg_side_p));
