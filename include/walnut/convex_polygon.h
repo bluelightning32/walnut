@@ -1249,7 +1249,8 @@ ConvexPolygon<point3_bits, VertexData>::FindSplitRangesLinear(
   assert(compare != 0);
   assert((initial_compare ^ compare) < 0);
   second_side->first = index;
-  // Keep looping until the next on line vertex is found.
+  // Keep looping until a vertex is found that is on the first side or touching
+  // the line.
   while (true) {
     ++index;
     if (index == vertex_count()) {
@@ -1257,20 +1258,20 @@ ConvexPolygon<point3_bits, VertexData>::FindSplitRangesLinear(
       return result;
     }
     compare = half_space2.Compare(vertex(index).DropDimension(drop_dimension));
-    if (compare == 0) {
+    if (compare == 0 || (initial_compare ^ compare) >= 0) {
+      second_side->second = index;
       break;
     }
   }
 
   // Keep looping until the next vertex back on the first side is found.
-  while (true) {
+  while (compare == 0) {
     ++index;
     if (index == vertex_count()) {
       return result;
     }
     compare =
       half_space2.Compare(vertex(index).DropDimension(drop_dimension));
-    if (compare != 0) break;
   }
   assert((initial_compare ^ compare) >= 0);
   first_side->first = index;

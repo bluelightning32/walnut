@@ -1059,6 +1059,37 @@ TEST_P(ConvexPolygonFindSplitRanges, AtNewVertices) {
   }
 }
 
+TEST_P(ConvexPolygonFindSplitRanges, AtNewVerticesXPlane) {
+  //
+  // p[3] <--------- p[2]
+  //  |       |       ^
+  //  |       |pos->  |
+  //  v       |       |
+  // p[0] ---------> p[1]
+  //
+  Point3<32> p[4] =
+  {
+    Point3<32>(0, 0, 10),
+    Point3<32>(2, 0, 10),
+    Point3<32>(2, 1, 10),
+    Point3<32>(0, 1, 10),
+  };
+
+  ConvexPolygon<> polygon = MakeConvexPolygon(p);
+  HalfSpace3<> half_space(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
+  PluckerLine<> line(half_space, polygon.plane());
+
+  ConvexPolygonSplitRanges indices =
+    (polygon.*GetParam())(line.Project2D(polygon.drop_dimension()),
+                          polygon.drop_dimension());
+  EXPECT_TRUE(indices.ShouldEmitNegativeChild());
+  EXPECT_TRUE(indices.ShouldEmitPositiveChild());
+  EXPECT_EQ(indices.neg_range.first % polygon.vertex_count(), 3);
+  EXPECT_EQ(indices.neg_range.second % polygon.vertex_count(), 1);
+  EXPECT_EQ(indices.pos_range.first, 1);
+  EXPECT_EQ(indices.pos_range.second, 3);
+}
+
 INSTANTIATE_TEST_SUITE_P(, ConvexPolygonFindSplitRanges,
     testing::Values(&ConvexPolygon<32>::FindSplitRangesBisect<32, 32>,
                     &ConvexPolygon<32>::FindSplitRangesLinear<32, 32>));
