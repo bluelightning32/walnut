@@ -148,7 +148,7 @@ class ConvexPolygon {
     ConvexPolygon CreateNegativeChild() {
       assert(ShouldEmitNegativeChild());
       assert(!ShouldEmitPositiveChild());
-      return ConvexPolygon(std::forward<Parent>);
+      return ConvexPolygon(std::forward<Parent>(parent_));
     }
 
     // Creates the positive child from the split.
@@ -163,7 +163,7 @@ class ConvexPolygon {
     ConvexPolygon CreatePositiveChild() {
       assert(!ShouldEmitNegativeChild());
       assert(ShouldEmitPositiveChild());
-      return ConvexPolygon(std::forward<Parent>);
+      return ConvexPolygon(std::forward<Parent>(parent_));
     }
 
     // Creates the on plane child from the split.
@@ -175,8 +175,8 @@ class ConvexPolygon {
     // destructor or assignment operator on the parent. Also if `Parent` is an
     // rvalue reference, then this function can only be called once.
     ConvexPolygon CreateOnPlaneChild() {
-      assert(!ShouldEmitOnPlane());
-      return ConvexPolygon(std::forward<Parent>);
+      assert(ShouldEmitOnPlane());
+      return ConvexPolygon(std::forward<Parent>(parent_));
     }
 
     // Creates both split children.
