@@ -17,9 +17,10 @@ ConvexPolygon<std::iterator_traits<
     decltype(std::begin(vertices))>::value_type::component_bits> {
   using Iterator = decltype(std::begin(vertices));
   using Point3Rep = typename std::iterator_traits<Iterator>::value_type;
-  using ConvexPolygonRep = ConvexPolygon<Point3Rep::component_bits>;
+  using Factory = ConvexPolygonFactory<Point3Rep>;
+  using ConvexPolygonRep = typename Factory::ConvexPolygonRep;
 
-  class CollectOne : public ConvexPolygonRep::Factory {
+  class CollectOne : public Factory {
    public:
     CollectOne() = default;
 

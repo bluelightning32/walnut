@@ -8,7 +8,7 @@ namespace walnut {
 using testing::ElementsAre;
 using testing::IsEmpty;
 
-template <typename Factory = ConvexPolygon<32>::Factory>
+template <typename Factory = ConvexPolygonFactory<>>
 class ResultCollector : public Factory {
  public:
   using ConvexPolygonRep = typename Factory::ConvexPolygonRep;
@@ -289,7 +289,7 @@ TEST(ConvexPolygonFactory, VertexData) {
     Point3WithString(1, 1, 10, "p2"),
   };
 
-  ResultCollector<ConvexPolygonRep::FactoryWithVertexData> collector;
+  ResultCollector<ConvexPolygonFactory<Point3WithString>> collector;
   collector.Build(std::begin(input), std::end(input));
   ASSERT_THAT(collector.GetSortedPolygonVertices(), ElementsAre(
         std::vector<Point3<32>>{input[0], input[1], input[2]}
@@ -319,7 +319,7 @@ TEST(ConvexPolygonFactory, GetPlaneOrientationAfterProjection) {
 
     EXPECT_NE(cross.components()[drop_dimension], 0);
     int orientation =
-      ConvexPolygon<32>::Factory::GetPlaneOrientationAfterProjection(
+      ConvexPolygonFactory<Point3<32>>::GetPlaneOrientationAfterProjection(
         cross, drop_dimension);
 
     auto cross2 = (p[0] - p[1]).DropDimension(drop_dimension).Cross(
