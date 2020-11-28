@@ -282,7 +282,7 @@ TEST(ConvexPolygonFactory, VertexData) {
   };
   using ConvexPolygonRep = ConvexPolygon<32, NoDefaultConstructor>;
   using ConvexPolygonEdgeRep = ConvexPolygonRep::EdgeRep;
-  using Point3WithString = ConvexPolygonEdgeRep::Point3WithVertexData;
+  using Point3WithString = Point3WithVertexData<32, NoDefaultConstructor>;
   Point3WithString input[] = {
     Point3WithString(0, 0, 10, "p0"),
     Point3WithString(1, 0, 10, "p1"),

@@ -235,7 +235,7 @@ class ConvexPolygon {
   //
   // Include convex_polygon_factory.h to use this.
   using FactoryWithVertexData =
-    GenericFactory<typename EdgeRep::Point3WithVertexData>;
+    GenericFactory<Point3WithVertexData<point3_bits_template, VertexData>>;
 
   using HomoPoint3Rep = HomoPoint3<(point3_bits_template - 1)*7 + 10,
                              (point3_bits_template - 1)*6 + 10>;

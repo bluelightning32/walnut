@@ -6,24 +6,9 @@
 #include "walnut/homo_point3.h"
 #include "walnut/plucker_line.h"
 #include "walnut/point3.h"
+#include "walnut/point3_with_vertex_data.h"
 
 namespace walnut {
-
-struct NoVertexData {
-  constexpr NoVertexData() = default;
-  template <typename Other>
-  constexpr explicit NoVertexData(const Other&) { }
-
-  template <typename Other>
-  constexpr bool operator!=(const Other& other) const {
-    return false;
-  }
-
-  template <typename Other>
-  constexpr NoVertexData& operator=(const Other& other) {
-    return *this;
-  }
-};
 
 // An edge of a ConvexPolygon
 template <int point3_bits_template = 32,
@@ -35,17 +20,6 @@ struct ConvexPolygonEdge : private VertexDataTemplate {
   using LineRep = typename PluckerLineFromPlanesFromPoint3sBuilder<
     point3_bits_template>::PluckerLineRep;
   using VertexData = VertexDataTemplate;
-
-  // This is used by FactoryWithVertexData to construct a ConvexPolygon and
-  // specify the inital values of the vertex data.
-  struct Point3WithVertexData : public Point3Rep {
-    using Point3Rep::Point3Rep;
-
-    Point3WithVertexData(int x, int y, int z, VertexData data) :
-      Point3Rep(x, y, z), data(data) { }
-
-    VertexData data;
-  };
 
   // VertexData must be default-constructible to use this constructor.
   template <int other_point3_bits>
@@ -60,8 +34,10 @@ struct ConvexPolygonEdge : private VertexDataTemplate {
   ConvexPolygonEdge(const HomoPoint3Rep& vertex, const LineRep& line) :
     vertex(vertex), line(line) { }
 
-  ConvexPolygonEdge(const Point3WithVertexData& vertex,
-                    const Point3WithVertexData& next_vertex) :
+  template <int input_point3_bits = point3_bits_template>
+  ConvexPolygonEdge(const Point3WithVertexData<input_point3_bits,
+                                               VertexData>& vertex,
+                    const Point3<input_point3_bits>& next_vertex) :
     VertexData(vertex.data), vertex(vertex), line(vertex, next_vertex) { }
 
   template <int other_point3_bits, typename OtherVertexData>
