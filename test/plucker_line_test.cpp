@@ -190,6 +190,64 @@ TEST(PluckerLine, IntersectPlane) {
   EXPECT_TRUE(line.IsCoincident(intersect_point));
 }
 
+template <int point3_bits>
+void TestIntersectPlanes() {
+  const BigInt<point3_bits> min_int = BigInt<point3_bits>::min_value();
+  const BigInt<point3_bits> min_plus_1 = min_int + BigInt<point3_bits>(1);
+  const BigInt<point3_bits> max_int = BigInt<point3_bits>::max_value();
+
+  Point3<point3_bits> plane1_points[3] = {
+    Point3<point3_bits>{min_plus_1, min_int, min_int},
+    Point3<point3_bits>{min_int, max_int, min_int},
+    Point3<point3_bits>{min_int, min_int, max_int},
+  };
+
+  using HalfSpace3Builder = HalfSpace3FromPoint3Builder<point3_bits>;
+  using HalfSpace3Rep = typename HalfSpace3Builder::HalfSpace3Rep;
+  HalfSpace3Rep plane1(plane1_points[0], plane1_points[1], plane1_points[2]);
+  for (int i = 0; i < 3; ++i) {
+    ASSERT_LT(HalfSpace3Builder::normal_component_min(), 0);
+    ASSERT_GE(plane1.normal().components()[i],
+              HalfSpace3Builder::normal_component_min());
+    ASSERT_LE(plane1.normal().components()[i],
+              HalfSpace3Builder::normal_component_max());
+  }
+  ASSERT_GE(plane1.d(), HalfSpace3Builder::dist_min());
+  ASSERT_LE(plane1.d(), HalfSpace3Builder::dist_max());
+
+  Point3<point3_bits> plane2_points[3] = {
+    Point3<point3_bits>{min_int, max_int, min_int},
+    Point3<point3_bits>{max_int, max_int, min_int},
+    Point3<point3_bits>{min_int, max_int, max_int},
+  };
+  HalfSpace3Rep plane2(Vector3<>(0, 1, 0), max_int);
+  ASSERT_GE(plane2.d(), HalfSpace3Builder::dist_min());
+  ASSERT_LE(plane2.d(), HalfSpace3Builder::dist_max());
+
+  HalfSpace3Rep plane3(Vector3<>(0, 0, 1), max_int);
+  ASSERT_GE(plane3.d(), HalfSpace3Builder::dist_min());
+  ASSERT_LE(plane3.d(), HalfSpace3Builder::dist_max());
+
+  using PluckerLineBuilder =
+    PluckerLineFromPlanesFromPoint3sBuilder<point3_bits>;
+  using PluckerLineRep = typename PluckerLineBuilder::PluckerLineRep;
+  const PluckerLineRep line(plane1, plane2);
+
+  auto intersection = line.Intersect(plane3);
+  EXPECT_TRUE(line.IsCoincident(intersection));
+  EXPECT_TRUE(plane1.IsCoincident(intersection));
+  EXPECT_TRUE(plane2.IsCoincident(intersection));
+  EXPECT_TRUE(plane3.IsCoincident(intersection));
+}
+
+TEST(PluckerLine, IntersectPlanes64) {
+  TestIntersectPlanes<64>();
+}
+
+TEST(PluckerLine, IntersectPlanes128) {
+  TestIntersectPlanes<128>();
+}
+
 TEST(PluckerLine, Project2D) {
   const Point3<> p1(17, 23, 31);
   const Point3<> p2(131, 163, 197);
