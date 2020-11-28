@@ -170,6 +170,13 @@ class Vector3 {
     return components_[0] == 0 && components_[1] == 0 && components_[2] == 0;
   }
 
+  int GetFirstNonzeroDimension() const {
+    for (int i = 0; i < 3; ++i) {
+      if (!components()[i].IsZero()) return i;
+    }
+    return -1;
+  }
+
   Vector2<component_bits> DropDimension(int drop_dimension) const {
     return Vector2<component_bits>(components()[(drop_dimension + 1) % 3],
                                    components()[(drop_dimension + 2) % 3]);

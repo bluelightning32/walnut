@@ -32,17 +32,10 @@ class ConvexPolygonFactory :
     while (begin != end) {
       planar_range.Build(begin, end);
       plane_ = planar_range.plane();
-      int monotone_dimension;
-      if (plane_.x() != 0) {
-        drop_dimension_ = 0;
-        monotone_dimension = 1;
-      } else if (plane_.y() != 0) {
-        drop_dimension_ = 1;
-        monotone_dimension = 0;
-      } else {
-        drop_dimension_ = 2;
-        monotone_dimension = 0;
-      }
+      drop_dimension_ = plane_.normal().GetFirstNonzeroDimension();
+      // drop_dimension_ is -1 if the points are collinear.
+      if (drop_dimension_ == -1) continue;
+      int monotone_dimension = (~drop_dimension_) & 1;
       plane_orientation_ =
         GetPlaneOrientationAfterProjection(plane_.normal(), drop_dimension_);
       typename PlanarRangeRep::OutputIterator planar_begin =
