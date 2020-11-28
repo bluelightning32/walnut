@@ -8,14 +8,16 @@
 
 namespace walnut {
 
-template <int point3_bits_template, typename VertexDataTemplate>
-template <typename Point3RepTemplate>
-class ConvexPolygon<point3_bits_template, VertexDataTemplate>::GenericFactory :
-  private OrientingMonotoneDecomposer<Point3RepTemplate> {
+template <typename InputPoint3Template,
+          typename ConvexPolygonTemplate = ConvexPolygon<
+            InputPoint3Template::component_bits,
+            typename GetVertexData<InputPoint3Template>::VertexData>
+         >
+class ConvexPolygonFactory :
+  private OrientingMonotoneDecomposer<InputPoint3Template> {
  public:
-  using Point3Rep = Point3RepTemplate;
-  using VertexData = VertexDataTemplate;
-  using ConvexPolygonRep = ConvexPolygon<point3_bits_template, VertexData>;
+  using InputPoint3 = InputPoint3Template;
+  using ConvexPolygonRep = ConvexPolygonTemplate;
   using HalfSpace3Rep = typename ConvexPolygonRep::HalfSpace3Rep;
 
   // `Point3Iterator` should produce Point3Reps.
@@ -83,13 +85,13 @@ class ConvexPolygon<point3_bits_template, VertexDataTemplate>::GenericFactory :
     return -cross_product.components()[drop_dimension].GetAbsMult();
   }
 
-  static constexpr int point3_bits = point3_bits_template;
+  static constexpr int point3_bits = InputPoint3Template::component_bits;
  
  protected:
-  virtual void Emit(ConvexPolygon&& polygon) = 0;
+  virtual void Emit(ConvexPolygonRep&& polygon) = 0;
 
  private:
-  using Parent = OrientingMonotoneDecomposer<Point3Rep>;
+  using Parent = OrientingMonotoneDecomposer<InputPoint3>;
 
   void EmitOriented(int orientation,
                     typename Parent::const_reverse_iterator range1_begin,
@@ -100,10 +102,10 @@ class ConvexPolygon<point3_bits_template, VertexDataTemplate>::GenericFactory :
       // Skip collinear polygons
       return;
     }
-    std::vector<ConvexPolygonRep::EdgeRep> vertices;
+    std::vector<typename ConvexPolygonRep::EdgeRep> vertices;
     vertices.reserve((range1_end - range1_begin) + (range2_end - range2_begin));
-    const Point3Rep* prev;
-    const Point3Rep* first;
+    const InputPoint3* prev;
+    const InputPoint3* first;
     if (range1_begin != range1_end) {
       auto pos1 = range1_begin;
       prev = &*pos1;
@@ -135,10 +137,10 @@ class ConvexPolygon<point3_bits_template, VertexDataTemplate>::GenericFactory :
     // counter-clockwise polygon. If both are -1, then plane_ is already
     // correct, and they should cancel out.
     const int flip_orientation = (orientation ^ plane_orientation_) | 1;
-    Emit(ConvexPolygon(HalfSpace3Rep(plane_.normal() * flip_orientation,
-                                     plane_.d() * flip_orientation),
-                       drop_dimension_,
-                       std::move(vertices)));
+    Emit(ConvexPolygonRep(HalfSpace3Rep(plane_.normal() * flip_orientation,
+                                        plane_.d() * flip_orientation),
+                          drop_dimension_,
+                          std::move(vertices)));
   }
 
   int drop_dimension_;

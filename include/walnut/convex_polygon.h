@@ -89,6 +89,10 @@ struct ConvexPolygonSplitInfo {
   HomoPoint3Rep new_shared_point2;
 };
 
+template <typename InputPoint3Template,
+          typename ConvexPolygonTemplate>
+class ConvexPolygonFactory;
+
 // A 2D ConvexPolygon embedded in R^3. The vertices are stored using homogeneous
 // coordinates.
 //
@@ -223,7 +227,8 @@ class ConvexPolygon {
 
   // Defined in convex_polygon_factory.h. Use the alias `Factory` instead.
   template <typename Point3RepTemplate>
-  class GenericFactory;
+  using GenericFactory = ConvexPolygonFactory<Point3RepTemplate,
+                                              ConvexPolygon>;
 
   // A class to build ConvexPolygons from iterators that produce Point3s.
   // VertexData must be default-constructible to use this factory.
