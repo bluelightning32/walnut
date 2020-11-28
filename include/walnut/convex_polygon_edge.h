@@ -69,6 +69,11 @@ struct ConvexPolygonEdge : private VertexDataTemplate {
     return *this;
   }
 
+  bool IsValidState() const {
+    return vertex.IsValidState() && line.IsValidState() &&
+           line.IsCoincident(vertex);
+  }
+
   HomoPoint3Rep vertex;
   // This line starts at `vertex` and goes to the next vertex in the polygon.
   //

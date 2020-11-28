@@ -183,6 +183,10 @@ class HomoPoint3 {
     return !(*this == other);
   }
 
+  bool IsValidState() const {
+    return vector_from_origin_.IsValidState() && dist_denom_.IsValidState();
+  }
+
  private:
   VectorRep vector_from_origin_;
   DenomInt dist_denom_;

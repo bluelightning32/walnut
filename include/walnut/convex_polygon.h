@@ -264,10 +264,11 @@ class ConvexPolygon {
     if (plane().normal().components()[drop_dimension()].IsZero()) return false;
     const EdgeRep* prev_edge = &edges().back();
     for (const EdgeRep& edge : edges()) {
-      if (!edge.line.IsValidState()) return false;
+      if (!edge.IsValidState()) return false;
       if (!plane().IsCoincident(edge.vertex)) return false;
 
-      LineRep expected_line(prev_edge->vertex, edge.vertex);
+      PluckerLine<LineRep::d_bits * 2, LineRep::m_bits * 2> expected_line(
+          prev_edge->vertex, edge.vertex);
       if (prev_edge->line != expected_line) return false;
       if (!prev_edge->line.d().IsSameDir(expected_line.d())) return false;
 

@@ -33,11 +33,35 @@ struct RectangularPrism {
     return false;
   }
 
+  // Returns true if `p` is on the border (but still inside) of the prism.
+  template <int num_bits, int denom_bits>
+  bool IsOnBorder(const HomoPoint3<num_bits, denom_bits>& p) const {
+    if (!IsInside(p)) return false;
+    for (int i = 0; i < 3; ++i) {
+      const BigInt<num_bits>& p_comp = p.vector_from_origin().components()[i];
+      if (p_comp == min_point.components()[i] * p.w() ||
+          p_comp == max_point.components()[i] * p.w()) return true;
+    }
+    return false;
+  }
+
   // Returns true if `p` is inside the prism.
   bool IsInside(const Point3Rep& p) const {
     for (int i = 0; i < 3; ++i) {
       if (p.components()[i] < min_point.components()[i] ||
           p.components()[i] > max_point.components()[i]) return false;
+    }
+    return true;
+  }
+
+  // Returns true if `p` is inside the prism.
+  template <int num_bits, int denom_bits>
+  bool IsInside(const HomoPoint3<num_bits, denom_bits>& p) const {
+    const int mult = p.w().GetAbsMult();
+    for (int i = 0; i < 3; ++i) {
+      auto p_flipped = p.vector_from_origin().components()[i] * mult;
+      if (p_flipped < min_point.components()[i] * p.w() * mult ||
+          p_flipped > max_point.components()[i] * p.w() * mult) return false;
     }
     return true;
   }
