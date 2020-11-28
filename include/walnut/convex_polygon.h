@@ -266,6 +266,33 @@ class ConvexPolygon {
     plane_(other.plane()), drop_dimension_(other.drop_dimension()),
     edges_(other.edges().begin(), other.edges().end()) { }
 
+  ConvexPolygon(const HalfSpace3Rep& plane, int drop_dimension,
+                std::vector<EdgeRep> edges) :
+      plane_(plane), drop_dimension_(drop_dimension),
+      edges_(std::move(edges)) {
+    assert(IsValidState());
+  }
+
+  // Verifies the polygon is really convex
+  bool IsValidState() const {
+    if (vertex_count() == 0) return true;
+
+    if (!plane().IsValidState()) return false;
+    if (plane().normal().components()[drop_dimension()].IsZero()) return false;
+    const EdgeRep* prev_edge = &edges().back();
+    for (const EdgeRep& edge : edges()) {
+      if (!edge.line.IsValidState()) return false;
+      if (!plane().IsCoincident(edge.vertex)) return false;
+
+      LineRep expected_line(prev_edge->vertex, edge.vertex);
+      if (prev_edge->line != expected_line) return false;
+      if (!prev_edge->line.d().IsSameDir(expected_line.d())) return false;
+
+      prev_edge = &edge;
+    }
+    return true;
+  }
+
   // `VertexData` must be assignable from `OtherVertexData`.
   template <int other_point3_bits, typename OtherVertexData>
   ConvexPolygon& operator=(const ConvexPolygon<other_point3_bits,
@@ -668,11 +695,6 @@ class ConvexPolygon {
       int drop_dimension) const;
 
  private:
-  ConvexPolygon(const HalfSpace3Rep& plane, int drop_dimension,
-                std::vector<EdgeRep> edges) :
-    plane_(plane), drop_dimension_(drop_dimension),
-    edges_(std::move(edges)) { }
-
   // The plane that all of the vertices are in.
   HalfSpace3Rep plane_;
   // When this dimension is projected to 0, 'dropped', the vertices will not
