@@ -79,8 +79,8 @@ class HomoPoint3 {
 
   template <int other_num_bits, int other_denom_bits>
   HomoPoint3(const HomoPoint3<other_num_bits, other_denom_bits>& other) :
-    vector_from_origin_(other.vector_from_origin_),
-    dist_denom_(other.dist_denom_) { }
+    vector_from_origin_(other.vector_from_origin()),
+    dist_denom_(other.dist_denom()) { }
 
   template <int other_num_bits, int other_denom_bits>
   HomoPoint3(const BigInt<other_num_bits>& x,

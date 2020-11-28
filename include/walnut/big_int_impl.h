@@ -110,6 +110,13 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     return *this;
   }
 
+  constexpr BigIntImpl& operator = (BigIntWord value) {
+    used_ = static_cast<BigIntHalfWord>(value) == value ?
+      sizeof(BigIntHalfWord) : bytes_per_word;
+    words_[0] = value;
+    return *this;
+  }
+
   template <int other_max_words>
   constexpr BigIntImpl<max_words>& operator = (
       const BigUIntImpl<other_max_words>& other) {

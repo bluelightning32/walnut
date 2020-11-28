@@ -45,6 +45,11 @@ class BigInt {
     return *this;
   }
 
+  constexpr BigInt<bits>& operator = (BigIntWord other) {
+    rep_ = other;
+    return *this;
+  }
+
   static constexpr BigInt max_value() {
     return BigIntRep::max_value(
         /*set_last_word_bits=*/(bits - 1) % BigUIntWord::bits_per_word);

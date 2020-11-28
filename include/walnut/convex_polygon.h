@@ -98,7 +98,6 @@ template <int point3_bits_template = 32,
           typename VertexDataTemplate = NoVertexData>
 class ConvexPolygon {
  public:
-  using Point3Rep = Point3<point3_bits_template>;
   using VertexData = VertexDataTemplate;
   using EdgeRep = ConvexPolygonEdge<point3_bits_template, VertexDataTemplate>;
   using SplitInfoRep = ConvexPolygonSplitInfo<point3_bits_template>;
@@ -902,6 +901,8 @@ void
 ConvexPolygon<point3_bits, VertexData>::SplitKey<Parent>::CreateSplitChildren(
     ConvexPolygon& neg_child, ConvexPolygon& pos_child) {
   assert(ShouldEmitNegativeChild() && ShouldEmitPositiveChild());
+  assert(&neg_child != &parent_);
+  assert(&pos_child != &parent_);
 
   neg_child.edges_.clear();
   neg_child.edges_.reserve(neg_range().second - neg_range().first + 2);
@@ -909,10 +910,11 @@ ConvexPolygon<point3_bits, VertexData>::SplitKey<Parent>::CreateSplitChildren(
   neg_child.drop_dimension_ = parent_.drop_dimension_;
 
   pos_child.edges_.clear();
-  neg_child.edges_.reserve(pos_range().second - pos_range().first + 2);
+  pos_child.edges_.reserve(pos_range().second - pos_range().first + 2);
   pos_child.plane_ = MakeForward(parent_.plane_);
   pos_child.drop_dimension_ = parent_.drop_dimension_;
 
+  assert(neg_range().second - neg_range().first <= parent_.vertex_count());
   for (size_t i = neg_range().first; i < neg_range().second; ++i) {
     neg_child.edges_.push_back(MakeForward(parent_.edges_[
             i % parent_.vertex_count()]));
