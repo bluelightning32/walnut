@@ -560,13 +560,23 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
   constexpr void Negate() {
     bool carry = true;
     int i = 0;
+    const BigUIntWord old_last_word(words_[used_words() - 1]);
     for (i = 0; i < used_words(); ++i) {
       words_[i] = (~words_[i]).Add(carry, &carry);
     }
-    constexpr BigUIntWord min_word{std::numeric_limits<BigIntWord>::min()};
-    if (words_[i - 1] == min_word && i < max_words) {
-      // int_min was just negated and went back to int_min.
-      ++i;
+    // This will be 1 if the result switched signs, and 0 if the result kept
+    // the same sign.
+    const BigUIntWord sign_changed =
+      (old_last_word ^ words_[i - 1]) >> (bits_per_word - 1);
+    // carry is true if the result is 0.
+    if (!(sign_changed.low_uint32() | carry)) {
+      // The result kept the same sign, and the result isn't 0 (because carry
+      // is false). This means that *this was equal to min_value, and it just
+      // overflowed back to min_value. So allocate another word.
+      assert(i < max_words);
+      if (i < max_words) {
+        ++i;
+      }
     }
     used_ = i * bytes_per_word;
     Trim();

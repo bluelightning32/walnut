@@ -318,6 +318,12 @@ TEST(BigInt, MultiplyQuadPower2NegNeg) {
   }
 }
 
+TEST(BigInt, Negate0) {
+  const BigInt<128> a{0};
+  const BigInt<128> result = -a;
+  EXPECT_EQ(result, a);
+}
+
 TEST(BigInt, NegateInt32Min) {
   const BigInt<64> a{std::numeric_limits<int32_t>::min()};
   const BigInt<64> result = -a;
@@ -337,6 +343,13 @@ TEST(BigInt, NegateInt128Min) {
   const BigInt<192> result = -a;
   const BigInt<192> expected = BigInt<192>{1} << 127;
   EXPECT_EQ(result, expected);
+}
+
+TEST(BigInt, NegateInt128MaxExtraRoom) {
+  const BigInt<192> a = BigInt<128>::max_value();
+  const BigInt<192> result = -a;
+  EXPECT_LT(result, 0);
+  EXPECT_EQ(result - BigInt<192>(1), BigInt<128>::min_value());
 }
 
 TEST(BigInt, GetUIntAbsInt32Min) {
