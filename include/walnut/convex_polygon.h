@@ -634,8 +634,19 @@ class ConvexPolygon {
   // Returns information about how to build the positive and negative sides of
   // a ConvexPolygon split by a 3D half-space.
   //
-  // `GetSplitKey` should be called instead of this function. This function is
-  // only exposed for testing purposes.
+  // On the returned info, `ShouldEmitOnPlane`, `ShouldEmitNegativeChild`, and
+  // `ShouldEmitPositiveChild` indicate which sides of `half_space` the polygon
+  // is present on.
+  //
+  // If exactly one of `ShouldEmitOnPlane`, `ShouldEmitNegativeChild`, or
+  // `ShouldEmitPositiveChild` returns true, then the input polygon should be
+  // copied entirely to that child. For a negative or positive child, any
+  // vertex not within that range of the returned info is a vertex that touches
+  // the plane.
+  //
+  // Otherwise if `ShouldEmitNegativeChild` and `ShouldEmitPositiveChild` both
+  // return true, the info should be passed to `CreateSplitChildren` to create
+  // both children.
   template <int vector_bits, int dist_bits>
   SplitInfoRep GetSplitInfo(
       const HalfSpace3<vector_bits, dist_bits>& half_space) const;
@@ -675,6 +686,17 @@ class ConvexPolygon {
   ConvexPolygonSplitRanges FindSplitRangesLinear(
       const HalfSpace2<vector_bits, dist_bits>& half_space2,
       int drop_dimension) const;
+
+  void CreateSplitChildren(const SplitInfoRep& split, ConvexPolygon& neg_child,
+                           ConvexPolygon& pos_child) const {
+    return CreateSplitChildren(*this, split, neg_child, pos_child);
+  }
+
+  void CreateSplitChildren(SplitInfoRep&& split, ConvexPolygon& neg_child,
+                           ConvexPolygon& pos_child) && {
+    return CreateSplitChildren(std::move(*this), std::move(split), neg_child,
+                               pos_child);
+  }
 
  private:
   // Creates both split children.
