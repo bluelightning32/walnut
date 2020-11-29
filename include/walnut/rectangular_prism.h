@@ -11,7 +11,6 @@ struct RectangularPrism {
   using Point3Rep = Point3<point3_bits_template>;
   using HalfSpace3Rep =
     typename HalfSpace3FromPoint3Builder<point3_bits_template>::HalfSpace3Rep;
-  using ConvexPolygonRep = ConvexPolygon<point3_bits_template>;
 
   static constexpr int point3_bits = point3_bits_template;
 
@@ -68,6 +67,7 @@ struct RectangularPrism {
 
   // Returns a ConvexPolygon for the intersection of this rectangular prism and
   // a plane (represented as a HalfSpace3).
+  template <typename ConvexPolygonRep = ConvexPolygon<point3_bits_template>>
   ConvexPolygonRep IntersectPlane(const HalfSpace3Rep& plane) const;
 
   // This point is considered part of the prism
@@ -77,8 +77,8 @@ struct RectangularPrism {
 };
 
 template <int point3_bits_template>
-typename RectangularPrism<point3_bits_template>::ConvexPolygonRep
-RectangularPrism<point3_bits_template>::IntersectPlane(
+template <typename ConvexPolygonRep>
+ConvexPolygonRep RectangularPrism<point3_bits_template>::IntersectPlane(
     const HalfSpace3Rep& plane) const {
   int drop_dimension = plane.normal().GetFirstNonzeroDimension();
   if (drop_dimension == -1) {

@@ -1,5 +1,7 @@
 #include "walnut/rectangular_prism.h"
 
+#include <string>
+
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -169,6 +171,33 @@ TEST(RectangularPrism, IntersectPlaneLowSlopeMin128) {
 
 TEST(RectangularPrism, IntersectPlaneLowSlopeMin256) {
   TestIntersectPlaneLowSlopeMin<256>();
+}
+
+TEST(RectangularPrism, IntersectPlaneZUpWithData) {
+  RectangularPrism<> prism(5);
+
+  using ConvexPolygonRep = ConvexPolygon<32, std::string>;
+  ConvexPolygonRep result =
+    prism.IntersectPlane<ConvexPolygonRep>(HalfSpace3<>(/*x=*/0,
+                                                        /*y=*/0,
+                                                        /*z=*/1,
+                                                        /*d=*/0));
+  result.SortVertices();
+  std::vector<HomoPoint3<>> vertices;
+  for (int i = 0; i < result.vertex_count(); ++i) {
+    vertices.push_back(result.vertex(i));
+    EXPECT_EQ(result.vertex_data(i), "");
+    result.vertex_data(i) = std::to_string(i);
+  }
+  for (int i = 0; i < result.vertex_count(); ++i) {
+    EXPECT_EQ(result.vertex_data(i), std::to_string(i));
+  }
+  EXPECT_THAT(vertices, ElementsAre(
+          Point3<32>{-5, -5, 0},
+          Point3<32>{5, -5, 0},
+          Point3<32>{5, 5, 0},
+          Point3<32>{-5, 5, 0}
+        ));
 }
 
 }  // walnut
