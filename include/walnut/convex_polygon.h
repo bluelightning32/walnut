@@ -7,6 +7,7 @@
 #include "walnut/convex_polygon_edge.h"
 #include "walnut/half_space3.h"
 #include "walnut/homo_point3.h"
+#include "walnut/member_forward.h"
 #include "walnut/plucker_line.h"
 #include "walnut/point3.h"
 
@@ -196,21 +197,6 @@ class ConvexPolygon {
 
    private:
     friend ConvexPolygon;
-
-    template <typename T>
-    typename std::enable_if<
-      std::is_rvalue_reference<Parent>::value &&
-        !std::is_const<typename std::remove_reference<T>::type>::value,
-      T&&>::type
-    MakeForward(T& t) const {
-      return std::move(t);
-    }
-
-    template <typename T>
-    typename std::enable_if<!std::is_rvalue_reference<Parent>::value, T&>::type
-    MakeForward(T& t) const {
-      return t;
-    }
 
     SplitKey(Parent parent, const SplitInfoRep& info) :
       parent_(std::forward<Parent>(parent)), info_(info) { }
@@ -912,12 +898,12 @@ ConvexPolygon<point3_bits, VertexData>::SplitKey<Parent>::CreateSplitChildren(
 
   pos_child.edges_.clear();
   pos_child.edges_.reserve(pos_range().second - pos_range().first + 2);
-  pos_child.plane_ = MakeForward(parent_.plane_);
+  pos_child.plane_ = MemberForward<Parent>(parent_.plane_);
   pos_child.drop_dimension_ = parent_.drop_dimension_;
 
   assert(neg_range().second - neg_range().first <= parent_.vertex_count());
   for (size_t i = neg_range().first; i < neg_range().second; ++i) {
-    neg_child.edges_.push_back(MakeForward(parent_.edges_[
+    neg_child.edges_.push_back(MemberForward<Parent>(parent_.edges_[
             i % parent_.vertex_count()]));
   }
 
@@ -928,7 +914,7 @@ ConvexPolygon<point3_bits, VertexData>::SplitKey<Parent>::CreateSplitChildren(
     neg_child.edges_.emplace_back(
         parent_.vertex(neg_range().second % parent_.vertex_count()),
         info_.new_line);
-    pos_child.edges_.push_back(MakeForward(parent_.edges_[
+    pos_child.edges_.push_back(MemberForward<Parent>(parent_.edges_[
           neg_range().second % parent_.vertex_count()]));
   } else {
     size_t last_neg_index = (neg_range().second +
@@ -937,12 +923,12 @@ ConvexPolygon<point3_bits, VertexData>::SplitKey<Parent>::CreateSplitChildren(
     neg_child.edges_.emplace_back(info_.new_shared_point2,
                                   info_.new_line);
     pos_child.edges_.emplace_back(
-        MakeForward(info_.new_shared_point2),
-        MakeForward(parent_.edges_[last_neg_index].line));
+        MemberForward<Parent>(info_.new_shared_point2),
+        MemberForward<Parent>(parent_.edges_[last_neg_index].line));
   }
 
   for (size_t i = pos_range().first; i < pos_range().second; ++i) {
-    pos_child.edges_.push_back(MakeForward(parent_.edges_[
+    pos_child.edges_.push_back(MemberForward<Parent>(parent_.edges_[
             i % parent_.vertex_count()]));
   }
 
@@ -953,17 +939,17 @@ ConvexPolygon<point3_bits, VertexData>::SplitKey<Parent>::CreateSplitChildren(
     pos_child.edges_.emplace_back(
         parent_.vertex(pos_range().second % parent_.vertex_count()),
         -info_.new_line);
-    neg_child.edges_.push_back(MakeForward(parent_.edges_[
+    neg_child.edges_.push_back(MemberForward<Parent>(parent_.edges_[
           pos_range().second % parent_.vertex_count()]));
   } else {
     size_t last_pos_index = (pos_range().second +
                              parent_.vertex_count() - 1) %
                             parent_.vertex_count();
     pos_child.edges_.emplace_back(info_.new_shared_point1,
-                                  -MakeForward(info_.new_line));
+                                  -MemberForward<Parent>(info_.new_line));
     neg_child.edges_.emplace_back(
-        MakeForward(info_.new_shared_point1),
-        MakeForward(parent_.edges_[last_pos_index].line));
+        MemberForward<Parent>(info_.new_shared_point1),
+        MemberForward<Parent>(parent_.edges_[last_pos_index].line));
   }
 }
 
