@@ -120,10 +120,10 @@ ConvexPolygonRep RectangularPrism<point3_bits_template>::IntersectPlane(
 
   // Now split the parallelogram on the remaining 2 sides of the prism.
   HalfSpace3Rep drop_top(dir3, max_point.components()[drop_dimension]);
-  auto split1 = std::move(result).GetSplitKey(drop_top);
+  auto split1 = result.GetSplitInfo(drop_top);
   if (!split1.ShouldEmitNegativeChild()) {
     if (split1.ShouldEmitOnPlane()) {
-      return split1.CreateOnPlaneChild();
+      return result;
     }
     // `plane` is outside of the prism.
     return ConvexPolygonRep();
@@ -131,17 +131,16 @@ ConvexPolygonRep RectangularPrism<point3_bits_template>::IntersectPlane(
   if (split1.ShouldEmitPositiveChild()) {
     ConvexPolygonRep neg_child;
     ConvexPolygonRep pos_child;
-    split1.CreateSplitChildren(neg_child, pos_child);
+    std::move(result).CreateSplitChildren(std::move(split1), neg_child,
+                                          pos_child);
     result = std::move(neg_child);
-  } else {
-    result = split1.CreateNegativeChild();
   }
 
   HalfSpace3Rep drop_bottom(dir3, min_point.components()[drop_dimension]);
-  auto split2 = std::move(result).GetSplitKey(drop_bottom);
+  auto split2 = result.GetSplitInfo(drop_bottom);
   if (!split2.ShouldEmitPositiveChild()) {
     if (split2.ShouldEmitOnPlane()) {
-      return split2.CreateOnPlaneChild();
+      return result;
     }
     // `plane` is outside of the prism.
     return ConvexPolygonRep();
@@ -149,10 +148,9 @@ ConvexPolygonRep RectangularPrism<point3_bits_template>::IntersectPlane(
   if (split2.ShouldEmitNegativeChild()) {
     ConvexPolygonRep neg_child;
     ConvexPolygonRep pos_child;
-    split2.CreateSplitChildren(neg_child, pos_child);
+    std::move(result).CreateSplitChildren(std::move(split2), neg_child,
+                                          pos_child);
     result = std::move(pos_child);
-  } else {
-    result = split2.CreatePositiveChild();
   }
   return result;
 }
