@@ -71,6 +71,14 @@ struct ConvexPolygonSplitInfo {
            !ranges.ShouldEmitPositiveChild();
   }
 
+  const std::pair<size_t, size_t>& neg_range() const {
+    return ranges.neg_range;
+  }
+
+  const std::pair<size_t, size_t>& pos_range() const {
+    return ranges.pos_range;
+  }
+
   ConvexPolygonSplitRanges ranges;
 
   // A line that should used for the new edge in the negative child. -new_line
@@ -193,7 +201,11 @@ class ConvexPolygon {
     // destructor or assignment operator on the parent. Also if `Parent` is an
     // rvalue reference, then this function can only be called once.
     void CreateSplitChildren(ConvexPolygon& neg_child,
-                             ConvexPolygon& pos_child);
+                             ConvexPolygon& pos_child) {
+      ConvexPolygon::CreateSplitChildren(std::forward<Parent>(parent_),
+                                         MemberForward<Parent>(info_),
+                                         neg_child, pos_child);
+    }
 
    private:
     friend ConvexPolygon;
@@ -665,6 +677,29 @@ class ConvexPolygon {
       int drop_dimension) const;
 
  private:
+  // Creates both split children.
+  //
+  // This function may only be called if `split.ShouldEmitNegativeChild()`
+  // `split.ShouldEmitPositiveChild()` are both true.
+  //
+  // On the returned `neg_child`, the last 2 vertices will be on the split
+  // plane. Whereas for `pos_child`, the first and last vertices will be on
+  // the split plane.
+  //
+  // `ParentRef` must be a reference to a ConvexPolygon. If `ParentRef` is an
+  // rvalue reference, the parent is put into an unspecified state afterwards,
+  // such that it is only safe to call the destructor or assignment operator on
+  // the parent.
+  //
+  // `SplitInfoRef` must be a reference to a ConvexPolygonSplitInfo. If
+  // `SplitInfoRef` is an rvalue reference, the `split` is put into an
+  // unspecified state afterwards, such that it is only safe to call the
+  // destructor or assignment operator on it.
+  template <typename ParentRef, typename SplitInfoRef>
+  static void CreateSplitChildren(ParentRef&& parent, SplitInfoRef&& split,
+                                  ConvexPolygon& neg_child,
+                                  ConvexPolygon& pos_child);
+
   // The plane that all of the vertices are in.
   HalfSpace3Rep plane_;
   // When this dimension is projected to 0, 'dropped', the vertices will not
@@ -883,73 +918,76 @@ ConvexPolygon<point3_bits, VertexData>::GetLastNegSideVertex(
 }
 
 template <int point3_bits, typename VertexData>
-template <typename Parent>
-void
-ConvexPolygon<point3_bits, VertexData>::SplitKey<Parent>::CreateSplitChildren(
+template <typename ParentRef, typename SplitInfoRef>
+void ConvexPolygon<point3_bits, VertexData>::CreateSplitChildren(
+    ParentRef&& parent, SplitInfoRef&& split,
     ConvexPolygon& neg_child, ConvexPolygon& pos_child) {
-  assert(ShouldEmitNegativeChild() && ShouldEmitPositiveChild());
-  assert(&neg_child != &parent_);
-  assert(&pos_child != &parent_);
+  assert(split.ShouldEmitNegativeChild() && split.ShouldEmitPositiveChild());
+  assert(&neg_child != &parent);
+  assert(&pos_child != &parent);
 
   neg_child.edges_.clear();
-  neg_child.edges_.reserve(neg_range().second - neg_range().first + 2);
-  neg_child.plane_ = parent_.plane_;
-  neg_child.drop_dimension_ = parent_.drop_dimension_;
+  neg_child.edges_.reserve(split.neg_range().second -
+                           split.neg_range().first + 2);
+  neg_child.plane_ = parent.plane_;
+  neg_child.drop_dimension_ = parent.drop_dimension_;
 
   pos_child.edges_.clear();
-  pos_child.edges_.reserve(pos_range().second - pos_range().first + 2);
-  pos_child.plane_ = MemberForward<Parent>(parent_.plane_);
-  pos_child.drop_dimension_ = parent_.drop_dimension_;
+  pos_child.edges_.reserve(split.pos_range().second -
+                           split.pos_range().first + 2);
+  pos_child.plane_ = MemberForward<ParentRef>(parent.plane_);
+  pos_child.drop_dimension_ = parent.drop_dimension_;
 
-  assert(neg_range().second - neg_range().first <= parent_.vertex_count());
-  for (size_t i = neg_range().first; i < neg_range().second; ++i) {
-    neg_child.edges_.push_back(MemberForward<Parent>(parent_.edges_[
-            i % parent_.vertex_count()]));
+  assert(split.neg_range().second - split.neg_range().first <=
+         parent.vertex_count());
+  for (size_t i = split.neg_range().first; i < split.neg_range().second; ++i) {
+    neg_child.edges_.push_back(MemberForward<ParentRef>(parent.edges_[
+            i % parent.vertex_count()]));
   }
 
-  if (!info_.has_new_shared_point2) {
+  if (!split.has_new_shared_point2) {
     // The range [neg_range.second, pos_range.first) is non-empty, holds
     // exactly 1 vertex, and is shared between the negative and positive
     // children.
     neg_child.edges_.emplace_back(
-        parent_.vertex(neg_range().second % parent_.vertex_count()),
-        info_.new_line);
-    pos_child.edges_.push_back(MemberForward<Parent>(parent_.edges_[
-          neg_range().second % parent_.vertex_count()]));
+        parent.vertex(split.neg_range().second % parent.vertex_count()),
+        split.new_line);
+    pos_child.edges_.push_back(MemberForward<ParentRef>(parent.edges_[
+          split.neg_range().second % parent.vertex_count()]));
   } else {
-    size_t last_neg_index = (neg_range().second +
-                             parent_.vertex_count() - 1) %
-                             parent_.vertex_count();
-    neg_child.edges_.emplace_back(info_.new_shared_point2,
-                                  info_.new_line);
+    size_t last_neg_index = (split.neg_range().second +
+                             parent.vertex_count() - 1) %
+                             parent.vertex_count();
+    neg_child.edges_.emplace_back(split.new_shared_point2,
+                                  split.new_line);
     pos_child.edges_.emplace_back(
-        MemberForward<Parent>(info_.new_shared_point2),
-        MemberForward<Parent>(parent_.edges_[last_neg_index].line));
+        MemberForward<SplitInfoRef>(split.new_shared_point2),
+        MemberForward<ParentRef>(parent.edges_[last_neg_index].line));
   }
 
-  for (size_t i = pos_range().first; i < pos_range().second; ++i) {
-    pos_child.edges_.push_back(MemberForward<Parent>(parent_.edges_[
-            i % parent_.vertex_count()]));
+  for (size_t i = split.pos_range().first; i < split.pos_range().second; ++i) {
+    pos_child.edges_.push_back(MemberForward<ParentRef>(parent.edges_[
+            i % parent.vertex_count()]));
   }
 
-  if (!info_.has_new_shared_point1) {
+  if (!split.has_new_shared_point1) {
     // The range [pos_range.second, neg_range.first) is non-empty, holds
     // exactly 1 vertex, and is shared between the negative and positive
     // children.
     pos_child.edges_.emplace_back(
-        parent_.vertex(pos_range().second % parent_.vertex_count()),
-        -info_.new_line);
-    neg_child.edges_.push_back(MemberForward<Parent>(parent_.edges_[
-          pos_range().second % parent_.vertex_count()]));
+        parent.vertex(split.pos_range().second % parent.vertex_count()),
+        -split.new_line);
+    neg_child.edges_.push_back(MemberForward<ParentRef>(parent.edges_[
+          split.pos_range().second % parent.vertex_count()]));
   } else {
-    size_t last_pos_index = (pos_range().second +
-                             parent_.vertex_count() - 1) %
-                            parent_.vertex_count();
-    pos_child.edges_.emplace_back(info_.new_shared_point1,
-                                  -MemberForward<Parent>(info_.new_line));
+    size_t last_pos_index = (split.pos_range().second +
+                             parent.vertex_count() - 1) %
+                            parent.vertex_count();
+    pos_child.edges_.emplace_back(split.new_shared_point1,
+                                  -MemberForward<SplitInfoRef>(split.new_line));
     neg_child.edges_.emplace_back(
-        MemberForward<Parent>(info_.new_shared_point1),
-        MemberForward<Parent>(parent_.edges_[last_pos_index].line));
+        MemberForward<SplitInfoRef>(split.new_shared_point1),
+        MemberForward<ParentRef>(parent.edges_[last_pos_index].line));
   }
 }
 
