@@ -195,6 +195,7 @@ void BSPNode<point3_bits>::PushContentsToChildren() {
         positive_child_->border_contents_.emplace_back();
         ConvexPolygonRep& neg_poly = negative_child_->border_contents_.back();
         ConvexPolygonRep& pos_poly = positive_child_->border_contents_.back();
+        key.CreateSplitChildren(neg_poly, pos_poly);
         // As described by the CreateSplitChildren function declaration
         // comment, the last 2 vertices of neg_poly will touch the plane. So
         // the first of those 2 vertices is the edge source.

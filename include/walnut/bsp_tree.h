@@ -9,6 +9,7 @@ template <int point3_bits_template = 32>
 class BSPTree {
  public:
   using InputConvexPolygon = ConvexPolygon<point3_bits_template>;
+  using BSPNodeRep = BSPNode<point3_bits_template>;
 
   static constexpr int point3_bits = point3_bits_template;
 
@@ -38,7 +39,7 @@ class BSPTree {
     root.PushContentsToLeaves(leaf_callback);
   }
 
-  BSPNode<point3_bits> root;
+  BSPNodeRep root;
 };
 
 }  // walnut

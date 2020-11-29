@@ -145,11 +145,6 @@ TEST(BSPTree, SplitOnPlane) {
 
   ConvexPolygon<> polygon = MakeConvexPolygon(triangle);
 
-  std::vector<Point3<32>> above_points;
-  for (const Point3<32>& p : triangle) {
-    above_points.emplace_back(p.x(), p.y(), BigInt<32>(p.z() + BigInt<32>(1)));
-  }
-
   {
     BSPTree<> tree;
     auto leaf_added = [&](BSPNode<>& leaf) {};
@@ -243,6 +238,83 @@ TEST(BSPTree, SplitTo2Children) {
        tree.root.positive_child()->contents()[0].edges()) {
     if (edge.vertex == expected_pos[3]) {
       EXPECT_EQ(edge.data().split_by(), &tree.root);
+    } else {
+      EXPECT_EQ(edge.data().split_by(), nullptr);
+    }
+  }
+}
+
+TEST(BSPTree, SplitBorderTo2Children) {
+  //
+  // p[3] <--------- p[2]
+  //  |       |       ^
+  //  |       |pos->  |
+  //  v       |       |
+  // p[0] ---------> p[1]
+  //
+  Point3<32> p[4] = {
+    Point3<32>(0, 0, 10),
+    Point3<32>(2, 0, 10),
+    Point3<32>(2, 1, 10),
+    Point3<32>(0, 1, 10),
+  };
+
+  ConvexPolygon<> polygon = MakeConvexPolygon(p);
+  HalfSpace3<> half_space(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
+
+  Point3<32> expected_neg[4] = {
+    Point3<32>(0, 0, 10),
+    Point3<32>(1, 0, 10),
+    Point3<32>(1, 1, 10),
+    Point3<32>(0, 1, 10),
+  };
+
+  Point3<32> expected_pos[4] = {
+    Point3<32>(1, 0, 10),
+    Point3<32>(2, 0, 10),
+    Point3<32>(2, 1, 10),
+    Point3<32>(1, 1, 10),
+  };
+
+  BSPTree<> tree;
+  auto leaf_added = [&](BSPNode<>& leaf) {};
+  tree.AddContent(polygon, leaf_added);
+
+  // Split the root such that the polygon becomes a border polygon of the
+  // negative child.
+  tree.root.Split(polygon.plane());
+  ASSERT_FALSE(tree.root.IsLeaf());
+  EXPECT_THAT(DropVertexData(tree.root.negative_child()->border_contents()),
+              ElementsAre(polygon));
+
+  // Split the negative child such that the polygon is split into 2 pieces.
+  tree.root.negative_child()->Split(half_space);
+  ASSERT_FALSE(tree.root.negative_child()->IsLeaf());
+
+  const BSPTree<>::BSPNodeRep* neg_leaf =
+    tree.root.negative_child()->negative_child();
+  const BSPTree<>::BSPNodeRep* pos_leaf =
+    tree.root.negative_child()->positive_child();
+  ASSERT_NE(neg_leaf, nullptr);
+  ASSERT_NE(pos_leaf, nullptr);
+  ASSERT_EQ(neg_leaf->border_contents().size(), 1);
+  ASSERT_EQ(pos_leaf->border_contents().size(), 1);
+
+  EXPECT_EQ(neg_leaf->border_contents()[0], MakeConvexPolygon(expected_neg));
+  EXPECT_EQ(pos_leaf->border_contents()[0], MakeConvexPolygon(expected_pos));
+
+  for (const BSPNode<>::ConvexPolygonRep::EdgeRep& edge :
+       neg_leaf->border_contents()[0].edges()) {
+    if (edge.vertex == expected_neg[1]) {
+      EXPECT_EQ(edge.data().split_by(), tree.root.negative_child());
+    } else {
+      EXPECT_EQ(edge.data().split_by(), nullptr);
+    }
+  }
+  for (const BSPNode<>::ConvexPolygonRep::EdgeRep& edge :
+       pos_leaf->border_contents()[0].edges()) {
+    if (edge.vertex == expected_pos[3]) {
+      EXPECT_EQ(edge.data().split_by(), tree.root.negative_child());
     } else {
       EXPECT_EQ(edge.data().split_by(), nullptr);
     }
