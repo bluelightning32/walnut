@@ -154,19 +154,19 @@ void BSPNode<point3_bits>::PushContentsToChildren() {
 
     if (info.ShouldEmitNegativeChild()) {
       if (info.ShouldEmitPositiveChild()) {
-        negative_child_->contents_.emplace_back();
-        positive_child_->contents_.emplace_back();
-        ConvexPolygonRep& neg_poly = negative_child_->contents_.back();
-        ConvexPolygonRep& pos_poly = positive_child_->contents_.back();
-        std::move(polygon).CreateSplitChildren(std::move(info), neg_poly,
-                                               pos_poly);
+        std::pair<ConvexPolygonRep, ConvexPolygonRep> children =
+          std::move(polygon).CreateSplitChildren(std::move(info));
         // As described by the CreateSplitChildren function declaration
         // comment, the last 2 vertices of neg_poly will touch the plane. So
         // the first of those 2 vertices is the edge source.
-        neg_poly.vertex_data(neg_poly.vertex_count() - 2).set_split_by(this);
+        children.first.vertex_data(
+            children.first.vertex_count() - 2).set_split_by(this);
         // The first and last vertices of pos_poly will touch the plane. So the
         // first of those 2 vertices is the edge source.
-        pos_poly.vertex_data(neg_poly.vertex_count() - 1).set_split_by(this);
+        children.second.vertex_data(
+            children.second.vertex_count() - 1).set_split_by(this);
+        negative_child_->contents_.push_back(std::move(children.first));
+        positive_child_->contents_.push_back(std::move(children.second));
       } else {
         negative_child_->contents_.push_back(std::move(polygon));
       }
@@ -192,19 +192,20 @@ void BSPNode<point3_bits>::PushContentsToChildren() {
 
     if (info.ShouldEmitNegativeChild()) {
       if (info.ShouldEmitPositiveChild()) {
-        negative_child_->border_contents_.emplace_back();
-        positive_child_->border_contents_.emplace_back();
-        ConvexPolygonRep& neg_poly = negative_child_->border_contents_.back();
-        ConvexPolygonRep& pos_poly = positive_child_->border_contents_.back();
-        std::move(polygon).CreateSplitChildren(std::move(info), neg_poly,
-                                               pos_poly);
+        std::pair<ConvexPolygonRep, ConvexPolygonRep> children =
+          std::move(polygon).CreateSplitChildren(std::move(info));
         // As described by the CreateSplitChildren function declaration
         // comment, the last 2 vertices of neg_poly will touch the plane. So
         // the first of those 2 vertices is the edge source.
-        neg_poly.vertex_data(neg_poly.vertex_count() - 2).set_split_by(this);
+        children.first.vertex_data(
+            children.first.vertex_count() - 2).set_split_by(this);
         // The first and last vertices of pos_poly will touch the plane. So the
         // first of those 2 vertices is the edge source.
-        pos_poly.vertex_data(neg_poly.vertex_count() - 1).set_split_by(this);
+        children.second.vertex_data(
+            children.second.vertex_count() - 1).set_split_by(this);
+        negative_child_->border_contents_.push_back(std::move(children.first));
+        positive_child_->border_contents_.push_back(
+            std::move(children.second));
       } else {
         negative_child_->border_contents_.push_back(std::move(polygon));
       }

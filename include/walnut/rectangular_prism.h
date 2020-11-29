@@ -129,11 +129,8 @@ ConvexPolygonRep RectangularPrism<point3_bits_template>::IntersectPlane(
     return ConvexPolygonRep();
   }
   if (split1.ShouldEmitPositiveChild()) {
-    ConvexPolygonRep neg_child;
-    ConvexPolygonRep pos_child;
-    std::move(result).CreateSplitChildren(std::move(split1), neg_child,
-                                          pos_child);
-    result = std::move(neg_child);
+    // Keep the negative child
+    result = std::move(result).CreateSplitChildren(std::move(split1)).first;
   }
 
   HalfSpace3Rep drop_bottom(dir3, min_point.components()[drop_dimension]);
@@ -146,11 +143,8 @@ ConvexPolygonRep RectangularPrism<point3_bits_template>::IntersectPlane(
     return ConvexPolygonRep();
   }
   if (split2.ShouldEmitNegativeChild()) {
-    ConvexPolygonRep neg_child;
-    ConvexPolygonRep pos_child;
-    std::move(result).CreateSplitChildren(std::move(split2), neg_child,
-                                          pos_child);
-    result = std::move(pos_child);
+    // Keep the positive child
+    result = std::move(result).CreateSplitChildren(std::move(split2)).second;
   }
   return result;
 }

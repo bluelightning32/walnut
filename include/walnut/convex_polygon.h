@@ -549,18 +549,44 @@ class ConvexPolygon {
       const HalfSpace2<vector_bits, dist_bits>& half_space2,
       int drop_dimension) const;
 
-  void CreateSplitChildren(const SplitInfoRep& split, ConvexPolygon& neg_child,
-                           ConvexPolygon& pos_child) const {
-    return CreateSplitChildren(*this, split, neg_child, pos_child);
+  // Creates both split children.
+  //
+  // This function may only be called if `split.ShouldEmitNegativeChild()`
+  // `split.ShouldEmitPositiveChild()` are both true.
+  //
+  // The first entry of the returned pair is the negative child, and the second
+  // entry is the positive child.
+  //
+  // The last 2 vertices of the negative child will be on the split
+  // plane. Whereas for the postive child, the first and last vertices will be
+  // on the split plane.
+  std::pair<ConvexPolygon, ConvexPolygon> CreateSplitChildren(
+      const SplitInfoRep& split) const {
+    std::pair<ConvexPolygon, ConvexPolygon> result;
+    CreateSplitChildren(*this, split, result.first, result.second);
+    return result;
   }
 
-  void CreateSplitChildren(SplitInfoRep&& split, ConvexPolygon& neg_child,
-                           ConvexPolygon& pos_child) && {
-    return CreateSplitChildren(std::move(*this), std::move(split), neg_child,
-                               pos_child);
+  // Creates both split children.
+  //
+  // This function may only be called if `split.ShouldEmitNegativeChild()`
+  // `split.ShouldEmitPositiveChild()` are both true.
+  //
+  // The first entry of the returned pair is the negative child, and the second
+  // entry is the positive child.
+  //
+  // The last 2 vertices of the negative child will be on the split
+  // plane. Whereas for the postive child, the first and last vertices will be
+  // on the split plane.
+  std::pair<ConvexPolygon, ConvexPolygon> CreateSplitChildren(
+      SplitInfoRep&& split) && {
+    std::pair<ConvexPolygon, ConvexPolygon> result;
+    CreateSplitChildren(std::move(*this), std::move(split), result.first,
+                        result.second);
+    return result;
   }
 
- private:
+ protected:
   // Creates both split children.
   //
   // This function may only be called if `split.ShouldEmitNegativeChild()`
@@ -584,6 +610,7 @@ class ConvexPolygon {
                                   ConvexPolygon& neg_child,
                                   ConvexPolygon& pos_child);
 
+ private:
   // The plane that all of the vertices are in.
   HalfSpace3Rep plane_;
   // When this dimension is projected to 0, 'dropped', the vertices will not
