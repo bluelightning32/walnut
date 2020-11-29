@@ -16,7 +16,10 @@ template <int point3_bits_template>
 class BSPTree;
 
 template <int point3_bits_template = 32>
-struct BSPEdgeInfo {
+class BSPEdgeInfo {
+ public:
+  using BSPNodeRep = BSPNode<point3_bits_template>;
+
   BSPEdgeInfo() = default;
   BSPEdgeInfo(const NoVertexData&) { }
 
@@ -27,7 +30,20 @@ struct BSPEdgeInfo {
     return false;
   }
 
-  const BSPNode<point3_bits_template>* split_by = nullptr;
+  BSPNodeRep* split_by() {
+    return split_by_;
+  }
+
+  const BSPNodeRep* split_by() const {
+    return split_by_;
+  }
+
+  void set_split_by(BSPNodeRep* split_by) {
+    split_by_ = split_by;
+  }
+
+ private:
+  BSPNodeRep* split_by_ = nullptr;
 };
 
 // This is a node within a binary space partition tree.
@@ -146,10 +162,10 @@ void BSPNode<point3_bits>::PushContentsToChildren() {
         // As described by the CreateSplitChildren function declaration
         // comment, the last 2 vertices of neg_poly will touch the plane. So
         // the first of those 2 vertices is the edge source.
-        neg_poly.vertex_data(neg_poly.vertex_count() - 2).split_by = this;
+        neg_poly.vertex_data(neg_poly.vertex_count() - 2).set_split_by(this);
         // The first and last vertices of pos_poly will touch the plane. So the
         // first of those 2 vertices is the edge source.
-        pos_poly.vertex_data(neg_poly.vertex_count() - 1).split_by = this;
+        pos_poly.vertex_data(neg_poly.vertex_count() - 1).set_split_by(this);
       } else {
         negative_child_->contents_.push_back(key.CreateNegativeChild());
       }
@@ -182,10 +198,10 @@ void BSPNode<point3_bits>::PushContentsToChildren() {
         // As described by the CreateSplitChildren function declaration
         // comment, the last 2 vertices of neg_poly will touch the plane. So
         // the first of those 2 vertices is the edge source.
-        neg_poly.vertex_data(neg_poly.vertex_count() - 2).split_by = this;
+        neg_poly.vertex_data(neg_poly.vertex_count() - 2).set_split_by(this);
         // The first and last vertices of pos_poly will touch the plane. So the
         // first of those 2 vertices is the edge source.
-        pos_poly.vertex_data(neg_poly.vertex_count() - 1).split_by = this;
+        pos_poly.vertex_data(neg_poly.vertex_count() - 1).set_split_by(this);
       } else {
         negative_child_->border_contents_.push_back(key.CreateNegativeChild());
       }
@@ -227,7 +243,7 @@ void BSPNode<point3_bits>::PushContentsToLeaves(LeafCallback leaf_callback) {
 template <int point3_bits_template>
 std::ostream& operator<<(std::ostream& out,
                          const BSPEdgeInfo<point3_bits_template>& info) {
-  out << "split_by=" << info.split_by;
+  out << "split_by=" << info.split_by();
   return out;
 }
 
