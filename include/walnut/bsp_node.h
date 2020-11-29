@@ -149,16 +149,17 @@ void BSPNode<point3_bits>::Split(const HalfSpace3Rep& half_space) {
 template <int point3_bits>
 void BSPNode<point3_bits>::PushContentsToChildren() {
   for (ConvexPolygonRep& polygon : contents_) {
-    typename ConvexPolygonRep::template SplitKey<ConvexPolygonRep&&> key =
-      std::move(polygon).GetSplitKey(split_);
+    typename ConvexPolygonRep::SplitInfoRep info =
+      polygon.GetSplitInfo(split_);
 
-    if (key.ShouldEmitNegativeChild()) {
-      if (key.ShouldEmitPositiveChild()) {
+    if (info.ShouldEmitNegativeChild()) {
+      if (info.ShouldEmitPositiveChild()) {
         negative_child_->contents_.emplace_back();
         positive_child_->contents_.emplace_back();
         ConvexPolygonRep& neg_poly = negative_child_->contents_.back();
         ConvexPolygonRep& pos_poly = positive_child_->contents_.back();
-        key.CreateSplitChildren(neg_poly, pos_poly);
+        std::move(polygon).CreateSplitChildren(std::move(info), neg_poly,
+                                               pos_poly);
         // As described by the CreateSplitChildren function declaration
         // comment, the last 2 vertices of neg_poly will touch the plane. So
         // the first of those 2 vertices is the edge source.
@@ -167,35 +168,36 @@ void BSPNode<point3_bits>::PushContentsToChildren() {
         // first of those 2 vertices is the edge source.
         pos_poly.vertex_data(neg_poly.vertex_count() - 1).set_split_by(this);
       } else {
-        negative_child_->contents_.push_back(key.CreateNegativeChild());
+        negative_child_->contents_.push_back(std::move(polygon));
       }
-    } else if (key.ShouldEmitPositiveChild()) {
-      positive_child_->contents_.push_back(key.CreatePositiveChild());
+    } else if (info.ShouldEmitPositiveChild()) {
+      positive_child_->contents_.push_back(std::move(polygon));
     } else {
-      assert(key.ShouldEmitOnPlane());
+      assert(info.ShouldEmitOnPlane());
       // If polygon.plane().normal() and split_.normal() point in the same
       // direction, put polygon in the negative child.
       const int drop_dimension = polygon.drop_dimension();
       if (polygon.plane().normal().components()[drop_dimension].GetAbsMult(
             split_.normal().components()[drop_dimension]) >= 0) {
-        negative_child_->border_contents_.push_back(key.CreateOnPlaneChild());
+        negative_child_->border_contents_.push_back(std::move(polygon));
       } else {
-        positive_child_->border_contents_.push_back(key.CreateOnPlaneChild());
+        positive_child_->border_contents_.push_back(std::move(polygon));
       }
     }
   }
 
   for (ConvexPolygonRep& polygon : border_contents_) {
-    typename ConvexPolygonRep::template SplitKey<ConvexPolygonRep&&> key =
-      std::move(polygon).GetSplitKey(split_);
+    typename ConvexPolygonRep::SplitInfoRep info =
+      polygon.GetSplitInfo(split_);
 
-    if (key.ShouldEmitNegativeChild()) {
-      if (key.ShouldEmitPositiveChild()) {
+    if (info.ShouldEmitNegativeChild()) {
+      if (info.ShouldEmitPositiveChild()) {
         negative_child_->border_contents_.emplace_back();
         positive_child_->border_contents_.emplace_back();
         ConvexPolygonRep& neg_poly = negative_child_->border_contents_.back();
         ConvexPolygonRep& pos_poly = positive_child_->border_contents_.back();
-        key.CreateSplitChildren(neg_poly, pos_poly);
+        std::move(polygon).CreateSplitChildren(std::move(info), neg_poly,
+                                               pos_poly);
         // As described by the CreateSplitChildren function declaration
         // comment, the last 2 vertices of neg_poly will touch the plane. So
         // the first of those 2 vertices is the edge source.
@@ -204,12 +206,12 @@ void BSPNode<point3_bits>::PushContentsToChildren() {
         // first of those 2 vertices is the edge source.
         pos_poly.vertex_data(neg_poly.vertex_count() - 1).set_split_by(this);
       } else {
-        negative_child_->border_contents_.push_back(key.CreateNegativeChild());
+        negative_child_->border_contents_.push_back(std::move(polygon));
       }
-    } else if (key.ShouldEmitPositiveChild()) {
-      positive_child_->border_contents_.push_back(key.CreatePositiveChild());
+    } else if (info.ShouldEmitPositiveChild()) {
+      positive_child_->border_contents_.push_back(std::move(polygon));
     } else {
-      assert(key.ShouldEmitOnPlane());
+      assert(info.ShouldEmitOnPlane());
       // This branch only runs if this node is being split on the same plane as
       // an ancestor node, which should not happen.
       assert(false);
@@ -218,9 +220,9 @@ void BSPNode<point3_bits>::PushContentsToChildren() {
       const int drop_dimension = polygon.drop_dimension();
       if (polygon.plane().normal().components()[drop_dimension].GetAbsMult(
             split_.normal().components()[drop_dimension]) >= 0) {
-        negative_child_->border_contents_.push_back(key.CreateOnPlaneChild());
+        negative_child_->border_contents_.push_back(std::move(polygon));
       } else {
-        positive_child_->border_contents_.push_back(key.CreateOnPlaneChild());
+        positive_child_->border_contents_.push_back(std::move(polygon));
       }
     }
   }
