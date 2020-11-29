@@ -12,6 +12,9 @@ namespace walnut {
 template <int point3_bits_template = 32>
 class BSPNode;
 
+template <int point3_bits_template>
+class BSPTree;
+
 template <int point3_bits_template = 32>
 struct BSPEdgeInfo {
   BSPEdgeInfo() = default;
@@ -32,10 +35,10 @@ template <int point3_bits_template>
 class BSPNode {
  public:
   using EdgeInfo = BSPEdgeInfo<point3_bits_template>;
-  using InputConvexPolygon = ConvexPolygon<point3_bits_template>;
   using ConvexPolygonRep = ConvexPolygon<point3_bits_template, EdgeInfo>;
   using HalfSpace3Rep =
     typename HalfSpace3FromPoint3Builder<point3_bits_template>::HalfSpace3Rep;
+  friend class BSPTree<point3_bits_template>;
 
   static constexpr int point3_bits = point3_bits_template;
 
@@ -48,36 +51,6 @@ class BSPNode {
   //
   // The contents of this node will be pushed into the new child nodes.
   void Split(const HalfSpace3Rep& half_space);
-
-  // Add new polygons to this node.
-  //
-  // This should only be called on the root node.
-  //
-  // The iterators should produce `InputConvexPolygon`s. For an interior node,
-  // the contents will be pushed to the children. `leaf_callback` will be
-  // called for every leaf node that some pieces of the new contents settle in.
-  // There may also be spurious calls to `leaf_callback` for leaves were the
-  // contents did not land in.
-  template <typename Iterator, typename LeafCallback>
-  void AddContents(Iterator first, Iterator last, LeafCallback leaf_callback) {
-    contents_.insert(contents_.end(), first, last);
-    PushContentsToLeaves(leaf_callback);
-  }
-
-  // Add a new polygon to this node.
-  //
-  // This should only be called on the root node.
-  //
-  // For an interior node, the contents will be pushed to the children.
-  // `leaf_callback` will be called for every leaf node that some pieces of the
-  // new contents settle in. There may also be spurious calls to
-  // `leaf_callback` for leaves were the contents did not land in.
-  template <typename LeafCallback>
-  void AddContent(const InputConvexPolygon& polygon,
-                  LeafCallback leaf_callback) {
-    contents_.emplace_back(polygon);
-    PushContentsToLeaves(leaf_callback);
-  }
 
   bool IsLeaf() const {
     return !split().IsValid();

@@ -1,4 +1,4 @@
-#include "walnut/bsp_node.h"
+#include "walnut/bsp_tree.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -63,7 +63,7 @@ std::vector<ConvexPolygon<point3_bits>> DropVertexData(
   return std::vector<ConvexPolygon<point3_bits>>(input.begin(), input.end());
 }
 
-TEST(BSPNode, AddContentsToLeaf) {
+TEST(BSPTree, AddContentsToLeaf) {
   Point3<32> triangles[][3] = {
     {
       Point3<32>(0, 0, 10),
@@ -82,16 +82,16 @@ TEST(BSPNode, AddContentsToLeaf) {
     polygons.push_back(MakeConvexPolygon(triangle));
   }
 
-  BSPNode<> node;
+  BSPTree<> tree;
   auto leaf_added = [&](BSPNode<>& leaf) {
-    EXPECT_EQ(&leaf, &node);
+    EXPECT_EQ(&leaf, &tree.root);
   };
-  node.AddContents(polygons.begin(), polygons.end(), leaf_added);
-  EXPECT_THAT(DropVertexData(node.contents()),
+  tree.AddContents(polygons.begin(), polygons.end(), leaf_added);
+  EXPECT_THAT(DropVertexData(tree.root.contents()),
               ContainerEq(polygons));
 }
 
-TEST(BSPNode, SplitTo1Child) {
+TEST(BSPTree, SplitTo1Child) {
   Point3<32> triangle[3] =
   {
     Point3<32>(0, 0, 10),
@@ -109,33 +109,33 @@ TEST(BSPNode, SplitTo1Child) {
   HalfSpace3<> above_down = -above_up;
 
   {
-    BSPNode<> node;
+    BSPTree<> tree;
     auto leaf_added = [&](BSPNode<>& leaf) {};
-    node.AddContent(polygon, leaf_added);
+    tree.AddContent(polygon, leaf_added);
 
-    node.Split(above_up);
-    EXPECT_FALSE(node.IsLeaf());
-    EXPECT_THAT(DropVertexData(node.negative_child()->contents()),
+    tree.root.Split(above_up);
+    EXPECT_FALSE(tree.root.IsLeaf());
+    EXPECT_THAT(DropVertexData(tree.root.negative_child()->contents()),
                 ElementsAre(polygon));
-    EXPECT_THAT(DropVertexData(node.positive_child()->contents()),
+    EXPECT_THAT(DropVertexData(tree.root.positive_child()->contents()),
                 IsEmpty());
   }
 
   {
-    BSPNode<> node;
+    BSPTree<> tree;
     auto leaf_added = [&](BSPNode<>& leaf) {};
-    node.AddContent(polygon, leaf_added);
+    tree.AddContent(polygon, leaf_added);
 
-    node.Split(above_down);
-    EXPECT_FALSE(node.IsLeaf());
-    EXPECT_THAT(DropVertexData(node.negative_child()->contents()),
+    tree.root.Split(above_down);
+    EXPECT_FALSE(tree.root.IsLeaf());
+    EXPECT_THAT(DropVertexData(tree.root.negative_child()->contents()),
                 IsEmpty());
-    EXPECT_THAT(DropVertexData(node.positive_child()->contents()),
+    EXPECT_THAT(DropVertexData(tree.root.positive_child()->contents()),
                 ElementsAre(polygon));
   }
 }
 
-TEST(BSPNode, SplitOnPlane) {
+TEST(BSPTree, SplitOnPlane) {
   Point3<32> triangle[3] =
   {
     Point3<32>(0, 0, 10),
@@ -151,41 +151,41 @@ TEST(BSPNode, SplitOnPlane) {
   }
 
   {
-    BSPNode<> node;
+    BSPTree<> tree;
     auto leaf_added = [&](BSPNode<>& leaf) {};
-    node.AddContent(polygon, leaf_added);
+    tree.AddContent(polygon, leaf_added);
 
-    node.Split(polygon.plane());
-    EXPECT_FALSE(node.IsLeaf());
-    EXPECT_THAT(DropVertexData(node.negative_child()->border_contents()),
+    tree.root.Split(polygon.plane());
+    EXPECT_FALSE(tree.root.IsLeaf());
+    EXPECT_THAT(DropVertexData(tree.root.negative_child()->border_contents()),
                 ElementsAre(polygon));
-    EXPECT_THAT(DropVertexData(node.positive_child()->border_contents()),
+    EXPECT_THAT(DropVertexData(tree.root.positive_child()->border_contents()),
                 IsEmpty());
-    EXPECT_THAT(DropVertexData(node.negative_child()->contents()),
+    EXPECT_THAT(DropVertexData(tree.root.negative_child()->contents()),
                 IsEmpty());
-    EXPECT_THAT(DropVertexData(node.positive_child()->contents()),
+    EXPECT_THAT(DropVertexData(tree.root.positive_child()->contents()),
                 IsEmpty());
   }
 
   {
-    BSPNode<> node;
+    BSPTree<> tree;
     auto leaf_added = [&](BSPNode<>& leaf) {};
-    node.AddContent(polygon, leaf_added);
+    tree.AddContent(polygon, leaf_added);
 
-    node.Split(-polygon.plane());
-    EXPECT_FALSE(node.IsLeaf());
-    EXPECT_THAT(DropVertexData(node.negative_child()->border_contents()),
+    tree.root.Split(-polygon.plane());
+    EXPECT_FALSE(tree.root.IsLeaf());
+    EXPECT_THAT(DropVertexData(tree.root.negative_child()->border_contents()),
                 IsEmpty());
-    EXPECT_THAT(DropVertexData(node.positive_child()->border_contents()),
+    EXPECT_THAT(DropVertexData(tree.root.positive_child()->border_contents()),
                 ElementsAre(polygon));
-    EXPECT_THAT(DropVertexData(node.negative_child()->contents()),
+    EXPECT_THAT(DropVertexData(tree.root.negative_child()->contents()),
                 IsEmpty());
-    EXPECT_THAT(DropVertexData(node.positive_child()->contents()),
+    EXPECT_THAT(DropVertexData(tree.root.positive_child()->contents()),
                 IsEmpty());
   }
 }
 
-TEST(BSPNode, SplitTo2Children) {
+TEST(BSPTree, SplitTo2Children) {
   //
   // p[3] <--------- p[2]
   //  |       |       ^
@@ -217,32 +217,32 @@ TEST(BSPNode, SplitTo2Children) {
     Point3<32>(1, 1, 10),
   };
 
-  BSPNode<> node;
+  BSPTree<> tree;
   auto leaf_added = [&](BSPNode<>& leaf) {};
-  node.AddContent(polygon, leaf_added);
+  tree.AddContent(polygon, leaf_added);
 
-  node.Split(half_space);
-  EXPECT_FALSE(node.IsLeaf());
-  ASSERT_EQ(node.negative_child()->contents().size(), 1);
-  ASSERT_EQ(node.positive_child()->contents().size(), 1);
+  tree.root.Split(half_space);
+  EXPECT_FALSE(tree.root.IsLeaf());
+  ASSERT_EQ(tree.root.negative_child()->contents().size(), 1);
+  ASSERT_EQ(tree.root.positive_child()->contents().size(), 1);
 
-  EXPECT_EQ(node.negative_child()->contents()[0],
+  EXPECT_EQ(tree.root.negative_child()->contents()[0],
             MakeConvexPolygon(expected_neg));
-  EXPECT_EQ(node.positive_child()->contents()[0],
+  EXPECT_EQ(tree.root.positive_child()->contents()[0],
             MakeConvexPolygon(expected_pos));
 
   for (const BSPNode<>::ConvexPolygonRep::EdgeRep& edge :
-       node.negative_child()->contents()[0].edges()) {
+       tree.root.negative_child()->contents()[0].edges()) {
     if (edge.vertex == expected_neg[1]) {
-      EXPECT_EQ(edge.data().split_by, &node);
+      EXPECT_EQ(edge.data().split_by, &tree.root);
     } else {
       EXPECT_EQ(edge.data().split_by, nullptr);
     }
   }
   for (const BSPNode<>::ConvexPolygonRep::EdgeRep& edge :
-       node.positive_child()->contents()[0].edges()) {
+       tree.root.positive_child()->contents()[0].edges()) {
     if (edge.vertex == expected_pos[3]) {
-      EXPECT_EQ(edge.data().split_by, &node);
+      EXPECT_EQ(edge.data().split_by, &tree.root);
     } else {
       EXPECT_EQ(edge.data().split_by, nullptr);
     }
