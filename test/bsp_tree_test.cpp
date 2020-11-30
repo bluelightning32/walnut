@@ -57,10 +57,11 @@ ConvexPolygon<std::iterator_traits<
   return result;
 }
 
-template <int point3_bits, typename VertexData>
-std::vector<ConvexPolygon<point3_bits>> DropVertexData(
-    const std::vector<ConvexPolygon<point3_bits, VertexData>> &input) {
-  return std::vector<ConvexPolygon<point3_bits>>(input.begin(), input.end());
+template <typename InputConvexPolygon>
+std::vector<ConvexPolygon<InputConvexPolygon::point3_bits>> DropVertexData(
+    const std::vector<InputConvexPolygon> &input) {
+  return std::vector<ConvexPolygon<InputConvexPolygon::point3_bits>>(
+      input.begin(), input.end());
 }
 
 TEST(BSPTree, AddContentsToLeaf) {

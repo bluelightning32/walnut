@@ -1,24 +1,38 @@
 #ifndef WALNUT_BSP_NODE_H__
 #define WALNUT_BSP_NODE_H__
 
+// for std::unique_ptr
 #include <memory>
+// for std::ostream
 #include <ostream>
+// for std::is_base_of
+#include <type_traits>
+// for std::pair and std::move
+#include <utility>
+#include <vector>
 
 #include "walnut/convex_polygon.h"
 #include "walnut/half_space3.h"
 
 namespace walnut {
 
-template <int point3_bits_template = 32>
+template <typename ConvexPolygonTemplate>
+struct BSPEdgeInfo;
+
+template <typename ConvexPolygonTemplate>
 class BSPNode;
 
-template <int point3_bits_template>
+template <typename ConvexPolygonTemplate>
 class BSPTree;
 
-template <int point3_bits_template = 32>
+template <int point3_bits_template>
+class BSPDefaultPolygon;
+
+template <typename ConvexPolygonTemplate = BSPDefaultPolygon<32>>
 class BSPEdgeInfo {
  public:
-  using BSPNodeRep = BSPNode<point3_bits_template>;
+  using ConvexPolygonRep = ConvexPolygonTemplate;
+  using BSPNodeRep = BSPNode<ConvexPolygonRep>;
 
   BSPEdgeInfo() = default;
   BSPEdgeInfo(const NoVertexData&) { }
@@ -46,17 +60,59 @@ class BSPEdgeInfo {
   BSPNodeRep* split_by_ = nullptr;
 };
 
+template <int point3_bits>
+class BSPDefaultPolygon :
+  public ConvexPolygon<point3_bits,
+                       BSPEdgeInfo<BSPDefaultPolygon<point3_bits>>> {
+ public:
+  using Parent = ConvexPolygon<point3_bits,
+                               BSPEdgeInfo<BSPDefaultPolygon<point3_bits>>>;
+  using typename Parent::SplitInfoRep;
+
+  // Inherit all of the parent class's constructors.
+  using Parent::Parent;
+
+  // Overload CreateSplitChildren to create the derived polygon type.
+  std::pair<BSPDefaultPolygon, BSPDefaultPolygon> CreateSplitChildren(
+      const SplitInfoRep& split) const {
+    std::pair<BSPDefaultPolygon, BSPDefaultPolygon> result;
+    Parent::FillInSplitChildren(*this, split, result.first, result.second);
+    return result;
+  }
+
+  // Overload CreateSplitChildren to create the derived polygon type.
+  std::pair<BSPDefaultPolygon, BSPDefaultPolygon> CreateSplitChildren(
+      SplitInfoRep&& split) && {
+    std::pair<BSPDefaultPolygon, BSPDefaultPolygon> result;
+    Parent::FillInSplitChildren(std::move(*this), std::move(split),
+                                result.first, result.second);
+    return result;
+  }
+};
+
 // This is a node within a binary space partition tree.
-template <int point3_bits_template>
+//
+// `ConvexPolygonTemplate` must inherit from ConvexPolygon.
+// `ConvexPolygonTemplate::VertexData` must inherit from BSPEdgeInfo.
+template <typename ConvexPolygonTemplate = BSPDefaultPolygon<32>>
 class BSPNode {
  public:
-  using EdgeInfo = BSPEdgeInfo<point3_bits_template>;
-  using ConvexPolygonRep = ConvexPolygon<point3_bits_template, EdgeInfo>;
-  using HalfSpace3Rep =
-    typename HalfSpace3FromPoint3Builder<point3_bits_template>::HalfSpace3Rep;
-  friend class BSPTree<point3_bits_template>;
+  using ConvexPolygonRep = ConvexPolygonTemplate;
+  static_assert(std::is_base_of<BSPEdgeInfo<ConvexPolygonRep>,
+                                typename ConvexPolygonRep::VertexData>::value,
+                "The ConvexPolygon's VertexData must inherit from "
+                "BSPEdgeInfo.");
+  static_assert(
+      std::is_base_of<ConvexPolygon<ConvexPolygonRep::point3_bits,
+                                    typename ConvexPolygonRep::VertexData>,
+                      ConvexPolygonRep>::value,
+      "The ConvexPolygonTemplate must inherit from ConvexPolygon.");
 
-  static constexpr int point3_bits = point3_bits_template;
+  using HalfSpace3Rep = typename HalfSpace3FromPoint3Builder<
+    ConvexPolygonRep::point3_bits>::HalfSpace3Rep;
+  friend class BSPTree<ConvexPolygonRep>;
+
+  static constexpr int point3_bits = ConvexPolygonRep::point3_bits;
 
   // Convert a leaf node into an interior node.
   //
@@ -135,8 +191,8 @@ class BSPNode {
   std::unique_ptr<BSPNode> positive_child_;
 };
 
-template <int point3_bits>
-void BSPNode<point3_bits>::Split(const HalfSpace3Rep& half_space) {
+template <typename ConvexPolygonTemplate>
+void BSPNode<ConvexPolygonTemplate>::Split(const HalfSpace3Rep& half_space) {
   assert(IsLeaf());
 
   split_ = half_space;
@@ -146,8 +202,8 @@ void BSPNode<point3_bits>::Split(const HalfSpace3Rep& half_space) {
   PushContentsToChildren();
 }
 
-template <int point3_bits>
-void BSPNode<point3_bits>::PushContentsToChildren() {
+template <typename ConvexPolygonTemplate>
+void BSPNode<ConvexPolygonTemplate>::PushContentsToChildren() {
   for (ConvexPolygonRep& polygon : contents_) {
     typename ConvexPolygonRep::SplitInfoRep info =
       polygon.GetSplitInfo(split_);
@@ -229,9 +285,10 @@ void BSPNode<point3_bits>::PushContentsToChildren() {
   }
 }
 
-template <int point3_bits>
+template <typename ConvexPolygonTemplate>
 template <typename LeafCallback>
-void BSPNode<point3_bits>::PushContentsToLeaves(LeafCallback leaf_callback) {
+void BSPNode<ConvexPolygonTemplate>::PushContentsToLeaves(
+    LeafCallback leaf_callback) {
   if (contents_.empty() && border_contents_.empty()) {
     return;
   }
@@ -244,9 +301,9 @@ void BSPNode<point3_bits>::PushContentsToLeaves(LeafCallback leaf_callback) {
   }
 }
 
-template <int point3_bits_template>
+template <typename ConvexPolygonTemplate>
 std::ostream& operator<<(std::ostream& out,
-                         const BSPEdgeInfo<point3_bits_template>& info) {
+                         const BSPEdgeInfo<ConvexPolygonTemplate>& info) {
   out << "split_by=" << info.split_by();
   return out;
 }

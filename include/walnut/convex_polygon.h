@@ -563,7 +563,7 @@ class ConvexPolygon {
   std::pair<ConvexPolygon, ConvexPolygon> CreateSplitChildren(
       const SplitInfoRep& split) const {
     std::pair<ConvexPolygon, ConvexPolygon> result;
-    CreateSplitChildren(*this, split, result.first, result.second);
+    FillInSplitChildren(*this, split, result.first, result.second);
     return result;
   }
 
@@ -581,7 +581,7 @@ class ConvexPolygon {
   std::pair<ConvexPolygon, ConvexPolygon> CreateSplitChildren(
       SplitInfoRep&& split) && {
     std::pair<ConvexPolygon, ConvexPolygon> result;
-    CreateSplitChildren(std::move(*this), std::move(split), result.first,
+    FillInSplitChildren(std::move(*this), std::move(split), result.first,
                         result.second);
     return result;
   }
@@ -606,7 +606,7 @@ class ConvexPolygon {
   // unspecified state afterwards, such that it is only safe to call the
   // destructor or assignment operator on it.
   template <typename ParentRef, typename SplitInfoRef>
-  static void CreateSplitChildren(ParentRef&& parent, SplitInfoRef&& split,
+  static void FillInSplitChildren(ParentRef&& parent, SplitInfoRef&& split,
                                   ConvexPolygon& neg_child,
                                   ConvexPolygon& pos_child);
 
@@ -830,7 +830,7 @@ ConvexPolygon<point3_bits, VertexData>::GetLastNegSideVertex(
 
 template <int point3_bits, typename VertexData>
 template <typename ParentRef, typename SplitInfoRef>
-void ConvexPolygon<point3_bits, VertexData>::CreateSplitChildren(
+void ConvexPolygon<point3_bits, VertexData>::FillInSplitChildren(
     ParentRef&& parent, SplitInfoRef&& split,
     ConvexPolygon& neg_child, ConvexPolygon& pos_child) {
   assert(split.ShouldEmitNegativeChild() && split.ShouldEmitPositiveChild());
