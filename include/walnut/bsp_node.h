@@ -28,11 +28,10 @@ class BSPTree;
 template <int point3_bits_template>
 class BSPDefaultPolygon;
 
-template <typename ConvexPolygonTemplate = BSPDefaultPolygon<32>>
+template <typename BSPNodeTemplate>
 class BSPEdgeInfo {
  public:
-  using ConvexPolygonRep = ConvexPolygonTemplate;
-  using BSPNodeRep = BSPNode<ConvexPolygonRep>;
+  using BSPNodeRep = BSPNodeTemplate;
 
   BSPEdgeInfo() = default;
   BSPEdgeInfo(const NoVertexData&) { }
@@ -63,10 +62,11 @@ class BSPEdgeInfo {
 template <int point3_bits>
 class BSPDefaultPolygon :
   public ConvexPolygon<point3_bits,
-                       BSPEdgeInfo<BSPDefaultPolygon<point3_bits>>> {
+                       BSPEdgeInfo<BSPNode<BSPDefaultPolygon<point3_bits>>>> {
  public:
-  using Parent = ConvexPolygon<point3_bits,
-                               BSPEdgeInfo<BSPDefaultPolygon<point3_bits>>>;
+  using Parent =
+    ConvexPolygon<point3_bits,
+                  BSPEdgeInfo<BSPNode<BSPDefaultPolygon<point3_bits>>>>;
   using typename Parent::SplitInfoRep;
 
   // Inherit all of the parent class's constructors.
@@ -98,7 +98,7 @@ template <typename ConvexPolygonTemplate = BSPDefaultPolygon<32>>
 class BSPNode {
  public:
   using ConvexPolygonRep = ConvexPolygonTemplate;
-  static_assert(std::is_base_of<BSPEdgeInfo<ConvexPolygonRep>,
+  static_assert(std::is_base_of<BSPEdgeInfo<BSPNode>,
                                 typename ConvexPolygonRep::VertexData>::value,
                 "The ConvexPolygon's VertexData must inherit from "
                 "BSPEdgeInfo.");
