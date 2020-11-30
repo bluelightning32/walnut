@@ -29,7 +29,7 @@ template <int point3_bits_template>
 class BSPDefaultPolygon;
 
 template <typename BSPNodeTemplate>
-class BSPEdgeInfo {
+struct BSPEdgeInfo {
  public:
   using BSPNodeRep = BSPNodeTemplate;
 
@@ -43,20 +43,7 @@ class BSPEdgeInfo {
     return false;
   }
 
-  BSPNodeRep* split_by() {
-    return split_by_;
-  }
-
-  const BSPNodeRep* split_by() const {
-    return split_by_;
-  }
-
-  void set_split_by(BSPNodeRep* split_by) {
-    split_by_ = split_by;
-  }
-
- private:
-  BSPNodeRep* split_by_ = nullptr;
+  const BSPNodeRep* split_by = nullptr;
 };
 
 template <int point3_bits>
@@ -268,11 +255,11 @@ void BSPNode<ConvexPolygonTemplate>::PushContentsToChildren() {
         // comment, the last 2 vertices of neg_poly will touch the plane. So
         // the first of those 2 vertices is the edge source.
         children.first.vertex_data(
-            children.first.vertex_count() - 2).set_split_by(this);
+            children.first.vertex_count() - 2).split_by = this;
         // The first and last vertices of pos_poly will touch the plane. So the
         // first of those 2 vertices is the edge source.
         children.second.vertex_data(
-            children.second.vertex_count() - 1).set_split_by(this);
+            children.second.vertex_count() - 1).split_by = this;
         negative_child_->contents_.push_back(std::move(children.first));
         positive_child_->contents_.push_back(std::move(children.second));
       } else {
@@ -308,11 +295,11 @@ void BSPNode<ConvexPolygonTemplate>::PushContentsToChildren() {
         // comment, the last 2 vertices of neg_poly will touch the plane. So
         // the first of those 2 vertices is the edge source.
         children.first.vertex_data(
-            children.first.vertex_count() - 2).set_split_by(this);
+            children.first.vertex_count() - 2).split_by = this;
         // The first and last vertices of pos_poly will touch the plane. So the
         // first of those 2 vertices is the edge source.
         children.second.vertex_data(
-            children.second.vertex_count() - 1).set_split_by(this);
+            children.second.vertex_count() - 1).split_by = this;
         negative_child_->border_contents_.push_back(std::move(children.first));
         positive_child_->border_contents_.push_back(
             std::move(children.second));
@@ -358,7 +345,7 @@ void BSPNode<ConvexPolygonTemplate>::PushContentsToLeaves(
 template <typename ConvexPolygonTemplate>
 std::ostream& operator<<(std::ostream& out,
                          const BSPEdgeInfo<ConvexPolygonTemplate>& info) {
-  out << "split_by=" << info.split_by();
+  out << "split_by=" << info.split_by;
   return out;
 }
 

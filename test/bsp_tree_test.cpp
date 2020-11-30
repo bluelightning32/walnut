@@ -233,17 +233,17 @@ TEST(BSPTree, SplitTo2Children) {
   for (const BSPNode<>::ConvexPolygonRep::EdgeRep& edge :
        tree.root.negative_child()->contents()[0].edges()) {
     if (edge.vertex == expected_neg[1]) {
-      EXPECT_EQ(edge.data().split_by(), &tree.root);
+      EXPECT_EQ(edge.data().split_by, &tree.root);
     } else {
-      EXPECT_EQ(edge.data().split_by(), nullptr);
+      EXPECT_EQ(edge.data().split_by, nullptr);
     }
   }
   for (const BSPNode<>::ConvexPolygonRep::EdgeRep& edge :
        tree.root.positive_child()->contents()[0].edges()) {
     if (edge.vertex == expected_pos[3]) {
-      EXPECT_EQ(edge.data().split_by(), &tree.root);
+      EXPECT_EQ(edge.data().split_by, &tree.root);
     } else {
-      EXPECT_EQ(edge.data().split_by(), nullptr);
+      EXPECT_EQ(edge.data().split_by, nullptr);
     }
   }
 }
@@ -316,17 +316,17 @@ TEST(BSPTree, SplitBorderTo2Children) {
   for (const BSPNode<>::ConvexPolygonRep::EdgeRep& edge :
        neg_leaf->border_contents()[0].edges()) {
     if (edge.vertex == expected_neg[1]) {
-      EXPECT_EQ(edge.data().split_by(), tree.root.negative_child());
+      EXPECT_EQ(edge.data().split_by, tree.root.negative_child());
     } else {
-      EXPECT_EQ(edge.data().split_by(), nullptr);
+      EXPECT_EQ(edge.data().split_by, nullptr);
     }
   }
   for (const BSPNode<>::ConvexPolygonRep::EdgeRep& edge :
        pos_leaf->border_contents()[0].edges()) {
     if (edge.vertex == expected_pos[3]) {
-      EXPECT_EQ(edge.data().split_by(), tree.root.negative_child());
+      EXPECT_EQ(edge.data().split_by, tree.root.negative_child());
     } else {
-      EXPECT_EQ(edge.data().split_by(), nullptr);
+      EXPECT_EQ(edge.data().split_by, nullptr);
     }
   }
 }
