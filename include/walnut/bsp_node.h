@@ -90,6 +90,54 @@ class BSPDefaultPolygon :
   }
 };
 
+template <typename BSPNodeTemplate>
+class BSPBorderPolygon : public BSPNodeTemplate::ConvexPolygonRep {
+ public:
+  using BSPNodeRep = BSPNodeTemplate;
+  using Parent = typename BSPNodeTemplate::ConvexPolygonRep;
+  using typename Parent::SplitInfoRep;
+
+  BSPBorderPolygon(BSPNodeRep* node_border, Parent&& parent) :
+    Parent(std::move(parent)), node_border_(node_border) { }
+
+  // Overload CreateSplitChildren to create the derived polygon type.
+  std::pair<BSPBorderPolygon, BSPBorderPolygon> CreateSplitChildren(
+      const SplitInfoRep& split) const {
+    std::pair<Parent, Parent> parent_result =
+      Parent::CreateSplitChildren(split);
+    return std::make_pair(BSPBorderPolygon(node_border_,
+                                           std::move(parent_result.first)),
+                          BSPBorderPolygon(node_border_,
+                                           std::move(parent_result.second)));
+  }
+
+  // Overload CreateSplitChildren to create the derived polygon type.
+  std::pair<BSPBorderPolygon, BSPBorderPolygon> CreateSplitChildren(
+      SplitInfoRep&& split) && {
+    std::pair<Parent, Parent> parent_result =
+      static_cast<Parent&&>(*this).CreateSplitChildren(std::move(split));
+    return std::make_pair(BSPBorderPolygon(node_border_,
+                                           std::move(parent_result.first)),
+                          BSPBorderPolygon(node_border_,
+                                           std::move(parent_result.second)));
+  }
+
+  BSPNodeRep* node_border() {
+    return node_border_;
+  }
+
+  const BSPNodeRep* node_border() const {
+    return node_border_;
+  }
+
+  void set_node_border(BSPNodeRep* node_border) {
+    node_border_ = node_border;
+  }
+
+ private:
+  BSPNodeRep* node_border_ = nullptr;
+};
+
 // This is a node within a binary space partition tree.
 //
 // `ConvexPolygonTemplate` must inherit from ConvexPolygon.
@@ -107,6 +155,8 @@ class BSPNode {
                                     typename ConvexPolygonRep::VertexData>,
                       ConvexPolygonRep>::value,
       "The ConvexPolygonTemplate must inherit from ConvexPolygon.");
+
+  using BorderPolygonRep = BSPBorderPolygon<BSPNode>;
 
   using HalfSpace3Rep = typename HalfSpace3FromPoint3Builder<
     ConvexPolygonRep::point3_bits>::HalfSpace3Rep;
@@ -149,7 +199,7 @@ class BSPNode {
     return contents_;
   }
 
-  const std::vector<ConvexPolygonRep>& border_contents() const {
+  const std::vector<BorderPolygonRep>& border_contents() const {
     return border_contents_;
   }
 
@@ -180,7 +230,7 @@ class BSPNode {
   // For a finished interior node, this will be empty. When new contents are
   // added to the tree, this will be temporarily non-empty, until the new
   // contents are psuhed to the children.
-  std::vector<ConvexPolygonRep> border_contents_;
+  std::vector<BorderPolygonRep> border_contents_;
 
   // The plane that splits an interior node.
   //
@@ -235,20 +285,22 @@ void BSPNode<ConvexPolygonTemplate>::PushContentsToChildren() {
       const int drop_dimension = polygon.drop_dimension();
       if (polygon.plane().normal().components()[drop_dimension].GetAbsMult(
             split_.normal().components()[drop_dimension]) >= 0) {
-        negative_child_->border_contents_.push_back(std::move(polygon));
+        negative_child_->border_contents_.emplace_back(this,
+                                                       std::move(polygon));
       } else {
-        positive_child_->border_contents_.push_back(std::move(polygon));
+        positive_child_->border_contents_.emplace_back(this,
+                                                       std::move(polygon));
       }
     }
   }
 
-  for (ConvexPolygonRep& polygon : border_contents_) {
+  for (BorderPolygonRep& polygon : border_contents_) {
     typename ConvexPolygonRep::SplitInfoRep info =
       polygon.GetSplitInfo(split_);
 
     if (info.ShouldEmitNegativeChild()) {
       if (info.ShouldEmitPositiveChild()) {
-        std::pair<ConvexPolygonRep, ConvexPolygonRep> children =
+        std::pair<BorderPolygonRep, BorderPolygonRep> children =
           std::move(polygon).CreateSplitChildren(std::move(info));
         // As described by the CreateSplitChildren function declaration
         // comment, the last 2 vertices of neg_poly will touch the plane. So

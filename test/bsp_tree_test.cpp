@@ -152,8 +152,10 @@ TEST(BSPTree, SplitOnPlane) {
 
     tree.root.Split(polygon.plane());
     EXPECT_FALSE(tree.root.IsLeaf());
-    EXPECT_THAT(DropVertexData(tree.root.negative_child()->border_contents()),
+    ASSERT_THAT(DropVertexData(tree.root.negative_child()->border_contents()),
                 ElementsAre(polygon));
+    EXPECT_EQ(tree.root.negative_child()->border_contents()[0].node_border(),
+              &tree.root);
     EXPECT_THAT(DropVertexData(tree.root.positive_child()->border_contents()),
                 IsEmpty());
     EXPECT_THAT(DropVertexData(tree.root.negative_child()->contents()),
@@ -171,8 +173,10 @@ TEST(BSPTree, SplitOnPlane) {
     EXPECT_FALSE(tree.root.IsLeaf());
     EXPECT_THAT(DropVertexData(tree.root.negative_child()->border_contents()),
                 IsEmpty());
-    EXPECT_THAT(DropVertexData(tree.root.positive_child()->border_contents()),
+    ASSERT_THAT(DropVertexData(tree.root.positive_child()->border_contents()),
                 ElementsAre(polygon));
+    EXPECT_EQ(tree.root.positive_child()->border_contents()[0].node_border(),
+              &tree.root);
     EXPECT_THAT(DropVertexData(tree.root.negative_child()->contents()),
                 IsEmpty());
     EXPECT_THAT(DropVertexData(tree.root.positive_child()->contents()),
@@ -284,8 +288,10 @@ TEST(BSPTree, SplitBorderTo2Children) {
   // negative child.
   tree.root.Split(polygon.plane());
   ASSERT_FALSE(tree.root.IsLeaf());
-  EXPECT_THAT(DropVertexData(tree.root.negative_child()->border_contents()),
+  ASSERT_THAT(DropVertexData(tree.root.negative_child()->border_contents()),
               ElementsAre(polygon));
+  EXPECT_EQ(tree.root.negative_child()->border_contents()[0].node_border(),
+            &tree.root);
 
   // Split the negative child such that the polygon is split into 2 pieces.
   tree.root.negative_child()->Split(half_space);
@@ -301,7 +307,11 @@ TEST(BSPTree, SplitBorderTo2Children) {
   ASSERT_EQ(pos_leaf->border_contents().size(), 1);
 
   EXPECT_EQ(neg_leaf->border_contents()[0], MakeConvexPolygon(expected_neg));
+  EXPECT_EQ(neg_leaf->border_contents()[0].node_border(),
+            &tree.root);
   EXPECT_EQ(pos_leaf->border_contents()[0], MakeConvexPolygon(expected_pos));
+  EXPECT_EQ(pos_leaf->border_contents()[0].node_border(),
+            &tree.root);
 
   for (const BSPNode<>::ConvexPolygonRep::EdgeRep& edge :
        neg_leaf->border_contents()[0].edges()) {
