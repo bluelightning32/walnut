@@ -83,9 +83,19 @@ class BSPPolygonWrapper : public BSPNodeTemplate::InputPolygon {
   using BSPNodeRep = BSPNodeTemplate;
   using Parent = typename BSPNodeTemplate::InputPolygon;
   using typename Parent::SplitInfoRep;
+  using typename Parent::VertexData;
 
-  BSPPolygonWrapper(const BSPNodeRep* on_node_plane, Parent&& parent) :
-    Parent(std::move(parent)), on_node_plane(on_node_plane) { }
+  static_assert(std::is_base_of<BSPEdgeInfo<BSPNodeRep>, VertexData>::value,
+                "The ConvexPolygon's VertexData must inherit from "
+                "BSPEdgeInfo.");
+  static_assert(std::is_base_of<ConvexPolygon<Parent::point3_bits, VertexData>,
+                                Parent>::value,
+      "The InputPolygonTemplate must inherit from ConvexPolygon.");
+
+  template <typename OtherPolygon>
+  BSPPolygonWrapper(const BSPNodeRep* on_node_plane, OtherPolygon&& parent) :
+    Parent(std::forward<OtherPolygon>(parent)),
+    on_node_plane(on_node_plane) { }
 
   // Overload CreateSplitChildren to create the derived polygon type.
   std::pair<BSPPolygonWrapper, BSPPolygonWrapper> CreateSplitChildren(
@@ -122,17 +132,7 @@ template <typename InputPolygonTemplate = BSPDefaultPolygon<32>>
 class BSPNode {
  public:
   using InputPolygon = InputPolygonTemplate;
-  static_assert(std::is_base_of<BSPEdgeInfo<BSPNode>,
-                                typename InputPolygon::VertexData>::value,
-                "The ConvexPolygon's VertexData must inherit from "
-                "BSPEdgeInfo.");
-  static_assert(
-      std::is_base_of<ConvexPolygon<InputPolygon::point3_bits,
-                                    typename InputPolygon::VertexData>,
-                      InputPolygon>::value,
-      "The InputPolygonTemplate must inherit from ConvexPolygon.");
-
-  using BorderPolygonRep = BSPPolygonWrapper<BSPNode>;
+  using PolygonRep = BSPPolygonWrapper<BSPNode>;
 
   using HalfSpace3Rep = typename HalfSpace3FromPoint3Builder<
     InputPolygon::point3_bits>::HalfSpace3Rep;
@@ -174,11 +174,11 @@ class BSPNode {
     return positive_child_.get();
   }
 
-  const std::vector<InputPolygon>& contents() const {
+  const std::vector<PolygonRep>& contents() const {
     return contents_;
   }
 
-  const std::vector<BorderPolygonRep>& border_contents() const {
+  const std::vector<PolygonRep>& border_contents() const {
     return border_contents_;
   }
 
@@ -212,14 +212,14 @@ class BSPNode {
   // For a finished interior node, this will be empty. When new contents are
   // added to the tree, this will be temporarily non-empty, until the new
   // contents are psuhed to the children.
-  std::vector<InputPolygon> contents_;
+  std::vector<PolygonRep> contents_;
 
   // For a leaf node, these are the polygons that are on the cell border.
   //
   // For a finished interior node, this will be empty. When new contents are
   // added to the tree, this will be temporarily non-empty, until the new
   // contents are psuhed to the children.
-  std::vector<BorderPolygonRep> border_contents_;
+  std::vector<PolygonRep> border_contents_;
 
   // The plane that splits an interior node.
   //
@@ -232,13 +232,12 @@ class BSPNode {
 
 template <typename InputPolygonTemplate>
 void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
-  for (InputPolygon& polygon : contents_) {
-    typename InputPolygon::SplitInfoRep info =
-      polygon.GetSplitInfo(split_);
+  for (PolygonRep& polygon : contents_) {
+    typename PolygonRep::SplitInfoRep info = polygon.GetSplitInfo(split_);
 
     if (info.ShouldEmitNegativeChild()) {
       if (info.ShouldEmitPositiveChild()) {
-        std::pair<InputPolygon, InputPolygon> children =
+        std::pair<PolygonRep, PolygonRep> children =
           std::move(polygon).CreateSplitChildren(std::move(info));
         // As described by the CreateSplitChildren function declaration
         // comment, the last 2 vertices of neg_poly will touch the plane. So
@@ -272,13 +271,12 @@ void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
     }
   }
 
-  for (BorderPolygonRep& polygon : border_contents_) {
-    typename InputPolygon::SplitInfoRep info =
-      polygon.GetSplitInfo(split_);
+  for (PolygonRep& polygon : border_contents_) {
+    typename InputPolygon::SplitInfoRep info = polygon.GetSplitInfo(split_);
 
     if (info.ShouldEmitNegativeChild()) {
       if (info.ShouldEmitPositiveChild()) {
-        std::pair<BorderPolygonRep, BorderPolygonRep> children =
+        std::pair<PolygonRep, PolygonRep> children =
           std::move(polygon).CreateSplitChildren(std::move(info));
         // As described by the CreateSplitChildren function declaration
         // comment, the last 2 vertices of neg_poly will touch the plane. So

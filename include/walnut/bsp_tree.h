@@ -23,7 +23,8 @@ class BSPTree {
   template <typename InputConvexPolygon, typename LeafCallback>
   void AddContent(InputConvexPolygon&& polygon,
                   LeafCallback leaf_callback) {
-    root.contents_.emplace_back(std::forward<InputConvexPolygon>(polygon));
+    root.contents_.emplace_back(/*on_node_plane=*/nullptr,
+                                std::forward<InputConvexPolygon>(polygon));
     root.PushContentsToLeaves(leaf_callback);
   }
 
