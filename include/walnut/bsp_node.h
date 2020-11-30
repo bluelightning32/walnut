@@ -16,13 +16,13 @@
 
 namespace walnut {
 
-template <typename ConvexPolygonTemplate>
+template <typename InputPolygonTemplate>
 struct BSPEdgeInfo;
 
-template <typename ConvexPolygonTemplate>
+template <typename BSPNodeTemplate>
 class BSPNode;
 
-template <typename ConvexPolygonTemplate>
+template <typename InputPolygonTemplate>
 class BSPTree;
 
 template <int point3_bits_template>
@@ -78,10 +78,10 @@ class BSPDefaultPolygon :
 };
 
 template <typename BSPNodeTemplate>
-class BSPPolygonWrapper : public BSPNodeTemplate::ConvexPolygonRep {
+class BSPPolygonWrapper : public BSPNodeTemplate::InputPolygon {
  public:
   using BSPNodeRep = BSPNodeTemplate;
-  using Parent = typename BSPNodeTemplate::ConvexPolygonRep;
+  using Parent = typename BSPNodeTemplate::InputPolygon;
   using typename Parent::SplitInfoRep;
 
   BSPPolygonWrapper(const BSPNodeRep* on_node_plane, Parent&& parent) :
@@ -116,29 +116,29 @@ class BSPPolygonWrapper : public BSPNodeTemplate::ConvexPolygonRep {
 
 // This is a node within a binary space partition tree.
 //
-// `ConvexPolygonTemplate` must inherit from ConvexPolygon.
-// `ConvexPolygonTemplate::VertexData` must inherit from BSPEdgeInfo.
-template <typename ConvexPolygonTemplate = BSPDefaultPolygon<32>>
+// `InputPolygonTemplate` must inherit from ConvexPolygon.
+// `InputPolygonTemplate::VertexData` must inherit from BSPEdgeInfo.
+template <typename InputPolygonTemplate = BSPDefaultPolygon<32>>
 class BSPNode {
  public:
-  using ConvexPolygonRep = ConvexPolygonTemplate;
+  using InputPolygon = InputPolygonTemplate;
   static_assert(std::is_base_of<BSPEdgeInfo<BSPNode>,
-                                typename ConvexPolygonRep::VertexData>::value,
+                                typename InputPolygon::VertexData>::value,
                 "The ConvexPolygon's VertexData must inherit from "
                 "BSPEdgeInfo.");
   static_assert(
-      std::is_base_of<ConvexPolygon<ConvexPolygonRep::point3_bits,
-                                    typename ConvexPolygonRep::VertexData>,
-                      ConvexPolygonRep>::value,
-      "The ConvexPolygonTemplate must inherit from ConvexPolygon.");
+      std::is_base_of<ConvexPolygon<InputPolygon::point3_bits,
+                                    typename InputPolygon::VertexData>,
+                      InputPolygon>::value,
+      "The InputPolygonTemplate must inherit from ConvexPolygon.");
 
   using BorderPolygonRep = BSPPolygonWrapper<BSPNode>;
 
   using HalfSpace3Rep = typename HalfSpace3FromPoint3Builder<
-    ConvexPolygonRep::point3_bits>::HalfSpace3Rep;
-  friend class BSPTree<ConvexPolygonRep>;
+    InputPolygon::point3_bits>::HalfSpace3Rep;
+  friend class BSPTree<InputPolygon>;
 
-  static constexpr int point3_bits = ConvexPolygonRep::point3_bits;
+  static constexpr int point3_bits = InputPolygon::point3_bits;
 
   // Convert a leaf node into an interior node.
   //
@@ -174,7 +174,7 @@ class BSPNode {
     return positive_child_.get();
   }
 
-  const std::vector<ConvexPolygonRep>& contents() const {
+  const std::vector<InputPolygon>& contents() const {
     return contents_;
   }
 
@@ -212,7 +212,7 @@ class BSPNode {
   // For a finished interior node, this will be empty. When new contents are
   // added to the tree, this will be temporarily non-empty, until the new
   // contents are psuhed to the children.
-  std::vector<ConvexPolygonRep> contents_;
+  std::vector<InputPolygon> contents_;
 
   // For a leaf node, these are the polygons that are on the cell border.
   //
@@ -230,15 +230,15 @@ class BSPNode {
   std::unique_ptr<BSPNode> positive_child_;
 };
 
-template <typename ConvexPolygonTemplate>
-void BSPNode<ConvexPolygonTemplate>::PushContentsToChildren() {
-  for (ConvexPolygonRep& polygon : contents_) {
-    typename ConvexPolygonRep::SplitInfoRep info =
+template <typename InputPolygonTemplate>
+void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
+  for (InputPolygon& polygon : contents_) {
+    typename InputPolygon::SplitInfoRep info =
       polygon.GetSplitInfo(split_);
 
     if (info.ShouldEmitNegativeChild()) {
       if (info.ShouldEmitPositiveChild()) {
-        std::pair<ConvexPolygonRep, ConvexPolygonRep> children =
+        std::pair<InputPolygon, InputPolygon> children =
           std::move(polygon).CreateSplitChildren(std::move(info));
         // As described by the CreateSplitChildren function declaration
         // comment, the last 2 vertices of neg_poly will touch the plane. So
@@ -273,7 +273,7 @@ void BSPNode<ConvexPolygonTemplate>::PushContentsToChildren() {
   }
 
   for (BorderPolygonRep& polygon : border_contents_) {
-    typename ConvexPolygonRep::SplitInfoRep info =
+    typename InputPolygon::SplitInfoRep info =
       polygon.GetSplitInfo(split_);
 
     if (info.ShouldEmitNegativeChild()) {
@@ -315,9 +315,9 @@ void BSPNode<ConvexPolygonTemplate>::PushContentsToChildren() {
   }
 }
 
-template <typename ConvexPolygonTemplate>
+template <typename InputPolygonTemplate>
 template <typename LeafCallback>
-void BSPNode<ConvexPolygonTemplate>::PushContentsToLeaves(
+void BSPNode<InputPolygonTemplate>::PushContentsToLeaves(
     LeafCallback leaf_callback) {
   if (contents_.empty() && border_contents_.empty()) {
     return;
@@ -331,9 +331,9 @@ void BSPNode<ConvexPolygonTemplate>::PushContentsToLeaves(
   }
 }
 
-template <typename ConvexPolygonTemplate>
+template <typename InputPolygonTemplate>
 std::ostream& operator<<(std::ostream& out,
-                         const BSPEdgeInfo<ConvexPolygonTemplate>& info) {
+                         const BSPEdgeInfo<InputPolygonTemplate>& info) {
   out << "split_by=" << info.split_by;
   return out;
 }

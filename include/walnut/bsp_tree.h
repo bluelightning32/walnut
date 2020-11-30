@@ -5,15 +5,14 @@
 
 namespace walnut {
 
-// ConvexPolygonTemplate must have a VertexData that inherits from
-// BSPEdgeInfo.
-template <typename ConvexPolygonTemplate = BSPDefaultPolygon<32>>
+// InputPolygonTemplate must have a VertexData that inherits from BSPEdgeInfo.
+template <typename InputPolygonTemplate = BSPDefaultPolygon<32>>
 class BSPTree {
  public:
-  using ConvexPolygonRep = ConvexPolygonTemplate;
-  using BSPNodeRep = BSPNode<ConvexPolygonRep>;
+  using InputPolygon = InputPolygonTemplate;
+  using BSPNodeRep = BSPNode<InputPolygon>;
 
-  static constexpr int point3_bits = ConvexPolygonRep::point3_bits;
+  static constexpr int point3_bits = InputPolygon::point3_bits;
 
   // Add a new polygon to this node.
   //
