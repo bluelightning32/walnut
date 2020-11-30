@@ -77,16 +77,15 @@ TEST(BSPTree, AddContentsToLeaf) {
     },
   };
 
-  std::vector<ConvexPolygon<>> polygons;
-  for (Point3<32> (&triangle)[3] : triangles) {
-    polygons.push_back(MakeConvexPolygon(triangle));
-  }
-
   BSPTree<> tree;
   auto leaf_added = [&](BSPNode<>& leaf) {
     EXPECT_EQ(&leaf, &tree.root);
   };
-  tree.AddContents(polygons.begin(), polygons.end(), leaf_added);
+  std::vector<ConvexPolygon<>> polygons;
+  for (Point3<32> (&triangle)[3] : triangles) {
+    polygons.push_back(MakeConvexPolygon(triangle));
+    tree.AddContent(MakeConvexPolygon(triangle), leaf_added);
+  }
   EXPECT_THAT(DropVertexData(tree.root.contents()),
               ContainerEq(polygons));
 }
