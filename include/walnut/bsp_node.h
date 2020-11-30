@@ -172,7 +172,10 @@ class BSPNode {
   // that ancestor nodes were split on.
   //
   // The contents of this node will be pushed into the new child nodes.
-  void Split(const HalfSpace3Rep& half_space);
+  void Split(const HalfSpace3Rep& half_space) {
+    MakeInterior(half_space, new BSPNode(), new BSPNode());
+    PushContentsToChildren();
+  }
 
   bool IsLeaf() const {
     return !split().IsValid();
@@ -203,12 +206,22 @@ class BSPNode {
     return border_contents_;
   }
 
- private:
+ protected:
   // Push the contents of an interior node to the children.
   //
   // This may only be called on an interior node.
   void PushContentsToChildren();
 
+  void MakeInterior(const HalfSpace3Rep& half_space,
+                    BSPNode* negative_child,
+                    BSPNode* positive_child) {
+    assert(IsLeaf());
+    split_ = half_space;
+    negative_child_ = std::unique_ptr<BSPNode>(negative_child);
+    positive_child_ = std::unique_ptr<BSPNode>(positive_child);
+  }
+
+ private:
   // Push the contents all the way down to descendant leaf nodes. Call
   // `leaf_callback` on each leaf node that the contents were pushed to (and
   // possibly more nodes that the contents were not pushed to).
@@ -240,17 +253,6 @@ class BSPNode {
   std::unique_ptr<BSPNode> negative_child_;
   std::unique_ptr<BSPNode> positive_child_;
 };
-
-template <typename ConvexPolygonTemplate>
-void BSPNode<ConvexPolygonTemplate>::Split(const HalfSpace3Rep& half_space) {
-  assert(IsLeaf());
-
-  split_ = half_space;
-  positive_child_ = std::unique_ptr<BSPNode>(new BSPNode());
-  negative_child_ = std::unique_ptr<BSPNode>(new BSPNode());
-
-  PushContentsToChildren();
-}
 
 template <typename ConvexPolygonTemplate>
 void BSPNode<ConvexPolygonTemplate>::PushContentsToChildren() {
