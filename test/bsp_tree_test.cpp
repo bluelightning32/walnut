@@ -154,7 +154,7 @@ TEST(BSPTree, SplitOnPlane) {
     EXPECT_FALSE(tree.root.IsLeaf());
     ASSERT_THAT(DropVertexData(tree.root.negative_child()->border_contents()),
                 ElementsAre(polygon));
-    EXPECT_EQ(tree.root.negative_child()->border_contents()[0].node_border(),
+    EXPECT_EQ(tree.root.negative_child()->border_contents()[0].on_node_plane,
               &tree.root);
     EXPECT_THAT(DropVertexData(tree.root.positive_child()->border_contents()),
                 IsEmpty());
@@ -175,7 +175,7 @@ TEST(BSPTree, SplitOnPlane) {
                 IsEmpty());
     ASSERT_THAT(DropVertexData(tree.root.positive_child()->border_contents()),
                 ElementsAre(polygon));
-    EXPECT_EQ(tree.root.positive_child()->border_contents()[0].node_border(),
+    EXPECT_EQ(tree.root.positive_child()->border_contents()[0].on_node_plane,
               &tree.root);
     EXPECT_THAT(DropVertexData(tree.root.negative_child()->contents()),
                 IsEmpty());
@@ -290,7 +290,7 @@ TEST(BSPTree, SplitBorderTo2Children) {
   ASSERT_FALSE(tree.root.IsLeaf());
   ASSERT_THAT(DropVertexData(tree.root.negative_child()->border_contents()),
               ElementsAre(polygon));
-  EXPECT_EQ(tree.root.negative_child()->border_contents()[0].node_border(),
+  EXPECT_EQ(tree.root.negative_child()->border_contents()[0].on_node_plane,
             &tree.root);
 
   // Split the negative child such that the polygon is split into 2 pieces.
@@ -307,10 +307,10 @@ TEST(BSPTree, SplitBorderTo2Children) {
   ASSERT_EQ(pos_leaf->border_contents().size(), 1);
 
   EXPECT_EQ(neg_leaf->border_contents()[0], MakeConvexPolygon(expected_neg));
-  EXPECT_EQ(neg_leaf->border_contents()[0].node_border(),
+  EXPECT_EQ(neg_leaf->border_contents()[0].on_node_plane,
             &tree.root);
   EXPECT_EQ(pos_leaf->border_contents()[0], MakeConvexPolygon(expected_pos));
-  EXPECT_EQ(pos_leaf->border_contents()[0].node_border(),
+  EXPECT_EQ(pos_leaf->border_contents()[0].on_node_plane,
             &tree.root);
 
   for (const BSPNode<>::ConvexPolygonRep::EdgeRep& edge :

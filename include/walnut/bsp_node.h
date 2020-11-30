@@ -78,51 +78,40 @@ class BSPDefaultPolygon :
 };
 
 template <typename BSPNodeTemplate>
-class BSPBorderPolygon : public BSPNodeTemplate::ConvexPolygonRep {
+class BSPPolygonWrapper : public BSPNodeTemplate::ConvexPolygonRep {
  public:
   using BSPNodeRep = BSPNodeTemplate;
   using Parent = typename BSPNodeTemplate::ConvexPolygonRep;
   using typename Parent::SplitInfoRep;
 
-  BSPBorderPolygon(BSPNodeRep* node_border, Parent&& parent) :
-    Parent(std::move(parent)), node_border_(node_border) { }
+  BSPPolygonWrapper(const BSPNodeRep* on_node_plane, Parent&& parent) :
+    Parent(std::move(parent)), on_node_plane(on_node_plane) { }
 
   // Overload CreateSplitChildren to create the derived polygon type.
-  std::pair<BSPBorderPolygon, BSPBorderPolygon> CreateSplitChildren(
+  std::pair<BSPPolygonWrapper, BSPPolygonWrapper> CreateSplitChildren(
       const SplitInfoRep& split) const {
     std::pair<Parent, Parent> parent_result =
       Parent::CreateSplitChildren(split);
-    return std::make_pair(BSPBorderPolygon(node_border_,
-                                           std::move(parent_result.first)),
-                          BSPBorderPolygon(node_border_,
-                                           std::move(parent_result.second)));
+    return std::make_pair(BSPPolygonWrapper(on_node_plane,
+                                            std::move(parent_result.first)),
+                          BSPPolygonWrapper(on_node_plane,
+                                            std::move(parent_result.second)));
   }
 
   // Overload CreateSplitChildren to create the derived polygon type.
-  std::pair<BSPBorderPolygon, BSPBorderPolygon> CreateSplitChildren(
+  std::pair<BSPPolygonWrapper, BSPPolygonWrapper> CreateSplitChildren(
       SplitInfoRep&& split) && {
     std::pair<Parent, Parent> parent_result =
       static_cast<Parent&&>(*this).CreateSplitChildren(std::move(split));
-    return std::make_pair(BSPBorderPolygon(node_border_,
-                                           std::move(parent_result.first)),
-                          BSPBorderPolygon(node_border_,
-                                           std::move(parent_result.second)));
+    return std::make_pair(BSPPolygonWrapper(on_node_plane,
+                                            std::move(parent_result.first)),
+                          BSPPolygonWrapper(on_node_plane,
+                                            std::move(parent_result.second)));
   }
 
-  BSPNodeRep* node_border() {
-    return node_border_;
-  }
-
-  const BSPNodeRep* node_border() const {
-    return node_border_;
-  }
-
-  void set_node_border(BSPNodeRep* node_border) {
-    node_border_ = node_border;
-  }
-
- private:
-  BSPNodeRep* node_border_ = nullptr;
+  // This is the BSPNode whose split plane is coincident with this polygon's
+  // plane, or nullptr if no such BSPNode exists.
+  const BSPNodeRep* on_node_plane = nullptr;
 };
 
 // This is a node within a binary space partition tree.
@@ -143,7 +132,7 @@ class BSPNode {
                       ConvexPolygonRep>::value,
       "The ConvexPolygonTemplate must inherit from ConvexPolygon.");
 
-  using BorderPolygonRep = BSPBorderPolygon<BSPNode>;
+  using BorderPolygonRep = BSPPolygonWrapper<BSPNode>;
 
   using HalfSpace3Rep = typename HalfSpace3FromPoint3Builder<
     ConvexPolygonRep::point3_bits>::HalfSpace3Rep;
