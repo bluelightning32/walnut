@@ -1,5 +1,8 @@
 #include "walnut/bsp_tree.h"
 
+// For std::sort
+#include <algorithm>
+
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "walnut/convex_polygon_factory.h"
@@ -9,6 +12,24 @@ namespace walnut {
 using testing::ContainerEq;
 using testing::ElementsAre;
 using testing::IsEmpty;
+using testing::UnorderedElementsAreArray;
+
+template <typename Polygon>
+bool PolygonLt(const Polygon& a, const Polygon& b) {
+  return std::lexicographical_compare(a.edges().begin(),
+      a.edges().end(),
+      b.edges().begin(), b.edges().end(),
+      Polygon::EdgeRep::LexicographicallyLt);
+}
+
+template <typename Polygon>
+void SortPolygons(std::vector<Polygon>& polygons) {
+  for (Polygon& polygon : polygons) {
+    polygon.SortVertices();
+  }
+
+  std::sort(polygons.begin(), polygons.end(), PolygonLt<Polygon>);
+}
 
 template<typename Container>
 auto
@@ -327,6 +348,106 @@ TEST(BSPTree, SplitBorderTo2Children) {
       EXPECT_EQ(edge.data().split_by, tree.root.negative_child());
     } else {
       EXPECT_EQ(edge.data().split_by, nullptr);
+    }
+  }
+}
+
+TEST(BSPTree, GetNodeBorderEmptyTree) {
+  BSPTree<> tree;
+
+  RectangularPrism<> bounding_box(Point3<>(-1, -1, -1), Point3<>(2, 2, 2));
+  std::vector<bool> node_path = { };
+
+  std::vector<BSPTree<>::OutputPolygon> facets = tree.GetNodeBorder(
+      node_path.begin(), node_path.end(), bounding_box);
+
+  Point3<> p[] = {
+    Point3<>{-1, -1, -1},
+    Point3<>{ 2, -1, -1},
+    Point3<>{ 2,  2, -1},
+    Point3<>{-1,  2, -1},
+    Point3<>{-1, -1,  2},
+    Point3<>{ 2, -1,  2},
+    Point3<>{ 2,  2,  2},
+    Point3<>{-1,  2,  2},
+  };
+
+  std::vector<std::vector<Point3<>>> expected_facet_vertices = {
+    // bottom
+    {p[0], p[3], p[2], p[1]},
+    // min x side
+    {p[3], p[0], p[4], p[7]},
+    // min y side
+    {p[0], p[1], p[5], p[4]},
+    // max x side
+    {p[1], p[2], p[6], p[5]},
+    // max y side
+    {p[2], p[3], p[7], p[6]},
+    // top
+    {p[4], p[5], p[6], p[7]},
+  };
+  std::vector<ConvexPolygon<>> expected_facets;
+  for (const std::vector<Point3<>>& vertices : expected_facet_vertices) {
+    expected_facets.push_back(MakeConvexPolygon(vertices));
+  }
+  SortPolygons(expected_facets);
+  SortPolygons(facets);
+  ASSERT_EQ(facets.size(), expected_facets.size());
+  for (size_t i = 0; i < facets.size(); ++i) {
+    EXPECT_EQ(facets[i], expected_facets[i])
+      << "i=" << i << std::endl
+      << "facets[i]=" << facets[i] << std::endl
+      << "facets[i].plane=" << facets[i].plane() << std::endl
+      << "expected_facets[i].plane=" << expected_facets[i].plane();
+  }
+}
+
+TEST(BSPTree, GetNodeBorder1Split) {
+  Point3<> p[] = {
+    Point3<>{-1, -1, -1},
+    Point3<>{ 2, -1, -1},
+    Point3<>{ 2,  2, -1},
+    Point3<>{-1,  2, -1},
+    Point3<>{-1, -1,  2},
+    Point3<>{ 2, -1,  2},
+    Point3<>{ 2,  2,  2},
+    Point3<>{-1,  2,  2},
+  };
+
+  for (bool pos_side : {false, true}) {
+    BSPTree<> tree;
+    HalfSpace3<> split(p[1], p[3], p[4]);
+    tree.root.Split(pos_side ? -split : split);
+    std::vector<bool> node_path = {pos_side};
+    RectangularPrism<> bounding_box(Point3<>(-1, -1, -1), Point3<>(2, 2, 2));
+
+    std::vector<BSPTree<>::OutputPolygon> facets = tree.GetNodeBorder(
+        node_path.begin(), node_path.end(), bounding_box);
+
+    std::vector<std::vector<Point3<>>> expected_facet_vertices = {
+      // bottom
+      {p[0], p[3], p[1]},
+      // min x side
+      {p[0], p[4], p[3]},
+      // min y side
+      {p[0], p[1], p[4]},
+      // diag
+      {p[1], p[3], p[4]},
+    };
+    std::vector<ConvexPolygon<>> expected_facets;
+    for (const std::vector<Point3<>>& vertices : expected_facet_vertices) {
+      expected_facets.push_back(MakeConvexPolygon(vertices));
+    }
+    SortPolygons(expected_facets);
+    SortPolygons(facets);
+    ASSERT_EQ(facets.size(), expected_facets.size())
+      << "pos_side=" << pos_side;
+    for (size_t i = 0; i < facets.size(); ++i) {
+      EXPECT_EQ(facets[i], expected_facets[i])
+        << "i=" << i << std::endl
+        << "facets[i]=" << facets[i] << std::endl
+        << "facets[i].plane=" << facets[i].plane() << std::endl
+        << "expected_facets[i].plane=" << expected_facets[i].plane();
     }
   }
 }

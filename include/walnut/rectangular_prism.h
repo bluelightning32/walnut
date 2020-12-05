@@ -1,6 +1,8 @@
 #ifndef WALNUT_RECTANGULAR_PRISM_H__
 #define WALNUT_RECTANGULAR_PRISM_H__
 
+#include <vector>
+
 #include "walnut/convex_polygon.h"
 #include "walnut/point3.h"
 
@@ -67,8 +69,11 @@ struct RectangularPrism {
 
   // Returns a ConvexPolygon for the intersection of this rectangular prism and
   // a plane (represented as a HalfSpace3).
-  template <typename ConvexPolygonRep = ConvexPolygon<point3_bits_template>>
+  template <typename ConvexPolygonRep = ConvexPolygon<point3_bits>>
   ConvexPolygonRep IntersectPlane(const HalfSpace3Rep& plane) const;
+
+  // Returns all 6 sides of the prism.
+  std::vector<ConvexPolygon<point3_bits>> GetWalls() const;
 
   // This point is considered part of the prism
   Point3Rep min_point;
@@ -76,9 +81,9 @@ struct RectangularPrism {
   Point3Rep max_point;
 };
 
-template <int point3_bits_template>
+template <int point3_bits>
 template <typename ConvexPolygonRep>
-ConvexPolygonRep RectangularPrism<point3_bits_template>::IntersectPlane(
+ConvexPolygonRep RectangularPrism<point3_bits>::IntersectPlane(
     const HalfSpace3Rep& plane) const {
   int drop_dimension = plane.normal().GetFirstNonzeroDimension();
   if (drop_dimension == -1) {
@@ -145,6 +150,57 @@ ConvexPolygonRep RectangularPrism<point3_bits_template>::IntersectPlane(
   if (split2.ShouldEmitNegativeChild()) {
     // Keep the positive child
     result = std::move(result).CreateSplitChildren(std::move(split2)).second;
+  }
+  return result;
+}
+
+template <int point3_bits>
+std::vector<ConvexPolygon<RectangularPrism<point3_bits>::point3_bits>>
+RectangularPrism<point3_bits>::GetWalls() const {
+  Point3<point3_bits> p[] = {
+    Point3<point3_bits>(min_point.x(), min_point.y(), min_point.z()),
+    Point3<point3_bits>(max_point.x(), min_point.y(), min_point.z()),
+    Point3<point3_bits>(max_point.x(), max_point.y(), min_point.z()),
+    Point3<point3_bits>(min_point.x(), max_point.y(), min_point.z()),
+    Point3<point3_bits>(min_point.x(), min_point.y(), max_point.z()),
+    Point3<point3_bits>(max_point.x(), min_point.y(), max_point.z()),
+    Point3<point3_bits>(max_point.x(), max_point.y(), max_point.z()),
+    Point3<point3_bits>(min_point.x(), max_point.y(), max_point.z()),
+  };
+
+  struct FacetInfo {
+    int normal_dimension;
+    int vertex_indices[4];
+  } facet_infos[6] = {
+    // bottom
+    {2, {0, 3, 2, 1}},
+    // min x side
+    {0, {3, 0, 4, 7}},
+    // min y side
+    {1, {0, 1, 5, 4}},
+    // max x side
+    {0, {1, 2, 6, 5}},
+    // max y side
+    {1, {2, 3, 7, 6}},
+    // top
+    {2, {4, 5, 6, 7}},
+  };
+
+  std::vector<ConvexPolygon<point3_bits>> result;
+  std::vector<Point3<point3_bits>> vertices;
+  vertices.reserve(4);
+  for (int side = 0; side < 6; ++side) {
+    const FacetInfo& facet_info = facet_infos[side];
+    vertices.clear();
+    for (int i = 0; i < 4; ++i) {
+      vertices.push_back(p[facet_info.vertex_indices[i]]);
+    }
+    Vector3<point3_bits> normal = Vector3<point3_bits>::Zero();
+    normal.components()[facet_info.normal_dimension] = side < 3 ? -1 : 1;
+    HalfSpace3Rep plane(normal, /*dist=*/side < 3 ?
+        -min_point.components()[facet_info.normal_dimension] : 
+        max_point.components()[facet_info.normal_dimension]);
+    result.emplace_back(plane, facet_info.normal_dimension, vertices);
   }
   return result;
 }
