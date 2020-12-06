@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <iostream>
 
 #include "walnut/big_int_base.h"
@@ -631,6 +632,21 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
 
   constexpr BigIntWord SignExtension() const {
     return BigIntWord{words_[used_words() - 1].SignExtension()};
+  }
+
+  explicit operator double() const {
+    static_assert(sizeof(BigIntWord) >= sizeof(double),
+                  "The cast function assumes that at most 2 words need to be "
+                  "inspected to convert to a double.");
+    if (max_words == 1 || used_ <= bytes_per_word) {
+      return (double)BigIntWord{words_[0]};
+    } else {
+      int used_words = used_ / bytes_per_word;
+      return std::ldexp(BigIntWord{words_[used_words - 1]},
+                        bits_per_word * (used_words - 1)) +
+             words_[used_words - 2].ToDoubleWithShift(bits_per_word *
+                                                      (used_words - 2));
+    }
   }
 
  protected:

@@ -1,5 +1,7 @@
 #include "walnut/big_int.h"
 
+#include <cmath>
+
 #include "gtest/gtest.h"
 
 namespace walnut {
@@ -553,6 +555,34 @@ TEST(BigInt, ConstexprMinValue) {
   constexpr BigInt<32> min_value = BigInt<32>::min_value();
   constexpr int min_value_int = static_cast<int>(min_value.low_uint32());
   EXPECT_EQ(force_constexpr_int<min_value_int> & 0x00, 0x00);
+}
+
+TEST(BigInt, CastDoubleInt64Min) {
+  const BigInt<128> a{std::numeric_limits<int64_t>::min()};
+  EXPECT_EQ((double)a, double(std::numeric_limits<int64_t>::min()));
+}
+
+TEST(BigInt, CastDoubleInt64Max) {
+  const BigInt<128> a{std::numeric_limits<int64_t>::max()};
+  EXPECT_EQ((double)a, double(std::numeric_limits<int64_t>::max()));
+}
+
+TEST(BigInt, CastDoubleInt64MaxShifted32) {
+  const BigInt<128> a(BigInt<128>{std::numeric_limits<int64_t>::max()} << 32);
+  EXPECT_EQ((double)a,
+            double(std::numeric_limits<int64_t>::max()) * std::ldexp(1, 32));
+}
+
+TEST(BigInt, CastDoubleInt64MinShifted32) {
+  const BigInt<128> a(BigInt<128>{std::numeric_limits<int64_t>::min()} << 32);
+  EXPECT_EQ((double)a,
+            double(std::numeric_limits<int64_t>::min()) * std::ldexp(1, 32));
+}
+
+TEST(BigInt, CastDoubleInt32MinShifted48) {
+  const BigInt<128> a(BigInt<128>{std::numeric_limits<int32_t>::min()} << 48);
+  EXPECT_EQ((double)a,
+            double(std::numeric_limits<int32_t>::min()) * std::ldexp(1, 48));
 }
 
 }  // walnut

@@ -285,6 +285,10 @@ class BigInt {
     return r1_c1*r2_c2 - r2_c1*r1_c2;
   }
 
+  explicit operator double() const {
+    return (double)rep_;
+  }
+
   template <int print_bits>
   friend std::ostream& operator<<(std::ostream& out, const BigInt<print_bits>& bigint);
 

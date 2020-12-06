@@ -1,6 +1,7 @@
 #ifndef WALNUT_BIG_UINT_WORD_H__
 #define WALNUT_BIG_UINT_WORD_H__
 
+#include <cmath>
 #include <cstdint>
 #include <limits>
 #include <cmath>
@@ -331,6 +332,10 @@ class BigUIntWordBase {
     } else {
       return ImplType{BigIntWord(i_) >= 0 ? BigIntWord(i_) : -BigIntWord(i_)};
     }
+  }
+
+  double ToDoubleWithShift(int shift) const {
+    return std::ldexp(i_, shift);
   }
 
  protected:
