@@ -1,4 +1,7 @@
-#include "render.h"
+// This program shows how to use the VisualizationWindow class. It does not use
+// the walnut library.
+
+#include "visualization_window.h"
 
 #include <vtkLinearExtrusionFilter.h>
 #include <vtkRegularPolygonSource.h>
@@ -18,6 +21,14 @@ vtkSmartPointer<vtkPolyDataAlgorithm> GenerateShape() {
 }
 
 int main(int argc, char *argv[]) {
-  Render(GenerateShape());
+  auto shape = GenerateShape();
+
+  walnut::VisualizationWindow window;
+  auto actor = window.AddShape(shape, 1, 0.8, 0.8, 0.6);
+  window.AddWireframe(shape);
+  window.AddShapeNormals(shape);
+  window.Axes(actor->GetBounds());
+  window.Run();
+
   return 0;
 }

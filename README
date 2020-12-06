@@ -4,5 +4,11 @@ Build the project:
   cmake ../
   make -j4
 
+The project has some algorithm visualizations to help illustrate how the
+alogrithm works in specific examples. To build them, run the following command
+from the build directory. The visualization programs will be written
+build/visualizations.
+  make -j4 visualizations
+
 The -L option lists other common options.
   cmake ../ -L

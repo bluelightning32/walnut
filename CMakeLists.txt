@@ -4,6 +4,12 @@ project(walnut
         DESCRIPTION "Exact 3D boolean library"
         )
 
+add_subdirectory(visualizations EXCLUDE_FROM_ALL)
+get_property(visualization_targets
+             DIRECTORY visualizations
+             PROPERTY BUILDSYSTEM_TARGETS)
+add_custom_target(visualizations DEPENDS ${visualization_targets})
+
 option(PACKAGE_TESTS "Build the tests" ON)
 if(PACKAGE_TESTS)
     enable_testing()

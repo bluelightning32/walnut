@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.1)
-project(examples)
+cmake_minimum_required(VERSION 3.10)
+project(visualizations)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -25,5 +25,9 @@ find_package(VTK REQUIRED COMPONENTS
 
 include(${VTK_USE_FILE})
 
-add_executable(extrusion extrusion.cxx)
-target_link_libraries(extrusion ${GLEW_LIBRARIES} ${VTK_LIBRARIES} )
+add_library(visualization STATIC visualization_window.cpp)
+
+add_executable(extrusion extrusion.cpp)
+target_link_libraries(extrusion
+                      visualization
+                      ${GLEW_LIBRARIES} ${VTK_LIBRARIES} )
