@@ -14,18 +14,19 @@
 namespace walnut {
 
 // Apply a Color to a shape.
-vtkSmartPointer<vtkAlgorithm> Color(vtkSmartPointer<vtkAlgorithm> input,
+vtkSmartPointer<vtkAlgorithm> Color(vtkSmartPointer<vtkAlgorithmOutput> input,
                                     double r, double g, double b, double a) {
   auto filter = vtkSmartPointer<vtkApplyColors>::New();
-  filter->SetInputConnection(0, input->GetOutputPort());
+  filter->SetInputConnection(0, input);
   filter->SetDefaultCellColor(r, g, b);
   filter->SetDefaultCellOpacity(a);
   return filter;
 }
 
-vtkSmartPointer<vtkGlyph3D> GetNormalsGlyph(vtkSmartPointer<vtkAlgorithm> shape) {
+vtkSmartPointer<vtkGlyph3D> GetNormalsGlyph(
+    vtkSmartPointer<vtkAlgorithmOutput> shape) {
   auto normals = vtkSmartPointer<vtkPolyDataNormals>::New();
-  normals->SetInputConnection(shape->GetOutputPort());
+  normals->SetInputConnection(shape);
 
   normals->ComputePointNormalsOff();
   normals->ComputeCellNormalsOn();
@@ -70,7 +71,7 @@ VisualizationWindow::VisualizationWindow() :
 }
 
 vtkSmartPointer<vtkActor> VisualizationWindow::AddShape(
-    vtkSmartPointer<vtkAlgorithm> shape, double r, double g, double b,
+    vtkSmartPointer<vtkAlgorithmOutput> shape, double r, double g, double b,
     double a) {
   auto mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   mapper->SetInputConnection(Color(shape, r, g, b, a)->GetOutputPort());
@@ -86,9 +87,9 @@ vtkSmartPointer<vtkActor> VisualizationWindow::AddShape(
 }
 
 vtkSmartPointer<vtkActor> VisualizationWindow::AddWireframe(
-    vtkSmartPointer<vtkAlgorithm> shape) {
+    vtkSmartPointer<vtkAlgorithmOutput> shape) {
   auto wireframe_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-  wireframe_mapper->SetInputConnection(shape->GetOutputPort());
+  wireframe_mapper->SetInputConnection(shape);
 
   auto wireframe_actor = vtkSmartPointer<vtkActor>::New();
   wireframe_actor->SetMapper(wireframe_mapper);
@@ -102,7 +103,7 @@ vtkSmartPointer<vtkActor> VisualizationWindow::AddWireframe(
 }
 
 vtkSmartPointer<vtkActor> VisualizationWindow::AddShapeNormals(
-    vtkSmartPointer<vtkAlgorithm> shape) {
+    vtkSmartPointer<vtkAlgorithmOutput> shape) {
   auto mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   mapper->SetInputConnection(GetNormalsGlyph(shape)->GetOutputPort());
 

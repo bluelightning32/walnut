@@ -2,7 +2,7 @@
 #define WALNUT_VISUALIZATIONS_VISUALIZATION_WINDOW_H__
 
 #include <vtkActor.h>
-#include <vtkAlgorithm.h>
+#include <vtkAlgorithmOutput.h>
 #include <vtkCubeAxesActor.h>
 #include <vtkRenderer.h>
 #include <vtkRenderWindow.h>
@@ -15,15 +15,16 @@ class VisualizationWindow {
  public:
   VisualizationWindow();
 
-  vtkSmartPointer<vtkActor> AddShape(vtkSmartPointer<vtkAlgorithm> shape,
+  vtkSmartPointer<vtkActor> AddShape(vtkSmartPointer<vtkAlgorithmOutput> shape,
                                      double r, double g, double b, double a);
 
   // Call `GetProperty()->SetColor` on the result to change the color.
-  vtkSmartPointer<vtkActor> AddWireframe(vtkSmartPointer<vtkAlgorithm> shape);
+  vtkSmartPointer<vtkActor> AddWireframe(
+      vtkSmartPointer<vtkAlgorithmOutput> shape);
 
   // Call `GetProperty()->SetColor` on the result to change the color.
   vtkSmartPointer<vtkActor> AddShapeNormals(
-      vtkSmartPointer<vtkAlgorithm> shape);
+      vtkSmartPointer<vtkAlgorithmOutput> shape);
 
   // Call `GetBounds` on a previously added actor to get the bounds.
   vtkSmartPointer<vtkCubeAxesActor> Axes(double content_bounds[6]);

@@ -24,9 +24,9 @@ int main(int argc, char *argv[]) {
   auto shape = GenerateShape();
 
   walnut::VisualizationWindow window;
-  auto actor = window.AddShape(shape, 1, 0.8, 0.8, 0.6);
-  window.AddWireframe(shape);
-  window.AddShapeNormals(shape);
+  auto actor = window.AddShape(shape->GetOutputPort(), 1, 0.8, 0.8, 0.6);
+  window.AddWireframe(shape->GetOutputPort());
+  window.AddShapeNormals(shape->GetOutputPort());
   window.Axes(actor->GetBounds());
   window.Run();
 
