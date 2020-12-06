@@ -24,22 +24,44 @@ set_target_properties(gtest_main PROPERTIES FOLDER extern)
 set_target_properties(gmock PROPERTIES FOLDER extern)
 set_target_properties(gmock_main PROPERTIES FOLDER extern)
 
-macro(package_add_test TESTNAME)
-    # create an exectuable in which the tests will be stored
-    add_executable(${TESTNAME} ${ARGN})
-    # link the Google test infrastructure, mocking library, and a default main fuction to
-    # the test executable.  Remove g_test_main if writing your own main function.
-    target_link_libraries(${TESTNAME} gtest gmock gtest_main)
-    target_include_directories(${TESTNAME} PUBLIC include)
-    # gtest_discover_tests replaces gtest_add_tests,
-    # see https://cmake.org/cmake/help/v3.10/module/GoogleTest.html for more options to pass to it
-    gtest_discover_tests(${TESTNAME}
-        # set a working directory so your project root so that you can find test data via paths relative to the project root
-        WORKING_DIRECTORY ${PROJECT_DIR}
-        PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${PROJECT_DIR}"
-    )
-    set_target_properties(${TESTNAME} PROPERTIES FOLDER tests)
-endmacro()
+option(RUN_TESTS
+"Build and run the tests as part of the default target.\
+Whenever a test file is change (or any of its dependencies), the next make
+invocation will automatically run the test after building it. Set this to OFF
+to disable building and running the unit tests."
+    ON)
+if(RUN_TESTS)
+    enable_testing()
+    include(GoogleTest)
+  macro(package_add_test TESTNAME)
+      # create an exectuable in which the tests will be stored
+      add_executable(${TESTNAME} ${ARGN})
+      # link the Google test infrastructure, mocking library, and a default
+      # main fuction to the test executable.  Remove g_test_main if writing
+      # your own main function.
+      target_link_libraries(${TESTNAME} gtest gmock gtest_main)
+      target_include_directories(${TESTNAME} PUBLIC include)
+      # gtest_discover_tests replaces gtest_add_tests, see
+      # https://cmake.org/cmake/help/v3.10/module/GoogleTest.html for more
+      # options to pass to it
+      gtest_discover_tests(${TESTNAME}
+          # set a working directory so your project root so that you can find
+          # test data via paths relative to the project root
+          WORKING_DIRECTORY ${PROJECT_DIR}
+          PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${PROJECT_DIR}"
+      )
+      set_target_properties(${TESTNAME} PROPERTIES FOLDER tests)
+      add_custom_command(
+          TARGET ${TESTNAME}
+          COMMENT "Run the test after building it"
+          POST_BUILD
+          COMMAND ${TESTNAME}
+      )
+  endmacro()
+else()
+  macro(package_add_test TESTNAME)
+  endmacro()
+endif()
 
 package_add_test(big_int_test test/big_int_test.cpp)
 package_add_test(big_uint_test test/big_uint_test.cpp)
@@ -63,3 +85,7 @@ package_add_test(point3_test test/point3_test.cpp)
 package_add_test(rectangular_prism_test test/rectangular_prism_test.cpp)
 package_add_test(vector2_test test/vector2_test.cpp)
 package_add_test(vector3_test test/vector3_test.cpp)
+
+AUX_SOURCE_DIRECTORY(include/walnut HEADERS)
+
+add_library(walnut INTERFACE ${HEADERS})
