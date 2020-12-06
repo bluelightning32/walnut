@@ -1,0 +1,8 @@
+Build the project:
+  mkdir build
+  cd build
+  cmake ../
+  make -j4
+
+The -L option lists other common options.
+  cmake ../ -L
