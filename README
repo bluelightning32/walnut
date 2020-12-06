@@ -12,3 +12,7 @@ build/visualizations.
 
 The -L option lists other common options.
   cmake ../ -L
+
+When making changes to the library, you can built really everything (including
+optional features such as the visualizations) by running:
+  make -j4 all extras

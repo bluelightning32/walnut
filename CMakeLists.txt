@@ -10,6 +10,8 @@ get_property(visualization_targets
              PROPERTY BUILDSYSTEM_TARGETS)
 add_custom_target(visualizations DEPENDS ${visualization_targets})
 
+add_custom_target(extras DEPENDS visualizations)
+
 option(PACKAGE_TESTS "Build the tests" ON)
 if(PACKAGE_TESTS)
     enable_testing()
@@ -59,7 +61,7 @@ if(RUN_TESTS)
       set_target_properties(${TESTNAME} PROPERTIES FOLDER tests)
       add_custom_command(
           TARGET ${TESTNAME}
-          COMMENT "Run the test after building it"
+          COMMENT "Running ${TESTNAME}"
           POST_BUILD
           COMMAND ${TESTNAME}
       )
