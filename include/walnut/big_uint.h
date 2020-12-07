@@ -488,8 +488,7 @@ class BigUIntImpl : public BigIntBaseOperations<BigUIntImplTrimMixin<max_words>>
   template <int other_words>
   constexpr BigUIntImpl<std::max(max_words, other_words)>
   GetGreatestCommonDivisor(BigUIntImpl<other_words> &other) {
-    if (other == BigUIntImpl<1>{0})
-      return *this;
+    if (other == BigUIntImpl<1>{0}) return *this;
 
     BigUIntImpl<std::max(max_words, other_words)> mod = *this % other;
     return other.GetGreatestCommonDivisor(mod);

@@ -192,6 +192,9 @@ class BigInt {
   }
 
   // Divide `this` by `other`. Return the remainder.
+  //
+  // If       *this >= 0, then remainder >= 0,
+  // else if  *this <  0, then remainder <= 0.
   template <int other_bits>
   constexpr BigInt<std::min(bits, other_bits)> operator%(
       const BigInt<other_bits>& other) const {
