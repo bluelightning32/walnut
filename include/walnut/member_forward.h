@@ -17,16 +17,16 @@ namespace walnut {
 // is.
 
 template <typename Parent, typename T>
-typename std::enable_if<
+typename std::enable_if_t<
   std::is_rvalue_reference<Parent>::value &&
-    !std::is_const<typename std::remove_reference<T>::type>::value,
-  typename std::remove_reference<T>::type &&>::type
+    !std::is_const<std::remove_reference_t<T>>::value,
+  std::remove_reference_t<T>&& >
 MemberForward(T&& t) {
   return std::move(t);
 }
 
 template <typename Parent, typename T>
-typename std::enable_if<!std::is_rvalue_reference<Parent>::value, T&&>::type
+std::enable_if_t<!std::is_rvalue_reference<Parent>::value, T&& >
 MemberForward(T&& t) {
   return std::forward<T>(t);
 }

@@ -51,10 +51,10 @@ struct FilterTrivialBigInts {
 
 template <class First, class... Accepted, class... Remaining>
 struct FilterTrivialBigInts<std::tuple<Accepted...>, First, Remaining...> {
-  using now_accepted = typename std::conditional<
+  using now_accepted = typename std::conditional_t<
     First::has_overloads,
     std::tuple<Accepted..., First>,
-    std::tuple<Accepted...>>::type;
+    std::tuple<Accepted...>>;
 
   using filtered =
     typename FilterTrivialBigInts<now_accepted, Remaining...>::filtered;

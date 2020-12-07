@@ -16,8 +16,8 @@ using BigIntWord = int64_t;
 
 template <typename Descendent, typename Default>
 using GetImplType =
-  typename std::conditional<std::is_same<Descendent, void>::value,
-                            Default, Descendent>::type;
+  typename std::conditional_t<std::is_same<Descendent, void>::value,
+                              Default, Descendent>;
 
 // A structure that holds an integer of the system's largest native format.
 // Subclasses provide progressively more acceleration (when the necessary
@@ -490,7 +490,7 @@ class BigUIntWordGCC
 #if defined(HAS_BUILTIN_CLZL)
   template <typename X=unsigned>
   constexpr
-  typename std::enable_if<sizeof(Parent::i_) == sizeof(unsigned long), X>::type
+  typename std::enable_if_t<sizeof(Parent::i_) == sizeof(unsigned long), X>
   GetHighestSetBit() const {
     return this->i_ == 0 ? 0 : Parent::bits_per_word - __builtin_clz(this->i_);
   }
