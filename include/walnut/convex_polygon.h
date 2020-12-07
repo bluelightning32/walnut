@@ -726,7 +726,7 @@ ConvexPolygon<point3_bits, VertexData>::GetOppositeEdgeIndicesBisect(
     // This check works as long as there are no duplicate vertices in the
     // polygon. Coincident vertices are okay.
     assert (dist != initial_dist);
-    if (dist < initial_dist) {
+    if (dist > initial_dist) {
       begin = mid + 1;
     } else {
       end = mid;

@@ -446,6 +446,56 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesBisect) {
   }
 }
 
+TEST(ConvexPolygon, GetOppositeEdgeIndicesCWMidSameDir) {
+  //
+  //  V |
+  //    v
+  //
+  // p[0]
+  // ^   \
+  // |    p[1]
+  //  \   |
+  //  |    \
+  //  |    p[2]
+  //   \  /
+  //    p[3]
+  //
+  std::vector<Point3<32>> p{
+    Point3<32>(0, 0, 0),
+    Point3<32>(1, -1, 0),
+    Point3<32>(2, -3, 0),
+    Point3<32>(1, -4, 0),
+  };
+  ConvexPolygon<32> polygon = MakeConvexPolygon(p);
+
+  Vector2<> vector(0, -1);
+  std::pair<size_t, size_t> opp_edges = polygon.GetOppositeEdgeIndicesBisect(
+      vector, /*drop_dimension=*/2);
+}
+
+TEST(ConvexPolygon, GetOppositeEdgeIndicesCCWMidSameDir) {
+  //
+  //  V ->
+  //
+  // p[0] <------
+  //   \         \
+  //   p[1]      p[3]
+  //     \        /
+  //      --> p[2]
+  //
+  std::vector<Point3<32>> p{
+    Point3<32>(0, 0, 0),
+    Point3<32>(1, -1, 0),
+    Point3<32>(3, -2, 0),
+    Point3<32>(4, -1, 0),
+  };
+  ConvexPolygon<32> polygon = MakeConvexPolygon(p);
+
+  Vector2<> vector(1, 0);
+  std::pair<size_t, size_t> opp_edges = polygon.GetOppositeEdgeIndicesBisect(
+      vector, /*drop_dimension=*/2);
+}
+
 TEST(ConvexPolygon, GetGreaterCycleIndex) {
   Point3<32> input[] = {
     Point3<32>(0, 0, 10),
