@@ -13,6 +13,9 @@ build/visualizations.
 The -L option lists other common options.
   cmake ../ -L
 
-When making changes to the library, you can built really everything (including
-optional features such as the visualizations) by running:
+For regular development, a debug release type is recommended. The debug release has the asserts enabled, and it has full debug symbols.
+  cmake ../ -DCMAKE_BUILD_TYPE=Debug
+
+After making a change to the library, everything can be built and all the tests
+run with this command:
   make -j4 all extras
