@@ -174,6 +174,13 @@ class ConvexPolygon {
       if (prev_edge->line != expected_line) return false;
       if (!prev_edge->line.d().IsSameDir(expected_line.d())) return false;
 
+      if (prev_edge->line.d().DropDimension(drop_dimension()).Cross(
+            edge.line.d().DropDimension(drop_dimension())).GetAbsMult(
+            plane().normal().components()[drop_dimension()]) < 0) {
+        // The vertex is reflex (not convex and not collinear).
+        return false;
+      }
+
       prev_edge = &edge;
     }
     return true;
