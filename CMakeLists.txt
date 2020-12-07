@@ -4,6 +4,9 @@ project(walnut
         DESCRIPTION "Exact 3D boolean library"
         )
 
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 add_subdirectory(visualizations EXCLUDE_FROM_ALL)
 get_property(visualization_targets
              DIRECTORY visualizations
