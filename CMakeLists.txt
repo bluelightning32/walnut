@@ -32,13 +32,13 @@ set_target_properties(gtest_main PROPERTIES FOLDER extern)
 set_target_properties(gmock PROPERTIES FOLDER extern)
 set_target_properties(gmock_main PROPERTIES FOLDER extern)
 
+option(BUILD_TESTS "Build the tests as part of the default target." ON)
 option(RUN_TESTS
-"Build and run the tests as part of the default target.\
-Whenever a test file is change (or any of its dependencies), the next make
-invocation will automatically run the test after building it. Set this to OFF
-to disable building and running the unit tests."
-    ON)
-if(RUN_TESTS)
+"Whenever a test file is changed (or any of its dependencies), run the test \
+as part of the default build target. Set this to OFF to disable building and \
+running the unit tests." ON)
+
+if(BUILD_TESTS)
     enable_testing()
     include(GoogleTest)
   macro(package_add_test TESTNAME)
@@ -60,11 +60,14 @@ if(RUN_TESTS)
       )
       set_target_properties(${TESTNAME} PROPERTIES FOLDER tests)
       add_custom_command(
-          TARGET ${TESTNAME}
-          COMMENT "Running ${TESTNAME}"
-          POST_BUILD
-          COMMAND ${TESTNAME}
+          OUTPUT ${TESTNAME}_results.json
+          COMMAND ${TESTNAME} "--gtest_output=json:${TESTNAME}_results.json"
+          DEPENDS ${TESTNAME}
+          USES_TERMINAL
       )
+      if(RUN_TESTS)
+        add_custom_target(run_${TESTNAME} ALL DEPENDS ${TESTNAME}_results.json)
+      endif()
   endmacro()
 else()
   macro(package_add_test TESTNAME)
