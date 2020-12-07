@@ -27,7 +27,8 @@ class VisualizationWindow {
       vtkSmartPointer<vtkAlgorithmOutput> shape);
 
   // Call `GetBounds` on a previously added actor to get the bounds.
-  vtkSmartPointer<vtkCubeAxesActor> Axes(double content_bounds[6]);
+  vtkSmartPointer<vtkCubeAxesActor> Axes(double content_bounds[6],
+                                         double padding = 5);
 
   void Run();
 

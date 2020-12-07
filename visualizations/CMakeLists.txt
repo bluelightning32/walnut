@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(visualizations)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(GLEW REQUIRED)
@@ -25,9 +25,18 @@ find_package(VTK REQUIRED COMPONENTS
 
 include(${VTK_USE_FILE})
 
-add_library(visualization STATIC visualization_window.cpp)
+# Make the top level walnut include files visible to all targets in this file.
+include_directories(${CMAKE_SOURCE_DIR}/include)
+
+add_library(visualization STATIC
+            visualization_window.cpp)
 
 add_executable(extrusion extrusion.cpp)
 target_link_libraries(extrusion
+                      visualization
+                      ${GLEW_LIBRARIES} ${VTK_LIBRARIES} )
+
+add_executable(corner_cell_boundary corner_cell_boundary.cpp)
+target_link_libraries(corner_cell_boundary
                       visualization
                       ${GLEW_LIBRARIES} ${VTK_LIBRARIES} )

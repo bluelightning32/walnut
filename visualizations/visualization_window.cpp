@@ -117,8 +117,7 @@ vtkSmartPointer<vtkActor> VisualizationWindow::AddShapeNormals(
 }
 
 vtkSmartPointer<vtkCubeAxesActor> VisualizationWindow::Axes(
-    double content_bounds[6]) {
-  double padding = 5;
+    double content_bounds[6], double padding) {
   vtkCamera* camera = renderer_->GetActiveCamera();
 
   auto actor = vtkSmartPointer<vtkCubeAxesActor>::New();
