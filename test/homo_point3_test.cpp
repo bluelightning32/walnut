@@ -51,4 +51,22 @@ TEST(HomoPoint3, LexicographicallyLtDifferentDistSign) {
   EXPECT_FALSE(HomoPoint3<>::LexicographicallyLt(p2, p1));
 }
 
+TEST(HomoPoint3, ReduceAllPos) {
+  HomoPoint3<> original(2, 4, 8, 2);
+
+  HomoPoint3<> reduced = original;
+  reduced.Reduce();
+  EXPECT_EQ(reduced, original);
+  EXPECT_EQ(reduced.w(), 1);
+}
+
+TEST(HomoPoint3, ReduceNegDenom) {
+  HomoPoint3<> original(2, -4, 8, -2);
+
+  HomoPoint3<> reduced = original;
+  reduced.Reduce();
+  EXPECT_EQ(reduced, original);
+  EXPECT_EQ(reduced.w(), 1);
+}
+
 }  // walnut

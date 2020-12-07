@@ -30,6 +30,9 @@ class BigInt {
   template <int other_bits>
   constexpr BigInt(const BigInt<other_bits>& other) : rep_(other.rep_) { }
 
+  template <int other_words>
+  constexpr BigInt(const BigUIntImpl<other_words>& other) : rep_(other) { }
+
   template <int other_bits>
   constexpr BigInt(const BigUInt<other_bits>& other) : rep_(other) { }
 
@@ -182,6 +185,13 @@ class BigInt {
   template <int other_bits>
   constexpr BigInt<bits> operator/(const BigInt<other_bits>& other) const {
     return rep_ / other.rep_;
+  }
+
+  // Divide `this` by `other`. Return the quotient.
+  template <int other_bits>
+  constexpr BigInt<bits>& operator/=(const BigInt<other_bits>& other) {
+    *this = rep_ / other.rep_;
+    return *this;
   }
 
   // Divide `this` by `other`. Return the quotient and store the remainder in `remainder_out`.

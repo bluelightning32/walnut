@@ -187,10 +187,41 @@ class HomoPoint3 {
     return vector_from_origin_.IsValidState() && dist_denom_.IsValidState();
   }
 
+  // Remove common factors from the point.
+  //
+  // After this function returns, the point may be stored in a more efficient
+  // format, but the value of the point will be equivalent to the value from
+  // before.
+  void Reduce();
+
  private:
   VectorRep vector_from_origin_;
   DenomInt dist_denom_;
 };
+
+template <int num_bits, int denom_bits>
+void HomoPoint3<num_bits, denom_bits>::Reduce() {
+  bool dist_signed;
+  auto common_factor = dist_denom_.GetUIntAbs(&dist_signed);
+
+  bool unused;
+  common_factor = common_factor.GetGreatestCommonDivisor(
+      vector_from_origin_.x().GetUIntAbs(&unused));
+  common_factor = common_factor.GetGreatestCommonDivisor(
+      vector_from_origin_.y().GetUIntAbs(&unused));
+  common_factor = common_factor.GetGreatestCommonDivisor(
+      vector_from_origin_.z().GetUIntAbs(&unused));
+
+  DenomInt signed_factor(common_factor);
+  if (dist_signed) {
+    signed_factor.Negate();
+  }
+
+  dist_denom_ /= signed_factor;
+  vector_from_origin_.x() /= signed_factor;
+  vector_from_origin_.y() /= signed_factor;
+  vector_from_origin_.z() /= signed_factor;
+}
 
 template <int a_bits, int b_num_bits, int b_denom_bits>
 bool operator==(const Point3<a_bits>& a,
