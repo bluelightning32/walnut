@@ -24,7 +24,7 @@ vtkSmartPointer<vtkAlgorithm> Color(vtkSmartPointer<vtkAlgorithmOutput> input,
 }
 
 vtkSmartPointer<vtkGlyph3D> GetNormalsGlyph(
-    vtkSmartPointer<vtkAlgorithmOutput> shape) {
+    vtkSmartPointer<vtkAlgorithmOutput> shape, double scale) {
   auto normals = vtkSmartPointer<vtkPolyDataNormals>::New();
   normals->SetInputConnection(shape);
 
@@ -43,7 +43,7 @@ vtkSmartPointer<vtkGlyph3D> GetNormalsGlyph(
   glyph->SetSourceData(arrow->GetOutput());
   glyph->SetVectorModeToUseNormal();
   glyph->SetScaleModeToScaleByVector();
-  glyph->SetScaleFactor(3);
+  glyph->SetScaleFactor(scale);
   glyph->OrientOn();
 
   return glyph;
@@ -58,6 +58,7 @@ VisualizationWindow::VisualizationWindow() :
   renderer_->GetActiveCamera()->SetPosition(10, 10, 10);
   renderer_->GetActiveCamera()->SetViewUp(0, 0, 1);
   renderer_->ResetCamera();
+
   renderer_->SetBackground(1, 1, 1);
 
   render_window_->AddRenderer(renderer_);
@@ -68,6 +69,14 @@ VisualizationWindow::VisualizationWindow() :
   auto interactor_style = vtkSmartPointer<vtkInteractorStyleSwitch>::New();
   interactor_style->SetCurrentStyleToTrackballCamera();
   interactor_->SetInteractorStyle(interactor_style);
+}
+
+void VisualizationWindow::UseTopDownView() {
+  renderer_->GetActiveCamera()->SetFocalPoint(0, 0, 0);
+  renderer_->GetActiveCamera()->SetPosition(0, 0, 10);
+  renderer_->GetActiveCamera()->SetViewUp(0, 1, 0);
+  renderer_->ResetCamera();
+  Zoom(1.5);
 }
 
 vtkSmartPointer<vtkActor> VisualizationWindow::AddShape(
@@ -83,6 +92,7 @@ vtkSmartPointer<vtkActor> VisualizationWindow::AddShape(
   actor->SetMapper(mapper);
   renderer_->AddActor(actor);
   renderer_->ResetCamera();
+  Zoom(1.5);
   return actor;
 }
 
@@ -99,13 +109,14 @@ vtkSmartPointer<vtkActor> VisualizationWindow::AddWireframe(
 
   renderer_->AddActor(wireframe_actor);
   renderer_->ResetCamera();
+  Zoom(1.5);
   return wireframe_actor;
 }
 
 vtkSmartPointer<vtkActor> VisualizationWindow::AddShapeNormals(
-    vtkSmartPointer<vtkAlgorithmOutput> shape) {
+    vtkSmartPointer<vtkAlgorithmOutput> shape, double scale) {
   auto mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-  mapper->SetInputConnection(GetNormalsGlyph(shape)->GetOutputPort());
+  mapper->SetInputConnection(GetNormalsGlyph(shape, scale)->GetOutputPort());
 
   auto actor = vtkSmartPointer<vtkActor>::New();
   actor->SetMapper(mapper);
@@ -113,6 +124,7 @@ vtkSmartPointer<vtkActor> VisualizationWindow::AddShapeNormals(
 
   renderer_->AddActor(actor);
   renderer_->ResetCamera();
+  Zoom(1.5);
   return actor;
 }
 
@@ -131,8 +143,8 @@ vtkSmartPointer<vtkCubeAxesActor> VisualizationWindow::Axes(
   }
   actor->SetBounds(bounds);
   actor->SetCamera(camera);
+  actor->SetScreenSize(15);
   actor->GetTitleTextProperty(0)->SetColor(0, 0, 0);
-  actor->GetTitleTextProperty(0)->SetFontSize(48);
   actor->GetLabelTextProperty(0)->SetColor(0, 0, 0);
 
   actor->GetTitleTextProperty(1)->SetColor(0, 0, 0);
@@ -169,7 +181,13 @@ vtkSmartPointer<vtkCubeAxesActor> VisualizationWindow::Axes(
   actor->SetLabelOffset(10);
 
   renderer_->AddActor(actor);
+  renderer_->ResetCamera();
+  Zoom(1.5);
   return actor;
+}
+
+void VisualizationWindow::Zoom(double factor) {
+  renderer_->GetActiveCamera()->Zoom(factor);
 }
 
 void VisualizationWindow::Run() {

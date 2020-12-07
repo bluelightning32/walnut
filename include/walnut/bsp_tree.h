@@ -88,6 +88,7 @@ BSPTree<ConvexPolygonTemplate>::GetNodeBorder(
 
   MappedBSPNode mapped_root(&root);
   for (auto& polygon : bounding_box.GetWalls()) {
+    assert(polygon.vertex_count() > 0);
     mapped_root.contents_.emplace_back(/*on_node_plane=*/nullptr,
                                        std::move(polygon));
   }
@@ -99,11 +100,13 @@ BSPTree<ConvexPolygonTemplate>::GetNodeBorder(
       mapped_root.contents_.emplace_back(
           /*on_node_plane=*/nullptr,
           bounding_box.IntersectPlane(-original_node->split()));
+      assert(mapped_root.contents_.back().vertex_count() > 0);
       original_node = original_node->positive_child();
     } else {
       mapped_root.contents_.emplace_back(
           /*on_node_plane=*/nullptr,
           bounding_box.IntersectPlane(original_node->split()));
+      assert(mapped_root.contents_.back().vertex_count() > 0);
       original_node = original_node->negative_child();
     }
   }

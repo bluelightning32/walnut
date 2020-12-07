@@ -149,6 +149,7 @@ class BSPNode {
   //
   // The contents of this node will be pushed into the new child nodes.
   void Split(const HalfSpace3Rep& half_space) {
+    assert(half_space.IsValid());
     MakeInterior(half_space, new BSPNode(), new BSPNode());
     PushContentsToChildren();
   }
@@ -233,6 +234,7 @@ class BSPNode {
 template <typename InputPolygonTemplate>
 void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
   for (PolygonRep& polygon : contents_) {
+    assert(polygon.vertex_count() > 0);
     typename PolygonRep::SplitInfoRep info = polygon.GetSplitInfo(split_);
 
     if (info.ShouldEmitNegativeChild()) {
@@ -248,6 +250,8 @@ void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
         // first of those 2 vertices is the edge source.
         children.second.vertex_data(
             children.second.vertex_count() - 1).split_by = this;
+        assert(children.first.vertex_count() > 0);
+        assert(children.second.vertex_count() > 0);
         negative_child_->contents_.push_back(std::move(children.first));
         positive_child_->contents_.push_back(std::move(children.second));
       } else {
@@ -272,6 +276,7 @@ void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
   }
 
   for (PolygonRep& polygon : border_contents_) {
+    assert(polygon.vertex_count() > 0);
     typename InputPolygon::SplitInfoRep info = polygon.GetSplitInfo(split_);
 
     if (info.ShouldEmitNegativeChild()) {

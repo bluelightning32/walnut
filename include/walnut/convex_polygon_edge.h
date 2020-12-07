@@ -28,6 +28,12 @@ struct ConvexPolygonEdge : private VertexDataTemplate {
     vertex(vertex), line(vertex, next_vertex) { }
 
   // VertexData must be default-constructible to use this constructor.
+  template <int num_bits, int denom_bits>
+  ConvexPolygonEdge(const HomoPoint3<num_bits, denom_bits>& vertex,
+                    const HomoPoint3<num_bits, denom_bits>& next_vertex) :
+    vertex(vertex), line(vertex, next_vertex) { }
+
+  // VertexData must be default-constructible to use this constructor.
   //
   // `line` should be in the direction from `vertex` to the next vertex in the
   // polygon.

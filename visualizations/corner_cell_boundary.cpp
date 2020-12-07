@@ -33,21 +33,21 @@ int main(int argc, char *argv[]) {
   walnut::VisualizationWindow window;
   auto actor = window.AddShape(cleaner->GetOutputPort(), 1, 0.8, 0.8, 0.6);
   window.AddWireframe(cleaner->GetOutputPort());
-  window.AddShapeNormals(cleaner->GetOutputPort());
+  window.AddShapeNormals(cleaner->GetOutputPort(), /*scale=*/1);
 
   double bounds[6];
   // xmin
   bounds[0] = 0;
   // xmax
-  bounds[1] = 4;
+  bounds[1] = 1;
   // ymin
   bounds[2] = 0;
   // ymax
-  bounds[3] = 4;
+  bounds[3] = 1;
   // zmin
   bounds[4] = 0;
   // zmax
-  bounds[5] = 4;
+  bounds[5] = 1;
   window.Axes(bounds, /*padding=*/0);
   window.Run();
 

@@ -158,6 +158,20 @@ class ConvexPolygon {
     assert(IsValidState());
   }
 
+  template <int num_bits, int denom_bits>
+  ConvexPolygon(const HalfSpace3Rep& plane, int drop_dimension,
+                const std::vector<HomoPoint3<num_bits,
+                                             denom_bits>>& vertices) :
+      plane_(plane), drop_dimension_(drop_dimension) {
+    edges_.reserve(vertices.size());
+    const HomoPoint3<num_bits, denom_bits>* prev = &vertices.back();
+    for (const HomoPoint3<num_bits, denom_bits>& vertex : vertices) {
+      edges_.emplace_back(*prev, vertex);
+      prev = &vertex;
+    }
+    assert(IsValidState());
+  }
+
   // Verifies the polygon is really convex
   bool IsValidState() const {
     if (vertex_count() == 0) return true;

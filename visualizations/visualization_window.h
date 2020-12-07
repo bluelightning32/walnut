@@ -24,11 +24,15 @@ class VisualizationWindow {
 
   // Call `GetProperty()->SetColor` on the result to change the color.
   vtkSmartPointer<vtkActor> AddShapeNormals(
-      vtkSmartPointer<vtkAlgorithmOutput> shape);
+      vtkSmartPointer<vtkAlgorithmOutput> shape, double scale=3);
 
   // Call `GetBounds` on a previously added actor to get the bounds.
   vtkSmartPointer<vtkCubeAxesActor> Axes(double content_bounds[6],
                                          double padding = 5);
+
+  void UseTopDownView();
+
+  void Zoom(double factor);
 
   void Run();
 
