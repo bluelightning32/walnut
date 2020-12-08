@@ -498,4 +498,20 @@ TEST(BigUInt, GcdLargePrimeMultiple) {
   EXPECT_EQ(result, prime);
 }
 
+TEST(BigUInt, Gcd5And0) {
+  BigUInt<64> a{5};
+  BigUInt<64> b{0};
+  BigUInt<64> result = a.GetGreatestCommonDivisor(b);
+  BigUInt<64> expected{5};
+  EXPECT_EQ(result, expected);
+}
+
+TEST(BigUInt, Gcd0And5) {
+  BigUInt<64> a{0};
+  BigUInt<64> b{5};
+  BigUInt<64> result = a.GetGreatestCommonDivisor(b);
+  BigUInt<64> expected{5};
+  EXPECT_EQ(result, expected);
+}
+
 }  // walnut
