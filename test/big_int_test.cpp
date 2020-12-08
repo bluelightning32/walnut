@@ -585,4 +585,58 @@ TEST(BigInt, CastDoubleInt32MinShifted48) {
             double(std::numeric_limits<int32_t>::min()) * std::ldexp(1, 48));
 }
 
+TEST(BigInt, Compare0Against0) {
+  const BigInt<128> a(0);
+  const BigInt<128> b(0);
+  EXPECT_EQ(a.Compare(b), 0);
+}
+
+TEST(BigInt, Compare0Against2Pow63) {
+  const BigInt<128> a(0);
+  const BigInt<128> b = BigInt<128>{1} << 63;
+  EXPECT_EQ(a.Compare(b), -1);
+}
+
+TEST(BigInt, Compare0AgainstInt128Max) {
+  const BigInt<128> a(0);
+  const BigInt<128> b = BigInt<128>::max_value();
+  EXPECT_EQ(a.Compare(b), -1);
+}
+
+TEST(BigInt, Compare2Pow63Against0) {
+  const BigInt<128> a = BigInt<128>{1} << 63;
+  const BigInt<128> b(0);
+  EXPECT_EQ(a.Compare(b), 1);
+}
+
+TEST(BigInt, CompareInt128MaxAgainst0) {
+  const BigInt<128> a = BigInt<128>::max_value();
+  const BigInt<128> b(0);
+  EXPECT_EQ(a.Compare(b), 1);
+}
+
+TEST(BigInt, Compare2Pow63Against2Pow64) {
+  const BigInt<128> a = BigInt<128>{1} << 63;
+  const BigInt<128> b = BigInt<128>{1} << 64;
+  EXPECT_EQ(a.Compare(b), -1);
+}
+
+TEST(BigInt, CompareInt128MinAgainst2Pow64) {
+  const BigInt<128> a = BigInt<128>::min_value();
+  const BigInt<128> b = BigInt<128>{1} << 64;
+  EXPECT_EQ(a.Compare(b), -1);
+}
+
+TEST(BigInt, Compare2Pow64Plus2Pow63Against2Pow64) {
+  const BigInt<128> a = (BigInt<128>{1} << 64) + (BigInt<128>{1} << 63);
+  const BigInt<128> b = BigInt<128>{1} << 64;
+  EXPECT_EQ(a.Compare(b), 1);
+}
+
+TEST(BigInt, CompareInt64MinAgainstInt64Max) {
+  const BigInt<128> a(std::numeric_limits<int64_t>::min());
+  const BigInt<128> b(std::numeric_limits<int64_t>::max());
+  EXPECT_EQ(a.Compare(b), -1);
+}
+
 }  // walnut

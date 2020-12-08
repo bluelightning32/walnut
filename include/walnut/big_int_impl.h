@@ -218,21 +218,41 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
   constexpr int Compare(const BigIntImpl<other_max_words>& other) const {
     if (used_ < other.used_) {
       // `this` is closer to 0 than `other`.
-      return (0 < BigIntWord{other.words_[other.used_words() - 1]}) ? -1 : 1;
+      // Since used_ < other_used, other != 0.
+      //
+      // If other is positive, then *this < other, so return -1.
+      // If other is negative, then *this > other, so return 1.
+      //
+      // So return -1 if the upper word of other >= 0, or return 1 if the upper
+      // word of other < 0.
+      int other_sign_extension =
+        BigIntWord{other.words_[other.used_words() - 1].SignExtension()};
+      return ~other_sign_extension | 1;
     }
     if (used_ > other.used_) {
       // `other` is closer to 0 than `this`.
-      return (0 < BigIntWord{words_[used_words() - 1]}) ? 1 : -1;
+      // Since used_ > other_used, *this != 0.
+      //
+      // If *this is positive, then *this > other, so return 1.
+      // If *this is negative, then *this < other, so return -1.
+      //
+      // So return 1 if the upper word of *this >= 0, or return -1 if the upper
+      // word of *this < 0.
+      int sign_extension =
+        BigIntWord{words_[used_words() - 1].SignExtension()};
+      return sign_extension | 1;
     }
     int i = used_words() - 1;
+    // Perform a signed comparison on the upper words (which contains the sign
+    // bits) and an unsigned comparison on the following words.
     if (words_[i] != other.words_[i]) {
       return (BigIntWord{words_[i]} > BigIntWord{other.words_[i]}) ? 1 : -1;
     }
-    for (i--; i > 0; i--) {
+    for (i--; i >= 0; i--) {
       if (words_[i] > other.words_[i]) return 1;
       if (words_[i] < other.words_[i]) return -1;
     }
-    return words_[0].CompareSigned(other.words_[0]);
+    return 0;
   }
 
   template <int result_words = 0, int other_words,

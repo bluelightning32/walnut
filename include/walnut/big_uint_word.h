@@ -122,7 +122,7 @@ class BigUIntWordBase {
   // Returns -1 if *this < `other`,
   //          0 if *this ==  `other`, or
   //          1 if *this > `other`.
-  constexpr int CompareSigned(const ImplType& other) const {
+  constexpr int Compare(const ImplType& other) const {
     if (i_ == other.i_) return 0;
     return (i_ < other.i_) ? -1 : 1;
   }
