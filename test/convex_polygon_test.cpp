@@ -496,6 +496,47 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesCCWMidSameDir) {
       vector, /*drop_dimension=*/2);
 }
 
+TEST(ConvexPolygon, GetOppositeEdgeIndicesLargeInts) {
+  std::vector<HomoPoint3<>> p{
+    HomoPoint3<>(98983800000, 478250000000, -496997400000, -165665800000),
+    HomoPoint3<>(1237096350000, 1110633380000, 1422518250000, 474172750000),
+    HomoPoint3<>(193810800000, 433923320000, 468159600000, 156053200000),
+    HomoPoint3<>(0, 493174500000, 506610000000, 168870000000),
+    HomoPoint3<>(-193810800000, 433923320000, 468159600000, 156053200000),
+    HomoPoint3<>(1237096350000, -1110633380000, -1422518250000, -474172750000),
+    HomoPoint3<>(1555715850000, 1413200000000, -1810284150000, -603428050000),
+    HomoPoint3<>(281623200000, 361828700000, -421395600000, -140465200000),
+  };
+
+  HalfSpace3<> plane(0, 0, 10000, 30000);
+  {
+    ConvexPolygon<32> polygon(plane, 2, p);
+
+    Vector2<> vector(-92360000, -2450000);
+    std::pair<size_t, size_t> opp_edges = polygon.GetOppositeEdgeIndicesBisect(
+        vector, /*drop_dimension=*/2);
+    EXPECT_EQ(opp_edges.first, 4);
+    EXPECT_EQ(opp_edges.second, 0);
+  }
+
+  // Reduce everything to smaller coordinates and rerun the test, to double
+  // check that the expected values are correct.
+  for (HomoPoint3<>& point : p) {
+    point.Reduce();
+  }
+  plane.Reduce();
+
+  {
+    ConvexPolygon<32> polygon(plane, 2, p);
+
+    Vector2<> vector(-9236, -245);
+    std::pair<size_t, size_t> opp_edges = polygon.GetOppositeEdgeIndicesBisect(
+        vector, /*drop_dimension=*/2);
+    EXPECT_EQ(opp_edges.first, 4);
+    EXPECT_EQ(opp_edges.second, 0);
+  }
+}
+
 TEST(ConvexPolygon, GetGreaterCycleIndex) {
   Point3<32> input[] = {
     Point3<32>(0, 0, 10),

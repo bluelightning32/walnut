@@ -208,6 +208,13 @@ class HalfSpace3 {
     return HalfSpace3(-normal(), -d());
   }
 
+  // Removes the common factor.
+  //
+  // After this function returns, the point may be stored in a more efficient
+  // format, but the value of the point will be equivalent to the value from
+  // before.
+  void Reduce();
+
  private:
   VectorRep normal_;
   DistInt dist_;
@@ -248,6 +255,28 @@ class HalfSpace3FromPoint3Builder {
     return HalfSpace3Rep(p1, p2, p3);
   }
 };
+
+template <int vector_bits, int dist_bits>
+void HalfSpace3<vector_bits, dist_bits>::Reduce() {
+  bool unused;
+  auto common_factor = normal_.components()[0].GetUIntAbs(&unused);
+
+  common_factor = common_factor.GetGreatestCommonDivisor(
+      normal_.components()[1].GetUIntAbs(&unused));
+  common_factor = common_factor.GetGreatestCommonDivisor(
+      normal_.components()[2].GetUIntAbs(&unused));
+
+  common_factor = common_factor.GetGreatestCommonDivisor(
+      dist_.GetUIntAbs(&unused));
+
+  VectorInt signed_factor(common_factor);
+
+  dist_ /= signed_factor;
+
+  normal_.components()[0] /= signed_factor;
+  normal_.components()[1] /= signed_factor;
+  normal_.components()[2] /= signed_factor;
+}
 
 template <int vector_bits, int dist_bits>
 std::ostream& operator<<(std::ostream& out,

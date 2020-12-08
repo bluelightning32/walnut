@@ -690,13 +690,13 @@ template <int vector_bits>
 std::pair<size_t, size_t>
 ConvexPolygon<point3_bits, VertexData>::GetOppositeEdgeIndicesBisect(
     const Vector2<vector_bits>& v, int drop_dimension) const {
-  int initial_dir_sign = edge(0).line.d().DropDimension(drop_dimension)
-                                .Dot(v).GetSign();
+  BigIntWord initial_dir_sign = edge(0).line.d().DropDimension(drop_dimension)
+                                       .Dot(v).GetSign();
   if (initial_dir_sign == 0) {
     // The 0th edge is perpendicular to `v`. Find the first non-perpendicular
     // edge before and after `v`.
     int before = vertex_count() - 1;
-    int before_sign;
+    BigIntWord before_sign;
     while (true) {
       // A well formed ConvexPolygon with a valid drop_dimension should always
       // find a match.

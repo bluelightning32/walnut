@@ -89,7 +89,7 @@ class HomoPoint3 {
           const BigInt<other_denom_bits>& w) :
     vector_from_origin_(x, y, z), dist_denom_(w) { }
 
-  HomoPoint3(int x, int y, int z, int w) :
+  HomoPoint3(long x, long y, long z, long w) :
     vector_from_origin_(x, y, z), dist_denom_(w) { }
 
   template <int other_num_bits>
