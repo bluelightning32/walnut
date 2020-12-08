@@ -68,6 +68,21 @@ TEST(RectangularPrism, IntersectPlaneZUp) {
         ));
 }
 
+TEST(RectangularPrism, IntersectPlaneZUpFactional) {
+  RectangularPrism<> prism(Point3<>(-8, -8, 0), Point3<>(8, 8, 10));
+  auto result = prism.IntersectPlane(HalfSpace3<>(/*x=*/0, /*y=*/0, /*z=*/20,
+                                                  /*d=*/19));
+  result.SortVertices();
+  std::vector<HomoPoint3<>> vertices;
+  for (int i = 0; i < result.vertex_count(); ++i) {
+    vertices.push_back(result.vertex(i));
+  }
+  EXPECT_THAT(vertices, ElementsAre(HomoPoint3<32>{-8*20, -8*20, 19, 20},
+                                    HomoPoint3<32>{ 8*20, -8*20, 19, 20},
+                                    HomoPoint3<32>{ 8*20,  8*20, 19, 20},
+                                    HomoPoint3<32>{-8*20,  8*20, 19, 20}));
+}
+
 TEST(RectangularPrism, IntersectPlaneZDown) {
   RectangularPrism<> prism(5);
 
