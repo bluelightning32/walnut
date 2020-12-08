@@ -231,10 +231,44 @@ class PluckerLine {
     return PluckerLine(-d(), -m());
   }
 
+  // Removes the common factor.
+  //
+  // After this function returns, the line may be stored in a more efficient
+  // format, but the value of the point will be equivalent to the value from
+  // before.
+  void Reduce();
+
  private:
   DVector d_;
   MVector m_;
 };
+
+template <int d_bits, int m_bits>
+void PluckerLine<d_bits, m_bits>::Reduce() {
+  bool unused;
+  auto common_factor = d_.components()[0].GetUIntAbs(&unused);
+  common_factor = common_factor.GetGreatestCommonDivisor(
+      d_.components()[1].GetUIntAbs(&unused));
+  common_factor = common_factor.GetGreatestCommonDivisor(
+      d_.components()[2].GetUIntAbs(&unused));
+
+  common_factor = common_factor.GetGreatestCommonDivisor(
+      m_.components()[0].GetUIntAbs(&unused));
+  common_factor = common_factor.GetGreatestCommonDivisor(
+      m_.components()[1].GetUIntAbs(&unused));
+  common_factor = common_factor.GetGreatestCommonDivisor(
+      m_.components()[2].GetUIntAbs(&unused));
+
+  typename DVector::BigIntRep signed_factor(common_factor);
+
+  d_.components()[0] /= signed_factor;
+  d_.components()[1] /= signed_factor;
+  d_.components()[2] /= signed_factor;
+
+  m_.components()[0] /= signed_factor;
+  m_.components()[1] /= signed_factor;
+  m_.components()[2] /= signed_factor;
+}
 
 // This is a wrapper around the PluckerLine constructor that takes 2 Point3's.
 // The only reason to use this wrapper is that it figures out how many bits are

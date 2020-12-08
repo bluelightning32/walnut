@@ -35,7 +35,7 @@ class Vector3 {
   Vector3(const BigIntRep& x, const BigIntRep& y, const BigIntRep& z) :
     components_{x, y, z} { }
 
-  Vector3(int x, int y, int z) :
+  Vector3(long x, long y, long z) :
     components_{BigIntRep(x), BigIntRep(y), BigIntRep(z)} { }
 
   static Vector3 Zero() {

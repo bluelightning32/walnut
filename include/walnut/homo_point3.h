@@ -187,7 +187,7 @@ class HomoPoint3 {
     return vector_from_origin_.IsValidState() && dist_denom_.IsValidState();
   }
 
-  // Remove common factors from the point.
+  // Removes the common factor.
   //
   // After this function returns, the point may be stored in a more efficient
   // format, but the value of the point will be equivalent to the value from
