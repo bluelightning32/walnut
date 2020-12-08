@@ -1410,4 +1410,24 @@ TEST(ConvexPolygon, SplitOnParallelPlane) {
   }
 }
 
+TEST(ConvexPolygon, SplitOnFractionalParallelPlane) {
+  Point3<32> ccw_input[] = {
+    Point3<32>(0, 0, 1),
+    Point3<32>(1, 0, 1),
+    Point3<32>(1, 1, 1),
+  };
+
+  ConvexPolygon<32> triangle = MakeConvexPolygon(ccw_input);
+
+  HalfSpace3<> below_up(/*x=*/0, /*y=*/0, /*z=*/10, /*dist=*/9);
+  {
+    auto info = triangle.GetSplitInfo(below_up);
+    EXPECT_FALSE(info.ShouldEmitNegativeChild());
+    EXPECT_TRUE(info.ShouldEmitPositiveChild());
+
+    EXPECT_EQ(info.pos_range().first, 0);
+    EXPECT_EQ(info.pos_range().second, triangle.vertex_count());
+  }
+}
+
 }  // walnut

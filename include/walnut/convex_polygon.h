@@ -951,12 +951,42 @@ ConvexPolygon<point3_bits, VertexData>::GetSplitInfo(
 
   if (!line.IsValid()) {
     // half_space is parallel to plane_.
-    int half_space_abs_mult =
-      half_space.normal().components()[drop_dimension()].GetAbsMult();
-    int compare = (plane().normal().components()[drop_dimension()] *
-                   plane().d()).Compare(
-                     half_space.normal().components()[drop_dimension()] *
-                     half_space.d()) * half_space_abs_mult;
+    //
+    // Now calculate the following:
+    //   If half.n > 0, then
+    //     if poly.d / poly.n < half.d / half.n, then
+    //       poly is below half
+    //     else
+    //       poly is above half
+    //    else
+    //     if poly.d / poly.n < half.d / half.n, then
+    //       poly is above half
+    //     else
+    //       poly is below half
+    //
+    // The above is equivalent to:
+    //   If half.n > 0, then
+    //     if poly.d * half.n / poly.n < half.d, then
+    //       poly is below half
+    //     else
+    //       poly is above half
+    //    else
+    //     if poly.d * half.n / poly.n < half.d, then
+    //       poly is below half
+    //     else
+    //       poly is above half
+    //
+    // Which simplifies to:
+    //   if poly.d * half.n / poly.n < half.d, then
+    //     poly is below half
+    //   else
+    //     poly is above half
+    int plane_abs_mult =
+      plane().normal().components()[drop_dimension()].GetAbsMult();
+    int compare = (plane().d() *
+                   half_space.normal().components()[drop_dimension()]).Compare(
+        half_space.d() *
+        plane().normal().components()[drop_dimension()]) * plane_abs_mult;
     SplitInfoRep result;
     if (compare < 0) {
       // The polygon is entirely on the negative side.
