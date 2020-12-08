@@ -214,7 +214,8 @@ void HomoPoint3<num_bits, denom_bits>::Reduce() {
 
   DenomInt signed_factor(common_factor);
   if (dist_signed) {
-    signed_factor.Negate();
+    bool overflowed = signed_factor.Negate();
+    assert(!overflowed);
   }
 
   dist_denom_ /= signed_factor;

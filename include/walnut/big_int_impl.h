@@ -578,7 +578,10 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     return remainder;
   }
 
-  constexpr void Negate() {
+  // Negates *this and returns whether the result overflowed.
+  //
+  // A return value of false means it did not overflow.
+  constexpr bool Negate() {
     bool carry = true;
     int i = 0;
     const BigUIntWord old_last_word(words_[used_words() - 1]);
@@ -589,23 +592,24 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     // the same sign.
     const BigUIntWord sign_changed =
       (old_last_word ^ words_[i - 1]) >> (bits_per_word - 1);
+    bool overflowed = false;
     // carry is true if the result is 0.
     if (!(sign_changed.low_uint32() | carry)) {
       // The result kept the same sign, and the result isn't 0 (because carry
       // is false). This means that *this was equal to min_value, and it just
       // overflowed back to min_value. So allocate another word.
-      assert(i < max_words);
-      if (i < max_words) {
-        ++i;
-      }
+      overflowed = i == max_words;
+      if (!overflowed) ++i;
     }
     used_ = i * bytes_per_word;
     Trim();
+    return overflowed;
   }
 
   constexpr BigIntImpl<max_words> operator-() const {
     BigIntImpl<max_words> result = *this;
-    result.Negate();
+    bool overflowed = result.Negate();
+    assert(!overflowed);
     return result;
   }
 
@@ -623,7 +627,9 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
   constexpr BigUIntImpl<max_words> GetUIntAbs(bool* was_signed) const {
     *was_signed = BigIntWord{words_[used_words() - 1]} < 0;
     if (*was_signed) {
-      BigIntImpl<max_words> pos = -*this;
+      BigIntImpl<max_words> pos = *this;
+      // Ignore overflow
+      pos.Negate();
       return BigUIntImpl<max_words>{pos.words_, pos.used_};
     } else {
       return BigUIntImpl<max_words>{words_, used_};
@@ -710,11 +716,13 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
                                                                 &remainder);
     *remainder_out = remainder;
     if (this_signed) {
-      remainder_out->Negate();
+      bool overflowed = remainder_out->Negate();
+      assert(!overflowed);
     }
     BigIntImpl<max_words> result{quotient};
     if (this_signed ^ other_signed) {
-      result.Negate();
+      bool overflowed = result.Negate();
+      assert(!overflowed);
     }
     return result;
   }

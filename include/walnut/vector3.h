@@ -199,7 +199,8 @@ class Vector3 {
   // sufficient bitspace.
   void Negate() {
     for (BigIntRep& coord : components_) {
-      coord.Negate();
+      bool overflowed = coord.Negate();
+      assert(!overflowed);
     }
   }
 

@@ -211,10 +211,11 @@ class BigInt {
     return rep_ % other.rep_;
   }
 
-  // This function could potentially overflow. The caller must ensure there is
-  // sufficient bitspace.
-  constexpr void Negate() {
-    rep_.Negate();
+  // Negates *this and returns whether the result overflowed.
+  //
+  // A return value of false means it did not overflow.
+  constexpr bool Negate() {
+    return rep_.Negate();
   }
 
   constexpr BigInt<bits> operator-() const {
