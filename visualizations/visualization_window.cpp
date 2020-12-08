@@ -72,11 +72,12 @@ VisualizationWindow::VisualizationWindow() :
 }
 
 void VisualizationWindow::UseTopDownView() {
+  renderer_->GetActiveCamera()->ParallelProjectionOn();
   renderer_->GetActiveCamera()->SetFocalPoint(0, 0, 0);
   renderer_->GetActiveCamera()->SetPosition(0, 0, 10);
   renderer_->GetActiveCamera()->SetViewUp(0, 1, 0);
   renderer_->ResetCamera();
-  Zoom(1.5);
+  Zoom(1.2);
 }
 
 vtkSmartPointer<vtkActor> VisualizationWindow::AddShape(

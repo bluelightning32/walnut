@@ -30,6 +30,10 @@ class VisualizationWindow {
   vtkSmartPointer<vtkCubeAxesActor> Axes(double content_bounds[6],
                                          double padding = 5);
 
+  // Moves the camera so that it looks down on the origin.
+  //
+  // Also switches the camera to use an orthogonal projection instead of a
+  // perspective view.
   void UseTopDownView();
 
   void Zoom(double factor);

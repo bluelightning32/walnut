@@ -73,8 +73,11 @@ int main(int argc, char *argv[]) {
   bounds[4] = 0;
   // zmax
   bounds[5] = 5;
-  window.Axes(bounds, /*padding=*/0);
+  vtkSmartPointer<vtkCubeAxesActor> axes = window.Axes(bounds, /*padding=*/0);
   window.UseTopDownView();
+  // The top down view ensures that nothing is going to overlap the axis
+  // labels. So the label size can be reduced without hurting readability.
+  axes->SetScreenSize(10);
   window.Run();
 
   return 0;
