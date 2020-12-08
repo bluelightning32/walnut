@@ -205,6 +205,14 @@ RectangularPrism<point3_bits>::GetWalls() const {
   return result;
 }
 
+template <int point3_bits = 32>
+std::ostream& operator<<(std::ostream& out,
+                         const RectangularPrism<point3_bits>& rect) {
+  out << "min_point=" << rect.min_point;
+  out << " max_point=" << rect.max_point;
+  return out;
+}
+
 }  // walnut
 
 #endif // WALNUT_RECTANGULAR_PRISM_H__
