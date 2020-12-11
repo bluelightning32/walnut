@@ -7,6 +7,7 @@
 #include <vtkRenderer.h>
 #include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
+#include <vtkSliderWidget.h>
 #include <vtkSmartPointer.h>
 
 namespace walnut {
@@ -29,6 +30,9 @@ class VisualizationWindow {
   // Call `GetBounds` on a previously added actor to get the bounds.
   vtkSmartPointer<vtkCubeAxesActor> Axes(double content_bounds[6],
                                          double padding = 5);
+
+  // The caller must call `SetRepresentation` on the returned widget.
+  vtkSmartPointer<vtkSliderWidget> CreateSliderWidget();
 
   // Moves the camera so that it looks down on the origin.
   //

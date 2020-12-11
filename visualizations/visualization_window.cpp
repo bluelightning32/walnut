@@ -187,6 +187,14 @@ vtkSmartPointer<vtkCubeAxesActor> VisualizationWindow::Axes(
   return actor;
 }
 
+vtkSmartPointer<vtkSliderWidget> VisualizationWindow::CreateSliderWidget() {
+  auto slider = vtkSmartPointer<vtkSliderWidget>::New();
+  slider->SetInteractor(interactor_);
+  slider->SetAnimationModeToAnimate();
+  slider->EnabledOn();
+  return slider;
+}
+
 void VisualizationWindow::Zoom(double factor) {
   renderer_->GetActiveCamera()->Zoom(factor);
 }

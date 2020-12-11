@@ -3,14 +3,19 @@
 #include "walnut/point3.h"
 #include "walnut/rectangular_prism.h"
 
+#include "function_command.h"
 #include "mesh_adapter.h"
 #include "visualization_window.h"
 
 #include <vtkCleanPolyData.h>
+#include <vtkProperty2D.h>
+#include <vtkSliderRepresentation2D.h>
+#include <vtkTextProperty.h>
 
 constexpr const double pi = 3.14159265358979323846;
 
-std::vector<walnut::BSPTree<>::OutputPolygon> CreateCellBorder() {
+std::vector<walnut::BSPTree<>::OutputPolygon> CreateCellBorder(
+    double top) {
   walnut::BSPTree<> tree;
   using NodeRep = typename walnut::BSPTree<>::BSPNodeRep;
   std::vector<bool> node_path;
@@ -43,17 +48,27 @@ std::vector<walnut::BSPTree<>::OutputPolygon> CreateCellBorder() {
       node_path.push_back(false);
     }
   }
+
+  // Cut the top off of the cell.
+  walnut::HalfSpace3<> split(0, 0, kDenom, /*w=*/top * kDenom);
+  leaf->Split(split);
+  // Include the side of the cell away from split's normal. That is the
+  // side closer to the origin.
+  leaf = leaf->negative_child();
+  node_path.push_back(false);
+
   walnut::RectangularPrism<> bounding_box(walnut::Point3<>(-8, -8, 0),
                                           walnut::Point3<>(8, 8, 10));
   return tree.GetNodeBorder(node_path.begin(), node_path.end(), bounding_box);
 }
 
 int main(int argc, char *argv[]) {
-  auto converted_mesh = ConvertWalnutMesh(CreateCellBorder());
   auto cleaner = vtkSmartPointer<vtkCleanPolyData>::New();
+  static constexpr double kInitialTop = 3;
+  auto converted_mesh = ConvertWalnutMesh(CreateCellBorder(kInitialTop));
+  cleaner->SetInputData(converted_mesh);
   cleaner->SetToleranceIsAbsolute(true);
   cleaner->SetAbsoluteTolerance(0.000001);
-  cleaner->SetInputData(converted_mesh);
 
   walnut::VisualizationWindow window;
   auto actor = window.AddShape(cleaner->GetOutputPort(), 1, 0.8, 0.8, 0.6);
@@ -78,6 +93,37 @@ int main(int argc, char *argv[]) {
   // The top down view ensures that nothing is going to overlap the axis
   // labels. So the label size can be reduced without hurting readability.
   axes->SetScreenSize(10);
+
+  vtkSmartPointer<vtkSliderWidget> slider_widget = window.CreateSliderWidget();
+
+  auto slider_rep = vtkSmartPointer<vtkSliderRepresentation2D>::New();
+
+  slider_rep->SetMinimumValue(0);
+  slider_rep->SetMaximumValue(4);
+  slider_rep->SetValue(kInitialTop);
+
+  slider_rep->GetTubeProperty()->SetColor(.8, .8, .8);
+  slider_rep->GetSliderProperty()->SetColor(.5, .5, .5);
+  slider_rep->GetLabelProperty()->SetColor(0, 0, 0);
+  slider_rep->GetCapProperty()->SetColor(.5 , .5, .5);
+  slider_rep->SetEndCapWidth(0.025);
+  slider_rep->SetSliderLength(0.04);
+  slider_rep->GetPoint1Coordinate()->SetCoordinateSystemToDisplay();
+  slider_rep->GetPoint1Coordinate()->SetValue(100, 40);
+  slider_rep->GetPoint2Coordinate()->SetCoordinateSystemToDisplay();
+  slider_rep->GetPoint2Coordinate()->SetValue(100, 600);
+
+  slider_widget->SetRepresentation(slider_rep);
+  vtkSmartPointer<walnut::FunctionCommand> callback =
+    walnut::MakeFunctionCommand(
+      [slider_rep = slider_rep.Get(), cleaner = cleaner.Get()](
+          vtkObject* caller, unsigned long event_id, void* data) {
+        auto converted_mesh = ConvertWalnutMesh(
+            CreateCellBorder(slider_rep->GetValue()));
+        cleaner->SetInputData(converted_mesh);
+      });
+  slider_widget->AddObserver(vtkCommand::InteractionEvent, callback);
+
   window.Run();
 
   return 0;
