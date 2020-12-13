@@ -7,6 +7,7 @@
 #include <vtkRenderer.h>
 #include <vtkRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
+#include <vtkSliderRepresentation2D.h>
 #include <vtkSliderWidget.h>
 #include <vtkSmartPointer.h>
 
@@ -31,8 +32,9 @@ class VisualizationWindow {
   vtkSmartPointer<vtkCubeAxesActor> Axes(double content_bounds[6],
                                          double padding = 5);
 
-  // The caller must call `SetRepresentation` on the returned widget.
-  vtkSmartPointer<vtkSliderWidget> CreateSliderWidget();
+  // Creates a new 2D slider and adds it to the window.
+  std::pair<vtkSmartPointer<vtkSliderWidget>,
+            vtkSmartPointer<vtkSliderRepresentation2D>> Create2DSliderWidget();
 
   // Moves the camera so that it looks down on the origin.
   //

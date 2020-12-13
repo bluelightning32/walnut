@@ -9,7 +9,6 @@
 
 #include <vtkCleanPolyData.h>
 #include <vtkProperty2D.h>
-#include <vtkSliderRepresentation2D.h>
 #include <vtkTextProperty.h>
 
 constexpr const double pi = 3.14159265358979323846;
@@ -94,26 +93,21 @@ int main(int argc, char *argv[]) {
   // labels. So the label size can be reduced without hurting readability.
   axes->SetScreenSize(10);
 
-  vtkSmartPointer<vtkSliderWidget> slider_widget = window.CreateSliderWidget();
-
-  auto slider_rep = vtkSmartPointer<vtkSliderRepresentation2D>::New();
+  vtkSmartPointer<vtkSliderWidget> slider_widget;
+  vtkSmartPointer<vtkSliderRepresentation2D> slider_rep;
+  {
+    auto pair = window.Create2DSliderWidget();
+    slider_widget = std::move(pair.first);
+    slider_rep = std::move(pair.second);
+  }
 
   slider_rep->SetMinimumValue(0);
   slider_rep->SetMaximumValue(4);
   slider_rep->SetValue(kInitialTop);
 
-  slider_rep->GetTubeProperty()->SetColor(.8, .8, .8);
-  slider_rep->GetSliderProperty()->SetColor(.5, .5, .5);
-  slider_rep->GetLabelProperty()->SetColor(0, 0, 0);
-  slider_rep->GetCapProperty()->SetColor(.5 , .5, .5);
-  slider_rep->SetEndCapWidth(0.025);
-  slider_rep->SetSliderLength(0.04);
-  slider_rep->GetPoint1Coordinate()->SetCoordinateSystemToDisplay();
   slider_rep->GetPoint1Coordinate()->SetValue(100, 40);
-  slider_rep->GetPoint2Coordinate()->SetCoordinateSystemToDisplay();
   slider_rep->GetPoint2Coordinate()->SetValue(100, 600);
 
-  slider_widget->SetRepresentation(slider_rep);
   vtkSmartPointer<walnut::FunctionCommand> callback =
     walnut::MakeFunctionCommand(
       [slider_rep = slider_rep.Get(), cleaner = cleaner.Get()](

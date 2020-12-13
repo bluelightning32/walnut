@@ -9,6 +9,7 @@
 #include <vtkPolyDataMapper.h>
 #include <vtkPolyDataNormals.h>
 #include <vtkProperty.h>
+#include <vtkProperty2D.h>
 #include <vtkTextProperty.h>
 
 namespace walnut {
@@ -187,12 +188,26 @@ vtkSmartPointer<vtkCubeAxesActor> VisualizationWindow::Axes(
   return actor;
 }
 
-vtkSmartPointer<vtkSliderWidget> VisualizationWindow::CreateSliderWidget() {
+std::pair<vtkSmartPointer<vtkSliderWidget>,
+          vtkSmartPointer<vtkSliderRepresentation2D>>
+VisualizationWindow::Create2DSliderWidget() {
+  auto slider_rep = vtkSmartPointer<vtkSliderRepresentation2D>::New();
+  slider_rep->GetTubeProperty()->SetColor(.8, .8, .8);
+  slider_rep->GetSliderProperty()->SetColor(.5, .5, .5);
+  slider_rep->GetLabelProperty()->SetColor(0, 0, 0);
+  slider_rep->GetCapProperty()->SetColor(.5 , .5, .5);
+  slider_rep->SetEndCapWidth(0.025);
+  slider_rep->SetSliderLength(0.04);
+  slider_rep->GetPoint1Coordinate()->SetCoordinateSystemToDisplay();
+  slider_rep->GetPoint2Coordinate()->SetCoordinateSystemToDisplay();
+
   auto slider = vtkSmartPointer<vtkSliderWidget>::New();
+  slider->SetRepresentation(slider_rep);
   slider->SetInteractor(interactor_);
   slider->SetAnimationModeToAnimate();
   slider->EnabledOn();
-  return slider;
+
+  return std::make_pair(slider, slider_rep);
 }
 
 void VisualizationWindow::Zoom(double factor) {
