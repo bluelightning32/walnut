@@ -49,8 +49,8 @@ std::vector<walnut::BSPTree<>::OutputPolygon> CreateCellBorder(
   }
 
   // Cut the top off of the cell.
-  walnut::HalfSpace3<> split(kDenom * 0.75 / 2 * sin(vert_angle * pi/2),
-                             kDenom * 0.75 / 1 * sin(vert_angle * pi/2),
+  walnut::HalfSpace3<> split(kDenom * 1 * sin(vert_angle * pi/2),
+                             0,
                              kDenom / 1 * cos(vert_angle * pi/2),
                              /*w=*/top * kDenom);
   leaf->Split(split);
@@ -75,7 +75,11 @@ int main(int argc, char *argv[]) {
   walnut::VisualizationWindow window;
   auto actor = window.AddShape(cleaner->GetOutputPort(), 1, 0.8, 0.8, 0.6);
   window.AddWireframe(cleaner->GetOutputPort());
-  window.AddShapeNormals(cleaner->GetOutputPort(), /*scale=*/1);
+  vtkSmartPointer<vtkActor> normals2d = window.AddShapeNormals(
+      cleaner->GetOutputPort(), /*scale=*/1, /*normals3d=*/false);
+  vtkSmartPointer<vtkActor> normals3d = window.AddShapeNormals(
+      cleaner->GetOutputPort(), /*scale=*/1, /*normals3d=*/true);
+  normals3d->VisibilityOff();
 
   double bounds[6];
   // xmin
@@ -135,6 +139,14 @@ int main(int argc, char *argv[]) {
       });
   height_widget->AddObserver(vtkCommand::InteractionEvent, callback);
   angle_widget->AddObserver(vtkCommand::InteractionEvent, callback);
+
+  window.AddKeyPressObserver([normals2d, normals3d, &window](char key) {
+      if (key == 'n') {
+        normals3d->SetVisibility(!normals3d->GetVisibility());
+        normals2d->SetVisibility(!normals3d->GetVisibility());
+        window.Redraw();
+      }
+    });
 
   window.Run();
 

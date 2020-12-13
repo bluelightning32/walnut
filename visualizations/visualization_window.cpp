@@ -4,6 +4,7 @@
 #include <vtkApplyColors.h>
 #include <vtkCamera.h>
 #include <vtkCellCenters.h>
+#include <vtkGlyph2D.h>
 #include <vtkGlyph3D.h>
 #include <vtkInteractorStyleSwitch.h>
 #include <vtkPolyDataMapper.h>
@@ -11,6 +12,8 @@
 #include <vtkProperty.h>
 #include <vtkProperty2D.h>
 #include <vtkTextProperty.h>
+
+#include "function_command.h"
 
 namespace walnut {
 
@@ -25,7 +28,7 @@ vtkSmartPointer<vtkAlgorithm> Color(vtkSmartPointer<vtkAlgorithmOutput> input,
 }
 
 vtkSmartPointer<vtkGlyph3D> GetNormalsGlyph(
-    vtkSmartPointer<vtkAlgorithmOutput> shape, double scale) {
+    vtkSmartPointer<vtkAlgorithmOutput> shape, double scale, bool normals3d) {
   auto normals = vtkSmartPointer<vtkPolyDataNormals>::New();
   normals->SetInputConnection(shape);
 
@@ -38,7 +41,12 @@ vtkSmartPointer<vtkGlyph3D> GetNormalsGlyph(
   auto arrow = vtkSmartPointer<vtkArrowSource>::New();
   arrow->Update();
 
-  auto glyph = vtkSmartPointer<vtkGlyph3D>::New();
+  vtkSmartPointer<vtkGlyph3D> glyph;
+  if (normals3d) {
+    glyph = vtkSmartPointer<vtkGlyph3D>::New();
+  } else {
+    glyph = vtkSmartPointer<vtkGlyph2D>::New();
+  }
 
   glyph->SetInputConnection(centers->GetOutputPort());
   glyph->SetSourceData(arrow->GetOutput());
@@ -116,9 +124,10 @@ vtkSmartPointer<vtkActor> VisualizationWindow::AddWireframe(
 }
 
 vtkSmartPointer<vtkActor> VisualizationWindow::AddShapeNormals(
-    vtkSmartPointer<vtkAlgorithmOutput> shape, double scale) {
+    vtkSmartPointer<vtkAlgorithmOutput> shape, double scale, bool normals3d) {
   auto mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-  mapper->SetInputConnection(GetNormalsGlyph(shape, scale)->GetOutputPort());
+  mapper->SetInputConnection(
+      GetNormalsGlyph(shape, scale, normals3d)->GetOutputPort());
 
   auto actor = vtkSmartPointer<vtkActor>::New();
   actor->SetMapper(mapper);
@@ -217,6 +226,22 @@ void VisualizationWindow::Zoom(double factor) {
 void VisualizationWindow::Run() {
   render_window_->Render();
   interactor_->Start();
+}
+
+void VisualizationWindow::AddKeyPressObserver(
+    std::function<void(char)> observer) {
+  vtkSmartPointer<walnut::FunctionCommand> command =
+    walnut::MakeFunctionCommand([this, observer](vtkObject* caller,
+                                                 unsigned long event_id,
+                                                 void* data) {
+        observer(interactor_->GetKeyCode());
+      });
+
+  interactor_->AddObserver(vtkCommand::KeyPressEvent, command);
+}
+
+void VisualizationWindow::Redraw() {
+  render_window_->Render();
 }
 
 } // walnut

@@ -1,6 +1,8 @@
 #ifndef WALNUT_VISUALIZATIONS_VISUALIZATION_WINDOW_H__
 #define WALNUT_VISUALIZATIONS_VISUALIZATION_WINDOW_H__
 
+#include <functional>
+
 #include <vtkActor.h>
 #include <vtkAlgorithmOutput.h>
 #include <vtkCubeAxesActor.h>
@@ -26,7 +28,8 @@ class VisualizationWindow {
 
   // Call `GetProperty()->SetColor` on the result to change the color.
   vtkSmartPointer<vtkActor> AddShapeNormals(
-      vtkSmartPointer<vtkAlgorithmOutput> shape, double scale=3);
+      vtkSmartPointer<vtkAlgorithmOutput> shape, double scale=3,
+      bool normals3d=true);
 
   // Call `GetBounds` on a previously added actor to get the bounds.
   vtkSmartPointer<vtkCubeAxesActor> Axes(double content_bounds[6],
@@ -45,6 +48,10 @@ class VisualizationWindow {
   void Zoom(double factor);
 
   void Run();
+
+  void AddKeyPressObserver(std::function<void(char)> observer);
+
+  void Redraw();
 
  private:
   vtkSmartPointer<vtkRenderer> renderer_;
