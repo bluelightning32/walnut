@@ -14,7 +14,7 @@
 constexpr const double pi = 3.14159265358979323846;
 
 std::vector<walnut::BSPTree<>::OutputPolygon> CreateCellBorder(
-    double top) {
+    double top, double vert_angle) {
   walnut::BSPTree<> tree;
   using NodeRep = typename walnut::BSPTree<>::BSPNodeRep;
   std::vector<bool> node_path;
@@ -49,7 +49,10 @@ std::vector<walnut::BSPTree<>::OutputPolygon> CreateCellBorder(
   }
 
   // Cut the top off of the cell.
-  walnut::HalfSpace3<> split(0, 0, kDenom, /*w=*/top * kDenom);
+  walnut::HalfSpace3<> split(kDenom * 0.75 / 2 * sin(vert_angle * pi/2),
+                             kDenom * 0.75 / 1 * sin(vert_angle * pi/2),
+                             kDenom / 1 * cos(vert_angle * pi/2),
+                             /*w=*/top * kDenom);
   leaf->Split(split);
   // Include the side of the cell away from split's normal. That is the
   // side closer to the origin.
@@ -64,7 +67,7 @@ std::vector<walnut::BSPTree<>::OutputPolygon> CreateCellBorder(
 int main(int argc, char *argv[]) {
   auto cleaner = vtkSmartPointer<vtkCleanPolyData>::New();
   static constexpr double kInitialTop = 3;
-  auto converted_mesh = ConvertWalnutMesh(CreateCellBorder(kInitialTop));
+  auto converted_mesh = ConvertWalnutMesh(CreateCellBorder(kInitialTop, 0));
   cleaner->SetInputData(converted_mesh);
   cleaner->SetToleranceIsAbsolute(true);
   cleaner->SetAbsoluteTolerance(0.000001);
@@ -93,29 +96,45 @@ int main(int argc, char *argv[]) {
   // labels. So the label size can be reduced without hurting readability.
   axes->SetScreenSize(10);
 
-  vtkSmartPointer<vtkSliderWidget> slider_widget;
-  vtkSmartPointer<vtkSliderRepresentation2D> slider_rep;
+  vtkSmartPointer<vtkSliderWidget> height_widget;
+  vtkSmartPointer<vtkSliderRepresentation2D> height_rep;
   {
     auto pair = window.Create2DSliderWidget();
-    slider_widget = std::move(pair.first);
-    slider_rep = std::move(pair.second);
+    height_widget = std::move(pair.first);
+    height_rep = std::move(pair.second);
   }
 
-  slider_rep->SetMinimumValue(0);
-  slider_rep->SetMaximumValue(4);
-  slider_rep->SetValue(kInitialTop);
+  height_rep->SetMinimumValue(0);
+  height_rep->SetMaximumValue(4);
+  height_rep->SetValue(kInitialTop);
 
-  slider_rep->GetPoint1Coordinate()->SetValue(100, 40);
-  slider_rep->GetPoint2Coordinate()->SetValue(100, 600);
+  height_rep->GetPoint1Coordinate()->SetValue(75, 40);
+  height_rep->GetPoint2Coordinate()->SetValue(75, 600);
+
+  vtkSmartPointer<vtkSliderWidget> angle_widget;
+  vtkSmartPointer<vtkSliderRepresentation2D> angle_rep;
+  {
+    auto pair = window.Create2DSliderWidget();
+    angle_widget = std::move(pair.first);
+    angle_rep = std::move(pair.second);
+  }
+
+  angle_rep->SetMinimumValue(-1);
+  angle_rep->SetMaximumValue(1);
+  angle_rep->SetValue(0);
+
+  angle_rep->GetPoint1Coordinate()->SetValue(125, 40);
+  angle_rep->GetPoint2Coordinate()->SetValue(125, 600);
 
   vtkSmartPointer<walnut::FunctionCommand> callback =
-    walnut::MakeFunctionCommand([slider_rep, cleaner](
+    walnut::MakeFunctionCommand([height_rep, angle_rep, cleaner](
           vtkObject* caller, unsigned long event_id, void* data) {
         auto converted_mesh = ConvertWalnutMesh(
-            CreateCellBorder(slider_rep->GetValue()));
+            CreateCellBorder(height_rep->GetValue(), angle_rep->GetValue()));
         cleaner->SetInputData(converted_mesh);
       });
-  slider_widget->AddObserver(vtkCommand::InteractionEvent, callback);
+  height_widget->AddObserver(vtkCommand::InteractionEvent, callback);
+  angle_widget->AddObserver(vtkCommand::InteractionEvent, callback);
 
   window.Run();
 
