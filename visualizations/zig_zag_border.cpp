@@ -109,8 +109,7 @@ int main(int argc, char *argv[]) {
   slider_rep->GetPoint2Coordinate()->SetValue(100, 600);
 
   vtkSmartPointer<walnut::FunctionCommand> callback =
-    walnut::MakeFunctionCommand(
-      [slider_rep = slider_rep.Get(), cleaner = cleaner.Get()](
+    walnut::MakeFunctionCommand([slider_rep, cleaner](
           vtkObject* caller, unsigned long event_id, void* data) {
         auto converted_mesh = ConvertWalnutMesh(
             CreateCellBorder(slider_rep->GetValue()));
