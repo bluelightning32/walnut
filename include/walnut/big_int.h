@@ -119,6 +119,11 @@ class BigInt {
     return rep_ * other;
   }
 
+  constexpr BigInt& operator*=(const int other) {
+    rep_ *= other;
+    return *this;
+  }
+
   template <int other_bits>
   constexpr bool operator < (const BigInt<other_bits>& other) const {
     return rep_ < other.rep_;

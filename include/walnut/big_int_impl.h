@@ -398,6 +398,11 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     return Multiply(BigIntImpl<1>(other));
   }
 
+  constexpr BigIntImpl& operator*=(const int other) {
+    *this = *this * other;
+    return *this;
+  }
+
   template <int other_max_words>
   constexpr bool operator < (const BigIntImpl<other_max_words>& other) const {
     if (used_ < other.used_) {

@@ -494,6 +494,11 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesCCWMidSameDir) {
   Vector2<> vector(1, 0);
   std::pair<size_t, size_t> opp_edges = polygon.GetOppositeEdgeIndicesBisect(
       vector, /*drop_dimension=*/2);
+
+  const auto& edge1_dir = polygon.edge(opp_edges.first).line.d();
+  const auto& edge2_dir = polygon.edge(opp_edges.second).line.d();
+  EXPECT_LT(edge1_dir.DropDimension(2).Dot(vector) *
+            edge2_dir.DropDimension(2).Dot(vector).GetSign(), 0);
 }
 
 TEST(ConvexPolygon, GetOppositeEdgeIndicesLargeInts) {
@@ -534,6 +539,51 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesLargeInts) {
         vector, /*drop_dimension=*/2);
     EXPECT_EQ(opp_edges.first, 4);
     EXPECT_EQ(opp_edges.second, 0);
+  }
+}
+
+TEST(ConvexPolygon, GetOppositeEdgeIndicesDenom) {
+  // This test modifies one the HomoPoint3s at a time to include a
+  // constant multiplier to all of the components. This constant
+  // multiplier should have no effect on the result, because it is
+  // applied to the both the x, y, and z components and the w component.
+  //
+  //  V ->
+  //
+  // p[0] <------
+  //   \         \
+  //   p[1]      p[3]
+  //     \        /
+  //      --> p[2]
+  //
+  std::vector<HomoPoint3<>> p{
+    HomoPoint3<32>(101, -101, 0, 1),
+    HomoPoint3<32>(103, -102, 0, 1),
+    HomoPoint3<32>(104, -101, 0, 1),
+    HomoPoint3<32>(100, 100, 0, 1),
+  };
+
+  HalfSpace3<> plane(0, 0, 1, 0);
+
+  for (int i = 0; i < p.size(); ++i) {
+    for (int multiple : {-1, 1000, -1000}) {
+      std::vector<HomoPoint3<>> p_copy(p);
+      p_copy[i].x() *= multiple;
+      p_copy[i].y() *= multiple;
+      p_copy[i].z() *= multiple;
+      p_copy[i].w() *= multiple;
+
+      ConvexPolygon<32> polygon(plane, /*drop_dimension=*/2, p_copy);
+
+      Vector2<> vector(1, 0);
+      std::pair<size_t, size_t> opp_edges =
+        polygon.GetOppositeEdgeIndicesBisect(
+            vector, /*drop_dimension=*/2);
+      const auto& edge1_dir = polygon.edge(opp_edges.first).line.d();
+      const auto& edge2_dir = polygon.edge(opp_edges.second).line.d();
+      EXPECT_LT(edge1_dir.DropDimension(2).Dot(vector) *
+                edge2_dir.DropDimension(2).Dot(vector).GetSign(), 0);
+    }
   }
 }
 
