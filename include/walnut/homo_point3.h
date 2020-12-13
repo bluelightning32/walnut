@@ -107,14 +107,28 @@ class HomoPoint3 {
     // a.v / a.w <?> b.v / b.w
     // a.v <?> b.v * a.w / b.w (maybe flip sign)
     // a.v * b.w <?> b.v * a.w (maybe flip sign)
-    int sign_flip = (b.dist_denom().SignExtension() ^
-                     a.dist_denom().SignExtension()) | 1;
+    int sign_flip = b.dist_denom().GetAbsMult(a.dist_denom());
     auto a_scaled = a.vector_from_origin() * (b.dist_denom() * sign_flip);
     auto b_scaled = b.vector_from_origin() * (a.dist_denom() * sign_flip);
     return std::lexicographical_compare(a_scaled.components().begin(),
                                         a_scaled.components().end(),
                                         b_scaled.components().begin(),
                                         b_scaled.components().end());
+  }
+
+  template <int other_num_bits=num_bits, int other_denom_bits=denom_bits>
+  static bool TopnessLt(const HomoPoint3& a,
+      const HomoPoint3<other_num_bits, other_denom_bits>& b) {
+    // a.v / a.w <?> b.v / b.w
+    // a.v <?> b.v * a.w / b.w (maybe flip sign)
+    // a.v * b.w <?> b.v * a.w (maybe flip sign)
+    int sign_flip = b.dist_denom().GetAbsMult(a.dist_denom());
+    auto a_scaled = a.vector_from_origin() * (b.dist_denom() * sign_flip);
+    auto b_scaled = b.vector_from_origin() * (a.dist_denom() * sign_flip);
+    return std::lexicographical_compare(a_scaled.components().rbegin(),
+                                        a_scaled.components().rend(),
+                                        b_scaled.components().rbegin(),
+                                        b_scaled.components().rend());
   }
 
   // Returns 0 if (p1, `this`, p3) are collinear.

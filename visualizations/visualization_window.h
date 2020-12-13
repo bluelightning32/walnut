@@ -19,6 +19,9 @@ class VisualizationWindow {
  public:
   VisualizationWindow();
 
+  vtkSmartPointer<vtkActor> AddShape(vtkSmartPointer<vtkPolyData> shape,
+                                     double r, double g, double b, double a);
+
   vtkSmartPointer<vtkActor> AddShape(vtkSmartPointer<vtkAlgorithmOutput> shape,
                                      double r, double g, double b, double a);
 

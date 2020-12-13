@@ -8,6 +8,8 @@
 #include "visualization_window.h"
 
 #include <vtkCleanPolyData.h>
+#include <vtkPolyLineSource.h>
+#include <vtkProperty.h>
 #include <vtkProperty2D.h>
 #include <vtkTextProperty.h>
 
@@ -64,10 +66,70 @@ std::vector<walnut::BSPTree<>::OutputPolygon> CreateCellBorder(
   return tree.GetNodeBorder(node_path.begin(), node_path.end(), bounding_box);
 }
 
+class PointData {
+ public:
+  PointData(vtkIdType num_points) {
+    poly_data_->SetPoints(points_);
+    poly_data_->SetVerts(verticies_);
+
+    SetNumberOfPoints(num_points);
+  }
+
+  vtkSmartPointer<vtkPolyData> poly_data() const {
+    return poly_data_;
+  }
+
+  void SetNumberOfPoints(vtkIdType count) {
+    points_->SetNumberOfPoints(count);
+    for (vtkIdType i = verticies_->GetNumberOfCells(); i < count; ++i) {
+      vtkIdType ids[1] = { i };
+      verticies_->InsertNextCell(1, ids);
+    }
+  }
+
+  void SetPoint(vtkIdType index, double x, double y, double z) {
+    points_->SetPoint(index, x, y, z);
+  }
+
+  template <int num_bits, int denom_bits>
+  void SetPoint(vtkIdType index,
+                const walnut::HomoPoint3<num_bits, denom_bits>& p) {
+    double w = p.w();
+    points_->SetPoint(index, double(p.x()) / w, double(p.y()) / w,
+                      double(p.z()) / w);
+    points_->Modified();
+  }
+
+ private:
+  vtkSmartPointer<vtkPoints> points_ = vtkSmartPointer<vtkPoints>::New();
+  vtkSmartPointer<vtkCellArray> verticies_ =
+    vtkSmartPointer<vtkCellArray>::New();
+  vtkSmartPointer<vtkPolyData> poly_data_ =
+    vtkSmartPointer<vtkPolyData>::New();
+};
+
+template<typename Polygon>
+typename Polygon::HomoPoint3Rep GetTopPoint(const std::vector<Polygon>& mesh) {
+  using HomoPoint3Rep = typename Polygon::HomoPoint3Rep;
+  HomoPoint3Rep top(0, 0, 0, 0);
+
+  for (const Polygon& polygon : mesh) {
+    for (size_t i = 0; i < polygon.vertex_count(); ++i) {
+      const HomoPoint3Rep& point = polygon.vertex(i);
+      if (top.w().IsZero() || HomoPoint3Rep::TopnessLt(top, point)) {
+        top = point;
+      }
+    }
+  }
+  return top;
+}
+
 int main(int argc, char *argv[]) {
   auto cleaner = vtkSmartPointer<vtkCleanPolyData>::New();
   static constexpr double kInitialTop = 3;
-  auto converted_mesh = ConvertWalnutMesh(CreateCellBorder(kInitialTop, 0));
+  std::vector<walnut::BSPTree<>::OutputPolygon> mesh =
+    CreateCellBorder(kInitialTop, 0);
+  auto converted_mesh = ConvertWalnutMesh(mesh);
   cleaner->SetInputData(converted_mesh);
   cleaner->SetToleranceIsAbsolute(true);
   cleaner->SetAbsoluteTolerance(0.000001);
@@ -80,6 +142,12 @@ int main(int argc, char *argv[]) {
   vtkSmartPointer<vtkActor> normals3d = window.AddShapeNormals(
       cleaner->GetOutputPort(), /*scale=*/1, /*normals3d=*/true);
   normals3d->VisibilityOff();
+
+  PointData top_point_data(1);
+  top_point_data.SetPoint(0, GetTopPoint(mesh));
+  auto top_point_actor = window.AddShape(top_point_data.poly_data(), 1, 0, 0,
+                                         1);
+  top_point_actor->GetProperty()->SetPointSize(20);
 
   double bounds[6];
   // xmin
@@ -130,12 +198,17 @@ int main(int argc, char *argv[]) {
   angle_rep->GetPoint1Coordinate()->SetValue(125, 40);
   angle_rep->GetPoint2Coordinate()->SetValue(125, 600);
 
+  auto update_mesh = [height_rep, angle_rep, cleaner, &top_point_data]() {
+    std::vector<walnut::BSPTree<>::OutputPolygon> mesh =
+      CreateCellBorder(height_rep->GetValue(), angle_rep->GetValue());
+    auto converted_mesh = ConvertWalnutMesh(mesh);
+    cleaner->SetInputData(converted_mesh);
+    top_point_data.SetPoint(0, GetTopPoint(mesh));
+  };
   vtkSmartPointer<walnut::FunctionCommand> callback =
-    walnut::MakeFunctionCommand([height_rep, angle_rep, cleaner](
+    walnut::MakeFunctionCommand([update_mesh](
           vtkObject* caller, unsigned long event_id, void* data) {
-        auto converted_mesh = ConvertWalnutMesh(
-            CreateCellBorder(height_rep->GetValue(), angle_rep->GetValue()));
-        cleaner->SetInputData(converted_mesh);
+        update_mesh();
       });
   height_widget->AddObserver(vtkCommand::InteractionEvent, callback);
   angle_widget->AddObserver(vtkCommand::InteractionEvent, callback);

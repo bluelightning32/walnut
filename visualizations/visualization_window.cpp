@@ -27,6 +27,16 @@ vtkSmartPointer<vtkAlgorithm> Color(vtkSmartPointer<vtkAlgorithmOutput> input,
   return filter;
 }
 
+// Apply a Color to a shape.
+vtkSmartPointer<vtkAlgorithm> Color(vtkSmartPointer<vtkPolyData> input,
+                                    double r, double g, double b, double a) {
+  auto filter = vtkSmartPointer<vtkApplyColors>::New();
+  filter->SetInputData(0, input);
+  filter->SetDefaultCellColor(r, g, b);
+  filter->SetDefaultCellOpacity(a);
+  return filter;
+}
+
 vtkSmartPointer<vtkGlyph3D> GetNormalsGlyph(
     vtkSmartPointer<vtkAlgorithmOutput> shape, double scale, bool normals3d) {
   auto normals = vtkSmartPointer<vtkPolyDataNormals>::New();
@@ -87,6 +97,23 @@ void VisualizationWindow::UseTopDownView() {
   renderer_->GetActiveCamera()->SetViewUp(0, 1, 0);
   renderer_->ResetCamera();
   Zoom(1.2);
+}
+
+vtkSmartPointer<vtkActor> VisualizationWindow::AddShape(
+    vtkSmartPointer<vtkPolyData> shape, double r, double g, double b,
+    double a) {
+  auto mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+  mapper->SetInputConnection(Color(shape, r, g, b, a)->GetOutputPort());
+  mapper->SetScalarModeToUseCellFieldData();
+  mapper->SelectColorArray("vtkApplyColors color");
+  mapper->SetScalarVisibility(true);
+
+  auto actor = vtkSmartPointer<vtkActor>::New();
+  actor->SetMapper(mapper);
+  renderer_->AddActor(actor);
+  renderer_->ResetCamera();
+  Zoom(1.5);
+  return actor;
 }
 
 vtkSmartPointer<vtkActor> VisualizationWindow::AddShape(
