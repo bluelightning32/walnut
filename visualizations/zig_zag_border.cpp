@@ -213,7 +213,8 @@ int main(int argc, char *argv[]) {
   height_widget->AddObserver(vtkCommand::InteractionEvent, callback);
   angle_widget->AddObserver(vtkCommand::InteractionEvent, callback);
 
-  window.AddKeyPressObserver([normals2d, normals3d, &window](char key) {
+  walnut::ObserverRegistration observer = window.AddKeyPressObserver(
+      [normals2d, normals3d, &window](char key) {
       if (key == 'n') {
         normals3d->SetVisibility(!normals3d->GetVisibility());
         normals2d->SetVisibility(!normals3d->GetVisibility());

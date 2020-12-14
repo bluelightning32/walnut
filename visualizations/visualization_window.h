@@ -13,6 +13,8 @@
 #include <vtkSliderWidget.h>
 #include <vtkSmartPointer.h>
 
+#include "observer_registration.h"
+
 namespace walnut {
 
 class VisualizationWindow {
@@ -52,7 +54,7 @@ class VisualizationWindow {
 
   void Run();
 
-  void AddKeyPressObserver(std::function<void(char)> observer);
+  ObserverRegistration AddKeyPressObserver(std::function<void(char)> observer);
 
   void Redraw();
 
