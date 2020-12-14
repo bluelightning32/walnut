@@ -11,6 +11,19 @@ ObserverRegistration::~ObserverRegistration() {
   Clear();
 }
 
+ObserverRegistration::ObserverRegistration(ObserverRegistration&& other) :
+    object_(std::move(other.object_)), tag_(other.tag_) {
+  other.object_ = nullptr;
+}
+
+ObserverRegistration& ObserverRegistration::operator=(
+    ObserverRegistration&& other) {
+  object_ = other.object_;
+  tag_ = other.tag_;
+  other.object_ = nullptr;
+  return *this;
+}
+
 void ObserverRegistration::Clear() {
   if (object_) {
     object_->RemoveObserver(tag_);

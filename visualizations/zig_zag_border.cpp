@@ -5,6 +5,7 @@
 
 #include "function_command.h"
 #include "mesh_adapter.h"
+#include "normals_actor.h"
 #include "visualization_window.h"
 
 #include <vtkCleanPolyData.h>
@@ -138,11 +139,7 @@ int main(int argc, char *argv[]) {
   walnut::VisualizationWindow window;
   auto actor = window.AddShape(cleaner->GetOutputPort(), 1, 0.8, 0.8, 0.6);
   window.AddWireframe(cleaner->GetOutputPort());
-  vtkSmartPointer<vtkActor> normals2d = window.AddShapeNormals(
-      cleaner->GetOutputPort(), /*scale=*/1, /*normals3d=*/false);
-  vtkSmartPointer<vtkActor> normals3d = window.AddShapeNormals(
-      cleaner->GetOutputPort(), /*scale=*/1, /*normals3d=*/true);
-  normals3d->VisibilityOff();
+  walnut::NormalsActor normals(window, cleaner->GetOutputPort(), /*scale=*/1);
 
   PointData top_point_data(1);
   top_point_data.SetPoint(0, GetTopPoint(mesh));
@@ -213,16 +210,6 @@ int main(int argc, char *argv[]) {
       });
   height_widget->AddObserver(vtkCommand::InteractionEvent, callback);
   angle_widget->AddObserver(vtkCommand::InteractionEvent, callback);
-
-  walnut::ObserverRegistration observer = window.AddKeyPressObserver(
-      [normals2d, normals3d, &window](char key) {
-      if (key == 'n') {
-        normals3d->SetVisibility(!normals3d->GetVisibility());
-        normals2d->SetVisibility(!normals3d->GetVisibility());
-        return true;
-      }
-      return false;
-    });
 
   window.Run();
 

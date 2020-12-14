@@ -9,8 +9,15 @@ namespace walnut {
 // Unregisters a VTK observer when destructed.
 class ObserverRegistration {
  public:
+  ObserverRegistration() = default;
   ObserverRegistration(vtkObject* object, unsigned long tag);
+  ObserverRegistration(ObserverRegistration&& other);
+  ObserverRegistration(const ObserverRegistration&) = delete;
+
   ~ObserverRegistration();
+
+  ObserverRegistration& operator=(ObserverRegistration&& other);
+  ObserverRegistration& operator=(const ObserverRegistration&) = delete;
 
   void Clear();
 

@@ -29,6 +29,7 @@ include(${VTK_USE_FILE})
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 add_library(visualization STATIC
+            normals_actor.cpp
             observer_registration.cpp
             visualization_window.cpp)
 
