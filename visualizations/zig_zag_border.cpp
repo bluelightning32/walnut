@@ -68,17 +68,15 @@ std::vector<walnut::BSPTree<>::OutputPolygon> CreateCellBorder(
   return tree.GetNodeBorder(node_path.begin(), node_path.end(), bounding_box);
 }
 
-class PointData {
+class PointsActor {
  public:
-  PointData(vtkIdType num_points) {
+  PointsActor(walnut::VisualizationWindow& window, double r, double g, double b,
+              double a) {
     poly_data_->SetPoints(points_);
     poly_data_->SetVerts(verticies_);
 
-    SetNumberOfPoints(num_points);
-  }
-
-  vtkSmartPointer<vtkPolyData> poly_data() const {
-    return poly_data_;
+    actor_ = window.AddShape(poly_data_, r, g, b, a);
+    actor_->GetProperty()->SetPointSize(20);
   }
 
   void SetNumberOfPoints(vtkIdType count) {
@@ -89,17 +87,30 @@ class PointData {
     }
   }
 
+  vtkIdType AddPoint(double x, double y, double z) {
+    vtkIdType id = points_->InsertNextPoint(x, y, z);
+    vtkIdType ids[1] = { id };
+    verticies_->InsertNextCell(1, ids);
+    points_->Modified();
+    return id;
+  }
+
+  template <int num_bits, int denom_bits>
+  vtkIdType AddPoint(const walnut::HomoPoint3<num_bits, denom_bits>& p) {
+    double w = p.w();
+    return AddPoint(double(p.x()) / w, double(p.y()) / w, double(p.z()) / w);
+  }
+
   void SetPoint(vtkIdType index, double x, double y, double z) {
     points_->SetPoint(index, x, y, z);
+    points_->Modified();
   }
 
   template <int num_bits, int denom_bits>
   void SetPoint(vtkIdType index,
                 const walnut::HomoPoint3<num_bits, denom_bits>& p) {
     double w = p.w();
-    points_->SetPoint(index, double(p.x()) / w, double(p.y()) / w,
-                      double(p.z()) / w);
-    points_->Modified();
+    SetPoint(index, double(p.x()) / w, double(p.y()) / w, double(p.z()) / w);
   }
 
  private:
@@ -108,6 +119,7 @@ class PointData {
     vtkSmartPointer<vtkCellArray>::New();
   vtkSmartPointer<vtkPolyData> poly_data_ =
     vtkSmartPointer<vtkPolyData>::New();
+  vtkSmartPointer<vtkActor> actor_;
 };
 
 template<typename Polygon>
@@ -141,11 +153,8 @@ int main(int argc, char *argv[]) {
   window.AddWireframe(cleaner->GetOutputPort());
   walnut::NormalsActor normals(window, cleaner->GetOutputPort(), /*scale=*/1);
 
-  PointData top_point_data(1);
-  top_point_data.SetPoint(0, GetTopPoint(mesh));
-  auto top_point_actor = window.AddShape(top_point_data.poly_data(), 1, 0, 0,
-                                         1);
-  top_point_actor->GetProperty()->SetPointSize(20);
+  PointsActor top_point(window, 1, 0, 0, 1);
+  top_point.AddPoint(GetTopPoint(mesh));
 
   double bounds[6];
   // xmin
@@ -175,7 +184,7 @@ int main(int argc, char *argv[]) {
   }
 
   height_rep->SetMinimumValue(0);
-  height_rep->SetMaximumValue(4);
+  height_rep->SetMaximumValue(4.1);
   height_rep->SetValue(kInitialTop);
 
   height_rep->GetPoint1Coordinate()->SetValue(75, 40);
@@ -196,12 +205,12 @@ int main(int argc, char *argv[]) {
   angle_rep->GetPoint1Coordinate()->SetValue(125, 40);
   angle_rep->GetPoint2Coordinate()->SetValue(125, 600);
 
-  auto update_mesh = [height_rep, angle_rep, cleaner, &top_point_data]() {
+  auto update_mesh = [height_rep, angle_rep, cleaner, &top_point]() {
     std::vector<walnut::BSPTree<>::OutputPolygon> mesh =
       CreateCellBorder(height_rep->GetValue(), angle_rep->GetValue());
     auto converted_mesh = ConvertWalnutMesh(mesh);
     cleaner->SetInputData(converted_mesh);
-    top_point_data.SetPoint(0, GetTopPoint(mesh));
+    top_point.SetPoint(0, GetTopPoint(mesh));
   };
   vtkSmartPointer<walnut::FunctionCommand> callback =
     walnut::MakeFunctionCommand([update_mesh](
