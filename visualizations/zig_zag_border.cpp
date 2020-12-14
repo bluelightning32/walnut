@@ -8,6 +8,7 @@
 #include "visualization_window.h"
 
 #include <vtkCleanPolyData.h>
+#include <vtkMapper.h>
 #include <vtkPolyLineSource.h>
 #include <vtkProperty.h>
 #include <vtkProperty2D.h>
@@ -218,8 +219,9 @@ int main(int argc, char *argv[]) {
       if (key == 'n') {
         normals3d->SetVisibility(!normals3d->GetVisibility());
         normals2d->SetVisibility(!normals3d->GetVisibility());
-        window.Redraw();
+        return true;
       }
+      return false;
     });
 
   window.Run();

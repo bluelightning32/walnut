@@ -54,7 +54,11 @@ class VisualizationWindow {
 
   void Run();
 
-  ObserverRegistration AddKeyPressObserver(std::function<void(char)> observer);
+  // Adds an observer that is notified of key presses.
+  //
+  // The function should return true if the window needs to be re-rendered, or
+  // false if the keypress was ignored.
+  ObserverRegistration AddKeyPressObserver(std::function<bool(char)> observer);
 
   void Redraw();
 

@@ -256,12 +256,13 @@ void VisualizationWindow::Run() {
 }
 
 ObserverRegistration VisualizationWindow::AddKeyPressObserver(
-    std::function<void(char)> observer) {
+    std::function<bool(char)> observer) {
   vtkSmartPointer<walnut::FunctionCommand> command =
-    walnut::MakeFunctionCommand([this, observer](vtkObject* caller,
-                                                 unsigned long event_id,
-                                                 void* data) {
-        observer(interactor_->GetKeyCode());
+    walnut::MakeFunctionCommand([interactor = interactor_, observer](
+          vtkObject* caller, unsigned long event_id, void* data) {
+        if (observer(interactor->GetKeyCode())) {
+          interactor->Render();
+        }
       });
 
   return ObserverRegistration(
