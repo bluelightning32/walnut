@@ -27,7 +27,7 @@ std::vector<walnut::BSPTree<>::OutputPolygon> CreateCellBorder(
   // the first element is a component that will later be distributed between
   // x and z. The second element is a y value.
   double y_rotation[4][2];
-  double y_rotation_angles[4] = {-pi/3, -pi/128, pi/128, pi/3};
+  double y_rotation_angles[4] = {-pi/3, -pi/32, pi/32, pi/3};
   for (int i = 0; i < 4; ++i) {
     y_rotation[i][0] = cos(y_rotation_angles[i]);
     y_rotation[i][1] = sin(y_rotation_angles[i]);
@@ -35,7 +35,7 @@ std::vector<walnut::BSPTree<>::OutputPolygon> CreateCellBorder(
   static constexpr double kDist = 4;
   static constexpr double kDenom = 10000;
   NodeRep* leaf = &tree.root;
-  static constexpr int kZigZagCount = 8;
+  static constexpr int kZigZagCount = 4;
   for (int i = 0; i < kZigZagCount; ++i) {
     for (int j = 0; j < 4; ++j) {
       double angle = pi * (i*2 + (j >= 2)) / (kZigZagCount * 2);
