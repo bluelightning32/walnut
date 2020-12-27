@@ -1,19 +1,19 @@
-#include "walnut/bsp_tree.h"
-#include "walnut/half_space3.h"
-#include "walnut/point3.h"
-#include "walnut/rectangular_prism.h"
-
-#include "function_command.h"
-#include "mesh_adapter.h"
-#include "normals_actor.h"
-#include "visualization_window.h"
-
 #include <vtkCleanPolyData.h>
 #include <vtkMapper.h>
 #include <vtkPolyLineSource.h>
 #include <vtkProperty.h>
 #include <vtkProperty2D.h>
 #include <vtkTextProperty.h>
+
+#include "function_command.h"
+#include "mesh_adapter.h"
+#include "normals_actor.h"
+#include "points_actor.h"
+#include "visualization_window.h"
+#include "walnut/bsp_tree.h"
+#include "walnut/half_space3.h"
+#include "walnut/point3.h"
+#include "walnut/rectangular_prism.h"
 
 constexpr const double pi = 3.14159265358979323846;
 
@@ -68,76 +68,6 @@ std::vector<walnut::BSPTree<>::OutputPolygon> CreateCellBorder(
   return tree.GetNodeBorder(node_path.begin(), node_path.end(), bounding_box);
 }
 
-class PointsActor {
- public:
-  PointsActor(walnut::VisualizationWindow& window, double r, double g, double b,
-              double a) {
-    poly_data_->SetPoints(points_);
-    poly_data_->SetVerts(verticies_);
-
-    actor_ = window.AddShape(poly_data_, r, g, b, a);
-    actor_->GetProperty()->SetPointSize(20);
-  }
-
-  void SetNumberOfPoints(vtkIdType count) {
-    points_->SetNumberOfPoints(count);
-    for (vtkIdType i = verticies_->GetNumberOfCells(); i < count; ++i) {
-      vtkIdType ids[1] = { i };
-      verticies_->InsertNextCell(1, ids);
-    }
-  }
-
-  vtkIdType AddPoint(double x, double y, double z) {
-    vtkIdType id = points_->InsertNextPoint(x, y, z);
-    vtkIdType ids[1] = { id };
-    verticies_->InsertNextCell(1, ids);
-    points_->Modified();
-    return id;
-  }
-
-  template <int num_bits, int denom_bits>
-  vtkIdType AddPoint(const walnut::HomoPoint3<num_bits, denom_bits>& p) {
-    double w = p.w();
-    return AddPoint(double(p.x()) / w, double(p.y()) / w, double(p.z()) / w);
-  }
-
-  void SetPoint(vtkIdType index, double x, double y, double z) {
-    points_->SetPoint(index, x, y, z);
-    points_->Modified();
-  }
-
-  template <int num_bits, int denom_bits>
-  void SetPoint(vtkIdType index,
-                const walnut::HomoPoint3<num_bits, denom_bits>& p) {
-    double w = p.w();
-    SetPoint(index, double(p.x()) / w, double(p.y()) / w, double(p.z()) / w);
-  }
-
- private:
-  vtkSmartPointer<vtkPoints> points_ = vtkSmartPointer<vtkPoints>::New();
-  vtkSmartPointer<vtkCellArray> verticies_ =
-    vtkSmartPointer<vtkCellArray>::New();
-  vtkSmartPointer<vtkPolyData> poly_data_ =
-    vtkSmartPointer<vtkPolyData>::New();
-  vtkSmartPointer<vtkActor> actor_;
-};
-
-template<typename Polygon>
-typename Polygon::HomoPoint3Rep GetTopPoint(const std::vector<Polygon>& mesh) {
-  using HomoPoint3Rep = typename Polygon::HomoPoint3Rep;
-  HomoPoint3Rep top(0, 0, 0, 0);
-
-  for (const Polygon& polygon : mesh) {
-    for (size_t i = 0; i < polygon.vertex_count(); ++i) {
-      const HomoPoint3Rep& point = polygon.vertex(i);
-      if (top.w().IsZero() || HomoPoint3Rep::TopnessLt(top, point)) {
-        top = point;
-      }
-    }
-  }
-  return top;
-}
-
 int main(int argc, char *argv[]) {
   auto cleaner = vtkSmartPointer<vtkCleanPolyData>::New();
   static constexpr double kInitialTop = 3;
@@ -153,7 +83,7 @@ int main(int argc, char *argv[]) {
   window.AddWireframe(cleaner->GetOutputPort());
   walnut::NormalsActor normals(window, cleaner->GetOutputPort(), /*scale=*/1);
 
-  PointsActor top_point(window, 1, 0, 0, 1);
+  walnut::PointsActor top_point(window, 1, 0, 0, 1);
   top_point.AddPoint(GetTopPoint(mesh));
 
   double bounds[6];

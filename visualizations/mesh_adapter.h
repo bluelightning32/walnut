@@ -6,6 +6,8 @@
 #include <vtkPolyData.h>
 #include <vtkPolygon.h>
 
+#include "walnut/convex_polygon.h"
+
 namespace walnut {
 
 // Converts a vector of walnut polygons into a VTK polydata output
@@ -44,6 +46,22 @@ vtkSmartPointer<vtkPolyData> ConvertWalnutMesh(
   poly_data->SetPoints(points);
   poly_data->SetPolys(cell_array);
   return poly_data;
+}
+
+template<typename Polygon>
+typename Polygon::HomoPoint3Rep GetTopPoint(const std::vector<Polygon>& mesh) {
+  using HomoPoint3Rep = typename Polygon::HomoPoint3Rep;
+  HomoPoint3Rep top(0, 0, 0, 0);
+
+  for (const Polygon& polygon : mesh) {
+    for (size_t i = 0; i < polygon.vertex_count(); ++i) {
+      const HomoPoint3Rep& point = polygon.vertex(i);
+      if (top.w().IsZero() || HomoPoint3Rep::TopnessLt(top, point)) {
+        top = point;
+      }
+    }
+  }
+  return top;
 }
 
 } // walnut

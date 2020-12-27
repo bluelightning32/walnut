@@ -7,14 +7,13 @@ namespace walnut {
 
 struct NormalsActor {
  public:
-  NormalsActor(walnut::VisualizationWindow& window,
-               vtkAlgorithmOutput* shape,
+  NormalsActor(VisualizationWindow& window, vtkAlgorithmOutput* shape,
                double scale=3, bool start3d = false);
 
   vtkSmartPointer<vtkActor> actor_2d;
   vtkSmartPointer<vtkActor> actor_3d;
 
-  walnut::ObserverRegistration switch_mode;
+  ObserverRegistration switch_mode;
 };
 
 } // walnut

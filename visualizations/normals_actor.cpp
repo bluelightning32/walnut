@@ -2,7 +2,7 @@
 
 namespace walnut {
 
-NormalsActor::NormalsActor(walnut::VisualizationWindow& window,
+NormalsActor::NormalsActor(VisualizationWindow& window,
                            vtkAlgorithmOutput* shape,
                            double scale, bool start3d) {
   actor_2d = window.AddShapeNormals(shape, /*scale=*/1, /*normals3d=*/false);

@@ -31,6 +31,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 add_library(visualization STATIC
             normals_actor.cpp
             observer_registration.cpp
+            points_actor.cpp
             visualization_window.cpp)
 
 add_executable(extrusion extrusion.cpp)
