@@ -160,6 +160,32 @@ TEST(HalfSpace3, BuildFromPoints) {
   EXPECT_GT(plane.Compare(Point3<>(/*x=*/600, /*y=*/100, /*z=*/6)), 0);
 }
 
+TEST(HalfSpace3, BuildFromHomoPoints) {
+  Point3<> p[3] = {
+    Point3<>(1, 2, 3),
+    Point3<>(5, 7, 11),
+    Point3<>(13, 17, 19),
+  };
+  HalfSpace3<> from_point3(p[0], p[1], p[2]);
+
+  for (const int scale : {-2, -1, 1, 2}) {
+    for (int i = 0; i < 3; ++i) {
+      HomoPoint3<> scaled_p[3] = {p[0], p[1], p[2]};
+      scaled_p[i] = HomoPoint3<>(p[i].x() * scale,
+                                 p[i].y() * scale,
+                                 p[i].z() * scale,
+                                 BigInt<32>(scale));
+      HalfSpace3<> from_homo_point3(scaled_p[0], scaled_p[1], scaled_p[2]);
+      EXPECT_EQ(from_homo_point3, from_point3)
+        << "scale=" << scale << ", scaled_index=" << i;
+      for (int j = 0; j < 3; ++j) {
+        EXPECT_EQ(from_point3.Compare(scaled_p[j]), 0);
+        EXPECT_EQ(from_homo_point3.Compare(scaled_p[j]), 0);
+      }
+    }
+  }
+}
+
 TEST(HalfSpace3, HalfSpacesDistinct) {
   EXPECT_NE(HalfSpace3<>(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10),
             HalfSpace3<>(/*x=*/0, /*y=*/0, /*z=*/-1, /*dist=*/-10));

@@ -93,6 +93,22 @@ class HalfSpace3 {
     normal_((p3 - p2).Cross(p1 - p2)),
     dist_(normal_.Dot(p2.vector_from_origin())) { }
 
+  template <int num_bits, int denom_bits>
+  HalfSpace3(const HomoPoint3<num_bits, denom_bits>& p1,
+             const HomoPoint3<num_bits, denom_bits>& p2,
+             const HomoPoint3<num_bits, denom_bits>& p3) {
+    // Use p2 as the center point, because if p1, p2, and p3 are from a polygon
+    // with more than 3 points, (p3 - p2) and (p1 - p2) are likely to be
+    // shorter than (p2 - p1) and (p3 - p1).
+    VectorRep unscaled_normal((p3.vector_from_origin()*p2.w() -
+                               p2.vector_from_origin()*p3.w())
+                              .Cross((p1.vector_from_origin()*p2.w() -
+                                      p2.vector_from_origin()*p1.w()))
+                              .Scale(p1.w().GetAbsMult(p3.w())));
+    dist_ = unscaled_normal.Dot(p2.vector_from_origin()) * p2.w().GetAbsMult();
+    normal_ = unscaled_normal.Scale(p2.w().abs());
+  }
+
   // Returns >0 if `v` is in the half-space, 0 if `v` is coincident with the
   // plane, or <0 if `v` is outside of the half-space.
   template <int v_bits>
