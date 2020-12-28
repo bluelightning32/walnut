@@ -224,6 +224,7 @@ class ConvexPolygon {
     return edges_[index].data();
   }
 
+  // Returns the information about an edge and the source vertex for that edge.
   const EdgeRep& edge(size_t index) const {
     return edges_[index];
   }
@@ -647,6 +648,8 @@ class ConvexPolygon {
   // When this dimension is projected to 0, 'dropped', the vertices will not
   // become collinear (assuming they were not already collinear).
   int drop_dimension_;
+  // Each entry in edges_ contains information about that edge and the source
+  // vertex of that edge.
   std::vector<EdgeRep> edges_;
 };
 
