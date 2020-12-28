@@ -16,8 +16,8 @@
 
 namespace walnut {
 
-template <typename InputPolygonTemplate>
-struct BSPEdgeInfo;
+template <typename BSPNodeTemplate, typename NormalRepTemplate>
+class BSPEdgeInfo;
 
 template <typename BSPNodeTemplate>
 class BSPNode;
@@ -28,10 +28,11 @@ class BSPTree;
 template <int point3_bits_template>
 class BSPDefaultPolygon;
 
-template <typename BSPNodeTemplate>
-struct BSPEdgeInfo {
+template <typename BSPNodeTemplate, typename NormalRepTemplate>
+class BSPEdgeInfo {
  public:
   using BSPNodeRep = BSPNodeTemplate;
+  using NormalRep = NormalRepTemplate;
 
   BSPEdgeInfo() = default;
   BSPEdgeInfo(const NoVertexData&) { }
@@ -49,11 +50,14 @@ struct BSPEdgeInfo {
 template <int point3_bits>
 class BSPDefaultPolygon :
   public ConvexPolygon<point3_bits,
-                       BSPEdgeInfo<BSPNode<BSPDefaultPolygon<point3_bits>>>> {
+    BSPEdgeInfo<BSPNode<BSPDefaultPolygon<point3_bits>>,
+                typename ConvexPolygon<point3_bits>::NormalRep>> {
  public:
+  using NormalRep = typename ConvexPolygon<point3_bits>::NormalRep;
   using Parent =
     ConvexPolygon<point3_bits,
-                  BSPEdgeInfo<BSPNode<BSPDefaultPolygon<point3_bits>>>>;
+                  BSPEdgeInfo<BSPNode<BSPDefaultPolygon<point3_bits>>,
+                              NormalRep>>;
   using typename Parent::SplitInfoRep;
 
   // Inherit all of the parent class's constructors.
@@ -82,10 +86,12 @@ class BSPPolygonWrapper : public BSPNodeTemplate::InputPolygon {
  public:
   using BSPNodeRep = BSPNodeTemplate;
   using Parent = typename BSPNodeTemplate::InputPolygon;
+  using typename Parent::NormalRep;
   using typename Parent::SplitInfoRep;
   using typename Parent::VertexData;
 
-  static_assert(std::is_base_of<BSPEdgeInfo<BSPNodeRep>, VertexData>::value,
+  static_assert(std::is_base_of<BSPEdgeInfo<BSPNodeRep, NormalRep>,
+                                VertexData>::value,
                 "The ConvexPolygon's VertexData must inherit from "
                 "BSPEdgeInfo.");
   static_assert(std::is_base_of<ConvexPolygon<Parent::point3_bits, VertexData>,
@@ -334,9 +340,10 @@ void BSPNode<InputPolygonTemplate>::PushContentsToLeaves(
   }
 }
 
-template <typename InputPolygonTemplate>
-std::ostream& operator<<(std::ostream& out,
-                         const BSPEdgeInfo<InputPolygonTemplate>& info) {
+template <typename InputPolygonTemplate, typename NormalRep>
+std::ostream& operator<<(
+    std::ostream& out,
+    const BSPEdgeInfo<InputPolygonTemplate, NormalRep>& info) {
   out << "split_by=" << info.split_by;
   return out;
 }

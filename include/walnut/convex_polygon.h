@@ -113,6 +113,7 @@ class ConvexPolygon {
   using HomoPoint3Rep = typename EdgeRep::HomoPoint3Rep;
   using HalfSpace3Rep =
     typename HalfSpace3FromPoint3Builder<point3_bits_template>::HalfSpace3Rep;
+  using NormalRep = typename HalfSpace3Rep::VectorRep;
   using LineRep = typename EdgeRep::LineRep;
 
   // The minimum number of bits to support for each component of the vertex3's
@@ -175,7 +176,7 @@ class ConvexPolygon {
     if (vertex_count() == 0) return true;
 
     if (!plane().IsValidState()) return false;
-    if (plane().normal().components()[drop_dimension()].IsZero()) return false;
+    if (normal().components()[drop_dimension()].IsZero()) return false;
     const EdgeRep* prev_edge = &edges().back();
     for (const EdgeRep& edge : edges()) {
       if (!edge.IsValidState()) return false;
@@ -188,7 +189,7 @@ class ConvexPolygon {
 
       if (prev_edge->line.d().DropDimension(drop_dimension()).Cross(
             edge.line.d().DropDimension(drop_dimension())).GetAbsMult(
-            plane().normal().components()[drop_dimension()]) < 0) {
+            normal().components()[drop_dimension()]) < 0) {
         // The vertex is reflex (not convex and not collinear).
         return false;
       }
@@ -234,6 +235,8 @@ class ConvexPolygon {
   }
 
   const HalfSpace3Rep& plane() const { return plane_; }
+
+  const NormalRep& normal() const { return plane().normal(); }
 
   // When this dimension is projected to 0, 'dropped', the vertices will not
   // become collinear (assuming they were not already collinear).
@@ -372,14 +375,13 @@ class ConvexPolygon {
   template <int vector_bits>
   size_t GetExtremeIndexBisect(const Vector3<vector_bits>& v) const {
     auto v_projected = v.DropDimension(drop_dimension()).Scale(
-        plane().normal().components()[drop_dimension()]);
-    auto normal_projected = plane().normal().DropDimension(
+        normal().components()[drop_dimension()]);
+    auto normal_projected = normal().DropDimension(
         drop_dimension()).Scale(v.components()[drop_dimension()]);
     auto new_vector = v_projected - normal_projected;
     // sign_adjust is -1 if the drop dimension in the plane normal is negative,
     // and 1 otherwise.
-    int sign_adjust =
-      plane().normal().components()[drop_dimension()].GetAbsMult();
+    int sign_adjust = normal().components()[drop_dimension()].GetAbsMult();
     new_vector = new_vector * sign_adjust;
     return GetExtremeIndexBisect(new_vector,
                                  drop_dimension());
@@ -961,7 +963,7 @@ ConvexPolygon<point3_bits, VertexData>::GetSplitInfo(
     PluckerLineFromPlanesFromPoint3sBuilder<point3_bits>;
   using PluckerLineRep = typename PluckerLineBuilder::PluckerLineRep;
 
-  int flip = plane().normal().components()[drop_dimension()].GetAbsMult();
+  int flip = normal().components()[drop_dimension()].GetAbsMult();
   PluckerLineRep line = PluckerLineBuilder::Build(
       HalfSpace3<vector_bits, dist_bits>(half_space.normal() * flip,
                                          half_space.d() * flip), plane_);
@@ -998,12 +1000,11 @@ ConvexPolygon<point3_bits, VertexData>::GetSplitInfo(
     //     poly is below half
     //   else
     //     poly is above half
-    int plane_abs_mult =
-      plane().normal().components()[drop_dimension()].GetAbsMult();
+    int plane_abs_mult = normal().components()[drop_dimension()].GetAbsMult();
     int compare = (plane().d() *
                    half_space.normal().components()[drop_dimension()]).Compare(
         half_space.d() *
-        plane().normal().components()[drop_dimension()]) * plane_abs_mult;
+        normal().components()[drop_dimension()]) * plane_abs_mult;
     SplitInfoRep result;
     if (compare < 0) {
       // The polygon is entirely on the negative side.
@@ -1028,8 +1029,7 @@ ConvexPolygon<point3_bits, VertexData>::GetSplitInfo(
 
   // If the input polygon is counter-clockwise in its projected form, then
   // `line` is in the correct orientation for the positive output polygon.
-  int neg_line_mult =
-    -plane().normal().components()[drop_dimension()].GetAbsMult();
+  int neg_line_mult = -normal().components()[drop_dimension()].GetAbsMult();
   result.new_line = LineRep(line.d() * neg_line_mult,
                             line.m() * neg_line_mult);
 
@@ -1057,7 +1057,7 @@ ConvexPolygonSplitRanges
 ConvexPolygon<point3_bits, VertexData>::FindSplitRangesBisect(
     const HalfSpace2<vector_bits, dist_bits>& half_space2,
     int drop_dimension) const {
-  assert(!plane().normal().components()[drop_dimension].IsZero());
+  assert(!normal().components()[drop_dimension].IsZero());
   assert(half_space2.IsValid());
   std::pair<size_t, size_t> opposite_edges = GetOppositeEdgeIndicesBisect(
       /*v=*/half_space2.normal(), drop_dimension);
@@ -1142,7 +1142,7 @@ ConvexPolygonSplitRanges
 ConvexPolygon<point3_bits, VertexData>::FindSplitRangesLinear(
     const HalfSpace2<vector_bits, dist_bits>& half_space2,
     int drop_dimension) const {
-  assert(!plane().normal().components()[drop_dimension].IsZero());
+  assert(!normal().components()[drop_dimension].IsZero());
   assert(half_space2.IsValid());
   assert(vertex_count() > 0);
 
