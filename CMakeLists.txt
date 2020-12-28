@@ -98,6 +98,7 @@ package_add_test(point2_test test/point2_test.cpp)
 package_add_test(point3_test test/point3_test.cpp)
 package_add_test(rectangular_prism_test test/rectangular_prism_test.cpp)
 package_add_test(r_transformation_test test/r_transformation_test.cpp)
+package_add_test(greatest_angle_tracker_test test/greatest_angle_tracker_test.cpp)
 package_add_test(vector2_test test/vector2_test.cpp)
 package_add_test(vector3_test test/vector3_test.cpp)
 
