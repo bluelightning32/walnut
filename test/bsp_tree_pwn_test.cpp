@@ -214,7 +214,7 @@ TEST_P(BSPTreePWN, BeforeCrossing) {
   EXPECT_THAT(inside_cube->contents(), SizeIs(1));
 
   BSPNode<>* child = SplitNorthWest(inside_cube, 0,
-                                    cube_north.y().ToInt() * 3 / 4);
+                                    cube_north.y().ToInt()/2);
   EXPECT_TRUE(child->IsLeaf());
   EXPECT_THAT(child->border_contents(), IsEmpty());
   EXPECT_THAT(child->contents(), SizeIs(1));
