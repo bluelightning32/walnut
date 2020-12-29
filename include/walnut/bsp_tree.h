@@ -23,11 +23,17 @@ class BSPTree {
   // new contents settle in. There may also be spurious calls to
   // `leaf_callback` for leaves were the contents did not land in.
   template <typename InputConvexPolygon, typename LeafCallback>
-  void AddContent(InputConvexPolygon&& polygon,
+  void AddContent(InputConvexPolygon&& polygon, BSPPolygonId id,
                   LeafCallback leaf_callback) {
-    root.contents_.emplace_back(/*on_node_plane=*/nullptr,
+    root.contents_.emplace_back(id, /*on_node_plane=*/nullptr,
                                 std::forward<InputConvexPolygon>(polygon));
     root.PushContentsToLeaves(leaf_callback);
+  }
+
+  template <typename InputConvexPolygon, typename LeafCallback>
+  void AddContent(InputConvexPolygon&& polygon, LeafCallback leaf_callback) {
+    AddContent(std::forward<InputConvexPolygon>(polygon), AllocateId(),
+               leaf_callback);
   }
 
   // Returns the polyhedron boundary of a BSPNode.
@@ -50,6 +56,13 @@ class BSPTree {
       const RectangularPrism<point3_bits>& bounding_box) const;
 
   BSPNodeRep root;
+
+  BSPPolygonId AllocateId() {
+    return next_id++;
+  }
+
+ private:
+  BSPPolygonId next_id = 0;
 };
 
 template <typename ConvexPolygonTemplate>
@@ -89,7 +102,7 @@ BSPTree<ConvexPolygonTemplate>::GetNodeBorder(
   MappedBSPNode mapped_root(&root);
   for (auto& polygon : bounding_box.GetWalls()) {
     assert(polygon.vertex_count() > 0);
-    mapped_root.contents_.emplace_back(/*on_node_plane=*/nullptr,
+    mapped_root.contents_.emplace_back(/*id=*/0, /*on_node_plane=*/nullptr,
                                        std::move(polygon));
   }
   const BSPNodeRep* original_node = &root;
@@ -98,13 +111,13 @@ BSPTree<ConvexPolygonTemplate>::GetNodeBorder(
   for (Iterator pos = node_path_begin; pos != node_path_end; ++pos) {
     if (*pos) {
       mapped_root.contents_.emplace_back(
-          /*on_node_plane=*/nullptr,
+          /*id=*/0, /*on_node_plane=*/nullptr,
           bounding_box.IntersectPlane(-original_node->split()));
       assert(mapped_root.contents_.back().vertex_count() > 0);
       original_node = original_node->positive_child();
     } else {
       mapped_root.contents_.emplace_back(
-          /*on_node_plane=*/nullptr,
+          /*id=*/0, /*on_node_plane=*/nullptr,
           bounding_box.IntersectPlane(original_node->split()));
       assert(mapped_root.contents_.back().vertex_count() > 0);
       original_node = original_node->negative_child();

@@ -28,6 +28,8 @@ class BSPTree;
 template <int point3_bits_template>
 class BSPDefaultPolygon;
 
+using BSPPolygonId = size_t;
+
 template <typename BSPNodeTemplate, typename NormalRepTemplate>
 class BSPEdgeInfo {
  public:
@@ -99,8 +101,19 @@ class BSPPolygonWrapper : public BSPNodeTemplate::InputPolygon {
       "The InputPolygonTemplate must inherit from ConvexPolygon.");
 
   template <typename OtherPolygon>
-  BSPPolygonWrapper(const BSPNodeRep* on_node_plane, OtherPolygon&& parent) :
-    Parent(std::forward<OtherPolygon>(parent)),
+  BSPPolygonWrapper(BSPPolygonId id, const BSPNodeRep* on_node_plane,
+                    OtherPolygon&& parent) :
+    Parent(std::forward<OtherPolygon>(parent)), id(id), 
+    on_node_plane(on_node_plane) { }
+
+  BSPPolygonWrapper(const BSPNodeRep* on_node_plane,
+                    const BSPPolygonWrapper& parent) :
+    Parent(parent), id(parent.id), 
+    on_node_plane(on_node_plane) { }
+
+  BSPPolygonWrapper(const BSPNodeRep* on_node_plane,
+                    BSPPolygonWrapper&& parent) :
+    Parent(std::move(parent)), id(parent.id), 
     on_node_plane(on_node_plane) { }
 
   // Overload CreateSplitChildren to create the derived polygon type.
@@ -108,9 +121,9 @@ class BSPPolygonWrapper : public BSPNodeTemplate::InputPolygon {
       const SplitInfoRep& split) const {
     std::pair<Parent, Parent> parent_result =
       Parent::CreateSplitChildren(split);
-    return std::make_pair(BSPPolygonWrapper(on_node_plane,
+    return std::make_pair(BSPPolygonWrapper(id, on_node_plane,
                                             std::move(parent_result.first)),
-                          BSPPolygonWrapper(on_node_plane,
+                          BSPPolygonWrapper(id, on_node_plane,
                                             std::move(parent_result.second)));
   }
 
@@ -119,11 +132,13 @@ class BSPPolygonWrapper : public BSPNodeTemplate::InputPolygon {
       SplitInfoRep&& split) && {
     std::pair<Parent, Parent> parent_result =
       static_cast<Parent&&>(*this).CreateSplitChildren(std::move(split));
-    return std::make_pair(BSPPolygonWrapper(on_node_plane,
+    return std::make_pair(BSPPolygonWrapper(id, on_node_plane,
                                             std::move(parent_result.first)),
-                          BSPPolygonWrapper(on_node_plane,
+                          BSPPolygonWrapper(id, on_node_plane,
                                             std::move(parent_result.second)));
   }
+
+  BSPPolygonId id;
 
   // This is the BSPNode whose split plane is coincident with this polygon's
   // plane, or nullptr if no such BSPNode exists.
@@ -189,6 +204,14 @@ class BSPNode {
     return border_contents_;
   }
 
+  int64_t GetPWNForId(BSPPolygonId id) const {
+    if (id < pwn_by_id_.size()) {
+      return pwn_by_id_[id];
+    } else {
+      return 0;
+    } 
+  }
+
  protected:
   // Push the contents of an interior node to the children.
   //
@@ -235,6 +258,8 @@ class BSPNode {
 
   std::unique_ptr<BSPNode> negative_child_;
   std::unique_ptr<BSPNode> positive_child_;
+
+  std::vector<int64_t> pwn_by_id_;
 };
 
 template <typename InputPolygonTemplate>
