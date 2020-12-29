@@ -292,6 +292,10 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     return Add(other);
   }
 
+  constexpr BigIntImpl<max_words> operator+(int other) const {
+    return *this + BigIntImpl<1>(other);
+  }
+
   template <int other_words>
   constexpr BigIntImpl& operator+=(const BigIntImpl<other_words>& other) {
     if (used_ == sizeof(BigIntHalfWord) && other.used_ == sizeof(BigIntHalfWord)) {
@@ -552,6 +556,11 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     }
     BigIntImpl<std::min(max_words, other_words)> unused;
     return DivideRemainderSlow(other, &unused);
+  }
+
+  // Divide `this` by `other`. Return the quotient.
+  constexpr BigIntImpl<max_words> operator/(int other) const {
+    return *this / BigIntImpl<1>(other);
   }
 
   // Divide `this` by `other`. Return the quotient and store the remainder in `remainder_out`.

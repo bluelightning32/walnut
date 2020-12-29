@@ -21,7 +21,7 @@ class BSPTree {
   // For an interior node, the contents will be pushed to the children.
   // `leaf_callback` will be called for every leaf node that some pieces of the
   // new contents settle in. There may also be spurious calls to
-  // `leaf_callback` for leaves were the contents did not land in.
+  // `leaf_callback` for leaves where the contents did not land in.
   template <typename InputConvexPolygon, typename LeafCallback>
   void AddContent(InputConvexPolygon&& polygon, BSPPolygonId id,
                   LeafCallback leaf_callback) {

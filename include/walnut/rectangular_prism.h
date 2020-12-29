@@ -11,6 +11,7 @@ namespace walnut {
 template <int point3_bits_template = 32>
 struct RectangularPrism {
   using Point3Rep = Point3<point3_bits_template>;
+  using BigIntRep = typename Point3Rep::BigIntRep;
   using HalfSpace3Rep =
     typename HalfSpace3FromPoint3Builder<point3_bits_template>::HalfSpace3Rep;
 
@@ -19,6 +20,12 @@ struct RectangularPrism {
   RectangularPrism(Point3Rep min_point, Point3Rep max_point) :
     min_point(min_point),
     max_point(max_point) { }
+
+  RectangularPrism(const BigIntRep& min_x, const BigIntRep& min_y,
+                   const BigIntRep& min_z, const BigIntRep& max_x,
+                   const BigIntRep& max_y, const BigIntRep& max_z) :
+    RectangularPrism(Point3Rep(min_x, min_y, min_z),
+                     Point3Rep(max_x, max_y, max_z)) { }
 
   RectangularPrism(int radius) :
     min_point(/*x=*/-radius, /*y=*/-radius, /*z=*/-radius),

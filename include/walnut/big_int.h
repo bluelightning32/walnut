@@ -82,6 +82,12 @@ class BigInt {
     return Add<std::max(bits, other_bits) + 1>(other);
   }
 
+  constexpr BigInt<bits + 1> operator+(int other) const {
+    constexpr int rb = std::max(bits, int(sizeof(int) * 8)) + 1;
+    return rep_.template Add<(rb + BigUIntWord::bits_per_word - 1) /
+                             BigUIntWord::bits_per_word>(BigIntImpl<1>(other));
+  }
+
   template <int other_bits>
   constexpr BigInt& operator+=(const BigInt<other_bits>& other) {
     rep_ += other.rep_;
@@ -193,6 +199,11 @@ class BigInt {
   }
 
   // Divide `this` by `other`. Return the quotient.
+  constexpr BigInt<bits> operator/(int other) const {
+    return rep_ / other;
+  }
+
+  // Divide `this` by `other`. Return the quotient.
   template <int other_bits>
   constexpr BigInt<bits>& operator/=(const BigInt<other_bits>& other) {
     *this = rep_ / other.rep_;
@@ -275,6 +286,10 @@ class BigInt {
 
   constexpr uint64_t low_uint64() const {
     return rep_.low_uint64();
+  }
+
+  constexpr int ToInt() const {
+    return rep_.ToInt();
   }
 
   constexpr int used_bytes() const {

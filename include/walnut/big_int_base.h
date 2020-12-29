@@ -29,6 +29,11 @@ class BigIntBase {
     return words_[0].low_uint64();
   }
 
+  constexpr int ToInt() const {
+    assert(used_words() == 1);
+    return words_[0].ToInt();
+  }
+
   constexpr int used_bytes() const {
     return used_;
   }

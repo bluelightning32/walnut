@@ -1,10 +1,10 @@
 #ifndef WALNUT_BIG_UINT_WORD_H__
 #define WALNUT_BIG_UINT_WORD_H__
 
+#include <cassert>
 #include <cmath>
 #include <cstdint>
 #include <limits>
-#include <cmath>
 #include <type_traits>
 
 namespace walnut {
@@ -85,6 +85,12 @@ class BigUIntWordBase {
 
   constexpr uint32_t low_uint32() const {
     return i_;
+  }
+
+  constexpr int ToInt() const {
+    assert(BigIntWord(std::numeric_limits<int>::min()) <= BigIntWord(i_));
+    assert(BigIntWord(i_) <= BigIntWord(std::numeric_limits<int>::max()));
+    return int(i_);
   }
 
   constexpr BigUIntHalfWord low_half_word() const {

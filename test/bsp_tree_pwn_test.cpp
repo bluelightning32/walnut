@@ -6,6 +6,9 @@
 
 namespace walnut {
 
+using testing::IsEmpty;
+using testing::SizeIs;
+
 template<typename Container>
 auto
 MakeConvexPolygon(const Container& vertices) ->
@@ -81,50 +84,144 @@ const Point3<>* cube_peripheral_points[6] = {
   &cube_north_east,
 };
 
-// Splits `root` 6 times to form all sides of the tilted cube. The descendant
-// node for the inside of the cube is returned.
-BSPNode<>* SplitToCube(BSPNode<>& root, bool make_pos_child = true) {
-  EXPECT_TRUE(root.IsLeaf());
+class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
+ protected:
+  // Splits `tree` 6 times to form all sides of the tilted cube. The descendant
+  // node for the inside of the cube is returned.
+  BSPNode<>* SplitToCube() {
+    EXPECT_TRUE(tree_.root.IsLeaf());
 
-  std::vector<BSPNode<>::HalfSpace3Rep> split_planes;
-  for (int i = 0; i < 6; i += 2) {
-    const Point3<>* this_point = cube_peripheral_points[i];
-    const Point3<>* next_point = cube_peripheral_points[(i + 2)%6];
+    std::vector<BSPNode<>::HalfSpace3Rep> split_planes;
+    for (int i = 0; i < 6; i += 2) {
+      const Point3<>* this_point = cube_peripheral_points[i];
+      const Point3<>* next_point = cube_peripheral_points[(i + 2)%6];
 
-    split_planes.emplace_back(*this_point, *next_point, cube_top);
-  }
-  for (int i = 1; i < 6; i += 2) {
-    const Point3<>* this_point = cube_peripheral_points[i];
-    const Point3<>* next_point = cube_peripheral_points[(i + 2)%6];
+      split_planes.emplace_back(*this_point, *next_point, cube_top);
+    }
+    for (int i = 1; i < 6; i += 2) {
+      const Point3<>* this_point = cube_peripheral_points[i];
+      const Point3<>* next_point = cube_peripheral_points[(i + 2)%6];
 
-    split_planes.emplace_back(*next_point, *this_point, cube_bottom);
-  }
-  EXPECT_EQ(split_planes.size(), 6);
+      split_planes.emplace_back(*next_point, *this_point, cube_bottom);
+    }
+    EXPECT_EQ(split_planes.size(), 6);
 
-  BSPNode<>* pos = &root;
-  for (BSPNode<>::HalfSpace3Rep& split_plane : split_planes) {
-    if (make_pos_child) {
-      pos->Split(-split_plane);
-      pos = pos->positive_child();
-    } else { 
+    BSPNode<>* pos = &tree_.root;
+    for (BSPNode<>::HalfSpace3Rep& split_plane : split_planes) {
       pos->Split(split_plane);
       pos = pos->negative_child();
     }
+    return pos;
   }
-  return pos;
-}
 
-TEST(BSPTreePWN, EmptyCube) {
-  BSPTree<> tree;
-  auto leaf_added = [&](BSPNode<>& leaf) {
-    EXPECT_EQ(&leaf, &tree.root);
-  };
 
-  BSPPolygonId id = tree.AllocateId();
+  // Splits the node with a vertical plane with a normal that is facing north
+  // west or south east (depending on the test's first parameter). The distance
+  // of the split plane is adjusted so that (on_border_x, on_border_y,
+  // arbitrary_z) is on the split plane.
+  //
+  // The child on the north-west side is returned.
+  //
+  // If the input node is the cube, the M-int path will follow along the east
+  // of the north edge, then to the south-east of the outer north-west edge.
+  //
+  //         /|\
+  //      --- | ---
+  //     / << |    \
+  //  /-- / ^ |     --\
+  //  |M</  M |       |
+  //  |     _/ \_     |
+  //  |    /     \    |
+  //  | ---       --- |
+  //  |/             \|
+  //  \               /
+  //   ---         ---
+  //      \       /
+  //       --- ---
+  //          v
+  //
+  BSPNode<>* SplitNorthWest(BSPNode<>* parent, int on_border_x,
+                            int on_border_y) {
+    EXPECT_TRUE(parent->IsLeaf());
+    std::pair<int, int> normal = std::get<0>(GetParam()) ?
+      std::pair<int, int>(-1, 1) :
+      std::pair<int, int>(1, -1);
+
+    int dist = normal.first*on_border_x + normal.second*on_border_y;
+    HalfSpace3<> split(normal.first, normal.second, 0, dist);
+    parent->Split(split);
+    if (std::get<0>(GetParam())) {
+      return parent->positive_child();
+    } else {
+      return parent->negative_child();
+    }
+  }
+
+  // Add a polygon to `tree_`, flipping it first if configured by the test
+  // parameters.
+  template <typename InputPolygon>
+  void AddContent(BSPPolygonId id, const InputPolygon& polygon) {
+    auto added_to_leaf = [&](BSPNode<>& leaf) { };
+    if (std::get<1>(GetParam())) {
+      // flip the input polygon
+      std::vector<typename InputPolygon::HomoPoint3Rep> vertices;
+      for (auto it = polygon.edges().rbegin(); it != polygon.edges().rend();
+           ++it) {
+        vertices.push_back(it->vertex);
+      }
+      tree_.AddContent(InputPolygon(-polygon.plane(), polygon.drop_dimension(),
+                                    vertices), id,
+                       added_to_leaf);
+    } else {
+      tree_.AddContent(polygon, id, added_to_leaf);
+    }
+  }
+
+  BSPTree<> tree_;
+};
+
+TEST_P(BSPTreePWN, EmptyCube) {
+  BSPPolygonId id = tree_.AllocateId();
   EXPECT_EQ(id, 0);
 
-  BSPNode<>* inside_cube = SplitToCube(tree.root, /*make_pos_child=*/false);
+  BSPNode<>* inside_cube = SplitToCube();
   EXPECT_EQ(inside_cube->GetPWNForId(id), 0);
+
+  BSPNode<>* child = SplitNorthWest(inside_cube, 0,
+                                    cube_north.y().ToInt() * 3 / 4);
+  EXPECT_EQ(child->GetPWNForId(id), 0);
 }
+
+TEST_P(BSPTreePWN, BeforeCrossing) {
+  BSPPolygonId id = tree_.AllocateId();
+  EXPECT_EQ(id, 0);
+
+  RectangularPrism<> prism(/*min_x=*/cube_north_west.x(),
+                           /*min_y=*/cube_north.y()*3/4,
+                           /*min_z=*/cube_bottom.z(),
+                           /*max_x=*/cube_north_east.x(),
+                           /*max_y=*/cube_north.y() + 10,
+                           /*max_z=*/cube_top.z());
+
+  for (const ConvexPolygon<>& wall : prism.GetWalls()) {
+    AddContent(id, wall);
+  }
+
+  BSPNode<>* inside_cube = SplitToCube();
+  EXPECT_EQ(inside_cube->GetPWNForId(id), 0);
+  EXPECT_TRUE(inside_cube->IsLeaf());
+  EXPECT_THAT(inside_cube->border_contents(), IsEmpty());
+  EXPECT_THAT(inside_cube->contents(), SizeIs(1));
+
+  BSPNode<>* child = SplitNorthWest(inside_cube, 0,
+                                    cube_north.y().ToInt() * 3 / 4);
+  EXPECT_TRUE(child->IsLeaf());
+  EXPECT_THAT(child->border_contents(), IsEmpty());
+  EXPECT_THAT(child->contents(), SizeIs(1));
+  EXPECT_EQ(child->GetPWNForId(id), 0);
+}
+
+INSTANTIATE_TEST_SUITE_P(, BSPTreePWN,
+    testing::Combine(testing::Bool(), testing::Bool()));
 
 }  // walnut
