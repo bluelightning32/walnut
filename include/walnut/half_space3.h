@@ -109,8 +109,8 @@ class HalfSpace3 {
     normal_ = unscaled_normal.Scale(p2.w().abs());
   }
 
-  // Returns >0 if `v` is in the half-space, 0 if `v` is coincident with the
-  // plane, or <0 if `v` is outside of the half-space.
+  // Returns >0 if `v` is in the positive half-space, 0 if `v` is coincident
+  // with the plane, or <0 if `v` is in the negative half-space.
   template <int v_bits>
   int Compare(const Point3<v_bits>& v) const {
     return normal_.Dot(v.vector_from_origin()).Compare(dist_);

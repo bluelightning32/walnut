@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "walnut/convex_polygon.h"
+#include "walnut/greatest_angle_tracker.h"
 #include "walnut/half_space3.h"
 
 namespace walnut {
@@ -38,19 +39,36 @@ class BSPEdgeInfo {
 
   BSPEdgeInfo(const NoVertexData&) { }
 
+  // Create a new vertex on the parent's existing edge.
+  //
+  // Inherit the edge trackers from the parent, but initialize the vertex
+  // tracker from the edge trackers.
   template <int num_bits, int denom_bits>
   BSPEdgeInfo(const BSPEdgeInfo& parent,
               const HomoPoint3<num_bits, denom_bits>& new_source) :
+    ccw_edge_angle_tracker_(parent.ccw_edge_angle_tracker_),
+    cw_edge_angle_tracker_(parent.cw_edge_angle_tracker_),
+    vertex_angle_tracker_(parent.cw_edge_angle_tracker_),
     split_by(parent.split_by) { }
 
+  // Create a new line from the parent's existing vertex.
+  //
+  // Inherit the vertex trackers from the parent, but default initialize the
+  // edge trackers.
   template <int d_bits, int m_bits>
   BSPEdgeInfo(const BSPEdgeInfo& parent,
-              const PluckerLine<d_bits, m_bits>& new_line) { }
+              const PluckerLine<d_bits, m_bits>& new_line) :
+    vertex_angle_tracker_(parent.cw_edge_angle_tracker_) { }
 
+  // Create a new line starting on a new vertex on the parent's existing edge.
+  //
+  // Initialize the vertex tracker from the parent's edge trackers. Default
+  // initialize the edge trackers.
   template <int num_bits, int denom_bits, int d_bits, int m_bits>
   BSPEdgeInfo(const BSPEdgeInfo& parent,
               const HomoPoint3<num_bits, denom_bits>& new_source,
-              const PluckerLine<d_bits, m_bits>& new_line) { }
+              const PluckerLine<d_bits, m_bits>& new_line) :
+    vertex_angle_tracker_(parent.cw_edge_angle_tracker_) { }
 
   bool operator==(const NoVertexData&) const {
     return true;
@@ -59,7 +77,33 @@ class BSPEdgeInfo {
     return false;
   }
 
+  const GreatestAngleTracker</*most_ccw=*/true, NormalRep::component_bits>&
+  ccw_edge_angle_tracker() const {
+    return ccw_edge_angle_tracker_;
+  }
+
+  const GreatestAngleTracker</*most_ccw=*/false, NormalRep::component_bits>&
+  cw_edge_angle_tracker() const {
+    return cw_edge_angle_tracker_;
+  }
+
+  const GreatestAngleTracker</*most_ccw=*/false, NormalRep::component_bits>&
+  vertex_angle_tracker() const {
+    return vertex_angle_tracker_;
+  }
+
   const BSPNodeRep* split_by = nullptr;
+
+ private:
+  friend BSPNodeRep;
+
+  GreatestAngleTracker</*most_ccw=*/true, NormalRep::component_bits>
+    ccw_edge_angle_tracker_;
+  GreatestAngleTracker</*most_ccw=*/false, NormalRep::component_bits>
+    cw_edge_angle_tracker_;
+
+  GreatestAngleTracker</*most_ccw=*/false, NormalRep::component_bits>
+    vertex_angle_tracker_;
 };
 
 template <int point3_bits>
@@ -167,6 +211,8 @@ class BSPNode {
  public:
   using InputPolygon = InputPolygonTemplate;
   using PolygonRep = BSPPolygonWrapper<BSPNode>;
+  using VertexData = typename PolygonRep::VertexData;
+  using EdgeRep = typename PolygonRep::EdgeRep;
 
   using HalfSpace3Rep = typename HalfSpace3FromPoint3Builder<
     InputPolygon::point3_bits>::HalfSpace3Rep;
@@ -249,6 +295,21 @@ class BSPNode {
   template <typename LeafCallback>
   void PushContentsToLeaves(LeafCallback leaf_callback);
 
+  // Update the angle trackers in the edges and vertices of `polygon` that are
+  // coincident with `split_`.
+  //
+  // If `pos_child_` is false, the trackers are updated with split_.normal(),
+  // otherwise they are updated with -split_.normal().
+  //
+  // The vertices in the range [coincident_begin, coincident_end) are updated.
+  // The edges in the range [coincident_begin, coincident_end - 1) are updated.
+  //
+  // The caller must ensure coincident_begin <= coincident_end. The function
+  // will apply the modulus on the vertex indices, so it is okay for
+  // coincident_end to be greater than polygon.vertex_count().
+  void UpdateAngleTrackers(bool pos_child, PolygonRep& polygon,
+      size_t coincident_begin, size_t coincident_end);
+
   // For a leaf node, these are the polygons that are inside the cell. They may
   // possibly be touching the cell border, but they are not on the border.
   //
@@ -276,6 +337,30 @@ class BSPNode {
 };
 
 template <typename InputPolygonTemplate>
+void BSPNode<InputPolygonTemplate>::UpdateAngleTrackers(
+    bool pos_child, PolygonRep& polygon, size_t coincident_begin,
+    size_t coincident_end) {
+  // Typically this function is called with 0 vertices to update. So quickly
+  // handle that case first.
+  if (coincident_begin == coincident_end) return;
+
+  auto normal = pos_child ? -split_.normal() : split_.normal();
+  size_t pos = coincident_begin;
+  // Edges go from source to target. So first loop through all of the edges
+  // that need to be updated, and update their corresponding source vertices
+  // along the way too.
+  for (; pos < coincident_end - 1; ++pos) {
+    VertexData& vertex_data = polygon.vertex_data(pos % polygon.vertex_count());
+    vertex_data.ccw_edge_angle_tracker_.Receive(normal);
+    vertex_data.cw_edge_angle_tracker_.Receive(normal);
+    vertex_data.vertex_angle_tracker_.Receive(normal);
+  }
+  // Update the last target vertex.
+  VertexData& vertex_data = polygon.vertex_data(pos % polygon.vertex_count());
+  vertex_data.vertex_angle_tracker_.Receive(normal);
+}
+
+template <typename InputPolygonTemplate>
 void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
   for (PolygonRep& polygon : contents_) {
     assert(polygon.vertex_count() > 0);
@@ -285,23 +370,36 @@ void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
       if (info.ShouldEmitPositiveChild()) {
         std::pair<PolygonRep, PolygonRep> children =
           std::move(polygon).CreateSplitChildren(std::move(info));
+        assert(children.first.vertex_count() > 2);
+        assert(children.second.vertex_count() > 2);
         // As described by the CreateSplitChildren function declaration
         // comment, the last 2 vertices of neg_poly will touch the plane. So
         // the first of those 2 vertices is the edge source.
         children.first.vertex_data(
             children.first.vertex_count() - 2).split_by = this;
+        UpdateAngleTrackers(/*pos_child=*/false, children.first,
+                            children.first.vertex_count() - 2,
+                            children.first.vertex_count());
         // The first and last vertices of pos_poly will touch the plane. So the
         // first of those 2 vertices is the edge source.
         children.second.vertex_data(
             children.second.vertex_count() - 1).split_by = this;
-        assert(children.first.vertex_count() > 0);
-        assert(children.second.vertex_count() > 0);
+        UpdateAngleTrackers(/*pos_child=*/true, children.second,
+                            children.second.vertex_count() - 1,
+                            children.second.vertex_count() + 1);
+
         negative_child_->contents_.push_back(std::move(children.first));
         positive_child_->contents_.push_back(std::move(children.second));
       } else {
+        UpdateAngleTrackers(/*pos_child=*/false, polygon,
+                            info.neg_range().second,
+                            polygon.vertex_count() + info.neg_range().first);
         negative_child_->contents_.push_back(std::move(polygon));
       }
     } else if (info.ShouldEmitPositiveChild()) {
+      UpdateAngleTrackers(/*pos_child=*/true, polygon,
+                          info.pos_range().second,
+                          polygon.vertex_count() + info.pos_range().first);
       positive_child_->contents_.push_back(std::move(polygon));
     } else {
       assert(info.ShouldEmitOnPlane());
@@ -382,7 +480,11 @@ template <typename InputPolygonTemplate, typename NormalRep>
 std::ostream& operator<<(
     std::ostream& out,
     const BSPEdgeInfo<InputPolygonTemplate, NormalRep>& info) {
-  out << "split_by=" << info.split_by;
+  out << "< split_by=" << info.split_by
+      << ", ccw_edge_angle_tracker=" << info.ccw_edge_angle_tracker().current()
+      << ", cw_edge_angle_tracker=" << info.cw_edge_angle_tracker().current()
+      << ", vertex_angle_tracker=" << info.vertex_angle_tracker().current()
+      << " >";
   return out;
 }
 

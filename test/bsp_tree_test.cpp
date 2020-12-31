@@ -284,12 +284,22 @@ TEST(BSPTree, SplitTwiceVertexData) {
   //  |           |pos->       |
   //  |           |            |
   //  v           |            |
-  // p[0] ------------------> p[1]
+  // p[0] --------q4--------> p[1]
   //
   // The edge of neg_child2 that starts at q2 is split by split1.
   // The edge of neg_child2 that starts at q1 is split by split2.
   // The edge of pos_child2 that starts at q3 is split by split1.
   // The edge of pos_child2 that starts at q2 is split by split2.
+  //
+  // neg_child2 most clockwise split plane touched by each vertex:
+  // q1: split2.normal()
+  // q2: split2.normal()
+  // q4: -split1.normal()
+  //
+  // pos_child2 most clockwise split plane touched by each vertex:
+  // q1: -split2.normal()
+  // q2: -split1.normal()
+  // q3: -split1.normal()
   //
   Point3<32> p[4] = {
     Point3<32>(0, 0, 10),
@@ -301,6 +311,7 @@ TEST(BSPTree, SplitTwiceVertexData) {
   Point3<32> q1(2, 1, 10);
   Point3<32> q2(1, 1, 10);
   Point3<32> q3(1, 2, 10);
+  Point3<32> q4(1, 0, 10);
 
   ConvexPolygon<> polygon = MakeConvexPolygon(p);
   HalfSpace3<> split1(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
@@ -320,24 +331,160 @@ TEST(BSPTree, SplitTwiceVertexData) {
   ASSERT_EQ(neg_child2.contents().size(), 1);
   ASSERT_EQ(pos_child2.contents().size(), 1);
 
+  // Validate neg_child2.
   for (const BSPNode<>::InputPolygon::EdgeRep& edge :
        neg_child2.contents()[0].edges()) {
     if (edge.vertex == q2) {
       EXPECT_EQ(edge.data().split_by, &tree.root);
+      EXPECT_EQ(edge.data().ccw_edge_angle_tracker().current(),
+                -split1.normal());
+      EXPECT_EQ(edge.data().vertex_angle_tracker().current(), split2.normal());
     } else if (edge.vertex == q1) {
       EXPECT_EQ(edge.data().split_by, &pos_child1);
+      EXPECT_EQ(edge.data().ccw_edge_angle_tracker().current(),
+                split2.normal());
+      EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
+                split2.normal());
+    } else if (edge.vertex == q4) {
+      EXPECT_EQ(edge.data().split_by, nullptr);
+      EXPECT_FALSE(edge.data().ccw_edge_angle_tracker().AnyReceived());
+      EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
+                -split1.normal());
     } else {
       EXPECT_EQ(edge.data().split_by, nullptr);
+      EXPECT_FALSE(edge.data().ccw_edge_angle_tracker().AnyReceived());
+      EXPECT_FALSE(edge.data().vertex_angle_tracker().AnyReceived());
     }
   }
+  // Validate pos_child2.
   for (const BSPNode<>::InputPolygon::EdgeRep& edge :
        pos_child2.contents()[0].edges()) {
     if (edge.vertex == q3) {
       EXPECT_EQ(edge.data().split_by, &tree.root);
+      EXPECT_EQ(edge.data().ccw_edge_angle_tracker().current(),
+                -split1.normal());
+      EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
+                -split1.normal());
     } else if (edge.vertex == q2) {
       EXPECT_EQ(edge.data().split_by, &pos_child1);
+      EXPECT_EQ(edge.data().ccw_edge_angle_tracker().current(),
+                -split2.normal());
+      EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
+                -split1.normal());
+    } else if (edge.vertex == q1) {
+      EXPECT_EQ(edge.data().split_by, nullptr);
+      EXPECT_FALSE(edge.data().ccw_edge_angle_tracker().AnyReceived());
+      EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
+                -split2.normal());
     } else {
       EXPECT_EQ(edge.data().split_by, nullptr);
+      EXPECT_FALSE(edge.data().ccw_edge_angle_tracker().AnyReceived());
+      EXPECT_FALSE(edge.data().vertex_angle_tracker().AnyReceived());
+    }
+  }
+}
+
+TEST(BSPTree, SplitVertThenDiagVertexData) {
+  //
+  // p[3] <----q1----------- p[2]
+  //  |        | neg_child2/  ^
+  //  |        |          /   |
+  //  |        |split1   /    |
+  //  |        |pos->   /     |
+  //  |        |       /      |
+  //  |        |      /       |
+  //  |        |     /split2  |
+  //  |        |    /pos      |
+  //  |        |   /    \     |
+  //  |        |  /      v    |
+  //  |        | /            |
+  //  v        |/  pos_child2 |
+  // p[0] -----q2----------> p[1]
+  //
+  // The edge of neg_child2 that starts at q1 is split by split1.
+  // The edge of neg_child2 that starts at q2 is split by split2.
+  // The edge of pos_child2 that starts at p[2] is split by split2.
+  //
+  // neg_child2 most clockwise split plane touched by each vertex:
+  // p[2]: split2.normal()
+  // q1: -split1.normal()
+  // q2: split2.normal()
+  //
+  // pos_child2 most clockwise split plane touched by each vertex:
+  // p[2]: -split2.normal()
+  // q2: -split2.normal()
+  //
+  Point3<32> p[4] = {
+    Point3<32>(0, 0, 10),
+    Point3<32>(2, 0, 10),
+    Point3<32>(2, 1, 10),
+    Point3<32>(0, 1, 10),
+  };
+
+  Point3<32> q1(1, 1, 10);
+  Point3<32> q2(1, 0, 10);
+
+  ConvexPolygon<> polygon = MakeConvexPolygon(p);
+  HalfSpace3<> split1(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
+  HalfSpace3<> split2(/*x=*/1, /*y=*/-1, /*z=*/0,
+                      /*dist=*/q1.x().ToInt() - q2.y().ToInt());
+
+  BSPTree<> tree;
+  auto leaf_added = [&](BSPNode<>& leaf) {};
+  tree.AddContent(polygon, leaf_added);
+
+  tree.root.Split(split1);
+  BSPNode<>& pos_child1 = *tree.root.positive_child();
+  EXPECT_EQ(pos_child1.contents().size(), 1);
+
+  pos_child1.Split(split2);
+  BSPNode<>& neg_child2 = *pos_child1.negative_child();
+  BSPNode<>& pos_child2 = *pos_child1.positive_child();
+  ASSERT_EQ(neg_child2.contents().size(), 1);
+  ASSERT_EQ(pos_child2.contents().size(), 1);
+
+  // Validate neg_child2.
+  EXPECT_EQ(neg_child2.contents()[0].vertex_count(), 3);
+  for (const BSPNode<>::InputPolygon::EdgeRep& edge :
+       neg_child2.contents()[0].edges()) {
+    if (edge.vertex == q1) {
+      EXPECT_EQ(edge.data().split_by, &tree.root);
+      EXPECT_EQ(edge.data().ccw_edge_angle_tracker().current(),
+                -split1.normal());
+      EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
+                -split1.normal());
+    } else if (edge.vertex == q2) {
+      EXPECT_EQ(edge.data().split_by, &pos_child1);
+      EXPECT_EQ(edge.data().ccw_edge_angle_tracker().current(),
+                split2.normal());
+      EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
+                split2.normal());
+    } else {
+      EXPECT_EQ(edge.data().split_by, nullptr);
+      EXPECT_FALSE(edge.data().ccw_edge_angle_tracker().AnyReceived());
+      EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
+                split2.normal());
+    }
+  }
+  // Validate pos_child2.
+  EXPECT_EQ(pos_child2.contents()[0].vertex_count(), 3);
+  for (const BSPNode<>::InputPolygon::EdgeRep& edge :
+       pos_child2.contents()[0].edges()) {
+    if (edge.vertex == p[2]) {
+      EXPECT_EQ(edge.data().split_by, &pos_child1);
+      EXPECT_EQ(edge.data().ccw_edge_angle_tracker().current(),
+                -split2.normal());
+      EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
+                -split2.normal());
+    } else if (edge.vertex == q2) {
+      EXPECT_EQ(edge.data().split_by, nullptr);
+      EXPECT_FALSE(edge.data().ccw_edge_angle_tracker().AnyReceived());
+      EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
+                -split2.normal());
+    } else {
+      EXPECT_EQ(edge.data().split_by, nullptr);
+      EXPECT_FALSE(edge.data().ccw_edge_angle_tracker().AnyReceived());
+      EXPECT_FALSE(edge.data().vertex_angle_tracker().AnyReceived());
     }
   }
 }
