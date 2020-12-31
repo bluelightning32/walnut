@@ -295,6 +295,11 @@ class BSPNode {
   template <typename LeafCallback>
   void PushContentsToLeaves(LeafCallback leaf_callback);
 
+  // Update the children's PWN based on this node's contents.
+  //
+  // This may only be called on an interior node.
+  void PushContentPWNToChildren();
+
   // Update the angle trackers in the edges and vertices of `polygon` that are
   // coincident with `split_`.
   //
@@ -337,6 +342,63 @@ class BSPNode {
 };
 
 template <typename InputPolygonTemplate>
+void BSPNode<InputPolygonTemplate>::PushContentPWNToChildren() {
+  for (PolygonRep& polygon : contents_) {
+    for (size_t i = 0; i < polygon.vertex_count(); ++i) {
+      const EdgeRep& current_edge = polygon.edge(i);
+      const VertexData& current_vertex_data = current_edge.data();
+      int edge_comparison = RXYCompareBivector(split_.normal(),
+          current_vertex_data.ccw_edge_angle_tracker_.current());
+      if (edge_comparison == 0) continue;
+
+      const EdgeRep& next_edge =
+        polygon.edge((i + 1)%polygon.vertex_count());
+      const VertexData& next_vertex_data = next_edge.data();
+      const int before_vertex_comparison = RXYCompareBivector(split_.normal(),
+          current_vertex_data.vertex_angle_tracker_.current());
+      const int after_vertex_comparison = RXYCompareBivector(split_.normal(),
+          next_vertex_data.vertex_angle_tracker_.current());
+
+      BSPNode<InputPolygonTemplate>* push_to_child;
+      int change = 0;
+      if (edge_comparison < 0) {
+        push_to_child = negative_child();
+        if (before_vertex_comparison > 0) {
+          const int side_comparison = split_.Compare(current_edge.vertex);
+          if (side_comparison >= 0) {
+            // M-int is entering the polyhedron.
+            ++change;
+          }
+        }
+        if (after_vertex_comparison > 0) {
+          const int side_comparison = split_.Compare(next_edge.vertex);
+          if (side_comparison >= 0) {
+            // M-int is exiting the polyhedron.
+            --change;
+          }
+        }
+      } else {
+        push_to_child = positive_child();
+        if (before_vertex_comparison < 0 &&
+            split_.Compare(current_edge.vertex) <= 0) {
+          // M-int is entering the polyhedron.
+          ++change;
+        }
+        if (after_vertex_comparison < 0 &&
+            split_.Compare(next_edge.vertex) <= 0) {
+          // M-int is exiting the polyhedron.
+          --change;
+        }
+      }
+      if (push_to_child->pwn_by_id_.size() <= polygon.id) {
+        push_to_child->pwn_by_id_.resize(polygon.id + 1);
+      }
+      push_to_child->pwn_by_id_[polygon.id] += change;
+    }
+  }
+}
+
+template <typename InputPolygonTemplate>
 void BSPNode<InputPolygonTemplate>::UpdateAngleTrackers(
     bool pos_child, PolygonRep& polygon, size_t coincident_begin,
     size_t coincident_end) {
@@ -362,6 +424,8 @@ void BSPNode<InputPolygonTemplate>::UpdateAngleTrackers(
 
 template <typename InputPolygonTemplate>
 void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
+  PushContentPWNToChildren();
+
   for (PolygonRep& polygon : contents_) {
     assert(polygon.vertex_count() > 0);
     typename PolygonRep::SplitInfoRep info = polygon.GetSplitInfo(split_);

@@ -177,6 +177,16 @@ class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
     }
   }
 
+  // Returns 1 if the input polygons were not flipped or -1 if the input
+  // polygons were flipped, based on the test parameter.
+  int GetPWNFlip() const {
+    if (std::get<1>(GetParam())) {
+      return -1;
+    } else {
+      return 1;
+    }
+  }
+
   BSPTree<> tree_;
 };
 
@@ -219,6 +229,51 @@ TEST_P(BSPTreePWN, BeforeCrossing) {
   EXPECT_THAT(child->border_contents(), IsEmpty());
   EXPECT_THAT(child->contents(), SizeIs(1));
   EXPECT_EQ(child->GetPWNForId(id), 0);
+}
+
+TEST_P(BSPTreePWN, SimpleCrossing) {
+  BSPPolygonId id = tree_.AllocateId();
+  EXPECT_EQ(id, 0);
+
+  int y_dist = cube_north.y().ToInt() - cube_north_west.y().ToInt();
+
+  Point3<>::BigIntRep polygon_y = cube_north_west.y() + y_dist/2;
+  // A rectangle that goes from
+  // (cube_north_west.x(), polygon_y, cube_bottom.z()) to
+  // (cube_north_east.x(), polygon_y, cube_top.z()).
+  //
+  // The unflipped version's normal points towards (0, 0, 0).
+  Point3<> polygon_vertices[] = {
+    Point3<>(cube_north_east.x(), polygon_y, cube_top.z()),
+    Point3<>(cube_north_west.x(), polygon_y, cube_top.z()),
+    Point3<>(cube_north_west.x(), polygon_y, cube_bottom.z()),
+    Point3<>(cube_north_east.x(), polygon_y, cube_bottom.z())
+  };
+
+  AddContent(id, MakeConvexPolygon(polygon_vertices));
+
+  // To make this test case simpler, only split the tree with the top left and
+  // top right sides of the cube.
+  std::vector<BSPNode<>::HalfSpace3Rep> split_planes;
+  split_planes.emplace_back(cube_top, cube_north, cube_north_west);
+  split_planes.emplace_back(cube_north_east, cube_north, cube_top);
+  BSPNode<>* inside = &tree_.root;
+  for (BSPNode<>::HalfSpace3Rep& split_plane : split_planes) {
+    inside->Split(split_plane);
+    inside = inside->negative_child();
+  }
+
+  EXPECT_EQ(inside->GetPWNForId(id), 0);
+  EXPECT_TRUE(inside->IsLeaf());
+  EXPECT_THAT(inside->border_contents(), IsEmpty());
+  EXPECT_THAT(inside->contents(), SizeIs(1));
+
+  BSPNode<>* child = SplitNorthWest(inside, 0,
+                                    cube_north_west.y().ToInt() + y_dist*3/4);
+  EXPECT_TRUE(child->IsLeaf());
+  EXPECT_THAT(child->border_contents(), IsEmpty());
+  EXPECT_THAT(child->contents(), SizeIs(1));
+  EXPECT_EQ(child->GetPWNForId(id), 1 * GetPWNFlip());
 }
 
 INSTANTIATE_TEST_SUITE_P(, BSPTreePWN,
