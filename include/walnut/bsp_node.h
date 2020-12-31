@@ -36,8 +36,21 @@ class BSPEdgeInfo {
   using BSPNodeRep = BSPNodeTemplate;
   using NormalRep = NormalRepTemplate;
 
-  BSPEdgeInfo() = default;
   BSPEdgeInfo(const NoVertexData&) { }
+
+  template <int num_bits, int denom_bits>
+  BSPEdgeInfo(const BSPEdgeInfo& parent,
+              const HomoPoint3<num_bits, denom_bits>& new_source) :
+    split_by(parent.split_by) { }
+
+  template <int d_bits, int m_bits>
+  BSPEdgeInfo(const BSPEdgeInfo& parent,
+              const PluckerLine<d_bits, m_bits>& new_line) { }
+
+  template <int num_bits, int denom_bits, int d_bits, int m_bits>
+  BSPEdgeInfo(const BSPEdgeInfo& parent,
+              const HomoPoint3<num_bits, denom_bits>& new_source,
+              const PluckerLine<d_bits, m_bits>& new_line) { }
 
   bool operator==(const NoVertexData&) const {
     return true;

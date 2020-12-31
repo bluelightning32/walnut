@@ -269,6 +269,79 @@ TEST(BSPTree, SplitTo2Children) {
   }
 }
 
+TEST(BSPTree, SplitTwiceVertexData) {
+  //
+  // p[3] <-------q3--------- p[2]
+  //  |           | pos_child2 ^
+  //  |           |            |
+  //  |           |       ^    |
+  //  |           | split2|    |
+  //  |           | pos   |    |
+  //  |           q2----------q1
+  //  |           | neg_child2 |
+  //  |           |            |
+  //  |           |split1      |
+  //  |           |pos->       |
+  //  |           |            |
+  //  v           |            |
+  // p[0] ------------------> p[1]
+  //
+  // The edge of neg_child2 that starts at q2 is split by split1.
+  // The edge of neg_child2 that starts at q1 is split by split2.
+  // The edge of pos_child2 that starts at q3 is split by split1.
+  // The edge of pos_child2 that starts at q2 is split by split2.
+  //
+  Point3<32> p[4] = {
+    Point3<32>(0, 0, 10),
+    Point3<32>(2, 0, 10),
+    Point3<32>(2, 2, 10),
+    Point3<32>(0, 2, 10),
+  };
+
+  Point3<32> q1(2, 1, 10);
+  Point3<32> q2(1, 1, 10);
+  Point3<32> q3(1, 2, 10);
+
+  ConvexPolygon<> polygon = MakeConvexPolygon(p);
+  HalfSpace3<> split1(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
+  HalfSpace3<> split2(/*x=*/0, /*y=*/1, /*z=*/0, /*dist=*/1);
+
+  BSPTree<> tree;
+  auto leaf_added = [&](BSPNode<>& leaf) {};
+  tree.AddContent(polygon, leaf_added);
+
+  tree.root.Split(split1);
+  BSPNode<>& pos_child1 = *tree.root.positive_child();
+  EXPECT_EQ(pos_child1.contents().size(), 1);
+
+  pos_child1.Split(split2);
+  BSPNode<>& neg_child2 = *pos_child1.negative_child();
+  BSPNode<>& pos_child2 = *pos_child1.positive_child();
+  ASSERT_EQ(neg_child2.contents().size(), 1);
+  ASSERT_EQ(pos_child2.contents().size(), 1);
+
+  for (const BSPNode<>::InputPolygon::EdgeRep& edge :
+       neg_child2.contents()[0].edges()) {
+    if (edge.vertex == q2) {
+      EXPECT_EQ(edge.data().split_by, &tree.root);
+    } else if (edge.vertex == q1) {
+      EXPECT_EQ(edge.data().split_by, &pos_child1);
+    } else {
+      EXPECT_EQ(edge.data().split_by, nullptr);
+    }
+  }
+  for (const BSPNode<>::InputPolygon::EdgeRep& edge :
+       pos_child2.contents()[0].edges()) {
+    if (edge.vertex == q3) {
+      EXPECT_EQ(edge.data().split_by, &tree.root);
+    } else if (edge.vertex == q2) {
+      EXPECT_EQ(edge.data().split_by, &pos_child1);
+    } else {
+      EXPECT_EQ(edge.data().split_by, nullptr);
+    }
+  }
+}
+
 TEST(BSPTree, SplitBorderTo2Children) {
   //
   // p[3] <--------- p[2]

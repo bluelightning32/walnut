@@ -40,6 +40,38 @@ struct ConvexPolygonEdge : private VertexDataTemplate {
   ConvexPolygonEdge(const HomoPoint3Rep& vertex, const LineRep& line) :
     vertex(vertex), line(line) { }
 
+  // Inherit the line and vertex data from `parent_edge`, but overwrite the
+  // vertex.
+  //
+  // `vertex` must be on `parent_edge.line`.
+  ConvexPolygonEdge(const ConvexPolygonEdge& parent_edge,
+                    const HomoPoint3Rep& vertex) :
+    VertexData(parent_edge.data(), vertex),
+    vertex(vertex),
+    line(parent_edge.line) { }
+
+  // Inherit the vertex and vertex data from `parent_edge`, but overwrite the
+  // line.
+  //
+  // `line` should be in the direction from `vertex` to the next vertex in the
+  // polygon.
+  ConvexPolygonEdge(const ConvexPolygonEdge& parent_edge,
+                    const LineRep& line) : VertexData(parent_edge.data(),
+                                                      line),
+                                           vertex(parent_edge.vertex),
+                                           line(line) { }
+
+  // Inherit the vertex data from `parent_edge`, but overwrite the vertex and
+  // line.
+  //
+  // `line` should be in the direction from `vertex` to the next vertex in the
+  // polygon.
+  ConvexPolygonEdge(const ConvexPolygonEdge& parent_edge,
+                    const HomoPoint3Rep& vertex,
+                    const LineRep& line) :
+    VertexData(parent_edge.data(), vertex, line),
+    vertex(vertex), line(line) { }
+
   template <int input_point3_bits = point3_bits_template>
   ConvexPolygonEdge(const Point3WithVertexData<input_point3_bits,
                                                VertexData>& vertex,

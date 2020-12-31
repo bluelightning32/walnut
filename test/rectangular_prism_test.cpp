@@ -188,10 +188,29 @@ TEST(RectangularPrism, IntersectPlaneLowSlopeMin256) {
   TestIntersectPlaneLowSlopeMin<256>();
 }
 
+struct StringVertexData : public std::string {
+  StringVertexData() = default;
+
+  template <int num_bits, int denom_bits>
+  StringVertexData(const StringVertexData& parent,
+                   const HomoPoint3<num_bits, denom_bits>& new_source) { }
+
+  template <int d_bits, int m_bits>
+  StringVertexData(const StringVertexData& parent,
+                   const PluckerLine<d_bits, m_bits>& new_line) { }
+
+  template <int num_bits, int denom_bits, int d_bits, int m_bits>
+  StringVertexData(const StringVertexData& parent,
+                   const HomoPoint3<num_bits, denom_bits>& new_source,
+                   const PluckerLine<d_bits, m_bits>& new_line) { }
+
+  using std::string::operator=;
+};
+
 TEST(RectangularPrism, IntersectPlaneZUpWithData) {
   RectangularPrism<> prism(5);
 
-  using ConvexPolygonRep = ConvexPolygon<32, std::string>;
+  using ConvexPolygonRep = ConvexPolygon<32, StringVertexData>;
   ConvexPolygonRep result =
     prism.IntersectPlane<ConvexPolygonRep>(HalfSpace3<>(/*x=*/0,
                                                         /*y=*/0,

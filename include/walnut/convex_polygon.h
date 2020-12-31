@@ -913,7 +913,7 @@ void ConvexPolygon<point3_bits, VertexData>::FillInSplitChildren(
     // exactly 1 vertex, and is shared between the negative and positive
     // children.
     neg_child.edges_.emplace_back(
-        parent.vertex(split.neg_range().second % parent.vertex_count()),
+        parent.edge(split.neg_range().second % parent.vertex_count()),
         split.new_line);
     pos_child.edges_.push_back(MemberForward<ParentRef>(parent.edges_[
           split.neg_range().second % parent.vertex_count()]));
@@ -921,11 +921,12 @@ void ConvexPolygon<point3_bits, VertexData>::FillInSplitChildren(
     size_t last_neg_index = (split.neg_range().second +
                              parent.vertex_count() - 1) %
                              parent.vertex_count();
-    neg_child.edges_.emplace_back(split.new_shared_point2,
+    neg_child.edges_.emplace_back(parent.edge(last_neg_index),
+                                  split.new_shared_point2,
                                   split.new_line);
     pos_child.edges_.emplace_back(
-        MemberForward<SplitInfoRef>(split.new_shared_point2),
-        MemberForward<ParentRef>(parent.edges_[last_neg_index].line));
+        MemberForward<ParentRef>(parent.edges_[last_neg_index]),
+        MemberForward<SplitInfoRef>(split.new_shared_point2));
   }
 
   for (size_t i = split.pos_range().first; i < split.pos_range().second; ++i) {
@@ -938,7 +939,7 @@ void ConvexPolygon<point3_bits, VertexData>::FillInSplitChildren(
     // exactly 1 vertex, and is shared between the negative and positive
     // children.
     pos_child.edges_.emplace_back(
-        parent.vertex(split.pos_range().second % parent.vertex_count()),
+        parent.edge(split.pos_range().second % parent.vertex_count()),
         -split.new_line);
     neg_child.edges_.push_back(MemberForward<ParentRef>(parent.edges_[
           split.pos_range().second % parent.vertex_count()]));
@@ -946,11 +947,12 @@ void ConvexPolygon<point3_bits, VertexData>::FillInSplitChildren(
     size_t last_pos_index = (split.pos_range().second +
                              parent.vertex_count() - 1) %
                             parent.vertex_count();
-    pos_child.edges_.emplace_back(split.new_shared_point1,
+    pos_child.edges_.emplace_back(parent.edge(last_pos_index),
+                                  split.new_shared_point1,
                                   -MemberForward<SplitInfoRef>(split.new_line));
     neg_child.edges_.emplace_back(
-        MemberForward<SplitInfoRef>(split.new_shared_point1),
-        MemberForward<ParentRef>(parent.edges_[last_pos_index].line));
+        MemberForward<ParentRef>(parent.edges_[last_pos_index]),
+        MemberForward<SplitInfoRef>(split.new_shared_point1));
   }
 }
 
