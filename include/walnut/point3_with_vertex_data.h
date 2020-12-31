@@ -1,25 +1,10 @@
 #ifndef WALNUT_POINT3_WITH_VERTEX_DATA_H__
 #define WALNUT_POINT3_WITH_VERTEX_DATA_H__
 
+#include "walnut/no_vertex_data.h"
 #include "walnut/point3.h"
 
 namespace walnut {
-
-struct NoVertexData {
-  constexpr NoVertexData() = default;
-  template <typename Other>
-  constexpr explicit NoVertexData(const Other&) { }
-
-  template <typename Other>
-  constexpr bool operator!=(const Other& other) const {
-    return false;
-  }
-
-  template <typename Other>
-  constexpr NoVertexData& operator=(const Other& other) {
-    return *this;
-  }
-};
 
 // This is used by FactoryWithVertexData to construct a ConvexPolygon and
 // specify the inital values of the vertex data.
