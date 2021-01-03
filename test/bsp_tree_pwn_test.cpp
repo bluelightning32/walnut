@@ -86,7 +86,7 @@ const Point3<>* cube_peripheral_points[6] = {
 
 class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
  protected:
-  // Splits `tree` 6 times to form all sides of the tilted cube. The descendant
+  // Splits `tree_` 6 times to form all sides of the tilted cube. The descendant
   // node for the inside of the cube is returned.
   BSPNode<>* SplitToCube() {
     EXPECT_TRUE(tree_.root.IsLeaf());
@@ -150,11 +150,20 @@ class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
     int dist = normal.first*on_border_x + normal.second*on_border_y;
     HalfSpace3<> split(normal.first, normal.second, 0, dist);
     parent->Split(split);
+    BSPNode<>* return_child;
+    BSPNode<>* other_child;
     if (std::get<0>(GetParam())) {
-      return parent->positive_child();
+      return_child = parent->positive_child();
+      other_child = parent->negative_child();
     } else {
-      return parent->negative_child();
+      return_child = parent->negative_child();
+      other_child = parent->positive_child();
     }
+    for (BSPPolygonId id = 0; id < tree_.next_id(); ++id) {
+      EXPECT_EQ(other_child->GetPWNForId(id), parent->GetPWNForId(id))
+        << "id=" << id;
+    }
+    return return_child;
   }
 
   // Add a polygon to `tree_`, flipping it first if configured by the test

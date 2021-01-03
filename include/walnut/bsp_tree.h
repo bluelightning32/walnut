@@ -55,14 +55,18 @@ class BSPTree {
       Iterator node_path_end,
       const RectangularPrism<point3_bits>& bounding_box) const;
 
-  BSPNodeRep root;
-
   BSPPolygonId AllocateId() {
-    return next_id++;
+    return next_id_++;
   }
 
+  BSPPolygonId next_id() const {
+    return next_id_;
+  }
+
+  BSPNodeRep root;
+
  private:
-  BSPPolygonId next_id = 0;
+  BSPPolygonId next_id_ = 0;
 };
 
 template <typename ConvexPolygonTemplate>
