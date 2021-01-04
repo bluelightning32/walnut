@@ -399,6 +399,58 @@ TEST_P(BSPTreePWN, MinimumExcluded) {
   EXPECT_EQ(child->GetPWNForId(id), 0);
 }
 
+TEST_P(BSPTreePWN, IPathBends) {
+  // This test verifies that the I-path correctly follows the bends around the
+  // object, instead of blindly using the split normal.
+  //
+  // The test uses the I-path that follows along the north edge of the cube,
+  // then the outer north-west edge towards the north-west vertex. Overlapping
+  // with the titled cube on the north end are two other rectangular prisms.
+  // The I-path will enter prism1, then prism2, leave prism2, then leave
+  // prism1. This test verifies a point on the I-path that is inside prism1 but
+  // outside prism2.
+  int y_dist = cube_north.y().ToInt() - cube_north_west.y().ToInt();
+
+  BSPPolygonId prism1_id = tree_.AllocateId();
+  Point3<>::BigIntRep prism1_y = cube_north_west.y() + y_dist/5;
+  RectangularPrism<> prism1(/*min_x=*/cube_north_west.x(),
+                            /*min_y=*/prism1_y,
+                            /*min_z=*/cube_bottom.z(),
+                            /*max_x=*/cube_north_east.x(),
+                            /*max_y=*/cube_north.y(),
+                            /*max_z=*/cube_top.z());
+  for (const ConvexPolygon<>& wall : prism1.GetWalls()) {
+    AddContent(prism1_id, wall);
+  }
+
+  BSPPolygonId prism2_id = tree_.AllocateId();
+  Point3<>::BigIntRep prism2_y = cube_north_west.y() + y_dist*3/5;
+  RectangularPrism<> prism2(/*min_x=*/cube_north_west.x(),
+                            /*min_y=*/prism2_y,
+                            /*min_z=*/cube_bottom.z(),
+                            /*max_x=*/cube_north_east.x(),
+                            /*max_y=*/cube_north.y(),
+                            /*max_z=*/cube_top.z());
+  for (const ConvexPolygon<>& wall : prism2.GetWalls()) {
+    AddContent(prism2_id, wall);
+  }
+
+  BSPNode<>* inside_cube = SplitToCube();
+  EXPECT_EQ(inside_cube->GetPWNForId(prism1_id), 0);
+  EXPECT_EQ(inside_cube->GetPWNForId(prism2_id), 0);
+  EXPECT_TRUE(inside_cube->IsLeaf());
+  EXPECT_THAT(inside_cube->border_contents(), IsEmpty());
+  EXPECT_THAT(inside_cube->contents(), SizeIs(2));
+
+  BSPNode<>* inside_prism1 = SplitNorthWest(inside_cube, cube_north_west,
+                                            cube_north, 2.0/5);
+  EXPECT_TRUE(inside_prism1->IsLeaf());
+  EXPECT_THAT(inside_prism1->border_contents(), IsEmpty());
+  EXPECT_THAT(inside_prism1->contents(), SizeIs(1));
+  EXPECT_EQ(inside_prism1->GetPWNForId(prism1_id), 1 * GetPWNFlip());
+  EXPECT_EQ(inside_prism1->GetPWNForId(prism2_id), 0);
+}
+
 INSTANTIATE_TEST_SUITE_P(, BSPTreePWN,
     testing::Combine(testing::Bool(), testing::Bool()));
 
