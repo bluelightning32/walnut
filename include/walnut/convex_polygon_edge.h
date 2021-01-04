@@ -2,6 +2,7 @@
 #define WALNUT_CONVEX_POLYGON_EDGE_H__
 
 #include <ostream>
+#include <sstream>
 
 #include "walnut/homo_point3.h"
 #include "walnut/plucker_line.h"
@@ -9,6 +10,17 @@
 #include "walnut/point3_with_vertex_data.h"
 
 namespace walnut {
+
+template <int point3_bits_template, typename VertexDataTemplate>
+struct ConvexPolygonEdge;
+
+template <int point3_bits, typename VertexData>
+std::string
+Approximate(const ConvexPolygonEdge<point3_bits, VertexData>& edge);
+
+template <int point3_bits>
+std::string
+Approximate(const ConvexPolygonEdge<point3_bits, NoVertexData>& edge);
 
 // An edge of a ConvexPolygon
 template <int point3_bits_template = 32,
@@ -112,6 +124,20 @@ struct ConvexPolygonEdge : private VertexDataTemplate {
            line.IsCoincident(vertex);
   }
 
+  // Return a string representation of the edge that uses decimal points to
+  // approximate the vertex coordinates.
+  std::string Approximate() const {
+    return walnut::Approximate(*this);
+  }
+
+  // Return a string representation of the edge that uses decimal points to
+  // approximate the vertex coordinates and does not include the data fields.
+  std::string ApproximateNoData() const {
+    std::ostringstream out;
+    out << vertex.Approximate();
+    return out.str();
+  }
+
   HomoPoint3Rep vertex;
   // This line starts at `vertex` and goes to the next vertex in the polygon.
   //
@@ -119,6 +145,20 @@ struct ConvexPolygonEdge : private VertexDataTemplate {
   //   next_vertex == vertex + line.d()
   LineRep line;
 };
+
+template <int point3_bits, typename VertexData>
+std::string
+Approximate(const ConvexPolygonEdge<point3_bits, VertexData>& edge) {
+  std::ostringstream out;
+  out << edge.vertex.Approximate() << ": " << edge.data();
+  return out.str();
+}
+
+template <int point3_bits>
+std::string
+Approximate(const ConvexPolygonEdge<point3_bits, NoVertexData>& edge) {
+  return edge.ApproximateNoData();
+}
 
 template <int point3_bits, typename VertexData>
 std::ostream& operator<<(

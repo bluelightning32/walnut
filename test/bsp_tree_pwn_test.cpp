@@ -68,10 +68,10 @@ ConvexPolygon<std::iterator_traits<
 //
 const Point3<> cube_top(0, 0, 11);
 const Point3<> cube_bottom(0, 0, -11);
-const Point3<> cube_north(0, 10, 4);
+const Point3<> cube_north(0, 10, 3);
 const Point3<> cube_north_west(-9, 5, -4);
 const Point3<> cube_south_west(-9, -5, 4);
-const Point3<> cube_south(0, -10, -4);
+const Point3<> cube_south(0, -10, -3);
 const Point3<> cube_south_east(9, -5, 4);
 const Point3<> cube_north_east(9, 5, -4);
 
@@ -83,6 +83,54 @@ const Point3<>* cube_peripheral_points[6] = {
   &cube_south_east,
   &cube_north_east,
 };
+
+TEST(TitltedCube, NorthEastSide) {
+  HalfSpace3<> side(cube_top, cube_south_east, cube_north_east);
+  EXPECT_TRUE(side.IsCoincident(cube_top));
+  EXPECT_TRUE(side.IsCoincident(cube_south_east));
+  EXPECT_TRUE(side.IsCoincident(cube_north_east));
+  EXPECT_TRUE(side.IsCoincident(cube_north));
+}
+
+TEST(TitltedCube, NorthSide) {
+  HalfSpace3<> side(cube_bottom, cube_north_west, cube_north);
+  EXPECT_TRUE(side.IsCoincident(cube_bottom));
+  EXPECT_TRUE(side.IsCoincident(cube_north_west));
+  EXPECT_TRUE(side.IsCoincident(cube_north));
+  EXPECT_TRUE(side.IsCoincident(cube_north_east));
+}
+
+TEST(TitltedCube, NorthWestSide) {
+  HalfSpace3<> side(cube_top, cube_north, cube_north_west);
+  EXPECT_TRUE(side.IsCoincident(cube_top));
+  EXPECT_TRUE(side.IsCoincident(cube_north));
+  EXPECT_TRUE(side.IsCoincident(cube_north_west));
+  EXPECT_TRUE(side.IsCoincident(cube_south_west));
+}
+
+TEST(TitltedCube, SouthWestSide) {
+  HalfSpace3<> side(cube_bottom, cube_south, cube_south_west);
+  EXPECT_TRUE(side.IsCoincident(cube_bottom));
+  EXPECT_TRUE(side.IsCoincident(cube_south));
+  EXPECT_TRUE(side.IsCoincident(cube_south_west));
+  EXPECT_TRUE(side.IsCoincident(cube_north_west));
+}
+
+TEST(TitltedCube, SouthSide) {
+  HalfSpace3<> side(cube_top, cube_south_west, cube_south);
+  EXPECT_TRUE(side.IsCoincident(cube_top));
+  EXPECT_TRUE(side.IsCoincident(cube_south_west));
+  EXPECT_TRUE(side.IsCoincident(cube_south));
+  EXPECT_TRUE(side.IsCoincident(cube_south_east));
+}
+
+TEST(TitltedCube, SouthEastSide) {
+  HalfSpace3<> side(cube_bottom, cube_north_east, cube_south_east);
+  EXPECT_TRUE(side.IsCoincident(cube_bottom));
+  EXPECT_TRUE(side.IsCoincident(cube_north_east));
+  EXPECT_TRUE(side.IsCoincident(cube_south_east));
+  EXPECT_TRUE(side.IsCoincident(cube_south));
+}
 
 class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
  protected:

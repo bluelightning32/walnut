@@ -1,6 +1,8 @@
 #ifndef WALNUT_HOMO_POINT3_H__
 #define WALNUT_HOMO_POINT3_H__
 
+#include <sstream>
+
 #include "walnut/homo_point2.h"
 #include "walnut/point3.h"
 #include "walnut/vector3.h"
@@ -208,6 +210,10 @@ class HomoPoint3 {
   // before.
   void Reduce();
 
+  // Return a string representation of the edge that uses decimal points to
+  // approximate the vertex coordinates.
+  std::string Approximate() const;
+
  private:
   VectorRep vector_from_origin_;
   DenomInt dist_denom_;
@@ -242,6 +248,18 @@ template <int a_bits, int b_num_bits, int b_denom_bits>
 bool operator==(const Point3<a_bits>& a,
                 const HomoPoint3<b_num_bits, b_denom_bits>& b) {
   return b == a;
+}
+
+template <int num_bits, int denom_bits>
+std::string HomoPoint3<num_bits, denom_bits>::Approximate() const {
+  std::ostringstream out;
+  double w_double(w());
+  out << "{ "
+      << (double)x()/w_double << ", "
+      << (double)y()/w_double << ", "
+      << (double)z()/w_double
+      << " }";
+  return out.str();
 }
 
 template <int num_bits, int denom_bits>

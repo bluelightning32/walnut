@@ -1,6 +1,7 @@
 #ifndef WALNUT_CONVEX_POLYGON_H__
 #define WALNUT_CONVEX_POLYGON_H__
 
+#include <sstream>
 #include <vector>
 #include <utility>
 
@@ -619,6 +620,15 @@ class ConvexPolygon {
                         result.second);
     return result;
   }
+
+  // Return a string representation of the polygon that uses decimal points to
+  // approximate the vertex coordinates.
+  std::string Approximate() const;
+
+  // Return a string representation of the polygon that uses decimal points to
+  // approximate the vertex coordinates and does not include the extra edge
+  // data fields.
+  std::string ApproximateNoData() const;
 
  protected:
   // Creates both split children.
@@ -1307,6 +1317,34 @@ ConvexPolygon<point3_bits, VertexData>::FindSplitRangesLinear(
 }
 
 template <int point3_bits, typename VertexData>
+std::string ConvexPolygon<point3_bits, VertexData>::Approximate() const {
+  std::ostringstream out;
+  out << "[";
+  bool first = true;
+  for (const auto& edge : edges()) {
+    if (!first) out << ", ";
+    first = false;
+    out << edge.Approximate();
+  }
+  out << "]";
+  return out.str();
+}
+
+template <int point3_bits, typename VertexData>
+std::string ConvexPolygon<point3_bits, VertexData>::ApproximateNoData() const {
+  std::ostringstream out;
+  out << "[";
+  bool first = true;
+  for (const auto& edge : edges()) {
+    if (!first) out << ", ";
+    first = false;
+    out << edge.ApproximateNoData();
+  }
+  out << "]";
+  return out.str();
+}
+
+template <int point3_bits, typename VertexData>
 std::ostream& operator<<(
     std::ostream& out,
     const ConvexPolygon<point3_bits, VertexData>& polygon) {
@@ -1318,6 +1356,28 @@ std::ostream& operator<<(
     out << edge;
   }
   out << "]";
+  return out;
+}
+
+std::ostream& operator<<(
+    std::ostream& out, const ConvexPolygonSplitRanges& ranges) {
+  out << "neg_range=[" << ranges.neg_range.first
+      << ", " << ranges.neg_range.second << ")";
+  out << ", pos_range=[" << ranges.pos_range.first
+      << ", " << ranges.pos_range.second << ")";
+  return out;
+}
+
+template <int point3_bits>
+std::ostream& operator<<(
+    std::ostream& out, const ConvexPolygonSplitInfo<point3_bits>& info) {
+  out << info.ranges;
+  if (info.has_new_shared_point1) {
+    out << ", new_shared_point1=" << info.new_shared_point1;
+  }
+  if (info.has_new_shared_point2) {
+    out << ", new_shared_point2=" << info.new_shared_point2;
+  }
   return out;
 }
 
