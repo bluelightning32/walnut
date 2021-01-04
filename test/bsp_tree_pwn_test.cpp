@@ -368,6 +368,37 @@ TEST_P(BSPTreePWN, SimpleCrossing2) {
   EXPECT_EQ(child->GetPWNForId(id), 1 * GetPWNFlip());
 }
 
+TEST_P(BSPTreePWN, MinimumExcluded) {
+  // Verify that minimums are excluded from the PWN calculation.
+  BSPPolygonId id = tree_.AllocateId();
+  EXPECT_EQ(id, 0);
+
+  Point3<>::BigIntRep polygon_x(cube_south_east.x().ToInt()/2);
+  RectangularPrism<> prism(/*min_x=*/polygon_x,
+                           /*min_y=*/cube_south.y(),
+                           /*min_z=*/cube_bottom.z(),
+                           /*max_x=*/cube_north_east.x(),
+                           /*max_y=*/cube_north.y(),
+                           /*max_z=*/cube_top.z());
+
+  for (const ConvexPolygon<>& wall : prism.GetWalls()) {
+    AddContent(id, wall);
+  }
+
+  BSPNode<>* inside_cube = SplitToCube();
+  EXPECT_EQ(inside_cube->GetPWNForId(id), 0);
+  EXPECT_TRUE(inside_cube->IsLeaf());
+  EXPECT_THAT(inside_cube->border_contents(), IsEmpty());
+  EXPECT_THAT(inside_cube->contents(), SizeIs(1));
+
+  BSPNode<>* child = SplitNorthWest(inside_cube, cube_top, cube_south_east,
+                                    0.75);
+  EXPECT_TRUE(child->IsLeaf());
+  EXPECT_THAT(child->border_contents(), IsEmpty());
+  EXPECT_THAT(inside_cube->contents(), SizeIs(1));
+  EXPECT_EQ(child->GetPWNForId(id), 0);
+}
+
 INSTANTIATE_TEST_SUITE_P(, BSPTreePWN,
     testing::Combine(testing::Bool(), testing::Bool()));
 

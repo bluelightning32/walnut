@@ -363,16 +363,25 @@ void BSPNode<InputPolygonTemplate>::PushContentPWNToChildren() {
       int change = 0;
       if (edge_comparison < 0) {
         push_to_child = negative_child();
-        if (before_vertex_comparison > 0) {
-          const int side_comparison = split_.Compare(current_edge.vertex);
-          if (side_comparison >= 0) {
+        if (before_vertex_comparison > 0 &&
+            split_.Compare(current_edge.vertex) >= 0) {
+          BigIntWord min_max_comparison =
+            split_.normal().Dot(
+                current_vertex_data.ccw_edge_angle_tracker_.current().Cross(
+                  current_vertex_data.vertex_angle_tracker_.current()))
+            .GetSign();
+          if (min_max_comparison < 0) {
             // M-int is entering the polyhedron.
             ++change;
           }
         }
-        if (after_vertex_comparison > 0) {
-          const int side_comparison = split_.Compare(next_edge.vertex);
-          if (side_comparison >= 0) {
+        if (after_vertex_comparison > 0 &&
+            split_.Compare(next_edge.vertex) >= 0) {
+          BigIntWord min_max_comparison =
+            split_.normal().Dot(
+                current_vertex_data.ccw_edge_angle_tracker_.current().Cross(
+                  next_vertex_data.vertex_angle_tracker_.current())).GetSign();
+          if (min_max_comparison < 0) {
             // M-int is exiting the polyhedron.
             --change;
           }
@@ -381,13 +390,26 @@ void BSPNode<InputPolygonTemplate>::PushContentPWNToChildren() {
         push_to_child = positive_child();
         if (before_vertex_comparison < 0 &&
             split_.Compare(current_edge.vertex) <= 0) {
-          // M-int is entering the polyhedron.
-          ++change;
+          BigIntWord min_max_comparison =
+            split_.normal().Dot(
+                current_vertex_data.ccw_edge_angle_tracker_.current().Cross(
+                  current_vertex_data.vertex_angle_tracker_.current()))
+            .GetSign();
+          if (min_max_comparison > 0) {
+            // M-int is entering the polyhedron.
+            ++change;
+          }
         }
         if (after_vertex_comparison < 0 &&
             split_.Compare(next_edge.vertex) <= 0) {
-          // M-int is exiting the polyhedron.
-          --change;
+          BigIntWord min_max_comparison =
+            split_.normal().Dot(
+                current_vertex_data.ccw_edge_angle_tracker_.current().Cross(
+                  next_vertex_data.vertex_angle_tracker_.current())).GetSign();
+          if (min_max_comparison > 0) {
+            // M-int is exiting the polyhedron.
+            --change;
+          }
         }
       }
       if (push_to_child->pwn_by_id_.size() <= polygon.id) {
