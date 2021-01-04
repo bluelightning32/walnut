@@ -165,8 +165,8 @@ class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
 
   // Splits the node with a vertical plane with a normal that is facing north
   // west or south east (depending on the test's first parameter). The distance
-  // of the split plane is adjusted so that (on_border_x, on_border_y,
-  // arbitrary_z) is on the split plane.
+  // of the split plane is adjusted so that the point
+  // ((edge_dest - edge_start) * edge_dist) is on the split plane.
   //
   // The child on the north-west side is returned.
   //
@@ -188,15 +188,20 @@ class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
   //       --- ---
   //          v
   //
-  BSPNode<>* SplitNorthWest(BSPNode<>* parent, int on_border_x,
-                            int on_border_y) {
+  BSPNode<>* SplitNorthWest(BSPNode<>* parent, const Point3<>& edge_start,
+                            const Point3<>& edge_dest, double edge_dist) {
     EXPECT_TRUE(parent->IsLeaf());
-    std::pair<int, int> normal = std::get<0>(GetParam()) ?
-      std::pair<int, int>(-1, 1) :
-      std::pair<int, int>(1, -1);
+    Vector3<> normal = std::get<0>(GetParam()) ? Vector3<>(-1, 1, -10) :
+                                                 Vector3<>(1, -1, 10);
 
-    int dist = normal.first*on_border_x + normal.second*on_border_y;
-    HalfSpace3<> split(normal.first, normal.second, 0, dist);
+    auto edge_vector = edge_dest - edge_start;
+    double dist = double(normal.x()) * (double(edge_start.x()) +
+                                        double(edge_vector.x()) * edge_dist) +
+                  double(normal.y()) * (double(edge_start.y()) +
+                                        double(edge_vector.y()) * edge_dist) +
+                  double(normal.z()) * (double(edge_start.z()) +
+                                        double(edge_vector.z()) * edge_dist);
+    HalfSpace3<> split(normal, HalfSpace3<>::DistInt(long(dist)));
     parent->Split(split);
     BSPNode<>* return_child;
     BSPNode<>* other_child;
@@ -254,8 +259,7 @@ TEST_P(BSPTreePWN, EmptyCube) {
   BSPNode<>* inside_cube = SplitToCube();
   EXPECT_EQ(inside_cube->GetPWNForId(id), 0);
 
-  BSPNode<>* child = SplitNorthWest(inside_cube, 0,
-                                    cube_north.y().ToInt() * 3 / 4);
+  BSPNode<>* child = SplitNorthWest(inside_cube, cube_top, cube_north, 0.75);
   EXPECT_EQ(child->GetPWNForId(id), 0);
 }
 
@@ -280,8 +284,7 @@ TEST_P(BSPTreePWN, BeforeCrossing) {
   EXPECT_THAT(inside_cube->border_contents(), IsEmpty());
   EXPECT_THAT(inside_cube->contents(), SizeIs(1));
 
-  BSPNode<>* child = SplitNorthWest(inside_cube, 0,
-                                    cube_north.y().ToInt()/2);
+  BSPNode<>* child = SplitNorthWest(inside_cube, cube_top, cube_north, 0.5);
   EXPECT_TRUE(child->IsLeaf());
   EXPECT_THAT(child->border_contents(), IsEmpty());
   EXPECT_THAT(child->contents(), SizeIs(1));
@@ -325,8 +328,7 @@ TEST_P(BSPTreePWN, SimpleCrossing) {
   EXPECT_THAT(inside->border_contents(), IsEmpty());
   EXPECT_THAT(inside->contents(), SizeIs(1));
 
-  BSPNode<>* child = SplitNorthWest(inside, 0,
-                                    cube_north_west.y().ToInt() + y_dist*3/4);
+  BSPNode<>* child = SplitNorthWest(inside, cube_north_west, cube_north, 0.75);
   EXPECT_TRUE(child->IsLeaf());
   EXPECT_THAT(child->border_contents(), IsEmpty());
   EXPECT_THAT(child->contents(), SizeIs(1));
@@ -358,8 +360,8 @@ TEST_P(BSPTreePWN, SimpleCrossing2) {
   EXPECT_THAT(inside_cube->border_contents(), IsEmpty());
   EXPECT_THAT(inside_cube->contents(), SizeIs(1));
 
-  BSPNode<>* child = SplitNorthWest(inside_cube, 0,
-                                    cube_north_west.y().ToInt() + y_dist*3/4);
+  BSPNode<>* child = SplitNorthWest(inside_cube, cube_north_west, cube_north,
+                                    0.75);
   EXPECT_TRUE(child->IsLeaf());
   EXPECT_THAT(child->border_contents(), IsEmpty());
   EXPECT_THAT(child->contents(), SizeIs(1));
