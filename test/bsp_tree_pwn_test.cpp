@@ -333,6 +333,39 @@ TEST_P(BSPTreePWN, SimpleCrossing) {
   EXPECT_EQ(child->GetPWNForId(id), 1 * GetPWNFlip());
 }
 
+TEST_P(BSPTreePWN, SimpleCrossing2) {
+  // This is almost the same as SimpleCrossing, except a full cubes are used.
+  BSPPolygonId id = tree_.AllocateId();
+  EXPECT_EQ(id, 0);
+
+  int y_dist = cube_north.y().ToInt() - cube_north_west.y().ToInt();
+
+  Point3<>::BigIntRep polygon_y = cube_north_west.y() + y_dist/2;
+  RectangularPrism<> prism(/*min_x=*/cube_north_west.x(),
+                           /*min_y=*/polygon_y,
+                           /*min_z=*/cube_bottom.z(),
+                           /*max_x=*/cube_north_east.x(),
+                           /*max_y=*/cube_north.y(),
+                           /*max_z=*/cube_top.z());
+
+  for (const ConvexPolygon<>& wall : prism.GetWalls()) {
+    AddContent(id, wall);
+  }
+
+  BSPNode<>* inside_cube = SplitToCube();
+  EXPECT_EQ(inside_cube->GetPWNForId(id), 0);
+  EXPECT_TRUE(inside_cube->IsLeaf());
+  EXPECT_THAT(inside_cube->border_contents(), IsEmpty());
+  EXPECT_THAT(inside_cube->contents(), SizeIs(1));
+
+  BSPNode<>* child = SplitNorthWest(inside_cube, 0,
+                                    cube_north_west.y().ToInt() + y_dist*3/4);
+  EXPECT_TRUE(child->IsLeaf());
+  EXPECT_THAT(child->border_contents(), IsEmpty());
+  EXPECT_THAT(child->contents(), SizeIs(1));
+  EXPECT_EQ(child->GetPWNForId(id), 1 * GetPWNFlip());
+}
+
 INSTANTIATE_TEST_SUITE_P(, BSPTreePWN,
     testing::Combine(testing::Bool(), testing::Bool()));
 
