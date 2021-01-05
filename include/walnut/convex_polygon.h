@@ -59,6 +59,10 @@ struct ConvexPolygonSplitInfo {
   using LineRep = typename PluckerLineFromPlanesFromPoint3sBuilder<
     point3_bits_template>::PluckerLineRep;
 
+  bool IsValid() const {
+    return ranges.IsValid();
+  }
+
   bool ShouldEmitNegativeChild() const {
     return ranges.ShouldEmitNegativeChild();
   }
@@ -1034,6 +1038,7 @@ ConvexPolygon<point3_bits, VertexData>::GetSplitInfo(
   result.ranges = vertex_count() < 10 ?
     FindSplitRangesLinear(half_space2, drop_dimension()) :
     FindSplitRangesBisect(half_space2, drop_dimension());
+  assert(result.ranges.IsValid());
 
   if (!result.ShouldEmitPositiveChild() || !result.ShouldEmitNegativeChild()) {
     return result;
@@ -1060,6 +1065,7 @@ ConvexPolygon<point3_bits, VertexData>::GetSplitInfo(
                              1) % vertex_count();
     result.new_shared_point1 = edge(last_pos_index).line.Intersect(half_space);
   }
+  assert(result.IsValid());
   return result;
 }
 
@@ -1273,6 +1279,8 @@ ConvexPolygon<point3_bits, VertexData>::FindSplitRangesLinear(
         // We're back to the first side again. The polygon is completely on one
         // side.
         first_side->first = index;
+        first_side->second += vertex_count();
+        assert(result.IsValid());
         return result;
       }
       break;
