@@ -212,6 +212,10 @@ class BSPNode {
 
   static constexpr int point3_bits = InputPolygon::point3_bits;
 
+  BSPNode() = default;
+
+  BSPNode(const std::vector<int64_t>& pwn_by_id) : pwn_by_id_(pwn_by_id) { }
+
   // Convert a leaf node into an interior node.
   //
   // This may only be called on a leaf node.
@@ -222,7 +226,7 @@ class BSPNode {
   // The contents of this node will be pushed into the new child nodes.
   void Split(const HalfSpace3Rep& half_space) {
     assert(half_space.IsValid());
-    MakeInterior(half_space, new BSPNode(), new BSPNode());
+    MakeInterior(half_space, new BSPNode(pwn_by_id_), new BSPNode(pwn_by_id_));
     PushContentsToChildren();
   }
 

@@ -510,6 +510,168 @@ TEST_P(BSPTreePWN, SkipEdgesAlongIPath) {
   EXPECT_EQ(along_edge->GetPWNForId(id), 0);
 }
 
+TEST_P(BSPTreePWN, IPathGoesThroughLeftSide) {
+  // This test verifies that the I-path goes through the left side of the edges
+  // it follows.
+  //
+  // The test has a rectangular prism that overlaps with the tilted cube on the
+  // left side of the north edge. Since the I-path follows along the left side
+  // of its edges, it should enter the prism.
+
+  BSPPolygonId id = tree_.AllocateId();
+  Point3<>::BigIntRep prism_start_y(cube_north.y().ToInt() / 4);
+  Point3<>::BigIntRep prism_end_y(cube_north.y().ToInt() * 3 / 4);
+  RectangularPrism<> prism(/*min_x=*/cube_north_west.x(),
+                           /*min_y=*/prism_start_y,
+                           /*min_z=*/cube_bottom.z(),
+                           /*max_x=*/cube_top.x(),
+                           /*max_y=*/prism_end_y,
+                           /*max_z=*/cube_top.z());
+  for (const ConvexPolygon<>& wall : prism.GetWalls()) {
+    AddContent(id, wall);
+  }
+
+  BSPNode<>* inside_cube = SplitToCube();
+  EXPECT_EQ(inside_cube->GetPWNForId(id), 0);
+  EXPECT_TRUE(inside_cube->IsLeaf());
+  EXPECT_THAT(inside_cube->border_contents(), IsEmpty());
+  EXPECT_THAT(inside_cube->contents(), SizeIs(3));
+
+  BSPNode<>* inside_prism1 = SplitNorthWest(inside_cube, cube_top,
+                                            cube_north, 2.0/4);
+  EXPECT_TRUE(inside_prism1->IsLeaf());
+  EXPECT_THAT(inside_prism1->border_contents(), IsEmpty());
+  EXPECT_THAT(inside_prism1->contents(), SizeIs(3));
+  EXPECT_EQ(inside_prism1->GetPWNForId(id), 1 * GetPWNFlip());
+}
+
+TEST_P(BSPTreePWN, IPathSkipsRightSide) {
+  // This test verifies that the I-path goes through the left side of the edges
+  // it follows, and does not pass through a polygon that does not touch the
+  // facet to the left of the edge.
+  //
+  // The test has a rectangular prism that overlaps with the tilted cube on the
+  // right side of the north edge. Since the I-path follows along the left side
+  // of its edges, the PWN should not be affected by the prism.
+
+  BSPPolygonId id = tree_.AllocateId();
+  Point3<>::BigIntRep prism_start_y(cube_north.y().ToInt() / 4);
+  Point3<>::BigIntRep prism_end_y(cube_north.y().ToInt() * 3 / 4);
+  RectangularPrism<> prism(/*min_x=*/cube_top.x(),
+                           /*min_y=*/prism_start_y,
+                           /*min_z=*/cube_bottom.z(),
+                           /*max_x=*/cube_north_east.x(),
+                           /*max_y=*/prism_end_y,
+                           /*max_z=*/cube_top.z());
+  for (const ConvexPolygon<>& wall : prism.GetWalls()) {
+    AddContent(id, wall);
+  }
+
+  BSPNode<>* inside_cube = SplitToCube();
+  EXPECT_EQ(inside_cube->GetPWNForId(id), 0);
+  EXPECT_TRUE(inside_cube->IsLeaf());
+  EXPECT_THAT(inside_cube->border_contents(), IsEmpty());
+  EXPECT_THAT(inside_cube->contents(), SizeIs(3));
+
+  BSPNode<>* inside_prism1 = SplitNorthWest(inside_cube, cube_top,
+                                            cube_north, 2.0/4);
+  EXPECT_TRUE(inside_prism1->IsLeaf());
+  EXPECT_THAT(inside_prism1->border_contents(), IsEmpty());
+  EXPECT_THAT(inside_prism1->contents(), SizeIs(3));
+  EXPECT_EQ(inside_prism1->GetPWNForId(id), 0);
+}
+
+TEST_P(BSPTreePWN, BothEdgeSidesTouchIPath) {
+  // This test verifies that the I-path sees a crossing, even if both sides of
+  // the crossed edge are on the I-path, but on from different edges of the
+  // I-path.
+  //
+  // The test has a rectangular prism that overlaps with the tilted cube on the
+  // left side of the north edge. Since the I-path follows along the left side
+  // of its edges, it should enter the prism.
+
+  BSPPolygonId id = tree_.AllocateId();
+  Point3<>::BigIntRep prism_start_y(cube_north.y().ToInt() / 4);
+  Point3<>::BigIntRep prism_end_y(cube_north.y().ToInt() * 3 / 4);
+  RectangularPrism<> prism(/*min_x=*/cube_north_west.x(),
+                           /*min_y=*/prism_start_y,
+                           /*min_z=*/cube_bottom.z(),
+                           /*max_x=*/cube_top.x(),
+                           /*max_y=*/prism_end_y,
+                           /*max_z=*/cube_top.z());
+  for (const ConvexPolygon<>& wall : prism.GetWalls()) {
+    AddContent(id, wall);
+  }
+
+  BSPNode<>* inside_cube = SplitToCube();
+  EXPECT_EQ(inside_cube->GetPWNForId(id), 0);
+  EXPECT_TRUE(inside_cube->IsLeaf());
+  EXPECT_THAT(inside_cube->border_contents(), IsEmpty());
+  EXPECT_THAT(inside_cube->contents(), SizeIs(3));
+
+  BSPNode<>* inside_prism1 = SplitNorthWest(inside_cube, cube_top,
+                                            cube_north, 7.0/8);
+  EXPECT_TRUE(inside_prism1->IsLeaf());
+  EXPECT_THAT(inside_prism1->border_contents(), IsEmpty());
+  EXPECT_THAT(inside_prism1->contents(), SizeIs(3));
+  EXPECT_EQ(inside_prism1->GetPWNForId(id), 0);
+}
+
+TEST_P(BSPTreePWN, SplitTwice) {
+  // This is almost the same as SimpleCrossing, except that the child is split
+  // again. The only polygon is already passed, so the second split should not
+  // impact the PWN.
+  BSPPolygonId id = tree_.AllocateId();
+  EXPECT_EQ(id, 0);
+
+  int y_dist = cube_north.y().ToInt() - cube_north_west.y().ToInt();
+
+  Point3<>::BigIntRep polygon_y = cube_north_west.y() + y_dist/2;
+  // A rectangle that goes from
+  // (cube_north_west.x(), polygon_y, cube_bottom.z()) to
+  // (cube_north_east.x(), polygon_y, cube_top.z()).
+  //
+  // The unflipped version's normal points towards (0, 0, 0).
+  Point3<> polygon_vertices[] = {
+    Point3<>(cube_north_east.x(), polygon_y, cube_top.z()),
+    Point3<>(cube_north_west.x(), polygon_y, cube_top.z()),
+    Point3<>(cube_north_west.x(), polygon_y, cube_bottom.z()),
+    Point3<>(cube_north_east.x(), polygon_y, cube_bottom.z())
+  };
+
+  AddContent(id, MakeConvexPolygon(polygon_vertices));
+
+  // To make this test case simpler, only split the tree with the top left and
+  // top right sides of the cube.
+  std::vector<BSPNode<>::HalfSpace3Rep> split_planes;
+  split_planes.emplace_back(cube_top, cube_north, cube_north_west);
+  split_planes.emplace_back(cube_north_east, cube_north, cube_top);
+  BSPNode<>* inside = &tree_.root;
+  for (BSPNode<>::HalfSpace3Rep& split_plane : split_planes) {
+    inside->Split(split_plane);
+    inside = inside->negative_child();
+  }
+
+  EXPECT_EQ(inside->GetPWNForId(id), 0);
+  EXPECT_TRUE(inside->IsLeaf());
+  EXPECT_THAT(inside->border_contents(), IsEmpty());
+  EXPECT_THAT(inside->contents(), SizeIs(1));
+
+  BSPNode<>* child = SplitNorthWest(inside, cube_north_west, cube_north,
+                                    3.0/4);
+  EXPECT_TRUE(child->IsLeaf());
+  EXPECT_THAT(child->border_contents(), IsEmpty());
+  EXPECT_THAT(child->contents(), SizeIs(1));
+  EXPECT_EQ(child->GetPWNForId(id), 1 * GetPWNFlip());
+
+  BSPNode<>* child2 = SplitNorthWest(child, cube_north_west, cube_north,
+                                     7.0/8);
+  EXPECT_TRUE(child2->IsLeaf());
+  EXPECT_THAT(child2->border_contents(), IsEmpty());
+  EXPECT_THAT(child2->contents(), SizeIs(1));
+  EXPECT_EQ(child2->GetPWNForId(id), 1 * GetPWNFlip());
+}
+
 INSTANTIATE_TEST_SUITE_P(, BSPTreePWN,
     testing::Combine(testing::Bool(), testing::Bool()));
 
