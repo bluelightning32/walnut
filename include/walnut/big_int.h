@@ -108,6 +108,14 @@ class BigInt {
     return Subtract<std::max(bits, other_bits) + 1>(other);
   }
 
+  constexpr BigInt<bits + 1> operator-(int other) const {
+    constexpr int rb = std::max(bits, int(sizeof(int) * 8)) + 1;
+    return rep_.template Subtract<(
+                                   rb + BigUIntWord::bits_per_word - 1) /
+                                   BigUIntWord::bits_per_word>(
+      BigIntImpl<1>(other));
+  }
+
   template <int other_bits>
   constexpr BigInt<bits + other_bits - 1>
   Multiply(const BigInt<other_bits>& other) const {

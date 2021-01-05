@@ -1,6 +1,8 @@
 #ifndef WALNUT_BSP_TREE_H__
 #define WALNUT_BSP_TREE_H__
 
+#include <type_traits>
+
 #include "walnut/bsp_node.h"
 #include "walnut/rectangular_prism.h"
 
@@ -13,6 +15,7 @@ class BSPTree {
   using InputPolygon = InputPolygonTemplate;
   using BSPNodeRep = BSPNode<InputPolygon>;
   using OutputPolygon = typename BSPNodeRep::PolygonRep;
+  using VertexData = typename BSPNodeRep::VertexData;
 
   static constexpr int point3_bits = InputPolygon::point3_bits;
 
@@ -25,8 +28,21 @@ class BSPTree {
   template <typename InputConvexPolygon, typename LeafCallback>
   void AddContent(InputConvexPolygon&& polygon, BSPPolygonId id,
                   LeafCallback leaf_callback) {
-    root.contents_.emplace_back(id, /*on_node_plane=*/nullptr,
-                                std::forward<InputConvexPolygon>(polygon));
+    using InputConvexPolygonNoRef =
+      typename std::remove_reference<InputConvexPolygon>::type;
+    using InputVertexData = typename InputConvexPolygonNoRef::VertexData;
+    if (std::is_base_of<VertexData, InputVertexData>::value) {
+      // The input polygon came from a different BSPTree. Make a copy of the
+      // input polygon that does not have the vertex and edge trackers from the
+      // previous tree.
+      ConvexPolygon<InputConvexPolygonNoRef::point3_bits> stripped(
+          std::forward<InputConvexPolygon>(polygon));
+      root.contents_.emplace_back(id, /*on_node_plane=*/nullptr,
+                                  std::move(stripped));
+    } else {
+      root.contents_.emplace_back(id, /*on_node_plane=*/nullptr,
+                                  std::forward<InputConvexPolygon>(polygon));
+    }
     root.PushContentsToLeaves(leaf_callback);
   }
 

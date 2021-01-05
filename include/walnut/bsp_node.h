@@ -46,7 +46,6 @@ class BSPEdgeInfo {
   template <int num_bits, int denom_bits>
   BSPEdgeInfo(const BSPEdgeInfo& parent,
               const HomoPoint3<num_bits, denom_bits>& new_source) :
-    ccw_edge_angle_tracker_(parent.ccw_edge_angle_tracker_),
     cw_edge_angle_tracker_(parent.cw_edge_angle_tracker_),
     vertex_angle_tracker_(parent.cw_edge_angle_tracker_),
     split_by(parent.split_by) { }
@@ -77,11 +76,6 @@ class BSPEdgeInfo {
     return false;
   }
 
-  const GreatestAngleTracker</*most_ccw=*/true, NormalRep::component_bits>&
-  ccw_edge_angle_tracker() const {
-    return ccw_edge_angle_tracker_;
-  }
-
   const GreatestAngleTracker</*most_ccw=*/false, NormalRep::component_bits>&
   cw_edge_angle_tracker() const {
     return cw_edge_angle_tracker_;
@@ -97,8 +91,6 @@ class BSPEdgeInfo {
  private:
   friend BSPNodeRep;
 
-  GreatestAngleTracker</*most_ccw=*/true, NormalRep::component_bits>
-    ccw_edge_angle_tracker_;
   GreatestAngleTracker</*most_ccw=*/false, NormalRep::component_bits>
     cw_edge_angle_tracker_;
 
@@ -348,7 +340,7 @@ void BSPNode<InputPolygonTemplate>::PushContentPWNToChildren() {
       const EdgeRep& current_edge = polygon.edge(i);
       const VertexData& current_vertex_data = current_edge.data();
       int edge_comparison = RXYCompareBivector(split_.normal(),
-          current_vertex_data.ccw_edge_angle_tracker_.current());
+          current_vertex_data.cw_edge_angle_tracker_.current());
       if (edge_comparison == 0) continue;
 
       const EdgeRep& next_edge =
@@ -367,11 +359,11 @@ void BSPNode<InputPolygonTemplate>::PushContentPWNToChildren() {
             split_.Compare(current_edge.vertex) >= 0) {
           BigIntWord min_max_comparison =
             split_.normal().Dot(
-                current_vertex_data.ccw_edge_angle_tracker_.current().Cross(
+                current_vertex_data.cw_edge_angle_tracker_.current().Cross(
                   current_vertex_data.vertex_angle_tracker_.current()))
             .GetSign();
           if (min_max_comparison < 0) {
-            // M-int is entering the polyhedron.
+            // I-path is entering the polyhedron.
             ++change;
           }
         }
@@ -379,10 +371,10 @@ void BSPNode<InputPolygonTemplate>::PushContentPWNToChildren() {
             split_.Compare(next_edge.vertex) >= 0) {
           BigIntWord min_max_comparison =
             split_.normal().Dot(
-                current_vertex_data.ccw_edge_angle_tracker_.current().Cross(
+                current_vertex_data.cw_edge_angle_tracker_.current().Cross(
                   next_vertex_data.vertex_angle_tracker_.current())).GetSign();
           if (min_max_comparison < 0) {
-            // M-int is exiting the polyhedron.
+            // I-path is exiting the polyhedron.
             --change;
           }
         }
@@ -392,11 +384,11 @@ void BSPNode<InputPolygonTemplate>::PushContentPWNToChildren() {
             split_.Compare(current_edge.vertex) <= 0) {
           BigIntWord min_max_comparison =
             split_.normal().Dot(
-                current_vertex_data.ccw_edge_angle_tracker_.current().Cross(
+                current_vertex_data.cw_edge_angle_tracker_.current().Cross(
                   current_vertex_data.vertex_angle_tracker_.current()))
             .GetSign();
           if (min_max_comparison > 0) {
-            // M-int is entering the polyhedron.
+            // I-path is entering the polyhedron.
             ++change;
           }
         }
@@ -404,10 +396,10 @@ void BSPNode<InputPolygonTemplate>::PushContentPWNToChildren() {
             split_.Compare(next_edge.vertex) <= 0) {
           BigIntWord min_max_comparison =
             split_.normal().Dot(
-                current_vertex_data.ccw_edge_angle_tracker_.current().Cross(
+                current_vertex_data.cw_edge_angle_tracker_.current().Cross(
                   next_vertex_data.vertex_angle_tracker_.current())).GetSign();
           if (min_max_comparison > 0) {
-            // M-int is exiting the polyhedron.
+            // I-path is exiting the polyhedron.
             --change;
           }
         }
@@ -435,7 +427,6 @@ void BSPNode<InputPolygonTemplate>::UpdateAngleTrackers(
   // along the way too.
   for (; pos < coincident_end - 1; ++pos) {
     VertexData& vertex_data = polygon.vertex_data(pos % polygon.vertex_count());
-    vertex_data.ccw_edge_angle_tracker_.Receive(normal);
     vertex_data.cw_edge_angle_tracker_.Receive(normal);
     vertex_data.vertex_angle_tracker_.Receive(normal);
   }
@@ -568,7 +559,6 @@ std::ostream& operator<<(
     std::ostream& out,
     const BSPEdgeInfo<InputPolygonTemplate, NormalRep>& info) {
   out << "< split_by=" << info.split_by
-      << ", ccw_edge_angle_tracker=" << info.ccw_edge_angle_tracker().current()
       << ", cw_edge_angle_tracker=" << info.cw_edge_angle_tracker().current()
       << ", vertex_angle_tracker=" << info.vertex_angle_tracker().current()
       << " >";

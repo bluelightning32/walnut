@@ -336,23 +336,23 @@ TEST(BSPTree, SplitTwiceVertexData) {
        neg_child2.contents()[0].edges()) {
     if (edge.vertex == q2) {
       EXPECT_EQ(edge.data().split_by, &tree.root);
-      EXPECT_EQ(edge.data().ccw_edge_angle_tracker().current(),
+      EXPECT_EQ(edge.data().cw_edge_angle_tracker().current(),
                 -split1.normal());
       EXPECT_EQ(edge.data().vertex_angle_tracker().current(), split2.normal());
     } else if (edge.vertex == q1) {
       EXPECT_EQ(edge.data().split_by, &pos_child1);
-      EXPECT_EQ(edge.data().ccw_edge_angle_tracker().current(),
+      EXPECT_EQ(edge.data().cw_edge_angle_tracker().current(),
                 split2.normal());
       EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
                 split2.normal());
     } else if (edge.vertex == q4) {
       EXPECT_EQ(edge.data().split_by, nullptr);
-      EXPECT_FALSE(edge.data().ccw_edge_angle_tracker().AnyReceived());
+      EXPECT_FALSE(edge.data().cw_edge_angle_tracker().AnyReceived());
       EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
                 -split1.normal());
     } else {
       EXPECT_EQ(edge.data().split_by, nullptr);
-      EXPECT_FALSE(edge.data().ccw_edge_angle_tracker().AnyReceived());
+      EXPECT_FALSE(edge.data().cw_edge_angle_tracker().AnyReceived());
       EXPECT_FALSE(edge.data().vertex_angle_tracker().AnyReceived());
     }
   }
@@ -361,24 +361,24 @@ TEST(BSPTree, SplitTwiceVertexData) {
        pos_child2.contents()[0].edges()) {
     if (edge.vertex == q3) {
       EXPECT_EQ(edge.data().split_by, &tree.root);
-      EXPECT_EQ(edge.data().ccw_edge_angle_tracker().current(),
+      EXPECT_EQ(edge.data().cw_edge_angle_tracker().current(),
                 -split1.normal());
       EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
                 -split1.normal());
     } else if (edge.vertex == q2) {
       EXPECT_EQ(edge.data().split_by, &pos_child1);
-      EXPECT_EQ(edge.data().ccw_edge_angle_tracker().current(),
+      EXPECT_EQ(edge.data().cw_edge_angle_tracker().current(),
                 -split2.normal());
       EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
                 -split1.normal());
     } else if (edge.vertex == q1) {
       EXPECT_EQ(edge.data().split_by, nullptr);
-      EXPECT_FALSE(edge.data().ccw_edge_angle_tracker().AnyReceived());
+      EXPECT_FALSE(edge.data().cw_edge_angle_tracker().AnyReceived());
       EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
                 -split2.normal());
     } else {
       EXPECT_EQ(edge.data().split_by, nullptr);
-      EXPECT_FALSE(edge.data().ccw_edge_angle_tracker().AnyReceived());
+      EXPECT_FALSE(edge.data().cw_edge_angle_tracker().AnyReceived());
       EXPECT_FALSE(edge.data().vertex_angle_tracker().AnyReceived());
     }
   }
@@ -449,19 +449,19 @@ TEST(BSPTree, SplitVertThenDiagVertexData) {
        neg_child2.contents()[0].edges()) {
     if (edge.vertex == q1) {
       EXPECT_EQ(edge.data().split_by, &tree.root);
-      EXPECT_EQ(edge.data().ccw_edge_angle_tracker().current(),
+      EXPECT_EQ(edge.data().cw_edge_angle_tracker().current(),
                 -split1.normal());
       EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
                 -split1.normal());
     } else if (edge.vertex == q2) {
       EXPECT_EQ(edge.data().split_by, &pos_child1);
-      EXPECT_EQ(edge.data().ccw_edge_angle_tracker().current(),
+      EXPECT_EQ(edge.data().cw_edge_angle_tracker().current(),
                 split2.normal());
       EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
                 split2.normal());
     } else {
       EXPECT_EQ(edge.data().split_by, nullptr);
-      EXPECT_FALSE(edge.data().ccw_edge_angle_tracker().AnyReceived());
+      EXPECT_FALSE(edge.data().cw_edge_angle_tracker().AnyReceived());
       EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
                 split2.normal());
     }
@@ -472,18 +472,18 @@ TEST(BSPTree, SplitVertThenDiagVertexData) {
        pos_child2.contents()[0].edges()) {
     if (edge.vertex == p[2]) {
       EXPECT_EQ(edge.data().split_by, &pos_child1);
-      EXPECT_EQ(edge.data().ccw_edge_angle_tracker().current(),
+      EXPECT_EQ(edge.data().cw_edge_angle_tracker().current(),
                 -split2.normal());
       EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
                 -split2.normal());
     } else if (edge.vertex == q2) {
       EXPECT_EQ(edge.data().split_by, nullptr);
-      EXPECT_FALSE(edge.data().ccw_edge_angle_tracker().AnyReceived());
+      EXPECT_FALSE(edge.data().cw_edge_angle_tracker().AnyReceived());
       EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
                 -split2.normal());
     } else {
       EXPECT_EQ(edge.data().split_by, nullptr);
-      EXPECT_FALSE(edge.data().ccw_edge_angle_tracker().AnyReceived());
+      EXPECT_FALSE(edge.data().cw_edge_angle_tracker().AnyReceived());
       EXPECT_FALSE(edge.data().vertex_angle_tracker().AnyReceived());
     }
   }

@@ -43,10 +43,10 @@ HomoPoint3<num_bits, denom_bits> RTransform(
 //
 // This function can be used on HalfSpace3 normals, because they are bivectors.
 //
-// * Returns <0 if (u R) is clockwise from (v R)
+// * Returns <0 if (v R) is clockwise from (u R)
 // * Returns 0 if u points in the same or opposite direction as v (as do (u R)
 //   and (v R)).
-// * Returns >0 if (u R) is counter-clockwise from (v R)
+// * Returns >0 if (v R) is counter-clockwise from (u R)
 template <int component_bits>
 int RXYCompareBivector(const Vector3<component_bits>& u,
                        const Vector3<component_bits>& v) {

@@ -132,6 +132,17 @@ TEST(TitltedCube, SouthEastSide) {
   EXPECT_TRUE(side.IsCoincident(cube_south));
 }
 
+// First parameter:
+//   false - return the negative child from the directional splits like
+//           `SplitNorthWest`. The tilted cube is made out of negative
+//           children.
+//   true  - return the positive child from the directional splits like
+//           `SplitNorthWest`. The tilted cube is made out of negative
+//           children.
+//
+// Second parameter:
+//   false - `AddContent` adds the input polygon as is.
+//   true  - `AddContent` flips the polygon before adding it to the tree.
 class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
  protected:
   // Splits `tree_` 6 times to form all sides of the tilted cube. The descendant
@@ -231,9 +242,10 @@ class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
            ++it) {
         vertices.push_back(it->vertex);
       }
-      tree_.AddContent(InputPolygon(-polygon.plane(), polygon.drop_dimension(),
-                                    vertices), id,
-                       added_to_leaf);
+      using ConvexPolygonRep = ConvexPolygon<InputPolygon::point3_bits>;
+      tree_.AddContent(ConvexPolygonRep(-polygon.plane(),
+                                        polygon.drop_dimension(), vertices),
+                       id, added_to_leaf);
     } else {
       tree_.AddContent(polygon, id, added_to_leaf);
     }
@@ -449,6 +461,53 @@ TEST_P(BSPTreePWN, IPathBends) {
   EXPECT_THAT(inside_prism1->contents(), SizeIs(1));
   EXPECT_EQ(inside_prism1->GetPWNForId(prism1_id), 1 * GetPWNFlip());
   EXPECT_EQ(inside_prism1->GetPWNForId(prism2_id), 0);
+}
+
+TEST_P(BSPTreePWN, SkipEdgesAlongIPath) {
+  // This test verifies that the I-path skips polygon edges that follow the
+  // I-path.
+  //
+  // The test starts with a rectangular prism, then cuts off the top so that
+  // there is an edge that runs parallel to the tilted cube's north edge, but
+  // the cut off prism's top facet only touches the tilted cube's north-west
+  // facet at the north edge.
+
+  BSPPolygonId id = tree_.AllocateId();
+  Point3<>::BigIntRep bounding_start_y(cube_north.y().ToInt() / 4);
+  Point3<>::BigIntRep bounding_end_y(cube_north.y().ToInt() * 3 / 4);
+  RectangularPrism<> bounding_box(/*min_x=*/cube_north_west.x(),
+                                  /*min_y=*/bounding_start_y,
+                                  /*min_z=*/cube_bottom.z(),
+                                  /*max_x=*/cube_top.x(),
+                                  /*max_y=*/bounding_end_y,
+                                  /*max_z=*/cube_top.z());
+  walnut::BSPTree<> slice_top_tree;
+  const Point3<> cube_north_west_down(cube_north_west.x(), cube_north_west.y(),
+      Point3<>::BigIntRep(cube_north_west.z() - 1));
+  walnut::HalfSpace3<> slice_top_plane(cube_top, cube_north,
+                                       cube_north_west_down);
+  slice_top_tree.root.Split(slice_top_plane);
+  // Use the negative half of slice_top_plane.
+  std::vector<bool> node_path { false };
+  for (const walnut::BSPTree<>::OutputPolygon& wall :
+       slice_top_tree.GetNodeBorder(node_path.begin(), node_path.end(),
+                                    bounding_box)) {
+    AddContent(id, wall);
+  }
+
+  BSPNode<>* inside_cube = SplitToCube();
+  EXPECT_EQ(inside_cube->GetPWNForId(id), 0);
+  EXPECT_TRUE(inside_cube->IsLeaf());
+  EXPECT_THAT(inside_cube->border_contents(), IsEmpty());
+  // Front, back, side, and top. The bottom is not inside the titled cube.
+  EXPECT_THAT(inside_cube->contents(), SizeIs(4));
+
+  BSPNode<>* along_edge = SplitNorthWest(inside_cube, cube_top,
+                                         cube_north, 2.0/4);
+  EXPECT_TRUE(along_edge->IsLeaf());
+  EXPECT_THAT(along_edge->border_contents(), IsEmpty());
+  EXPECT_THAT(along_edge->contents(), SizeIs(4));
+  EXPECT_EQ(along_edge->GetPWNForId(id), 0);
 }
 
 INSTANTIATE_TEST_SUITE_P(, BSPTreePWN,
