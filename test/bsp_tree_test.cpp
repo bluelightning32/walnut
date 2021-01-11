@@ -408,7 +408,7 @@ TEST(BSPTree, SplitVertThenDiagVertexData) {
   // neg_child2 most clockwise split plane touched by each vertex:
   // p[2]: split2.normal()
   // q1: -split1.normal()
-  // q2: split2.normal()
+  // q2: -split1.normal()
   //
   // pos_child2 most clockwise split plane touched by each vertex:
   // p[2]: -split2.normal()
@@ -458,7 +458,7 @@ TEST(BSPTree, SplitVertThenDiagVertexData) {
       EXPECT_EQ(edge.data().cw_edge_angle_tracker().current(),
                 split2.normal());
       EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
-                split2.normal());
+                -split1.normal());
     } else {
       EXPECT_EQ(edge.data().split_by, nullptr);
       EXPECT_FALSE(edge.data().cw_edge_angle_tracker().AnyReceived());

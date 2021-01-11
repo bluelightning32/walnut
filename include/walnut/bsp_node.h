@@ -57,7 +57,7 @@ class BSPEdgeInfo {
   template <int d_bits, int m_bits>
   BSPEdgeInfo(const BSPEdgeInfo& parent,
               const PluckerLine<d_bits, m_bits>& new_line) :
-    vertex_angle_tracker_(parent.cw_edge_angle_tracker_) { }
+    vertex_angle_tracker_(parent.vertex_angle_tracker_) { }
 
   // Create a new line starting on a new vertex on the parent's existing edge.
   //
