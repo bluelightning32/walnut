@@ -166,6 +166,13 @@ class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
     EXPECT_EQ(split_planes.size(), 6);
 
     BSPNode<>* pos = &tree_.root;
+    // Splits by the:
+    // 1. north-west facet
+    // 2. south facet
+    // 3. north-east facet
+    // 4. south-west facet
+    // 5. south-east facet
+    // 6. north facet
     for (BSPNode<>::HalfSpace3Rep& split_plane : split_planes) {
       pos->Split(split_plane);
       pos = pos->negative_child();
@@ -670,6 +677,43 @@ TEST_P(BSPTreePWN, SplitTwice) {
   EXPECT_THAT(child2->border_contents(), IsEmpty());
   EXPECT_THAT(child2->contents(), SizeIs(1));
   EXPECT_EQ(child2->GetPWNForId(id), 1 * GetPWNFlip());
+}
+
+TEST_P(BSPTreePWN, IPathOvershootsMValue) {
+  // This test creates a rectangular prism that overlaps the north half of the
+  // titled cube, starting at cube_top. Even though the prism ends at the cube
+  // top vertex, the titled cube splits overshoot the prism, which means they
+  // enter then exit it for a PWN of 0.
+  //
+  // Later the titled cube is split again on the north-west side. For that
+  // split, the prism is re-entered.
+  BSPPolygonId id = tree_.AllocateId();
+  EXPECT_EQ(id, 0);
+
+  Point3<>::BigIntRep polygon_y(cube_north.y().ToInt()/4);
+  RectangularPrism<> prism(/*min_x=*/cube_north_west.x(),
+                           /*min_y=*/cube_top.y(),
+                           /*min_z=*/cube_bottom.z(),
+                           /*max_x=*/cube_north_east.x(),
+                           /*max_y=*/cube_north.y(),
+                           /*max_z=*/cube_top.z());
+
+  for (const ConvexPolygon<>& wall : prism.GetWalls()) {
+    AddContent(id, wall);
+  }
+
+  BSPNode<>* inside_cube = SplitToCube();
+  EXPECT_TRUE(inside_cube->IsLeaf());
+  EXPECT_THAT(inside_cube->border_contents(), IsEmpty());
+  EXPECT_THAT(inside_cube->contents(), SizeIs(1));
+  EXPECT_EQ(inside_cube->GetPWNForId(id), 0);
+
+  BSPNode<>* child = SplitNorthWest(inside_cube, cube_top, cube_north,
+                                    1.0/2);
+  EXPECT_TRUE(child->IsLeaf());
+  EXPECT_THAT(child->border_contents(), IsEmpty());
+  EXPECT_THAT(child->contents(), SizeIs(1));
+  EXPECT_EQ(child->GetPWNForId(id), 1 * GetPWNFlip());
 }
 
 INSTANTIATE_TEST_SUITE_P(, BSPTreePWN,
