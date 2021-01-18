@@ -51,7 +51,7 @@ TEST(RXYCompareBivector, DiagonalPlanes) {
   EXPECT_GT(h1_transformed.normal().DropDimension(2).Cross(
         h2_transformed.normal().DropDimension(2)), 0);
 
-  EXPECT_GT(RXYCompareBivector(h1.normal(), h2.normal()), 0);
+  EXPECT_EQ(RXYCompareBivector(h1.normal(), h2.normal()), 1);
 }
 
 TEST(RXYCompareBivector, Y0Normal) {
@@ -96,7 +96,7 @@ TEST(RXYCompareBivector, Y0Normal) {
   EXPECT_LT(h1_transformed.normal().DropDimension(2).Cross(
         h2_transformed.normal().DropDimension(2)), 0);
 
-  EXPECT_LT(RXYCompareBivector(h1.normal(), h2.normal()), 0);
+  EXPECT_EQ(RXYCompareBivector(h1.normal(), h2.normal()), -1);
 }
 
 TEST(RXYCompareBivector, X0Normal) {
@@ -146,7 +146,7 @@ TEST(RXYCompareBivector, X0Normal) {
   EXPECT_GT(h1_transformed.normal().DropDimension(2).Cross(
         h2_transformed.normal().DropDimension(2)), 0);
 
-  EXPECT_GT(RXYCompareBivector(h1.normal(), h2.normal()), 0);
+  EXPECT_EQ(RXYCompareBivector(h1.normal(), h2.normal()), 1);
 }
 
 }  // walnut
