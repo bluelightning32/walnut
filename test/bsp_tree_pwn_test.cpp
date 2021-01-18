@@ -425,15 +425,15 @@ TEST_P(BSPTreePWN, MinimumExcluded) {
   EXPECT_EQ(child->GetPWNForId(id), 0);
 }
 
-TEST_P(BSPTreePWN, IPathBends) {
-  // This test verifies that the I-path correctly follows the bends around the
+TEST_P(BSPTreePWN, MPathBends) {
+  // This test verifies that the M-path correctly follows the bends around the
   // object, instead of blindly using the split normal.
   //
-  // The test uses the I-path that follows along the north edge of the cube,
+  // The test uses the M-path that follows along the north edge of the cube,
   // then the outer north-west edge towards the north-west vertex. Overlapping
   // with the titled cube on the north end are two other rectangular prisms.
-  // The I-path will enter prism1, then prism2, leave prism2, then leave
-  // prism1. This test verifies a point on the I-path that is inside prism1 but
+  // The M-path will enter prism1, then prism2, leave prism2, then leave
+  // prism1. This test verifies a point on the M-path that is inside prism1 but
   // outside prism2.
   int y_dist = cube_north.y().ToInt() - cube_north_west.y().ToInt();
 
@@ -478,8 +478,8 @@ TEST_P(BSPTreePWN, IPathBends) {
 }
 
 TEST_P(BSPTreePWN, SkipEdgesAlongIPath) {
-  // This test verifies that the I-path skips polygon edges that follow the
-  // I-path.
+  // This test verifies that the M-path skips polygon edges that follow the
+  // M-path.
   //
   // The test starts with a rectangular prism, then cuts off the top so that
   // there is an edge that runs parallel to the tilted cube's north edge, but
@@ -524,13 +524,19 @@ TEST_P(BSPTreePWN, SkipEdgesAlongIPath) {
   EXPECT_EQ(along_edge->GetPWNForId(id), 0);
 }
 
-TEST_P(BSPTreePWN, IPathGoesThroughLeftSide) {
-  // This test verifies that the I-path goes through the left side of the edges
-  // it follows.
+TEST_P(BSPTreePWN, MPathGoesThroughStraddlingEdge) {
+  // This test verifies that the M-path goes through content edges that
+  // straddle a boundary edge.
   //
   // The test has a rectangular prism that overlaps with the tilted cube on the
-  // left side of the north edge. Since the I-path follows along the left side
-  // of its edges, it should enter the prism.
+  // left side of the north edge. The test than splits the tilted cube again
+  // such that the split plane passes through the prism.
+  //
+  // If the titled boundary cube, the north-west facet was formed befor the
+  // north-east facet. So even though the content edge appears to be coincident
+  // with the boundary edge from the north-east and north-west facets, the kerf
+  // of the north-west boundary edge moved the content edge into the north-west
+  // facet. So the M-path should go through the content prism.
 
   BSPPolygonId id = tree_.AllocateId();
   Point3<>::BigIntRep prism_start_y(cube_north.y().ToInt() / 4);
@@ -559,14 +565,16 @@ TEST_P(BSPTreePWN, IPathGoesThroughLeftSide) {
   EXPECT_EQ(inside_prism1->GetPWNForId(id), 1 * GetPWNFlip());
 }
 
-TEST_P(BSPTreePWN, IPathSkipsRightSide) {
-  // This test verifies that the I-path goes through the left side of the edges
-  // it follows, and does not pass through a polygon that does not touch the
-  // facet to the left of the edge.
+TEST_P(BSPTreePWN, MPathSkipsContentContainedByRecentSplit) {
+  // This test verifies that the M-path does not go through a content object
+  // when the content object has a edge parallel to the boundary edge, and the
+  // rest of the content object is on the side of the most recent split.
   //
   // The test has a rectangular prism that overlaps with the tilted cube on the
-  // right side of the north edge. Since the I-path follows along the left side
-  // of its edges, the PWN should not be affected by the prism.
+  // right side of the north edge. Since the north-east boundary facet was
+  // added after the north-west boundary facet, the M-path goes slightly to the
+  // left side of the north boundary edge. So the PWN should not be affected by
+  // the prism.
 
   BSPPolygonId id = tree_.AllocateId();
   Point3<>::BigIntRep prism_start_y(cube_north.y().ToInt() / 4);
@@ -595,14 +603,15 @@ TEST_P(BSPTreePWN, IPathSkipsRightSide) {
   EXPECT_EQ(inside_prism1->GetPWNForId(id), 0);
 }
 
-TEST_P(BSPTreePWN, BothEdgeSidesTouchIPath) {
-  // This test verifies that the I-path sees a crossing, even if both sides of
-  // the crossed edge are on the I-path, but on from different edges of the
-  // I-path.
+TEST_P(BSPTreePWN, BothEdgeSidesTouchMPath) {
+  // This test verifies that the M-path sees a crossing, even if both sides of
+  // the crossed edge are on the M-path, but on different edges of the M-path.
   //
   // The test has a rectangular prism that overlaps with the tilted cube on the
-  // left side of the north edge. Since the I-path follows along the left side
-  // of its edges, it should enter the prism.
+  // left side of the north edge. Due to the split order of the titled cube,
+  // the M-path follows along the left side of its edges. The last split is far
+  // enough along the north edge that the M-path should enter then leave the
+  // prism, resulting in a PWN of 0.
 
   BSPPolygonId id = tree_.AllocateId();
   Point3<>::BigIntRep prism_start_y(cube_north.y().ToInt() / 4);
@@ -686,14 +695,15 @@ TEST_P(BSPTreePWN, SplitTwice) {
   EXPECT_EQ(child2->GetPWNForId(id), 1 * GetPWNFlip());
 }
 
-TEST_P(BSPTreePWN, IPathOvershootsMValue) {
+TEST_P(BSPTreePWN, MPathOvershootsMValue) {
   // This test creates a rectangular prism that overlaps the north half of the
-  // titled cube, starting at cube_top. Even though the prism ends at the cube
-  // top vertex, the titled cube splits overshoot the prism, which means they
-  // enter then exit it for a PWN of 0.
+  // titled cube, starting at cube_top. The north-east facet is the last of the
+  // top boundary facets. So even though the prism ends at the cube top vertex,
+  // the north-east boundary kerf causes the splits to go a little deeper and
+  // the M-value is outside the rectangular prism, for a PWN of 0.
   //
   // Later the titled cube is split again on the north-west side. For that
-  // split, the prism is re-entered.
+  // split, the prism is entered.
   BSPPolygonId id = tree_.AllocateId();
   EXPECT_EQ(id, 0);
 
