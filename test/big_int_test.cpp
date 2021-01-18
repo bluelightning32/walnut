@@ -658,4 +658,28 @@ TEST(BigInt, CompareInt64MinAgainstInt64Max) {
   EXPECT_EQ(a.Compare(b), -1);
 }
 
+TEST(BigInt, Lt0Against0) {
+  const BigInt<128> a(0);
+  const BigInt<128> b(0);
+  EXPECT_FALSE(a < b);
+}
+
+TEST(BigInt, LtEq0Against0) {
+  const BigInt<128> a(0);
+  const BigInt<128> b(0);
+  EXPECT_TRUE(a <= b);
+}
+
+TEST(BigInt, Gt0Against0) {
+  const BigInt<128> a(0);
+  const BigInt<128> b(0);
+  EXPECT_FALSE(a > b);
+}
+
+TEST(BigInt, GtEq0Against0) {
+  const BigInt<128> a(0);
+  const BigInt<128> b(0);
+  EXPECT_TRUE(a >= b);
+}
+
 }  // walnut
