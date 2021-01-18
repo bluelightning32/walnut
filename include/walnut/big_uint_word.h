@@ -40,8 +40,8 @@ class BigUIntWordBase {
 
  public:
   static constexpr bool has_overloads = true;
-  static constexpr int bytes_per_word = sizeof(uint64_t);
-  static constexpr int bits_per_word = 8 * bytes_per_word;
+  static constexpr size_t bytes_per_word = sizeof(uint64_t);
+  static constexpr size_t bits_per_word = 8 * bytes_per_word;
 
   constexpr BigUIntWordBase() : i_(0) { }
 

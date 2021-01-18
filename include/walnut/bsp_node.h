@@ -26,7 +26,7 @@ class BSPNode;
 template <typename InputPolygonTemplate>
 class BSPTree;
 
-template <int point3_bits_template>
+template <size_t point3_bits_template>
 class BSPDefaultPolygon;
 
 using BSPPolygonId = size_t;
@@ -43,18 +43,18 @@ class BSPEdgeInfo {
   //
   // Inherit the edge trackers from the parent, but initialize the vertex
   // tracker from the edge trackers.
-  template <int num_bits, int denom_bits>
+  template <size_t num_bits, size_t denom_bits>
   BSPEdgeInfo(const BSPEdgeInfo& parent,
               const HomoPoint3<num_bits, denom_bits>& new_source) :
+    split_by(parent.split_by),
     cw_edge_angle_tracker_(parent.cw_edge_angle_tracker_),
-    vertex_angle_tracker_(parent.cw_edge_angle_tracker_),
-    split_by(parent.split_by) { }
+    vertex_angle_tracker_(parent.cw_edge_angle_tracker_) { }
 
   // Create a new line from the parent's existing vertex.
   //
   // Inherit the vertex trackers from the parent, but default initialize the
   // edge trackers.
-  template <int d_bits, int m_bits>
+  template <size_t d_bits, size_t m_bits>
   BSPEdgeInfo(const BSPEdgeInfo& parent,
               const PluckerLine<d_bits, m_bits>& new_line) :
     vertex_angle_tracker_(parent.vertex_angle_tracker_) { }
@@ -63,7 +63,7 @@ class BSPEdgeInfo {
   //
   // Initialize the vertex tracker from the parent's edge trackers. Default
   // initialize the edge trackers.
-  template <int num_bits, int denom_bits, int d_bits, int m_bits>
+  template <size_t num_bits, size_t denom_bits, size_t d_bits, size_t m_bits>
   BSPEdgeInfo(const BSPEdgeInfo& parent,
               const HomoPoint3<num_bits, denom_bits>& new_source,
               const PluckerLine<d_bits, m_bits>& new_line) :
@@ -98,7 +98,7 @@ class BSPEdgeInfo {
     vertex_angle_tracker_;
 };
 
-template <int point3_bits>
+template <size_t point3_bits>
 class BSPDefaultPolygon :
   public ConvexPolygon<point3_bits,
     BSPEdgeInfo<BSPNode<BSPDefaultPolygon<point3_bits>>,

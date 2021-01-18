@@ -8,7 +8,7 @@ namespace walnut {
 
 // This is used by FactoryWithVertexData to construct a ConvexPolygon and
 // specify the inital values of the vertex data.
-template <int point3_bits = 32,
+template <size_t point3_bits = 32,
           typename VertexDataTemplate = NoVertexData>
 struct Point3WithVertexData : public Point3<point3_bits> {
   using Parent = Point3<point3_bits>;

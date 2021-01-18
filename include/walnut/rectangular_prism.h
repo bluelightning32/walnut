@@ -8,14 +8,14 @@
 
 namespace walnut {
 
-template <int point3_bits_template = 32>
+template <size_t point3_bits_template = 32>
 struct RectangularPrism {
   using Point3Rep = Point3<point3_bits_template>;
   using BigIntRep = typename Point3Rep::BigIntRep;
   using HalfSpace3Rep =
     typename HalfSpace3FromPoint3Builder<point3_bits_template>::HalfSpace3Rep;
 
-  static constexpr int point3_bits = point3_bits_template;
+  static constexpr size_t point3_bits = point3_bits_template;
 
   RectangularPrism(Point3Rep min_point, Point3Rep max_point) :
     min_point(min_point),
@@ -42,7 +42,7 @@ struct RectangularPrism {
   }
 
   // Returns true if `p` is on the border (but still inside) of the prism.
-  template <int num_bits, int denom_bits>
+  template <size_t num_bits, size_t denom_bits>
   bool IsOnBorder(const HomoPoint3<num_bits, denom_bits>& p) const {
     if (!IsInside(p)) return false;
     for (int i = 0; i < 3; ++i) {
@@ -63,13 +63,13 @@ struct RectangularPrism {
   }
 
   // Returns true if `p` is inside the prism.
-  template <int num_bits, int denom_bits>
+  template <size_t num_bits, size_t denom_bits>
   bool IsInside(const HomoPoint3<num_bits, denom_bits>& p) const {
     const int mult = p.w().GetAbsMult();
     for (int i = 0; i < 3; ++i) {
       auto p_flipped = p.vector_from_origin().components()[i] * mult;
-      if (p_flipped < min_point.components()[i] * p.w() * mult ||
-          p_flipped > max_point.components()[i] * p.w() * mult) return false;
+      if (p_flipped < min_point.components()[i] * p.w() * mult) return false;
+      if (p_flipped > max_point.components()[i] * p.w() * mult) return false;
     }
     return true;
   }
@@ -88,7 +88,7 @@ struct RectangularPrism {
   Point3Rep max_point;
 };
 
-template <int point3_bits>
+template <size_t point3_bits>
 template <typename ConvexPolygonRep>
 ConvexPolygonRep RectangularPrism<point3_bits>::IntersectPlane(
     const HalfSpace3Rep& plane) const {
@@ -161,7 +161,7 @@ ConvexPolygonRep RectangularPrism<point3_bits>::IntersectPlane(
   return result;
 }
 
-template <int point3_bits>
+template <size_t point3_bits>
 std::vector<ConvexPolygon<RectangularPrism<point3_bits>::point3_bits>>
 RectangularPrism<point3_bits>::GetWalls() const {
   Point3<point3_bits> p[] = {
@@ -212,7 +212,7 @@ RectangularPrism<point3_bits>::GetWalls() const {
   return result;
 }
 
-template <int point3_bits = 32>
+template <size_t point3_bits = 32>
 std::ostream& operator<<(std::ostream& out,
                          const RectangularPrism<point3_bits>& rect) {
   out << "min_point=" << rect.min_point;

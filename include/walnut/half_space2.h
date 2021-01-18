@@ -8,7 +8,8 @@
 namespace walnut {
 
 // Represents part of R^2 on one side of a line.
-template <int vector_bits_template = 31*2 + 3, int dist_bits_template = 31*3 + 3>
+template <size_t vector_bits_template = 31*2 + 3,
+          size_t dist_bits_template = 31*3 + 3>
 class HalfSpace2 {
  public:
   using VectorRep = Vector2<vector_bits_template>;
@@ -16,9 +17,9 @@ class HalfSpace2 {
   using DistInt = BigInt<dist_bits_template>;
 
   // The minimum number of bits to support for each of the x and y coordinates.
-  static constexpr int vector_bits = vector_bits_template;
+  static constexpr size_t vector_bits = vector_bits_template;
   // The minimum number of bits to support for the d coordinate.
-  static constexpr int dist_bits = dist_bits_template;
+  static constexpr size_t dist_bits = dist_bits_template;
 
   const VectorInt& x() const {
     return normal_.x();
@@ -47,7 +48,7 @@ class HalfSpace2 {
   // Leaves the coordinates in an undefined state
   HalfSpace2() = default;
 
-  template <int other_vector_bits>
+  template <size_t other_vector_bits>
   HalfSpace2(const Vector2<other_vector_bits>& normal, const DistInt& dist) :
     normal_(normal), dist_(dist) { }
 
@@ -56,38 +57,38 @@ class HalfSpace2 {
 
   HalfSpace2(int x, int y, int dist) : normal_(x, y), dist_(dist) { }
 
-  template <int other_vector_bits, int other_dist_bits>
+  template <size_t other_vector_bits, size_t other_dist_bits>
   HalfSpace2(const HalfSpace2<other_vector_bits, other_dist_bits>& other) :
     HalfSpace2(other.normal(), other.d()) { }
 
-  template <int point_bits>
+  template <size_t point_bits>
   HalfSpace2(const Point2<point_bits>& p1, const Point2<point_bits>& p2) :
     normal_((p2 - p1).GetPerpendicular()),
     dist_(normal_.Dot(p1.vector_from_origin())) { }
 
   // Returns >0 if `v` is in the half-space, 0 if `v` is coincident with the
   // line, or <0 if `v` is outside of the half-space.
-  template <int v_bits>
+  template <size_t v_bits>
   int Compare(const Point2<v_bits>& v) const {
     return normal_.Dot(v.vector_from_origin()).Compare(dist_);
   }
 
   // Returns true if the point is on the line
-  template <int v_bits>
+  template <size_t v_bits>
   bool IsCoincident(const Point2<v_bits>& v) const {
     return Compare(v) == 0;
   }
 
   // Returns >0 if `v` is in the half-space, 0 if `v` is coincident with the
   // line, or <0 if `v` is outside of the half-space.
-  template <int v_num_bits, int v_denom_bits>
+  template <size_t v_num_bits, size_t v_denom_bits>
   int Compare(const HomoPoint2<v_num_bits, v_denom_bits>& v) const {
     return normal_.Dot(v.vector_from_origin()).Compare(
         v.dist_denom() * dist_) * v.dist_denom().GetAbsMult();
   }
 
   // Returns true if the point is on the line
-  template <int v_num_bits, int v_denom_bits>
+  template <size_t v_num_bits, size_t v_denom_bits>
   bool IsCoincident(const HomoPoint2<v_num_bits, v_denom_bits>& v) const {
     return Compare(v) == 0;
   }
@@ -104,7 +105,7 @@ class HalfSpace2 {
   //
   // Two HalfSpace2s are not equal if they refer to different sides of the same
   // line.
-  template <int other_vector_bits, int other_dist_bits>
+  template <size_t other_vector_bits, size_t other_dist_bits>
   bool operator==(
       const HalfSpace2<other_vector_bits, other_dist_bits>& other) const {
     BigInt<std::max(vector_bits, dist_bits)> scale_other;
@@ -126,7 +127,7 @@ class HalfSpace2 {
   }
 
   // Note that everything equals the zero vector.
-  template <int other_vector_bits, int other_dist_bits>
+  template <size_t other_vector_bits, size_t other_dist_bits>
   bool operator!=(
       const HalfSpace2<other_vector_bits, other_dist_bits>& other) const {
     return !(*this == other);
@@ -166,7 +167,7 @@ class HalfSpace2 {
 // The only reason to use this wrapper is that it figures out how many bits are
 // necessary in the worst case for the numerator and denominator, given the
 // number of bits in each Point2.
-template <int point3_bits_template = 32>
+template <size_t point3_bits_template = 32>
 class HalfSpace2FromPoint2Builder {
  public:
   using Point2Rep = Point2<point3_bits_template>;
@@ -197,7 +198,7 @@ class HalfSpace2FromPoint2Builder {
   }
 };
 
-template <int vector_bits, int dist_bits>
+template <size_t vector_bits, size_t dist_bits>
 std::ostream& operator<<(std::ostream& out,
                          const HalfSpace2<vector_bits, dist_bits>& p) {
   return out << "{ x*" << p.x()

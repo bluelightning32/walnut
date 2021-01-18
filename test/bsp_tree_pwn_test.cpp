@@ -49,22 +49,22 @@ ConvexPolygon<std::iterator_traits<
 // is approximated, because the coordinates of an exact cube would contain
 // either sqrt(2) or sqrt(3).
 //
-//                  north
-//                   /|\
-//                --- | ---
-//  north_west   /    |    \   north_east
-//            /--     |     --\
-//            |      top &    |
-//            |     bottom    |
-//            |    /     \    |
-//            | ---       --- |
-//            |/             \|
-// south_west \               / south_east
-//             ---         ---
-//                \       /
-//                 --- ---
-//                    v
-//                  south
+//                  north                          |
+//                   /|\                           |
+//                --- | ---                        |
+//  north_west   /    |    \   north_east          |
+//            /--     |     --\                    |
+//            |      top &    |                    |
+//            |     bottom    |                    |
+//            |    /     \    |                    |
+//            | ---       --- |                    |
+//            |/             \|                    |
+// south_west \               / south_east         |
+//             ---         ---                     |
+//                \       /                        |
+//                 --- ---                         |
+//                    v                            |
+//                  south                          |
 //
 const Point3<> cube_top(0, 0, 11);
 const Point3<> cube_bottom(0, 0, -11);
@@ -191,20 +191,20 @@ class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
   // If the input node is the cube, the M-int path will follow along the east
   // of the north edge, then to the south-east of the outer north-west edge.
   //
-  //         /|\
-  //      --- | ---
-  //     / << |    \
-  //  /-- / ^ |     --\
-  //  |M</  M |       |
-  //  |     _/ \_     |
-  //  |    /     \    |
-  //  | ---       --- |
-  //  |/             \|
-  //  \               /
-  //   ---         ---
-  //      \       /
-  //       --- ---
-  //          v
+  //         /|\                         |
+  //      --- | ---                      |
+  //     / << |    \                     |
+  //  /-- / ^ |     --\                  |
+  //  |M</  M |       |                  |
+  //  |     _/ \_     |                  |
+  //  |    /     \    |                  |
+  //  | ---       --- |                  |
+  //  |/             \|                  |
+  //  \               /                  |
+  //   ---         ---                   |
+  //      \       /                      |
+  //       --- ---                       |
+  //          v                          |
   //
   BSPNode<>* SplitNorthWest(BSPNode<>* parent, const Point3<>& edge_start,
                             const Point3<>& edge_dest, double edge_dist) {

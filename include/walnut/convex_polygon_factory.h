@@ -78,7 +78,7 @@ class ConvexPolygonFactory :
     return -cross_product.components()[drop_dimension].GetAbsMult();
   }
 
-  static constexpr int point3_bits = InputPoint3Template::component_bits;
+  static constexpr size_t point3_bits = InputPoint3Template::component_bits;
  
  protected:
   virtual void Emit(ConvexPolygonRep&& polygon) = 0;

@@ -7,6 +7,12 @@ project(walnut
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if(MSVC)
+    add_compile_options(/W4 /WX)
+else()
+    add_compile_options(-Wall -Werror)
+endif()
+
 add_subdirectory(visualizations EXCLUDE_FROM_ALL)
 get_property(visualization_targets
              DIRECTORY visualizations

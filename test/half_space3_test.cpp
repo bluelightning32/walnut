@@ -103,8 +103,8 @@ TEST(HalfSpace3, CompareParallelPlane) {
     negative_half_spaces.push_back(-h);
   }
 
-  for (int i = 0; i < positive_half_spaces.size(); ++i) {
-    for (int j = 0; j < positive_half_spaces.size(); ++j) {
+  for (size_t i = 0; i < positive_half_spaces.size(); ++i) {
+    for (size_t j = 0; j < positive_half_spaces.size(); ++j) {
       if (i < j) {
         EXPECT_LT(positive_half_spaces[i].Compare(positive_half_spaces[j],
                                                   /*nonzero_dimension=*/0), 0)

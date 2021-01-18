@@ -448,17 +448,17 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesBisect) {
 
 TEST(ConvexPolygon, GetOppositeEdgeIndicesCWMidSameDir) {
   //
-  //  V |
-  //    v
-  //
-  // p[0]
-  // ^   \
-  // |    p[1]
-  //  \   |
-  //  |    \
-  //  |    p[2]
-  //   \  /
-  //    p[3]
+  //  V |         |
+  //    v         |
+  //              |
+  // p[0]         |
+  // ^   \        |
+  // |    p[1]    |
+  //  \   |       |
+  //  |    \      |
+  //  |    p[2]   |
+  //   \  /       |
+  //    p[3]      |
   //
   std::vector<Point3<32>> p{
     Point3<32>(0, 0, 0),
@@ -471,17 +471,21 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesCWMidSameDir) {
   Vector2<> vector(0, -1);
   std::pair<size_t, size_t> opp_edges = polygon.GetOppositeEdgeIndicesBisect(
       vector, /*drop_dimension=*/2);
+  const auto& edge1_dir = polygon.edge(opp_edges.first).line.d();
+  const auto& edge2_dir = polygon.edge(opp_edges.second).line.d();
+  EXPECT_GT(vector.Dot(edge1_dir.DropDimension(2)), 0);
+  EXPECT_LT(vector.Dot(edge2_dir.DropDimension(2)), 0);
 }
 
 TEST(ConvexPolygon, GetOppositeEdgeIndicesCCWMidSameDir) {
   //
-  //  V ->
-  //
-  // p[0] <------
-  //   \         \
-  //   p[1]      p[3]
-  //     \        /
-  //      --> p[2]
+  //  V ->                 |
+  //                       |
+  // p[0] <------          |
+  //   \         \         |
+  //   p[1]      p[3]      |
+  //     \        /        |
+  //      --> p[2]         |
   //
   std::vector<Point3<32>> p{
     Point3<32>(0, 0, 0),
@@ -548,13 +552,13 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesDenom) {
   // multiplier should have no effect on the result, because it is
   // applied to the both the x, y, and z components and the w component.
   //
-  //  V ->
-  //
-  // p[0] <------
-  //   \         \
-  //   p[1]      p[3]
-  //     \        /
-  //      --> p[2]
+  //  V ->               |
+  //                     |
+  // p[0] <------        |
+  //   \         \       |
+  //   p[1]      p[3]    |
+  //     \        /      |
+  //      --> p[2]       |
   //
   std::vector<HomoPoint3<>> p{
     HomoPoint3<32>(101, -101, 0, 1),
@@ -565,7 +569,7 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesDenom) {
 
   HalfSpace3<> plane(0, 0, 1, 0);
 
-  for (int i = 0; i < p.size(); ++i) {
+  for (size_t i = 0; i < p.size(); ++i) {
     for (int multiple : {-1, 1000, -1000}) {
       std::vector<HomoPoint3<>> p_copy(p);
       p_copy[i].x() *= multiple;
@@ -597,8 +601,8 @@ TEST(ConvexPolygon, GetGreaterCycleIndex) {
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
 
-  for (int a = 0; a < polygon.vertex_count(); ++a) {
-    for (int b = 0; b < polygon.vertex_count(); ++b) {
+  for (size_t a = 0; a < polygon.vertex_count(); ++a) {
+    for (size_t b = 0; b < polygon.vertex_count(); ++b) {
       size_t ret = polygon.GetGreaterCycleIndex(a, b);
       EXPECT_GE(ret, a);
       EXPECT_LT(ret, a + polygon.vertex_count());
@@ -867,29 +871,29 @@ TEST(ConvexPolygon, GetExtremeIndexBisect3DIsNot2DProjection) {
   // If the polygon was rotated to be flat on the XY plane, it would look like
   // this:
   //
-  //      p[3]
-  //   /       \
-  // p[4]      p[2]
-  //  |          ^
-  //  |          |
-  //  v          |
-  // p[0] ---> p[1]
+  //      p[3]          |
+  //   /       \        |
+  // p[4]      p[2]     |
+  //  |          ^      |
+  //  |          |      |
+  //  v          |      |
+  // p[0] ---> p[1]     |
   //
   // However, dropping the X dimension (so that Y and Z are remaining, and Z
   // was a fraction of X) also effectively non-uniformly scales the polygon,
   // squishing horizontally so that it looks like this:
   //
-  //      p[3]
-  //    /     \
-  //   /       \
-  // p[4]      p[2]
-  //  |          ^
-  //  |          |
-  //  |          |
-  //  |          |
-  //  |          |
-  //  v          |
-  // p[0] ---> p[1]
+  //      p[3]          |
+  //    /     \         |
+  //   /       \        |
+  // p[4]      p[2]     |
+  //  |          ^      |
+  //  |          |      |
+  //  |          |      |
+  //  |          |      |
+  //  |          |      |
+  //  v          |      |
+  // p[0] ---> p[1]     |
   //
   // So for a vector from p[0] to p[2], in the first polygon, p[2] is the
   // extreme index, but for the below diagram, p[3] is the extreme index. This
@@ -1173,9 +1177,6 @@ TEST_P(ConvexPolygonFindSplitRanges, AtNewVertices) {
     /*n[0]=*/Point3<32>(0, 1, 1),
     /*n[1]=*/Point3<32>(1, 1, 2),
   };
-
-  Point3<32> neg_side_p[] = { p[0], p[1], n[1], n[0] };
-  Point3<32> pos_side_p[] = { p[2], p[3], n[0], n[1] };
 
   ConvexPolygon<32> polygon(MakeConvexPolygon(p));
 

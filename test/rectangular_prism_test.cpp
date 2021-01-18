@@ -57,7 +57,7 @@ TEST(RectangularPrism, IntersectPlaneZUp) {
                                                                /*d=*/0));
   result.SortVertices();
   std::vector<HomoPoint3<>> vertices;
-  for (int i = 0; i < result.vertex_count(); ++i) {
+  for (size_t i = 0; i < result.vertex_count(); ++i) {
     vertices.push_back(result.vertex(i));
   }
   EXPECT_THAT(vertices, ElementsAre(
@@ -74,7 +74,7 @@ TEST(RectangularPrism, IntersectPlaneZUpFactional) {
                                                   /*d=*/19));
   result.SortVertices();
   std::vector<HomoPoint3<>> vertices;
-  for (int i = 0; i < result.vertex_count(); ++i) {
+  for (size_t i = 0; i < result.vertex_count(); ++i) {
     vertices.push_back(result.vertex(i));
   }
   EXPECT_THAT(vertices, ElementsAre(HomoPoint3<32>{-8*20, -8*20, 19, 20},
@@ -92,7 +92,7 @@ TEST(RectangularPrism, IntersectPlaneZDown) {
                                                                /*d=*/0));
   result.SortVertices();
   std::vector<HomoPoint3<>> vertices;
-  for (int i = 0; i < result.vertex_count(); ++i) {
+  for (size_t i = 0; i < result.vertex_count(); ++i) {
     vertices.push_back(result.vertex(i));
   }
   EXPECT_THAT(vertices, ElementsAre(
@@ -112,7 +112,7 @@ TEST(RectangularPrism, IntersectPlaneDiagPos) {
                                                                /*d=*/12));
   result.SortVertices();
   std::vector<HomoPoint3<>> vertices;
-  for (int i = 0; i < result.vertex_count(); ++i) {
+  for (size_t i = 0; i < result.vertex_count(); ++i) {
     vertices.push_back(result.vertex(i));
   }
   EXPECT_THAT(vertices, ElementsAre(
@@ -131,7 +131,7 @@ TEST(RectangularPrism, IntersectPlaneDiagNeg) {
                                                                /*d=*/12));
   result.SortVertices();
   std::vector<HomoPoint3<>> vertices;
-  for (int i = 0; i < result.vertex_count(); ++i) {
+  for (size_t i = 0; i < result.vertex_count(); ++i) {
     vertices.push_back(result.vertex(i));
   }
   EXPECT_THAT(vertices, ElementsAre(
@@ -141,7 +141,7 @@ TEST(RectangularPrism, IntersectPlaneDiagNeg) {
         ));
 }
 
-template <int point3_bits>
+template <size_t point3_bits>
 void TestIntersectPlaneLowSlopeMin() {
   const BigInt<point3_bits> min_int = BigInt<point3_bits>::min_value();
   const BigInt<point3_bits> min_plus_1 = min_int + BigInt<point3_bits>(1);
@@ -169,7 +169,7 @@ void TestIntersectPlaneLowSlopeMin() {
 
     ConvexPolygon<point3_bits> result = prism.IntersectPlane(plane);
     EXPECT_EQ(result.vertex_count(), 3);
-    for (int i = 0; i < result.vertex_count(); ++i) {
+    for (size_t i = 0; i < result.vertex_count(); ++i) {
       EXPECT_TRUE(prism.IsOnBorder(result.vertex(i)));
       EXPECT_TRUE(plane.IsCoincident(result.vertex(i)));
     }
@@ -191,15 +191,15 @@ TEST(RectangularPrism, IntersectPlaneLowSlopeMin256) {
 struct StringVertexData : public std::string {
   StringVertexData() = default;
 
-  template <int num_bits, int denom_bits>
+  template <size_t num_bits, size_t denom_bits>
   StringVertexData(const StringVertexData& parent,
                    const HomoPoint3<num_bits, denom_bits>& new_source) { }
 
-  template <int d_bits, int m_bits>
+  template <size_t d_bits, size_t m_bits>
   StringVertexData(const StringVertexData& parent,
                    const PluckerLine<d_bits, m_bits>& new_line) { }
 
-  template <int num_bits, int denom_bits, int d_bits, int m_bits>
+  template <size_t num_bits, size_t denom_bits, size_t d_bits, size_t m_bits>
   StringVertexData(const StringVertexData& parent,
                    const HomoPoint3<num_bits, denom_bits>& new_source,
                    const PluckerLine<d_bits, m_bits>& new_line) { }
@@ -218,12 +218,12 @@ TEST(RectangularPrism, IntersectPlaneZUpWithData) {
                                                         /*d=*/0));
   result.SortVertices();
   std::vector<HomoPoint3<>> vertices;
-  for (int i = 0; i < result.vertex_count(); ++i) {
+  for (size_t i = 0; i < result.vertex_count(); ++i) {
     vertices.push_back(result.vertex(i));
     EXPECT_EQ(result.vertex_data(i), "");
     result.vertex_data(i) = std::to_string(i);
   }
-  for (int i = 0; i < result.vertex_count(); ++i) {
+  for (size_t i = 0; i < result.vertex_count(); ++i) {
     EXPECT_EQ(result.vertex_data(i), std::to_string(i));
   }
   EXPECT_THAT(vertices, ElementsAre(

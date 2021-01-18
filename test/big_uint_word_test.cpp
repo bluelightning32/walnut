@@ -111,7 +111,7 @@ TYPED_TEST(BigUIntWordTest, AddCompleteWrapAround) {
 TYPED_TEST(BigUIntWordTest, ShiftRightAllOnes) {
   TypeParam low{-1};
   TypeParam high{-1};
-  for (int i = 0; i < TypeParam::bits_per_word; ++i) {
+  for (size_t i = 0; i < TypeParam::bits_per_word; ++i) {
     EXPECT_EQ(low.ShiftRight(high, i), low);
   }
 }
@@ -119,7 +119,7 @@ TYPED_TEST(BigUIntWordTest, ShiftRightAllOnes) {
 TYPED_TEST(BigUIntWordTest, ShiftRightLowAllOnes) {
   TypeParam low{-1};
   TypeParam high{0};
-  for (int i = 0; i < TypeParam::bits_per_word; ++i) {
+  for (size_t i = 0; i < TypeParam::bits_per_word; ++i) {
     EXPECT_EQ(low.ShiftRight(high, i), low >> i);
   }
 }
@@ -128,7 +128,7 @@ TYPED_TEST(BigUIntWordTest, ShiftRightHighAllOnes) {
   TypeParam low{0};
   TypeParam high{-1};
   EXPECT_EQ(low.ShiftRight(high, 0), low);
-  for (int i = 1; i < TypeParam::bits_per_word; ++i) {
+  for (size_t i = 1; i < TypeParam::bits_per_word; ++i) {
     EXPECT_EQ(low.ShiftRight(high, i), high << (TypeParam::bits_per_word - i));
   }
 }

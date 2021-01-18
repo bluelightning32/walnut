@@ -188,7 +188,7 @@ template <typename Point3RepTemplate>
 void MonotoneTriangulator<Point3RepTemplate>::SwitchChains(
     const Point3Rep& next) {
   const Point3Rep* reflex_back = reflex_stack_.back();
-  for (int i = 0; i < reflex_stack_.size() - 1; ++i) {
+  for (size_t i = 0; i < reflex_stack_.size() - 1; ++i) {
     const Point3Rep* p1;
     const Point3Rep* p2;
     if (top_chain_is_current_) {

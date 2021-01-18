@@ -62,7 +62,7 @@ TEST(BigUInt, max_value128) {
 TEST(BigUInt, ConstructorAssertsOnOverflow) {
   static constexpr int big_bits = BigUInt<32>::max_bits*2;
   BigUInt<big_bits> big_value = BigUInt<big_bits>::max_value();
-  ASSERT_DEBUG_DEATH(BigUInt<32> constructed(big_value), "overflow");
+  ASSERT_DEBUG_DEATH(BigUInt<32> constructed(big_value), "max_bytes");
 }
 
 TEST(BigUInt, LeftShift) {
@@ -142,7 +142,7 @@ TEST(BigUInt, AddSubtractCarry3Words) {
 }
 
 TEST(BigUInt, AddLeftShiftedAll1sTo0SingleWord) {
-  for (int i = 0; i < BigUIntWord::bits_per_word; ++i) {
+  for (size_t i = 0; i < BigUIntWord::bits_per_word; ++i) {
     BigUInt<64> result(0);
     result.AddLeftShifted(BigUIntWord{-1}, i);
     BigUInt<64> expected = BigUInt<64>{BigUIntWord{-1}} << i;
@@ -151,7 +151,7 @@ TEST(BigUInt, AddLeftShiftedAll1sTo0SingleWord) {
 }
 
 TEST(BigUInt, AddLeftShiftedAll1sTo0DoubleWord) {
-  for (int i = 0; i < BigUIntWord::bits_per_word * 2; ++i) {
+  for (size_t i = 0; i < BigUIntWord::bits_per_word * 2; ++i) {
     BigUInt<128> result(0);
     result.AddLeftShifted(BigUIntWord{-1}, i);
     BigUInt<128> expected = BigUInt<128>{BigUIntWord{-1}} << i;
@@ -160,7 +160,7 @@ TEST(BigUInt, AddLeftShiftedAll1sTo0DoubleWord) {
 }
 
 TEST(BigUInt, AddLeftShiftedAll1sTo0TripleWord) {
-  for (int i = 0; i < BigUIntWord::bits_per_word * 3; ++i) {
+  for (size_t i = 0; i < BigUIntWord::bits_per_word * 3; ++i) {
     BigUInt<192> result(0);
     result.AddLeftShifted(BigUIntWord{-1}, i);
     EXPECT_EQ(result, BigUInt<192>{BigUIntWord{-1}} << i);
@@ -179,7 +179,7 @@ TEST(BigUInt, PlusEqual) {
 }
 
 TEST(BigUInt, SubtractLeftShiftedAll1sFromAll1sSingleWord) {
-  for (int i = 0; i < BigUIntWord::bits_per_word; ++i) {
+  for (size_t i = 0; i < BigUIntWord::bits_per_word; ++i) {
     BigUInt<64> result(-1);
     result.SubtractLeftShifted(BigUInt<64>{-1}, i);
     BigUInt<64> expected = i > 0 ?
@@ -190,7 +190,7 @@ TEST(BigUInt, SubtractLeftShiftedAll1sFromAll1sSingleWord) {
 }
 
 TEST(BigUInt, SubtractLeftShiftedTripleFromTriple) {
-  for (int i = 0; i < BigUIntWord::bits_per_word; ++i) {
+  for (size_t i = 0; i < BigUIntWord::bits_per_word; ++i) {
     BigUInt<192> result(-1);
     result.SubtractLeftShifted(BigUInt<192>{-1}, i);
     BigUInt<64> expected = i > 0 ?
@@ -202,7 +202,7 @@ TEST(BigUInt, SubtractLeftShiftedTripleFromTriple) {
 
 TEST(BigUInt, SubtractLeftShiftedTripleUnderflow) {
   const BigUInt<192> all1s(-1);
-  for (int i = 0; i < BigUIntWord::bits_per_word; ++i) {
+  for (size_t i = 0; i < BigUIntWord::bits_per_word; ++i) {
     BigUInt<192> result(0);
     result.SubtractLeftShifted(BigUInt<64>{1}, i);
     BigUInt<192> expected = i > 0 ?
@@ -342,9 +342,9 @@ TEST(BigUInt, MultiplyUInt32MaxWord) {
 TEST(BigUInt, MultiplyWordPower2) {
   const BigUInt<128> a(1);
   const BigUIntWord b(1);
-  for (int i = 0; i < BigUIntWord::bits_per_word * 2; i++) {
+  for (size_t i = 0; i < BigUIntWord::bits_per_word * 2; i++) {
     const BigUInt<192> a_shifted = a << i;
-    for (int j = 0; j < BigUIntWord::bits_per_word - 2; j++) {
+    for (size_t j = 0; j < BigUIntWord::bits_per_word - 2; j++) {
       const BigUIntWord b_shifted = b << j;
       const BigUInt<192> result = a_shifted.Multiply<>(b_shifted);
       const BigUInt<192> expected = (BigUInt<192>{1} << (i + j));
@@ -424,9 +424,9 @@ TEST(BigUInt, DivideUInt64MaxByUInt32Max3) {
 }
 
 TEST(BigUInt, DivideSinglePower2) {
-  for (int i = 1; i < BigUIntWord::bits_per_word * 1; i++) {
+  for (size_t i = 1; i < BigUIntWord::bits_per_word * 1; i++) {
     const BigUInt<64> a = BigUInt<64>{1} << i;
-    for (int j = 1; j <= i; j++) {
+    for (size_t j = 1; j <= i; j++) {
       const BigUInt<64> b = BigUInt<64>{1} << j;
       const BigUInt<64> result = a / b;
       const BigUInt<64> expected = (BigUInt<64>{1} << (i - j));
@@ -436,9 +436,9 @@ TEST(BigUInt, DivideSinglePower2) {
 }
 
 TEST(BigUInt, DivideDoublePower2) {
-  for (int i = 1; i < BigUIntWord::bits_per_word * 2; i++) {
+  for (size_t i = 1; i < BigUIntWord::bits_per_word * 2; i++) {
     const BigUInt<128> a = BigUInt<128>{1} << i;
-    for (int j = 1; j <= i; j++) {
+    for (size_t j = 1; j <= i; j++) {
       const BigUInt<128> b = BigUInt<128>{1} << j;
       const BigUInt<128> result = a / b;
       const BigUInt<128> expected = (BigUInt<128>{1} << (i - j));
@@ -448,9 +448,9 @@ TEST(BigUInt, DivideDoublePower2) {
 }
 
 TEST(BigUInt, ModSinglePower2Plus1) {
-  for (int i = 1; i < BigUIntWord::bits_per_word * 1; i++) {
+  for (size_t i = 1; i < BigUIntWord::bits_per_word * 1; i++) {
     const BigUInt<64> a = (BigUInt<64>{1} << i) + BigUInt<64>{1};
-    for (int j = 1; j <= i; j++) {
+    for (size_t j = 1; j <= i; j++) {
       const BigUInt<64> b = BigUInt<64>{1} << j;
       const BigUInt<64> result = a % b;
       const BigUInt<64> expected{1};
@@ -468,9 +468,9 @@ TEST(BigUInt, ModP65plus1by2) {
 }
 
 TEST(BigUInt, ModDoublePower2Plus1) {
-  for (int i = 1; i < BigUIntWord::bits_per_word * 2; i++) {
+  for (size_t i = 1; i < BigUIntWord::bits_per_word * 2; i++) {
     const BigUInt<128> a = (BigUInt<128>{1} << i) + BigUInt<64>{1};
-    for (int j = 1; j <= i; j++) {
+    for (size_t j = 1; j <= i; j++) {
       const BigUInt<128> b = BigUInt<128>{1} << j;
       const BigUInt<128> result = a % b;
       const BigUInt<64> expected{1};

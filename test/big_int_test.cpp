@@ -25,7 +25,7 @@ TEST(BigInt, Int64Construction) {
 TEST(BigInt, ConstructorAssertsOnOverflow) {
   static constexpr int big_bits = BigInt<32>::word_count*BigInt<32>::bits_per_word*2;
   BigInt<big_bits> big_value = BigInt<big_bits>::max_value();
-  ASSERT_DEBUG_DEATH(BigInt<32> constructed(big_value), "overflow");
+  ASSERT_DEBUG_DEATH(BigInt<32> constructed(big_value), "max_bytes");
 }
 
 TEST(BigInt, LeftShiftPos) {
@@ -281,9 +281,9 @@ TEST(BigInt, MultiplyInt64Min) {
 
 TEST(BigInt, MultiplyQuadPower2PosPos) {
   const BigInt<256> a(1);
-  for (int i = 0; i < BigUIntWord::bits_per_word*4 - 1; i++) {
+  for (size_t i = 0; i < BigUIntWord::bits_per_word*4 - 1; i++) {
     const BigInt<256> a_shifted = a << i;
-    for (int j = 0; j < BigUIntWord::bits_per_word*4 - 1; j++) {
+    for (size_t j = 0; j < BigUIntWord::bits_per_word*4 - 1; j++) {
       const BigInt<256> b_shifted = a << j;
       const BigInt<512> result = a_shifted * b_shifted;
       const BigInt<512> expected = (BigInt<512>{1} << (i + j));
@@ -295,9 +295,9 @@ TEST(BigInt, MultiplyQuadPower2PosPos) {
 TEST(BigInt, MultiplyQuadPower2PosNeg) {
   const BigInt<256> a(1);
   const BigInt<256> b(-1);
-  for (int i = 0; i < BigUIntWord::bits_per_word*4 - 1; i++) {
+  for (size_t i = 0; i < BigUIntWord::bits_per_word*4 - 1; i++) {
     const BigInt<256> a_shifted = a << i;
-    for (int j = 0; j < BigUIntWord::bits_per_word*4 - 1; j++) {
+    for (size_t j = 0; j < BigUIntWord::bits_per_word*4 - 1; j++) {
       const BigInt<256> b_shifted = b << j;
       const BigInt<512> result = a_shifted * b_shifted;
       const BigInt<512> expected = (BigInt<512>{-1} << (i + j));
@@ -309,9 +309,9 @@ TEST(BigInt, MultiplyQuadPower2PosNeg) {
 TEST(BigInt, MultiplyQuadPower2NegNeg) {
   const BigInt<256> a(-1);
   const BigInt<256> b(-1);
-  for (int i = 0; i < BigUIntWord::bits_per_word*4 - 1; i++) {
+  for (size_t i = 0; i < BigUIntWord::bits_per_word*4 - 1; i++) {
     const BigInt<256> a_shifted = a << i;
-    for (int j = 0; j < BigUIntWord::bits_per_word*4 - 1; j++) {
+    for (size_t j = 0; j < BigUIntWord::bits_per_word*4 - 1; j++) {
       const BigInt<256> b_shifted = b << j;
       const BigInt<512> result = a_shifted * b_shifted;
       const BigInt<512> expected = (BigInt<512>{1} << (i + j));

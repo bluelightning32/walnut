@@ -29,17 +29,17 @@ class ResultCollector :
 
 TEST(MonotoneTriangulator, AlreadyConvexAllTopChain) {
   //
-  //       _t2 -> t3_
-  //      /          \
-  //    t1            t4
-  //    /               \
-  //  t0---------------> b0
+  //       _t2 -> t3_                |
+  //      /          \               |
+  //    t1            t4             |
+  //    /               \            |
+  //  t0---------------> b0          |
   //
-  //       _t2 -> t3_
-  //      //  ___/   \
-  //    t1/  /       -t4
-  //    /<----------/   \
-  //  t0---------------> b0
+  //       _t2 -> t3_                |
+  //      //  ___/   \               |
+  //    t1/  /       -t4             |
+  //    /<----------/   \            |
+  //  t0---------------> b0          |
   // 
   Point3<32> top_chain[] = {
     Point3<32>(0, 0, 10),
@@ -108,16 +108,16 @@ TEST(MonotoneTriangulator, AlreadyConvexAllBottomChain) {
 
 TEST(MonotoneTriangulator, AlreadyConvexAlternatingChains) {
   //                        
-  //       t2--->t3__
-  //      /          \
-  //     t1           t4
-  //    /              \
-  //   /                \
-  //  t0                b4
-  //   \               /
-  //    b0          b3-
-  //     \         /
-  //      b1-->b2--
+  //       t2--->t3__               |
+  //      /          \              |
+  //     t1           t4            |
+  //    /              \            |
+  //   /                \           |
+  //  t0                b4          |
+  //   \               /            |
+  //    b0          b3-             |
+  //     \         /                |
+  //      b1-->b2--                 |
   //
   Point3<32> top_chain[] = {
     // The minimum vertex must be in the top chain.
@@ -155,11 +155,11 @@ TEST(MonotoneTriangulator, AlreadyConvexAlternatingChains) {
 
 TEST(MonotoneTriangulator, SingleReflexOnTop) {
   //
-  //          t2
-  //          /\
-  //      ->t1  \
-  //    _/      |
-  //  t0------> b0
+  //          t2            |
+  //          /\            |
+  //      ->t1  \           |
+  //    _/      |           |
+  //  t0------> b0          |
   //
   Point3<32> top_chain[] = {
     Point3<32>(0, 0, 10),
@@ -183,19 +183,19 @@ TEST(MonotoneTriangulator, SingleReflexOnTop) {
 
 TEST(MonotoneTriangulator, SelfIntersecting) {
   //
-  //      t1          t3
-  //     /  \        /  \
-  //    /    \      /    \
-  //  t0----- \--- /----> b0
-  //           \  /
-  //            t2
+  //      t1          t3                 |
+  //     /  \        /  \                |
+  //    /    \      /    \               |
+  //  t0----- \--- /----> b0             |
+  //           \  /                      |
+  //            t2                       |
   //
-  //      t1          t3
-  //     /  \        /  \
-  //    /    \      /    \
-  //  t0----- \--- /----> b0
-  //    \__I__ \I /  I   /
-  //          \>t2------
+  //      t1          t3                 |
+  //     /  \        /  \                |
+  //    /    \      /    \               |
+  //  t0----- \--- /----> b0             |
+  //    \__I__ \I /  I   /               |
+  //          \>t2------                 |
   //
   Point3<32> top_chain[] = {
     Point3<32>(0, 0, 10),

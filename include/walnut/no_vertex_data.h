@@ -14,15 +14,15 @@ struct NoVertexData {
   template <typename OtherVertexData>
   constexpr explicit NoVertexData(const OtherVertexData&) { }
 
-  template <int num_bits, int denom_bits>
+  template <size_t num_bits, size_t denom_bits>
   NoVertexData(const NoVertexData& parent,
                const HomoPoint3<num_bits, denom_bits>& new_source) { }
 
-  template <int d_bits, int m_bits>
+  template <size_t d_bits, size_t m_bits>
   NoVertexData(const NoVertexData& parent,
                const PluckerLine<d_bits, m_bits>& new_line) { }
 
-  template <int num_bits, int denom_bits, int d_bits, int m_bits>
+  template <size_t num_bits, size_t denom_bits, size_t d_bits, size_t m_bits>
   NoVertexData(const NoVertexData& parent,
                const HomoPoint3<num_bits, denom_bits>& new_source,
                const PluckerLine<d_bits, m_bits>& new_line) { }

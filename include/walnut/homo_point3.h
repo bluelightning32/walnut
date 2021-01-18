@@ -11,7 +11,8 @@ namespace walnut {
 
 // 3D point represented with homogeneous coordinates. The w component acts
 // like a divisor for the x, y, and z component.
-template <int num_bits_template = 32*7 + 9, int denom_bits_template = 32*6 + 7>
+template <size_t num_bits_template = 32*7 + 9,
+          size_t denom_bits_template = 32*6 + 7>
 class HomoPoint3 {
  public:
   using VectorRep = Vector3<num_bits_template>;
@@ -20,13 +21,13 @@ class HomoPoint3 {
 
   // The minimum number of bits to support for each of the x, y, and z
   // components.
-  static constexpr int num_bits = num_bits_template;
+  static constexpr size_t num_bits = num_bits_template;
   // The maximum number of bits supported for the x, y, and z components.
-  static constexpr int max_num_bits = NumInt::max_bits;
+  static constexpr size_t max_num_bits = NumInt::max_bits;
   // The minimum number of bits to support for the w component.
-  static constexpr int denom_bits = denom_bits_template;
+  static constexpr size_t denom_bits = denom_bits_template;
   // The maximum number of bits supported for the w component.
-  static constexpr int max_denom_bits = DenomInt::max_bits;
+  static constexpr size_t max_denom_bits = DenomInt::max_bits;
 
   NumInt& x() {
     return vector_from_origin_.x();
@@ -79,12 +80,12 @@ class HomoPoint3 {
   // Leaves the components in an undefined state
   HomoPoint3() = default;
 
-  template <int other_num_bits, int other_denom_bits>
+  template <size_t other_num_bits, size_t other_denom_bits>
   HomoPoint3(const HomoPoint3<other_num_bits, other_denom_bits>& other) :
     vector_from_origin_(other.vector_from_origin()),
     dist_denom_(other.dist_denom()) { }
 
-  template <int other_num_bits, int other_denom_bits>
+  template <size_t other_num_bits, size_t other_denom_bits>
   HomoPoint3(const BigInt<other_num_bits>& x,
           const BigInt<other_num_bits>& y,
           const BigInt<other_num_bits>& z,
@@ -94,16 +95,16 @@ class HomoPoint3 {
   HomoPoint3(long x, long y, long z, long w) :
     vector_from_origin_(x, y, z), dist_denom_(w) { }
 
-  template <int other_num_bits>
+  template <size_t other_num_bits>
   HomoPoint3(const Point3<other_num_bits>& other) :
     vector_from_origin_(other.vector_from_origin()), dist_denom_(1) { }
 
-  template <int other_num_bits, int other_denom_bits>
+  template <size_t other_num_bits, size_t other_denom_bits>
   HomoPoint3(const Vector3<other_num_bits>& v,
           const BigInt<other_denom_bits>& w) :
     vector_from_origin_(v), dist_denom_(w) { }
 
-  template <int other_num_bits=num_bits, int other_denom_bits=denom_bits>
+  template <size_t other_num_bits=num_bits, size_t other_denom_bits=denom_bits>
   static bool LexicographicallyLt(const HomoPoint3& a,
       const HomoPoint3<other_num_bits, other_denom_bits>& b) {
     // a.v / a.w <?> b.v / b.w
@@ -118,7 +119,7 @@ class HomoPoint3 {
                                         b_scaled.components().end());
   }
 
-  template <int other_num_bits=num_bits, int other_denom_bits=denom_bits>
+  template <size_t other_num_bits=num_bits, size_t other_denom_bits=denom_bits>
   static bool TopnessLt(const HomoPoint3& a,
       const HomoPoint3<other_num_bits, other_denom_bits>& b) {
     // a.v / a.w <?> b.v / b.w
@@ -140,7 +141,7 @@ class HomoPoint3 {
   //
   // The calculations are done in 2D by removing (treating it as 0)
   // `drop_dimension` from the point.
-  template <int other_num_bits, int other_denom_bits>
+  template <size_t other_num_bits, size_t other_denom_bits>
   BigIntWord Get2DTwistDir(int drop_dimension,
       const HomoPoint3<other_num_bits, other_denom_bits>& p1,
       const HomoPoint3<other_num_bits, other_denom_bits>& p3) const {
@@ -173,7 +174,7 @@ class HomoPoint3 {
   }
 
   // Note that everything equals the 0 point with a 0 denominator.
-  template <int other_num_bits, int other_denom_bits>
+  template <size_t other_num_bits, size_t other_denom_bits>
   bool operator==(
       const HomoPoint3<other_num_bits, other_denom_bits>& other) const {
     return vector_from_origin().Scale(other.w()) ==
@@ -181,20 +182,20 @@ class HomoPoint3 {
   }
 
   // Note that everything equals the 0 point with a 0 denominator.
-  template <int other_bits>
+  template <size_t other_bits>
   bool operator==(const Point3<other_bits>& other) const {
     return vector_from_origin() == other.vector_from_origin().Scale(w());
   }
 
   // Note that everything equals the 0 point with a 0 denominator.
-  template <int other_num_bits, int other_denom_bits>
+  template <size_t other_num_bits, size_t other_denom_bits>
   bool operator!=(
       const HomoPoint3<other_num_bits, other_denom_bits>& other) const {
     return !(*this == other);
   }
 
   // Note that everything equals the 0 point with a 0 denominator.
-  template <int other_bits>
+  template <size_t other_bits>
   bool operator!=(const Point3<other_bits>& other) const {
     return !(*this == other);
   }
@@ -219,7 +220,7 @@ class HomoPoint3 {
   DenomInt dist_denom_;
 };
 
-template <int num_bits, int denom_bits>
+template <size_t num_bits, size_t denom_bits>
 void HomoPoint3<num_bits, denom_bits>::Reduce() {
   bool dist_signed;
   auto common_factor = dist_denom_.GetUIntAbs(&dist_signed);
@@ -244,13 +245,13 @@ void HomoPoint3<num_bits, denom_bits>::Reduce() {
   vector_from_origin_.z() /= signed_factor;
 }
 
-template <int a_bits, int b_num_bits, int b_denom_bits>
+template <size_t a_bits, size_t b_num_bits, size_t b_denom_bits>
 bool operator==(const Point3<a_bits>& a,
                 const HomoPoint3<b_num_bits, b_denom_bits>& b) {
   return b == a;
 }
 
-template <int num_bits, int denom_bits>
+template <size_t num_bits, size_t denom_bits>
 std::string HomoPoint3<num_bits, denom_bits>::Approximate() const {
   std::ostringstream out;
   double w_double(w());
@@ -262,7 +263,7 @@ std::string HomoPoint3<num_bits, denom_bits>::Approximate() const {
   return out.str();
 }
 
-template <int num_bits, int denom_bits>
+template <size_t num_bits, size_t denom_bits>
 std::ostream& operator<<(std::ostream& out,
                          const HomoPoint3<num_bits, denom_bits>& p) {
   return out << "{ ["

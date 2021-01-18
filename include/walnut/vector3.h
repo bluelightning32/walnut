@@ -8,9 +8,9 @@
 
 namespace walnut {
 
-template <int component_bits_template = 33>
+template <size_t component_bits_template = 33>
 class Vector3 {
-  template <int other_component_bits>
+  template <size_t other_component_bits>
   friend class Vector3;
 
  public:
@@ -22,12 +22,12 @@ class Vector3 {
   // supporting more bits. Also note that BigInts are faster when fewer bits
   // are requested, and of BigInts that have the same requested bits, instances
   // with fewer used bits are faster.
-  static constexpr int component_bits = component_bits_template;
+  static constexpr size_t component_bits = component_bits_template;
 
   // Leaves the coordinates in an undefined state
   Vector3() = default;
 
-  template <int other_component_bits>
+  template <size_t other_component_bits>
   Vector3(const Vector3<other_component_bits>& other) :
     components_{other.components()[0], other.components()[1],
                 other.components()[2]} { }
@@ -74,21 +74,21 @@ class Vector3 {
     return components_;
   }
 
-  template <int other_component_bits>
+  template <size_t other_component_bits>
   bool operator ==(const Vector3<other_component_bits>& other) const {
     return x() == other.x() &&
            y() == other.y() &&
            z() == other.z();
   }
 
-  template <int other_component_bits>
+  template <size_t other_component_bits>
   bool operator !=(const Vector3<other_component_bits>& other) const {
     return x() != other.x() ||
            y() != other.y() ||
            z() != other.z();
   }
 
-  template <int other_component_bits>
+  template <size_t other_component_bits>
   Vector3<std::max(other_component_bits, component_bits_template) + 1>
   operator-(const Vector3<other_component_bits>& other) const {
     return Vector3<std::max(other_component_bits, component_bits_template) + 1>(
@@ -97,7 +97,7 @@ class Vector3 {
         /*z=*/z() - other.z());
   }
 
-  template <int other_component_bits>
+  template <size_t other_component_bits>
   Vector3<std::max(other_component_bits, component_bits_template) + 1>
   operator+(const Vector3<other_component_bits>& other) const {
     return Vector3<std::max(other_component_bits, component_bits_template) + 1>(
@@ -111,12 +111,12 @@ class Vector3 {
   //
   // Vectors with opposite magnitude are considered to have opposite
   // directions, and this function returns false for such vectors.
-  template <int other_component_bits>
+  template <size_t other_component_bits>
   bool IsSameDir(const Vector3<other_component_bits>& other) const;
 
   // Return true if the vectors have the same direction or opposite directions
   // and only differ in magnitude.
-  template <int other_component_bits>
+  template <size_t other_component_bits>
   bool IsSameOrOppositeDir(const Vector3<other_component_bits>& other) const;
 
   // Get the square of the scale of this vector
@@ -125,7 +125,7 @@ class Vector3 {
   }
 
   // Compute the dot product
-  template <int other_component_bits>
+  template <size_t other_component_bits>
   BigInt<component_bits + other_component_bits + 1>
   Dot(const Vector3<other_component_bits>& other) const {
     BigInt<component_bits + other_component_bits + 1> result = x() * other.x();
@@ -135,7 +135,7 @@ class Vector3 {
   }
 
   // Compute the cross product
-  template <int other_component_bits>
+  template <size_t other_component_bits>
   Vector3<component_bits + other_component_bits>
   Cross(const Vector3<other_component_bits>& other) const {
     return Vector3<component_bits + other_component_bits>(
@@ -144,7 +144,7 @@ class Vector3 {
         /*z=*/x()*other.y() - y()*other.x());
   }
 
-  template <int other_bits>
+  template <size_t other_bits>
   Vector3<component_bits + other_bits>
   Scale(const BigInt<other_bits>& scale) const {
     return Vector3<component_bits + other_bits>(x() * scale,
@@ -156,7 +156,7 @@ class Vector3 {
     return Scale<sizeof(int)*8>(BigInt<sizeof(int)*8>(scale));
   }
 
-  template <int other_bits>
+  template <size_t other_bits>
   Vector3<component_bits + other_bits> operator*(
       const BigInt<other_bits>& scale) const {
     return Scale(scale);
@@ -214,8 +214,8 @@ class Vector3 {
   std::array<BigIntRep, 3> components_;
 };
 
-template <int component_bits_template>
-template <int other_component_bits>
+template <size_t component_bits_template>
+template <size_t other_component_bits>
 inline bool Vector3<component_bits_template>::IsSameDir(
     const Vector3<other_component_bits>& other) const {
   BigInt<component_bits> scale_other;
@@ -236,8 +236,8 @@ inline bool Vector3<component_bits_template>::IsSameDir(
          z().Multiply(scale_mine) == other.z().Multiply(scale_other);
 }
 
-template <int component_bits_template>
-template <int other_component_bits>
+template <size_t component_bits_template>
+template <size_t other_component_bits>
 inline bool Vector3<component_bits_template>::IsSameOrOppositeDir(
     const Vector3<other_component_bits>& other) const {
   BigInt<component_bits> scale_other;
@@ -258,7 +258,7 @@ inline bool Vector3<component_bits_template>::IsSameOrOppositeDir(
          z().Multiply(scale_mine) == other.z().Multiply(scale_other);
 }
 
-template <int component_bits>
+template <size_t component_bits>
 std::ostream& operator<<(std::ostream& out, const Vector3<component_bits>& v) {
   return out << "{ "
              << v.components()[0] << ", "

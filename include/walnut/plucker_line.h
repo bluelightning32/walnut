@@ -10,16 +10,16 @@ namespace walnut {
 
 // Plücker coordinates are a way to store a R^3 line with homogeneous
 // coordinates.
-template <int d_bits_template = 31*2 + 1, int m_bits_template = 31*2 + 3>
+template <size_t d_bits_template = 31*2 + 1, size_t m_bits_template = 31*2 + 3>
 class PluckerLine {
  public:
   using DVector = Vector3<d_bits_template>;
   using MVector = Vector3<m_bits_template>;
 
   // The minimum number of bits to support for each of the components of d.
-  static constexpr int d_bits = d_bits_template;
+  static constexpr size_t d_bits = d_bits_template;
   // The minimum number of bits to support for each of the components of m.
-  static constexpr int m_bits = m_bits_template;
+  static constexpr size_t m_bits = m_bits_template;
 
   // Returns the direction vector for the line.
   //
@@ -63,20 +63,20 @@ class PluckerLine {
   // Leaves the vectors in an undefined state
   PluckerLine() = default;
 
-  template <int other_d_bits, int other_m_bits>
+  template <size_t other_d_bits, size_t other_m_bits>
   PluckerLine(const Vector3<other_d_bits>& d, const Vector3<other_m_bits>& m) :
     d_(d), m_(m) { }
 
-  template <int other_d_bits, int other_m_bits>
+  template <size_t other_d_bits, size_t other_m_bits>
   PluckerLine(const PluckerLine<other_d_bits, other_m_bits>& other) :
     PluckerLine(other.d(), other.m()) { }
 
-  template <int point_bits>
+  template <size_t point_bits>
   PluckerLine(const Point3<point_bits>& p1,
               const Point3<point_bits>& p2) :
     d_(p2 - p1), m_(p1.vector_from_origin().Cross(p2.vector_from_origin())) { }
 
-  template <int num_bits, int denom_bits>
+  template <size_t num_bits, size_t denom_bits>
   PluckerLine(const HomoPoint3<num_bits, denom_bits>& p1,
               const HomoPoint3<num_bits, denom_bits>& p2) :
     d_((p2.vector_from_origin().Scale(p1.w()) -
@@ -88,7 +88,7 @@ class PluckerLine {
   //
   // Both `a` and `b` must be valid (have non-zero normals), and they must be
   // non-equal, otherwise `IsValid` will return false on the constructed line.
-  template <int vector_bits, int dist_bits>
+  template <size_t vector_bits, size_t dist_bits>
   PluckerLine(const HalfSpace3<vector_bits, dist_bits>& a,
               const HalfSpace3<vector_bits, dist_bits>& b) :
     // d = a_xyz x b_xyz = (p^23, p^31, p^12)
@@ -118,7 +118,7 @@ class PluckerLine {
        MVector::BigIntRep::Determinant(-a.d(), a.z(), -b.d(), b.z())) { }
 
   // Returns true if `p` is on the line.
-  template <int v_bits>
+  template <size_t v_bits>
   bool IsCoincident(const Point3<v_bits>& p) const {
     /*
      * p x (p + d) == m
@@ -129,7 +129,7 @@ class PluckerLine {
   }
 
   // Returns true if `p` is on the line.
-  template <int num_bits, int denom_bits>
+  template <size_t num_bits, size_t denom_bits>
   bool IsCoincident(const HomoPoint3<num_bits, denom_bits>& p) const {
     /*
      * p x (p + p.dist*d) == m
@@ -140,7 +140,7 @@ class PluckerLine {
   }
 
   // Returns true if the line is on the plane.
-  template <int vector_bits, int dist_bits>
+  template <size_t vector_bits, size_t dist_bits>
   bool IsCoincident(const HalfSpace3<vector_bits, dist_bits>& p) const {
     return d().Dot(p.normal()).IsZero();
   }
@@ -151,7 +151,7 @@ class PluckerLine {
   // of points. Notably the lines may have a different common scale factors.
   // The lines are considered equal even if their directions are opposite
   // (one scale factor is negative).
-  template <int other_d_bits, int other_m_bits>
+  template <size_t other_d_bits, size_t other_m_bits>
   bool operator==(const PluckerLine<other_d_bits, other_m_bits>& other) const {
     using OtherDVector =
       typename PluckerLine<other_d_bits, other_m_bits>::DVector;
@@ -177,7 +177,7 @@ class PluckerLine {
       m().z().Multiply(scale_mine) == other.m().z().Multiply(scale_other);
   }
 
-  template <int other_d_bits, int other_m_bits>
+  template <size_t other_d_bits, size_t other_m_bits>
   bool operator!=(const PluckerLine<other_d_bits, other_m_bits>& other) const {
     return !(*this == other);
   }
@@ -194,7 +194,7 @@ class PluckerLine {
   }
 
   // Calculate the intersection between this line and a plane.
-  template <int vector_bits, int dist_bits>
+  template <size_t vector_bits, size_t dist_bits>
   HomoPoint3<std::max(vector_bits + m_bits, d_bits + dist_bits) + 1,
           vector_bits + d_bits + 1>
   Intersect(const HalfSpace3<vector_bits, dist_bits>& p) const {
@@ -243,7 +243,7 @@ class PluckerLine {
   MVector m_;
 };
 
-template <int d_bits, int m_bits>
+template <size_t d_bits, size_t m_bits>
 void PluckerLine<d_bits, m_bits>::Reduce() {
   bool unused;
   auto common_factor = d_.components()[0].GetUIntAbs(&unused);
@@ -274,7 +274,7 @@ void PluckerLine<d_bits, m_bits>::Reduce() {
 // The only reason to use this wrapper is that it figures out how many bits are
 // necessary in the worst case for the PluckerLine d and m vector components,
 // given the number of bits in each Point3.
-template <int point3_bits_template = 32>
+template <size_t point3_bits_template = 32>
 class PluckerLineFromPoint3sBuilder {
  public:
   using Point3Rep = Point3<point3_bits_template>;
@@ -309,7 +309,7 @@ class PluckerLineFromPoint3sBuilder {
 // necessary in the worst case for the PluckerLine d and m vector components,
 // given that the Plane components are all within the bounds defined by
 // HalfSpace3FromPoint3Builder<point3_bits>.
-template <int point3_bits_template = 32>
+template <size_t point3_bits_template = 32>
 class PluckerLineFromPlanesFromPoint3sBuilder {
  public:
   static_assert(point3_bits_template >= 3,
@@ -343,7 +343,7 @@ class PluckerLineFromPlanesFromPoint3sBuilder {
   }
 };
 
-template <int d_bits, int m_bits>
+template <size_t d_bits, size_t m_bits>
 std::ostream& operator<<(std::ostream& out,
                          const PluckerLine<d_bits, m_bits>& line) {
   return out << "{ d=" << line.d() << " m=" << line.m() << " }";

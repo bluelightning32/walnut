@@ -8,7 +8,7 @@ namespace walnut {
 
 // 2D point represented with homogeneous coordinates. The w coordinate acts
 // like a divisor for the x and y coordinates.
-template <int num_bits_template = 32, int denom_bits_template = 32>
+template <size_t num_bits_template = 32, size_t denom_bits_template = 32>
 class HomoPoint2 {
  public:
   using VectorRep = Vector2<num_bits_template>;
@@ -16,13 +16,13 @@ class HomoPoint2 {
   using DenomInt = BigInt<denom_bits_template>;
 
   // The minimum number of bits to support for each of the x and y coordinates.
-  static constexpr int num_bits = num_bits_template;
+  static constexpr size_t num_bits = num_bits_template;
   // The maximum number of bits supported for the x and y coordinates.
-  static constexpr int max_num_bits = NumInt::max_bits;
+  static constexpr size_t max_num_bits = NumInt::max_bits;
   // The minimum number of bits to support for the w coordinate.
-  static constexpr int denom_bits = denom_bits_template;
+  static constexpr size_t denom_bits = denom_bits_template;
   // The maximum number of bits supported for the w coordinate.
-  static constexpr int max_denom_bits = DenomInt::max_bits;
+  static constexpr size_t max_denom_bits = DenomInt::max_bits;
 
   NumInt& x() {
     return vector_from_origin_.x();
@@ -67,11 +67,11 @@ class HomoPoint2 {
   // Leaves the coordinates in an undefined state
   HomoPoint2() = default;
 
-  template <int other_num_bits, int other_denom_bits>
+  template <size_t other_num_bits, size_t other_denom_bits>
   HomoPoint2(const HomoPoint2<other_num_bits, other_denom_bits>& other) :
     vector_from_origin_(other.vector_from_origin_), dist_denom_(other.dist_denom_) { }
 
-  template <int other_num_bits, int other_denom_bits>
+  template <size_t other_num_bits, size_t other_denom_bits>
   HomoPoint2(const BigInt<other_num_bits>& x,
           const BigInt<other_num_bits>& y,
           const BigInt<other_denom_bits>& w) :
@@ -80,16 +80,16 @@ class HomoPoint2 {
   HomoPoint2(int x, int y, int w) :
     vector_from_origin_(x, y), dist_denom_(w) { }
 
-  template <int other_num_bits>
+  template <size_t other_num_bits>
   HomoPoint2(const Point2<other_num_bits>& other) :
     vector_from_origin_(other.vector_from_origin()), dist_denom_(1) { }
 
-  template <int other_num_bits, int other_denom_bits>
+  template <size_t other_num_bits, size_t other_denom_bits>
   HomoPoint2(const Vector2<other_num_bits>& v,
              const BigInt<other_denom_bits>& w) :
     vector_from_origin_(v), dist_denom_(w) { }
 
-  template <int other_num_bits=num_bits, int other_denom_bits=denom_bits>
+  template <size_t other_num_bits=num_bits, size_t other_denom_bits=denom_bits>
   static bool LexicographicallyLt(const HomoPoint2& a,
       const HomoPoint2<other_num_bits, other_denom_bits>& b) {
     auto a_scaled = a.vector_from_origin() * b.dist_denom();
@@ -101,7 +101,7 @@ class HomoPoint2 {
   }
 
   // Note that everything equals the 0 point with a 0 denominator.
-  template <int other_num_bits, int other_denom_bits>
+  template <size_t other_num_bits, size_t other_denom_bits>
   bool operator==(
       const HomoPoint2<other_num_bits, other_denom_bits>& other) const {
     return vector_from_origin().Scale(other.w()) ==
@@ -109,20 +109,20 @@ class HomoPoint2 {
   }
 
   // Note that everything equals the 0 point with a 0 denominator.
-  template <int other_bits>
+  template <size_t other_bits>
   bool operator==(const Point2<other_bits>& other) const {
     return vector_from_origin() == other.vector_from_origin().Scale(w());
   }
 
   // Note that everything equals the 0 point with a 0 denominator.
-  template <int other_num_bits, int other_denom_bits>
+  template <size_t other_num_bits, size_t other_denom_bits>
   bool operator!=(
       const HomoPoint2<other_num_bits, other_denom_bits>& other) const {
     return !(*this == other);
   }
 
   // Note that everything equals the 0 point with a 0 denominator.
-  template <int other_bits>
+  template <size_t other_bits>
   bool operator!=(const Point2<other_bits>& other) const {
     return !(*this == other);
   }
@@ -132,13 +132,13 @@ class HomoPoint2 {
   DenomInt dist_denom_;
 };
 
-template <int a_bits, int b_num_bits, int b_denom_bits>
+template <size_t a_bits, size_t b_num_bits, size_t b_denom_bits>
 bool operator==(const Point2<a_bits>& a,
                 const HomoPoint2<b_num_bits, b_denom_bits>& b) {
   return b == a;
 }
 
-template <int num_bits, int denom_bits>
+template <size_t num_bits, size_t denom_bits>
 std::ostream& operator<<(std::ostream& out, const HomoPoint2<num_bits, denom_bits>& p) {
   return out << "{ ["
              << p.x() << ", "

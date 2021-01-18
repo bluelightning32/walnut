@@ -7,9 +7,9 @@
 
 namespace walnut {
 
-template <int coord_bits_template = 33>
+template <size_t coord_bits_template = 33>
 class Vector2 {
-  template <int other_coord_bits>
+  template <size_t other_coord_bits>
   friend class Vector2;
 
  public:
@@ -21,12 +21,12 @@ class Vector2 {
   // supporting more bits. Also note that BigInts are faster when fewer bits
   // are requested, and of BigInts that have the same requested bits, instances
   // with fewer used bits are faster.
-  static constexpr int coord_bits = coord_bits_template;
+  static constexpr size_t coord_bits = coord_bits_template;
 
   // Leaves the coordinates in an undefined state
   Vector2() = default;
 
-  template <int other_coord_bits>
+  template <size_t other_coord_bits>
   Vector2(const Vector2<other_coord_bits>& other) :
     coords_{other.coords()[0], other.coords()[1]} { }
 
@@ -60,13 +60,13 @@ class Vector2 {
     return coords_;
   }
 
-  template <int other_coord_bits>
+  template <size_t other_coord_bits>
   bool operator ==(const Vector2<other_coord_bits>& other) const {
     return x() == other.x() &&
            y() == other.y();
   }
 
-  template <int other_coord_bits>
+  template <size_t other_coord_bits>
   Vector2<std::max(other_coord_bits, coord_bits_template) + 1> operator-(
       const Vector2<other_coord_bits>& other) const {
     return Vector2<std::max(other_coord_bits, coord_bits_template) + 1>(
@@ -83,12 +83,12 @@ class Vector2 {
   //
   // Vectors with opposite magnitude are considered to have opposite
   // directions, and this function returns false for such vectors.
-  template <int other_coord_bits>
+  template <size_t other_coord_bits>
   bool IsSameDir(const Vector2<other_coord_bits>& other) const;
 
   // Return true if the vectors have the same direction or opposite directions
   // and only differ in magnitude.
-  template <int other_coord_bits>
+  template <size_t other_coord_bits>
   bool IsSameOrOppositeDir(const Vector2<other_coord_bits>& other) const;
 
   // Get the square of the scale of this vector
@@ -97,7 +97,7 @@ class Vector2 {
   }
 
   // Compute the dot product
-  template <int other_coord_bits>
+  template <size_t other_coord_bits>
   BigInt<coord_bits + other_coord_bits + 1> Dot(const Vector2<other_coord_bits>& other) const {
     BigInt<coord_bits + other_coord_bits + 1> result = x() * other.x();
     result += y() * other.y();
@@ -105,12 +105,12 @@ class Vector2 {
   }
 
   // Compute the cross product
-  template <int other_coord_bits>
+  template <size_t other_coord_bits>
   BigInt<coord_bits + other_coord_bits> Cross(const Vector2<other_coord_bits>& other) const {
     return x()*other.y() - y()*other.x();
   }
 
-  template <int other_bits>
+  template <size_t other_bits>
   Vector2<coord_bits + other_bits> Scale(const BigInt<other_bits>& scale) const {
     return Vector2<coord_bits + other_bits>(x() * scale,
                                             y() * scale);
@@ -120,7 +120,7 @@ class Vector2 {
     return Scale<sizeof(int)*8>(BigInt<sizeof(int)*8>(scale));
   }
 
-  template <int other_bits>
+  template <size_t other_bits>
   Vector2<coord_bits + other_bits> operator*(
       const BigInt<other_bits>& scale) const {
     return Scale(scale);
@@ -181,8 +181,8 @@ class Vector2 {
   std::array<BigIntRep, 2> coords_;
 };
 
-template <int coord_bits_template>
-template <int other_coord_bits>
+template <size_t coord_bits_template>
+template <size_t other_coord_bits>
 inline bool Vector2<coord_bits_template>::IsSameDir(
     const Vector2<other_coord_bits>& other) const {
   BigInt<coord_bits> scale_other;
@@ -199,8 +199,8 @@ inline bool Vector2<coord_bits_template>::IsSameDir(
          y().Multiply(scale_mine) == other.y().Multiply(scale_other);
 }
 
-template <int coord_bits_template>
-template <int other_coord_bits>
+template <size_t coord_bits_template>
+template <size_t other_coord_bits>
 inline bool Vector2<coord_bits_template>::IsSameOrOppositeDir(
     const Vector2<other_coord_bits>& other) const {
   BigInt<coord_bits> scale_other;
@@ -217,7 +217,7 @@ inline bool Vector2<coord_bits_template>::IsSameOrOppositeDir(
          y().Multiply(scale_mine) == other.y().Multiply(scale_other);
 }
 
-template <int coord_bits>
+template <size_t coord_bits>
 std::ostream& operator<<(std::ostream& out, const Vector2<coord_bits>& v) {
   return out << "{ "
              << v.coords()[0] << ", "

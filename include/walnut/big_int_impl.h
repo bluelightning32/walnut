@@ -11,7 +11,7 @@
 
 namespace walnut {
 
-template <int max_words>
+template <size_t max_words>
 class BigIntImplTrimMixin : public BigIntBase<max_words> {
   using Parent = BigIntBase<max_words>;
  public:
@@ -51,13 +51,13 @@ class BigIntImplTrimMixin : public BigIntBase<max_words> {
   }
 };
 
-template <int max_words>
+template <size_t max_words>
 class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
 {
   template <typename OtherMixin>
   friend class BigIntBaseOperations;
 
-  template <int other_max_words>
+  template <size_t other_max_words>
   friend class BigIntImpl;
 
   using Parent = BigIntBaseOperations<BigIntImplTrimMixin<max_words>>;
@@ -82,18 +82,18 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     words_[0] = value;
   }
 
-  template <int other_max_words>
+  template <size_t other_max_words>
   constexpr BigIntImpl(const BigIntImpl<other_max_words>& other)
    : Parent(other) { }
 
-  template <int other_max_words>
+  template <size_t other_max_words>
   constexpr BigIntImpl(const BigUIntImpl<other_max_words>& other)
    : Parent(sizeof(BigIntHalfWord)) {
     int copy_bytes = max_words < other_max_words ?
                      std::min(other.used_bytes(), int(max_words * bytes_per_word)) :
                      other.used_bytes();
-    int copy_words = (copy_bytes + bytes_per_word - 1) / bytes_per_word;
-    int i;
+    size_t copy_words = (copy_bytes + bytes_per_word - 1) / bytes_per_word;
+    size_t i;
     for (i = 0; i < copy_words; ++i) {
       words_[i] = other.words()[i];
     }
@@ -104,7 +104,7 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     Trim();
   }
 
-  template <int other_max_words>
+  template <size_t other_max_words>
   constexpr BigIntImpl<max_words>& operator = (
       const BigIntImpl<other_max_words>& other) {
     Parent::operator=(other);
@@ -118,14 +118,14 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     return *this;
   }
 
-  template <int other_max_words>
+  template <size_t other_max_words>
   constexpr BigIntImpl<max_words>& operator = (
       const BigUIntImpl<other_max_words>& other) {
     int copy_bytes = max_words < other_max_words ?
                      std::min(other.used_bytes(), int(max_words * bytes_per_word)) :
                      other.used_bytes();
-    int copy_words = (copy_bytes + bytes_per_word - 1) / bytes_per_word;
-    int i;
+    size_t copy_words = (copy_bytes + bytes_per_word - 1) / bytes_per_word;
+    size_t i;
     for (i = 0; i < copy_words; ++i) {
       words_[i] = other.words()[i];
     }
@@ -139,7 +139,7 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
 
   static constexpr BigIntImpl max_value(int set_last_word_bits) {
     BigIntImpl result;
-    for (int i = 0; i < max_words - 1; ++i) {
+    for (size_t i = 0; i < max_words - 1; ++i) {
       result.words_[i] = BigUIntWord::max_value();
     }
     for (int i = 0; i < set_last_word_bits; ++i) {
@@ -179,13 +179,13 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     return max_value(/*clear_last_word_bits=*/bits_per_word - 1);
   }
 
-  template <int result_words=max_words>
-  constexpr BigIntImpl<result_words> operator << (int shift) const {
+  template <size_t result_words=max_words>
+  constexpr BigIntImpl<result_words> operator << (size_t shift) const {
     BigIntImpl<result_words> result;
     if (shift >= result.max_bits) return result;
 
-    int in = 0;
-    int out = shift / bits_per_word;
+    size_t in = 0;
+    size_t out = shift / bits_per_word;
     const int word_left_shift = shift % bits_per_word;
     // The if statement is necessary to avoid shifting by bits_per_word.
     if (word_left_shift > 0) {
@@ -214,7 +214,7 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
   // Returns -1 if *this < `other`,
   //          0 if *this ==  `other`, or
   //          1 if *this > `other`.
-  template <int other_max_words>
+  template <size_t other_max_words>
   constexpr int Compare(const BigIntImpl<other_max_words>& other) const {
     if (used_ < other.used_) {
       // `this` is closer to 0 than `other`.
@@ -242,30 +242,30 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
         BigIntWord{words_[used_words() - 1].SignExtension()};
       return sign_extension | 1;
     }
-    int i = used_words() - 1;
+    size_t i = used_words() - 1;
     // Perform a signed comparison on the upper words (which contains the sign
     // bits) and an unsigned comparison on the following words.
     if (words_[i] != other.words_[i]) {
       return (BigIntWord{words_[i]} > BigIntWord{other.words_[i]}) ? 1 : -1;
     }
-    for (i--; i >= 0; i--) {
+    for (i--; ssize_t(i) >= 0; i--) {
       if (words_[i] > other.words_[i]) return 1;
       if (words_[i] < other.words_[i]) return -1;
     }
     return 0;
   }
 
-  template <int result_words = 0, int other_words,
-            int rw = result_words == 0 ?
+  template <size_t result_words = 0, size_t other_words,
+            size_t rw = result_words == 0 ?
               std::max(max_words, other_words) : result_words>
   constexpr BigIntImpl<rw> Add(const BigIntImpl<other_words>& other) const {
     if (used_ == sizeof(BigIntHalfWord) && other.used_ == sizeof(BigIntHalfWord)) {
       return BigIntImpl<rw>(BigIntWord{words_[0].Add(other.words_[0])});
     }
     BigIntImpl<rw> result;
-    int i = 0;
+    size_t i = 0;
     bool carry = false;
-    int common_words = GetCommonWordCount(other);
+    size_t common_words = GetCommonWordCount(other);
     for (; i < common_words && i < rw; i++) {
       result.words_[i] = words_[i].Add(other.words_[i], carry, &carry);
     }
@@ -286,7 +286,7 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     return result;
   }
 
-  template <int other_words>
+  template <size_t other_words>
   constexpr BigIntImpl<std::max(max_words, other_words)> operator+(
       const BigIntImpl<other_words>& other) const {
     return Add(other);
@@ -296,7 +296,7 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     return *this + BigIntImpl<1>(other);
   }
 
-  template <int other_words>
+  template <size_t other_words>
   constexpr BigIntImpl& operator+=(const BigIntImpl<other_words>& other) {
     if (used_ == sizeof(BigIntHalfWord) && other.used_ == sizeof(BigIntHalfWord)) {
       words_[0] += other.words_[0];
@@ -306,12 +306,12 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
       }
       return *this;
     }
-    int i = 0;
+    size_t i = 0;
     bool carry = false;
-    int common_words = GetCommonWordCount(other);
+    size_t common_words = GetCommonWordCount(other);
     BigUIntWord this_extension(SignExtension());
     BigUIntWord other_extension(other.SignExtension());
-    assert(("overflow", other.used_ <= max_bytes));
+    assert(other.used_ <= max_bytes);
     for (; i < common_words && i < max_words; i++) {
       words_[i] = words_[i].Add(other.words_[i], carry, &carry);
     }
@@ -330,17 +330,17 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     return *this;
   }
 
-  template <int result_words = 0, int other_words,
-            int rw = result_words == 0 ?
+  template <size_t result_words = 0, size_t other_words,
+            size_t rw = result_words == 0 ?
               std::max(max_words, other_words) : result_words>
   constexpr BigIntImpl<rw> Subtract(const BigIntImpl<other_words>& other) const {
     if (used_ == sizeof(BigIntHalfWord) && other.used_ == sizeof(BigIntHalfWord)) {
       return BigIntImpl<rw>(BigIntWord{words_[0].Subtract(other.words_[0])});
     }
     BigIntImpl<rw> result;
-    int i = 0;
+    size_t i = 0;
     bool carry = false;
-    int common_words = GetCommonWordCount(other);
+    size_t common_words = GetCommonWordCount(other);
     for (; i < common_words && i < rw; i++) {
       result.words_[i] = words_[i].Subtract(other.words_[i], carry, &carry);
     }
@@ -361,13 +361,13 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     return result;
   }
 
-  template <int other_words>
+  template <size_t other_words>
   constexpr BigIntImpl<std::max(max_words, other_words)> operator-(
       const BigIntImpl<other_words>& other) const {
     return Subtract(other);
   }
 
-  template <int other_words>
+  template <size_t other_words>
   constexpr BigIntImpl<max_words + other_words>
   Multiply(const BigIntImpl<other_words>& other) const {
     constexpr int result_words = max_words + other_words;
@@ -391,7 +391,7 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     return result;
   }
 
-  template <int other_words>
+  template <size_t other_words>
   constexpr BigIntImpl<max_words + other_words>
   operator*(const BigIntImpl<other_words>& other) const {
     return Multiply(other);
@@ -407,7 +407,7 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     return *this;
   }
 
-  template <int other_max_words>
+  template <size_t other_max_words>
   constexpr bool operator < (const BigIntImpl<other_max_words>& other) const {
     if (used_ < other.used_) {
       return 0 <= BigIntWord{other.words_[other.used_words() - 1]};
@@ -415,11 +415,11 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     if (used_ > other.used_) {
       return BigIntWord{words_[used_words() - 1]} < 0;
     }
-    int i = used_words() - 1;
+    size_t i = used_words() - 1;
     if (words_[i] != other.words_[i]) {
       return BigIntWord{words_[i]} < BigIntWord{other.words_[i]};
     }
-    for (i--; i > 0; i--) {
+    for (i--; ssize_t(i) > 0; i--) {
       if (words_[i] < other.words_[i]) return true;
       if (words_[i] > other.words_[i]) return false;
     }
@@ -434,7 +434,7 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     return BigIntWord{words_[0]} < other;
   }
 
-  template <int other_max_words>
+  template <size_t other_max_words>
   constexpr bool operator <= (const BigIntImpl<other_max_words>& other) const {
     if (used_ < other.used_) {
       return 0 <= BigIntWord{other.words_[other.used_words() - 1]};
@@ -442,11 +442,11 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     if (used_ > other.used_) {
       return BigIntWord{words_[used_words() - 1]} < 0;
     }
-    int i = used_words() - 1;
+    size_t i = used_words() - 1;
     if (words_[i] != other.words_[i]) {
       return BigIntWord{words_[i]} < BigIntWord{other.words_[i]};
     }
-    for (i--; i > 0; i--) {
+    for (i--; ssize_t(i) > 0; i--) {
       if (words_[i] < other.words_[i]) return true;
       if (words_[i] > other.words_[i]) return false;
     }
@@ -461,7 +461,7 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     return BigIntWord{words_[0]} <= other;
   }
 
-  template <int other_max_words>
+  template <size_t other_max_words>
   constexpr bool operator > (const BigIntImpl<other_max_words>& other) const {
     if (used_ < other.used_) {
       return 0 > BigIntWord{other.words_[other.used_words() - 1]};
@@ -469,11 +469,11 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     if (used_ > other.used_) {
       return BigIntWord{words_[used_words() - 1]} >= 0;
     }
-    int i = used_words() - 1;
+    size_t i = used_words() - 1;
     if (words_[i] != other.words_[i]) {
       return BigIntWord{words_[i]} > BigIntWord{other.words_[i]};
     }
-    for (i--; i > 0; i--) {
+    for (i--; ssize_t(i) > 0; i--) {
       if (words_[i] > other.words_[i]) return true;
       if (words_[i] < other.words_[i]) return false;
     }
@@ -488,7 +488,7 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     return BigIntWord{words_[0]} > other;
   }
 
-  template <int other_max_words>
+  template <size_t other_max_words>
   constexpr bool operator >= (const BigIntImpl<other_max_words>& other) const {
     if (used_ < other.used_) {
       return 0 > BigIntWord{other.words_[other.used_words() - 1]};
@@ -496,11 +496,11 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     if (used_ > other.used_) {
       return BigIntWord{words_[used_words() - 1]} >= 0;
     }
-    int i = used_words() - 1;
+    size_t i = used_words() - 1;
     if (words_[i] != other.words_[i]) {
       return BigIntWord{words_[i]} > BigIntWord{other.words_[i]};
     }
-    for (i--; i > 0; i--) {
+    for (i--; ssize_t(i) > 0; i--) {
       if (words_[i] > other.words_[i]) return true;
       if (words_[i] < other.words_[i]) return false;
     }
@@ -524,7 +524,7 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     }
   }
 
-  template <int other_max_words>
+  template <size_t other_max_words>
   constexpr bool operator == (const BigIntImpl<other_max_words>& other) const {
     if (used_ != other.used_) return false;
 
@@ -534,7 +534,7 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     return words_[0] == other.words_[0];
   }
 
-  template <int other_max_words>
+  template <size_t other_max_words>
   constexpr bool operator != (const BigIntImpl<other_max_words>& other) const {
     if (used_ != other.used_) return true;
 
@@ -549,7 +549,7 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
   }
 
   // Divide `this` by `other`. Return the quotient.
-  template <int other_words>
+  template <size_t other_words>
   constexpr BigIntImpl<max_words> operator/(const BigIntImpl<other_words>& other) const {
     if (used_ <= bytes_per_word && other.used_ <= bytes_per_word) {
       return BigIntImpl<max_words>{BigIntWord{words_[0]} / BigIntWord{other.words_[0]}};
@@ -568,7 +568,7 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
   // `remainder_out` may not equal `this`.
   //
   // The quotient is rounded towards 0.
-  template <int other_words>
+  template <size_t other_words>
   constexpr BigIntImpl<max_words> DivideRemainder(const BigIntImpl<other_words>& other,
       BigIntImpl<std::min(max_words, other_words)>* remainder_out) const {
     if (used_ <= bytes_per_word && other.used_ <= bytes_per_word) {
@@ -580,7 +580,7 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
   }
 
   // Divide `this` by `other`. Return the remainder.
-  template <int other_words>
+  template <size_t other_words>
   constexpr BigIntImpl<std::min(max_words, other_words)> operator%(
       const BigIntImpl<other_words>& other) const {
     if (used_ <= bytes_per_word && other.used_ <= bytes_per_word) {
@@ -597,7 +597,7 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
   // A return value of false means it did not overflow.
   constexpr bool Negate() {
     bool carry = true;
-    int i = 0;
+    size_t i = 0;
     const BigUIntWord old_last_word(words_[used_words() - 1]);
     for (i = 0; i < used_words(); ++i) {
       words_[i] = (~words_[i]).Add(carry, &carry);
@@ -654,7 +654,7 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
   // Returns >0 if this is greater than 0.
   // Returns <0 if this is less than 0.
   constexpr BigIntWord GetSign() const {
-    int i = used_words() - 1;
+    size_t i = used_words() - 1;
     return BigIntWord{words_[i]} | i;
   }
 
@@ -665,7 +665,7 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
         BigIntWord(words_[used_words() - 1].SignExtension())) | 1;
   }
 
-  template <int other_words>
+  template <size_t other_words>
   constexpr bool HasSameSign(const BigIntImpl<other_words>& other) const {
     return GetSign() ^ other.GetSign() >= 0;
   }
@@ -681,7 +681,7 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     if (max_words == 1 || used_ <= bytes_per_word) {
       return (double)BigIntWord{words_[0]};
     } else {
-      int used_words = used_ / bytes_per_word;
+      size_t used_words = used_ / bytes_per_word;
       return std::ldexp(BigIntWord{words_[used_words - 1]},
                         bits_per_word * (used_words - 1)) +
              words_[used_words - 2].ToDoubleWithShift(bits_per_word *
@@ -704,20 +704,19 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
   //   other.used_words() + shift_left_words <= max_words
   // 
   // Also note that the carry is not extended past used_words().
-  template <int other_words>
+  template <size_t other_words>
   constexpr void SubtractLeftShiftedMasked(const BigIntImpl<other_words>& other,
                                            int shift_left_words,
                                            BigIntWord mask) {
-    int i = 0, j = shift_left_words;
     bool carry = false;
-    for (int i = 0, j = shift_left_words; i < other.used_words(); i++, j++) {
+    for (size_t i = 0, j = shift_left_words; i < other.used_words(); i++, j++) {
       assert(j < used_words());
       words_[j] = words_[j].Subtract(other.words_[i] & BigUIntWord{mask},
                                      carry, &carry);
     }
   }
 
-  template <int other_words>
+  template <size_t other_words>
   constexpr BigIntImpl<max_words> DivideRemainderSlow(const BigIntImpl<other_words>& other,
       BigIntImpl<std::min(max_words, other_words)>* remainder_out) const {
     bool this_signed;
@@ -742,14 +741,13 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
   }
 };
 
-template <int max_words>
+template <size_t max_words>
 std::ostream& operator<<(std::ostream& out, const BigIntImpl<max_words>& bigint) {
   BigIntImpl<max_words> remaining = bigint;
   char digits[BigIntImpl<max_words>::max_bytes*3 + 2];
   char* digits_pos = &digits[BigIntImpl<max_words>::max_bytes*3 + 1];
   *digits_pos-- = '\0';
 
-  bool printed_anything = false;
   BigIntImpl<1> digit;
   do {
     remaining = remaining.DivideRemainder(BigIntImpl<1>(10), &digit);

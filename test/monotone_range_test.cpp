@@ -41,11 +41,11 @@ TEST(MonotoneRange, Triangle) {
 
 TEST(MonotoneRange, TiltedSquare) {
   //
-  //          > p1
-  //         /     \
-  //        p0     p2
-  //         \     /
-  //           p3 L
+  //          > p1            |
+  //         /     \          |
+  //        p0     p2         |
+  //         \     /          |
+  //           p3 L           |
   //
   using Point3Iterator = std::vector<Point3<32>>::iterator;
   using MonotoneRange = MonotoneRange<Point3Iterator>;
@@ -76,11 +76,11 @@ TEST(MonotoneRange, TiltedSquare) {
 
 TEST(MonotoneRange, Square) {
   //
-  //  p0 ->  p1
-  //  /\
-  //  |      |
-  //         v
-  //  p3 <-  p2
+  //  p0 ->  p1              |
+  //  /\                     |
+  //  |      |               |
+  //         v               |
+  //  p3 <-  p2              |
   //
   using Point3Iterator = std::vector<Point3<32>>::iterator;
   using MonotoneRange = MonotoneRange<Point3Iterator>;
@@ -111,17 +111,17 @@ TEST(MonotoneRange, Square) {
 
 TEST(MonotoneRange, StopsAtNonMonotone) {
   //
-  //        p0 -> p1 -> p2
-  //                      \
-  //      p12              p3
-  //       |               |
-  //      p11              p4
-  //        \             /
-  //        p10         p5
-  //         |          |
-  //        p9          p6
-  //        /             \
-  //       p8 <----------- p7
+  //        p0 -> p1 -> p2                  |
+  //                      \                 |
+  //      p12              p3               |
+  //       |               |                |
+  //      p11              p4               |
+  //        \             /                 |
+  //        p10         p5                  |
+  //         |          |                   |
+  //        p9          p6                  |
+  //        /             \                 |
+  //       p8 <----------- p7               |
   //
   using Point3Iterator = std::vector<Point3<32>>::iterator;
   using MonotoneRange = MonotoneRange<Point3Iterator>;
@@ -268,13 +268,13 @@ TEST(MonotoneRange, AllCollinearInCompareDim) {
 
 TEST(MonotoneRange, Step4DoesntOvershoot) {
   //
-  //        p0 -> p1 -> p2
-  //                      \
-  //      p9               p3
-  //       \              /
-  //     ___p8          p4
-  //    /              /
-  //  p7 <- p6 <- p5 <-
+  //        p0 -> p1 -> p2                   |
+  //                      \                  |
+  //      p9               p3                |
+  //       \              /                  |
+  //     ___p8          p4                   |
+  //    /              /                     |
+  //  p7 <- p6 <- p5 <-                      |
   //
   using Point3Iterator = std::vector<Point3<32>>::iterator;
   using MonotoneRange = MonotoneRange<Point3Iterator>;
@@ -315,13 +315,13 @@ TEST(MonotoneRange, Step4DoesntOvershoot) {
 
 TEST(MonotoneRange, Step5DoesntOvershoot) {
   //
-  //        p0 -> p1 -> p2
-  //                      \
-  //      p9               p3
-  //       |              /
-  //       \            p4 --------,
-  //        \                       \
-  //        p8 <------- p7 <- p6 <- p5
+  //        p0 -> p1 -> p2                     |
+  //                      \                    |
+  //      p9               p3                  |
+  //       |              /                    |
+  //       \            p4 --------,           |
+  //        \                       \          |
+  //        p8 <------- p7 <- p6 <- p5         |
   //
   using Point3Iterator = std::vector<Point3<32>>::iterator;
   using MonotoneRange = MonotoneRange<Point3Iterator>;

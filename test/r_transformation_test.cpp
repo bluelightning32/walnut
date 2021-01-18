@@ -8,14 +8,14 @@ namespace walnut {
 
 TEST(RXYCompareBivector, DiagonalPlanes) {
   //
-  // p3&p4   p1&p2
-  //      \ /
-  //       p0
+  // p3&p4   p1&p2            |
+  //      \ /                 |
+  //       p0                 |
   //
-  //        n2
-  //       /
-  //       \
-  //        n1
+  //        n2                |
+  //       /                  |
+  //       \                  |
+  //        n1                |
   //
   HomoPoint3<> p[5] = {
     HomoPoint3<>(1, 1, 5, 1),

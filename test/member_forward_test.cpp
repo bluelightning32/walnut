@@ -31,12 +31,16 @@ TEST(MemberForward, ConstRefParent) {
   EXPECT_EQ(std::get<0>(tref).copied_count, 0);
 
   TrackMoveCopy copy = MemberForward<decltype(tref)>(std::get<0>(tref));
+  // avoid an unused variable warning.
+  (void)copy;
 
   EXPECT_EQ(std::get<0>(tref).moved_count, 0);
   EXPECT_EQ(std::get<0>(tref).copied_count, 1);
 
   TrackMoveCopy moved = MemberForward<decltype(tref)>(
       std::move(std::get<0>(t)));
+  // avoid an unused variable warning.
+  (void)moved;
 
   EXPECT_EQ(std::get<0>(tref).moved_count, 1);
   EXPECT_EQ(std::get<0>(tref).copied_count, 1);
@@ -53,12 +57,16 @@ TEST(MemberForward, RefParent) {
   EXPECT_EQ(std::get<0>(tref).copied_count, 0);
 
   TrackMoveCopy copy = MemberForward<decltype(tref)>(std::get<0>(tref));
+  // avoid an unused variable warning.
+  (void)copy;
 
   EXPECT_EQ(std::get<0>(tref).moved_count, 0);
   EXPECT_EQ(std::get<0>(tref).copied_count, 1);
 
   TrackMoveCopy moved = MemberForward<decltype(tref)>(
       std::move(std::get<0>(t)));
+  // avoid an unused variable warning.
+  (void)moved;
 
   EXPECT_EQ(std::get<0>(tref).moved_count, 1);
   EXPECT_EQ(std::get<0>(tref).copied_count, 1);
@@ -75,12 +83,16 @@ TEST(MemberForward, RValueRefParent) {
   EXPECT_EQ(std::get<0>(tref).copied_count, 0);
 
   TrackMoveCopy moved1 = MemberForward<decltype(tref)>(std::get<0>(tref));
+  // avoid an unused variable warning.
+  (void)moved1;
 
   EXPECT_EQ(std::get<0>(tref).moved_count, 1);
   EXPECT_EQ(std::get<0>(tref).copied_count, 0);
 
   TrackMoveCopy moved2 = MemberForward<decltype(tref)>(
       std::move(std::get<0>(t)));
+  // avoid an unused variable warning.
+  (void)moved2;
 
   EXPECT_EQ(std::get<0>(tref).moved_count, 2);
   EXPECT_EQ(std::get<0>(tref).copied_count, 0);

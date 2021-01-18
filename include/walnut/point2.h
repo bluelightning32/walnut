@@ -5,7 +5,7 @@
 
 namespace walnut {
 
-template <int coord_bits_template = 32>
+template <size_t coord_bits_template = 32>
 class Point2 {
  public:
   using VectorRep = Vector2<coord_bits_template>;
@@ -16,16 +16,16 @@ class Point2 {
   // Note that the BigInt may round up the requested number of bits and end up
   // supporting more bits. Also note that the BigInt is faster when not all of
   // the requested bits are used.
-  static constexpr int coord_bits = coord_bits_template;
+  static constexpr size_t coord_bits = coord_bits_template;
 
   // Leaves the coordinates in an undefined state
   Point2() = default;
 
-  template <int other_coord_bits>
+  template <size_t other_coord_bits>
   Point2(const Point2<other_coord_bits>& other) :
     Point2(other.coords()[0], other.coords()[1]) { }
 
-  template <int other_coord_bits>
+  template <size_t other_coord_bits>
   Point2(const BigInt<other_coord_bits>& x,
           const BigInt<other_coord_bits>& y) :
     vector_from_origin_(x, y) { }
@@ -56,12 +56,12 @@ class Point2 {
     return vector_from_origin_.y();
   }
 
-  template <int other_coord_bits>
+  template <size_t other_coord_bits>
   bool operator == (const Point2<other_coord_bits>& other) const {
     return vector_from_origin() == other.vector_from_origin();
   }
 
-  template <int other_coord_bits>
+  template <size_t other_coord_bits>
   Vector2<std::max(other_coord_bits, coord_bits_template) + 1> operator-(
       const Point2<other_coord_bits>& other) const {
     return vector_from_origin() - other.vector_from_origin();
@@ -71,7 +71,7 @@ class Point2 {
   // Returns >0 if p3 is counter-clockwise from p1, with `this` as the center
   // point.
   // Returns <0 if p3 is clockwise from p1, with `this` as the center point.
-  template <int other_coord_bits>
+  template <size_t other_coord_bits>
   BigIntWord GetTwistDir(const Point2<other_coord_bits>& p1,
                          const Point2<other_coord_bits>& p3) {
     return (p1 - *this).Cross(p3 - *this).GetSign();

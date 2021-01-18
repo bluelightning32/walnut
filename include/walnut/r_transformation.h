@@ -22,7 +22,7 @@ namespace walnut {
 //
 // Since this function is likely to overflow the HomoPoint3 precision, this
 // function should only be used for testing purposes.
-template <int num_bits, int denom_bits>
+template <size_t num_bits, size_t denom_bits>
 HomoPoint3<num_bits, denom_bits> RTransform(
     const HomoPoint3<num_bits, denom_bits>& p,
     const BigInt<denom_bits>& eps_inv) {
@@ -47,7 +47,7 @@ HomoPoint3<num_bits, denom_bits> RTransform(
 // * Returns 0 if u points in the same or opposite direction as v (as do (u R)
 //   and (v R)).
 // * Returns 1 if (v R) is counter-clockwise from (u R)
-template <int component_bits>
+template <size_t component_bits>
 int RXYCompareBivector(const Vector3<component_bits>& u,
                        const Vector3<component_bits>& v) {
   int comparexy = (u.x()*v.y()).Compare(u.y()*v.x());

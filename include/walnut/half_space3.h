@@ -10,8 +10,8 @@ namespace walnut {
 // Sometimes this class is used just to represent a plane in R^3. Other times
 // it is used to represent the positive half-space created by dividing R^3 in
 // half at that plane.
-template <int vector_bits_template = 31*2 + 3,
-          int dist_bits_template = 31*3 + 3>
+template <size_t vector_bits_template = 31*2 + 3,
+          size_t dist_bits_template = 31*3 + 3>
 class HalfSpace3 {
  public:
   using VectorRep = Vector3<vector_bits_template>;
@@ -20,9 +20,9 @@ class HalfSpace3 {
 
   // The minimum number of bits to support for each of the x, y, and z
   // components.
-  static constexpr int vector_bits = vector_bits_template;
+  static constexpr size_t vector_bits = vector_bits_template;
   // The minimum number of bits to support for the d component.
-  static constexpr int dist_bits = dist_bits_template;
+  static constexpr size_t dist_bits = dist_bits_template;
 
   const VectorInt& x() const {
     return normal_.x();
@@ -62,7 +62,7 @@ class HalfSpace3 {
   // From that point, everything in the normal direction is considered in the
   // positive half-space and everything opposite to the normal direction is
   // considered in the negative half-space.
-  template <int other_vector_bits>
+  template <size_t other_vector_bits>
   HalfSpace3(const Vector3<other_vector_bits>& normal, const DistInt& dist) :
     normal_(normal), dist_(dist) { }
 
@@ -79,11 +79,11 @@ class HalfSpace3 {
 
   HalfSpace3(int x, int y, int z, int dist) : normal_(x, y, z), dist_(dist) { }
 
-  template <int other_vector_bits, int other_dist_bits>
+  template <size_t other_vector_bits, size_t other_dist_bits>
   HalfSpace3(const HalfSpace3<other_vector_bits, other_dist_bits>& other) :
     HalfSpace3(other.normal(), other.d()) { }
 
-  template <int point_bits>
+  template <size_t point_bits>
   HalfSpace3(const Point3<point_bits>& p1,
         const Point3<point_bits>& p2,
         const Point3<point_bits>& p3) :
@@ -93,7 +93,7 @@ class HalfSpace3 {
     normal_((p3 - p2).Cross(p1 - p2)),
     dist_(normal_.Dot(p2.vector_from_origin())) { }
 
-  template <int num_bits, int denom_bits>
+  template <size_t num_bits, size_t denom_bits>
   HalfSpace3(const HomoPoint3<num_bits, denom_bits>& p1,
              const HomoPoint3<num_bits, denom_bits>& p2,
              const HomoPoint3<num_bits, denom_bits>& p3) {
@@ -111,27 +111,27 @@ class HalfSpace3 {
 
   // Returns >0 if `v` is in the positive half-space, 0 if `v` is coincident
   // with the plane, or <0 if `v` is in the negative half-space.
-  template <int v_bits>
+  template <size_t v_bits>
   int Compare(const Point3<v_bits>& v) const {
     return normal_.Dot(v.vector_from_origin()).Compare(dist_);
   }
 
   // Returns true if the point is on the plane
-  template <int v_bits>
+  template <size_t v_bits>
   bool IsCoincident(const Point3<v_bits>& v) const {
     return Compare(v) == 0;
   }
 
   // Returns >0 if `v` is in the positive half-space, 0 if `v` is coincident
   // with the plane, or <0 if `v` is in the negative half-space.
-  template <int v_num_bits, int v_denom_bits>
+  template <size_t v_num_bits, size_t v_denom_bits>
   int Compare(const HomoPoint3<v_num_bits, v_denom_bits>& v) const {
     return normal_.Dot(v.vector_from_origin()).Compare(
         v.dist_denom() * dist_) * v.dist_denom().GetAbsMult();
   }
 
   // Returns true if the point is on the plane
-  template <int v_num_bits, int v_denom_bits>
+  template <size_t v_num_bits, size_t v_denom_bits>
   bool IsCoincident(const HomoPoint3<v_num_bits, v_denom_bits>& v) const {
     return Compare(v) == 0;
   }
@@ -147,7 +147,7 @@ class HalfSpace3 {
   //
   // The return value is undefined if `p` is not parallel to this half-space,
   // or if the normal component with index `nonzero_dimension` is zero.
-  template <int other_vector_bits, int other_dist_bits>
+  template <size_t other_vector_bits, size_t other_dist_bits>
   int Compare(const HalfSpace3<other_vector_bits, other_dist_bits>& p,
               int nonzero_dimension) const {
     return (d() * p.normal().components()[nonzero_dimension]).Compare(
@@ -166,7 +166,7 @@ class HalfSpace3 {
   // Note that everything equals the zero plane.
   //
   // Two HalfSpace3s are not equal if they refer to different half-spaces.
-  template <int other_vector_bits, int other_dist_bits>
+  template <size_t other_vector_bits, size_t other_dist_bits>
   bool operator==(
       const HalfSpace3<other_vector_bits, other_dist_bits>& other) const {
     BigInt<std::max(vector_bits, dist_bits)> scale_other;
@@ -192,7 +192,7 @@ class HalfSpace3 {
   }
 
   // Note that everything equals the zero vector.
-  template <int other_vector_bits, int other_dist_bits>
+  template <size_t other_vector_bits, size_t other_dist_bits>
   bool operator!=(
       const HalfSpace3<other_vector_bits, other_dist_bits>& other) const {
     return !(*this == other);
@@ -240,7 +240,7 @@ class HalfSpace3 {
 // The only reason to use this wrapper is that it figures out how many bits are
 // necessary in the worst case for the plane numerator and denominator, given
 // the number of bits in each Point3.
-template <int point3_bits_template = 32>
+template <size_t point3_bits_template = 32>
 class HalfSpace3FromPoint3Builder {
  public:
   using Point3Rep = Point3<point3_bits_template>;
@@ -272,7 +272,7 @@ class HalfSpace3FromPoint3Builder {
   }
 };
 
-template <int vector_bits, int dist_bits>
+template <size_t vector_bits, size_t dist_bits>
 void HalfSpace3<vector_bits, dist_bits>::Reduce() {
   bool unused;
   auto common_factor = normal_.components()[0].GetUIntAbs(&unused);
@@ -294,7 +294,7 @@ void HalfSpace3<vector_bits, dist_bits>::Reduce() {
   normal_.components()[2] /= signed_factor;
 }
 
-template <int vector_bits, int dist_bits>
+template <size_t vector_bits, size_t dist_bits>
 std::ostream& operator<<(std::ostream& out,
                          const HalfSpace3<vector_bits, dist_bits>& p) {
   return out << "{ x*" << p.x()

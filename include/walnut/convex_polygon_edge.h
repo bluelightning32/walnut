@@ -11,19 +11,19 @@
 
 namespace walnut {
 
-template <int point3_bits_template, typename VertexDataTemplate>
+template <size_t point3_bits_template, typename VertexDataTemplate>
 struct ConvexPolygonEdge;
 
-template <int point3_bits, typename VertexData>
+template <size_t point3_bits, typename VertexData>
 std::string
 Approximate(const ConvexPolygonEdge<point3_bits, VertexData>& edge);
 
-template <int point3_bits>
+template <size_t point3_bits>
 std::string
 Approximate(const ConvexPolygonEdge<point3_bits, NoVertexData>& edge);
 
 // An edge of a ConvexPolygon
-template <int point3_bits_template = 32,
+template <size_t point3_bits_template = 32,
           typename VertexDataTemplate = NoVertexData>
 struct ConvexPolygonEdge : private VertexDataTemplate {
   using Point3Rep = Point3<point3_bits_template>;
@@ -34,13 +34,15 @@ struct ConvexPolygonEdge : private VertexDataTemplate {
   using VertexData = VertexDataTemplate;
 
   // VertexData must be default-constructible to use this constructor.
-  template <int other_point3_bits>
-  ConvexPolygonEdge(const Point3<other_point3_bits>& vertex,
+  template <size_t other_point3_bits>
+  ConvexPolygonEdge(const std::enable_if_t<
+                            std::is_default_constructible<VertexData>::value,
+                            Point3<other_point3_bits>>& vertex,
                     const Point3<other_point3_bits>& next_vertex) :
     vertex(vertex), line(vertex, next_vertex) { }
 
   // VertexData must be default-constructible to use this constructor.
-  template <int num_bits, int denom_bits>
+  template <size_t num_bits, size_t denom_bits>
   ConvexPolygonEdge(const HomoPoint3<num_bits, denom_bits>& vertex,
                     const HomoPoint3<num_bits, denom_bits>& next_vertex) :
     vertex(vertex), line(vertex, next_vertex) { }
@@ -84,19 +86,19 @@ struct ConvexPolygonEdge : private VertexDataTemplate {
     VertexData(parent_edge.data(), vertex, line),
     vertex(vertex), line(line) { }
 
-  template <int input_point3_bits = point3_bits_template>
+  template <size_t input_point3_bits = point3_bits_template>
   ConvexPolygonEdge(const Point3WithVertexData<input_point3_bits,
                                                VertexData>& vertex,
                     const Point3<input_point3_bits>& next_vertex) :
     VertexData(vertex.data), vertex(vertex), line(vertex, next_vertex) { }
 
-  template <int other_point3_bits, typename OtherVertexData>
+  template <size_t other_point3_bits, typename OtherVertexData>
   explicit ConvexPolygonEdge(
       const ConvexPolygonEdge<other_point3_bits,
                               OtherVertexData>& other) :
     VertexData(other.data()), vertex(other.vertex), line(other.line) { }
 
-  template <int other_point3_bits, typename OtherVertexData>
+  template <size_t other_point3_bits, typename OtherVertexData>
   ConvexPolygonEdge& operator=(
       const ConvexPolygonEdge<other_point3_bits,
                               OtherVertexData>& other) {
@@ -146,7 +148,7 @@ struct ConvexPolygonEdge : private VertexDataTemplate {
   LineRep line;
 };
 
-template <int point3_bits, typename VertexData>
+template <size_t point3_bits, typename VertexData>
 std::string
 Approximate(const ConvexPolygonEdge<point3_bits, VertexData>& edge) {
   std::ostringstream out;
@@ -154,20 +156,20 @@ Approximate(const ConvexPolygonEdge<point3_bits, VertexData>& edge) {
   return out.str();
 }
 
-template <int point3_bits>
+template <size_t point3_bits>
 std::string
 Approximate(const ConvexPolygonEdge<point3_bits, NoVertexData>& edge) {
   return edge.ApproximateNoData();
 }
 
-template <int point3_bits, typename VertexData>
+template <size_t point3_bits, typename VertexData>
 std::ostream& operator<<(
     std::ostream& out, const ConvexPolygonEdge<point3_bits, VertexData>& edge) {
   out << edge.vertex << ": " << edge.data();
   return out;
 }
 
-template <int point3_bits>
+template <size_t point3_bits>
 std::ostream& operator<<(
     std::ostream& out,
     const ConvexPolygonEdge<point3_bits, NoVertexData>& edge) {

@@ -215,11 +215,6 @@ void TestIntersectPlanes() {
   ASSERT_GE(plane1.d(), HalfSpace3Builder::dist_min());
   ASSERT_LE(plane1.d(), HalfSpace3Builder::dist_max());
 
-  Point3<point3_bits> plane2_points[3] = {
-    Point3<point3_bits>{min_int, max_int, min_int},
-    Point3<point3_bits>{max_int, max_int, min_int},
-    Point3<point3_bits>{min_int, max_int, max_int},
-  };
   HalfSpace3Rep plane2(Vector3<>(0, 1, 0), max_int);
   ASSERT_GE(plane2.d(), HalfSpace3Builder::dist_min());
   ASSERT_LE(plane2.d(), HalfSpace3Builder::dist_max());
