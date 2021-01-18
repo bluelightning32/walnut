@@ -291,16 +291,15 @@ TEST(BSPTree, SplitTwiceVertexData) {
   // The edge of pos_child2 that starts at q3 is split by split1.
   // The edge of pos_child2 that starts at q2 is split by split2.
   //
-  // neg_child2 most clockwise split plane touched by each vertex:
+  // neg_child2 last split plane touched at each vertex:
   // q1: split2.normal()
   // q2: split2.normal()
   // q4: -split1.normal()
   //
-  // pos_child2 most clockwise split plane touched by each vertex:
+  // pos_child2 last split plane touched at each vertex:
   // q1: -split2.normal()
-  // q2: -split1.normal()
+  // q2: -split2.normal()
   // q3: -split1.normal()
-  //
   Point3<32> p[4] = {
     Point3<32>(0, 0, 10),
     Point3<32>(2, 0, 10),
@@ -336,24 +335,24 @@ TEST(BSPTree, SplitTwiceVertexData) {
        neg_child2.contents()[0].edges()) {
     if (edge.vertex == q2) {
       EXPECT_EQ(edge.data().split_by, &tree.root);
-      EXPECT_EQ(edge.data().cw_edge_angle_tracker().current(),
+      EXPECT_EQ(edge.data().edge_boundary_angle(),
                 -split1.normal());
-      EXPECT_EQ(edge.data().vertex_angle_tracker().current(), split2.normal());
+      EXPECT_EQ(edge.data().vertex_boundary_angle(), split2.normal());
     } else if (edge.vertex == q1) {
       EXPECT_EQ(edge.data().split_by, &pos_child1);
-      EXPECT_EQ(edge.data().cw_edge_angle_tracker().current(),
+      EXPECT_EQ(edge.data().edge_boundary_angle(),
                 split2.normal());
-      EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
+      EXPECT_EQ(edge.data().vertex_boundary_angle(),
                 split2.normal());
     } else if (edge.vertex == q4) {
       EXPECT_EQ(edge.data().split_by, nullptr);
-      EXPECT_FALSE(edge.data().cw_edge_angle_tracker().AnyReceived());
-      EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
+      EXPECT_TRUE(edge.data().edge_boundary_angle().IsZero());
+      EXPECT_EQ(edge.data().vertex_boundary_angle(),
                 -split1.normal());
     } else {
       EXPECT_EQ(edge.data().split_by, nullptr);
-      EXPECT_FALSE(edge.data().cw_edge_angle_tracker().AnyReceived());
-      EXPECT_FALSE(edge.data().vertex_angle_tracker().AnyReceived());
+      EXPECT_TRUE(edge.data().edge_boundary_angle().IsZero());
+      EXPECT_TRUE(edge.data().vertex_boundary_angle().IsZero());
     }
   }
   // Validate pos_child2.
@@ -361,25 +360,25 @@ TEST(BSPTree, SplitTwiceVertexData) {
        pos_child2.contents()[0].edges()) {
     if (edge.vertex == q3) {
       EXPECT_EQ(edge.data().split_by, &tree.root);
-      EXPECT_EQ(edge.data().cw_edge_angle_tracker().current(),
+      EXPECT_EQ(edge.data().edge_boundary_angle(),
                 -split1.normal());
-      EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
+      EXPECT_EQ(edge.data().vertex_boundary_angle(),
                 -split1.normal());
     } else if (edge.vertex == q2) {
       EXPECT_EQ(edge.data().split_by, &pos_child1);
-      EXPECT_EQ(edge.data().cw_edge_angle_tracker().current(),
+      EXPECT_EQ(edge.data().edge_boundary_angle(),
                 -split2.normal());
-      EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
-                -split1.normal());
+      EXPECT_EQ(edge.data().vertex_boundary_angle(),
+                -split2.normal());
     } else if (edge.vertex == q1) {
       EXPECT_EQ(edge.data().split_by, nullptr);
-      EXPECT_FALSE(edge.data().cw_edge_angle_tracker().AnyReceived());
-      EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
+      EXPECT_TRUE(edge.data().edge_boundary_angle().IsZero());
+      EXPECT_EQ(edge.data().vertex_boundary_angle(),
                 -split2.normal());
     } else {
       EXPECT_EQ(edge.data().split_by, nullptr);
-      EXPECT_FALSE(edge.data().cw_edge_angle_tracker().AnyReceived());
-      EXPECT_FALSE(edge.data().vertex_angle_tracker().AnyReceived());
+      EXPECT_TRUE(edge.data().edge_boundary_angle().IsZero());
+      EXPECT_TRUE(edge.data().vertex_boundary_angle().IsZero());
     }
   }
 }
@@ -405,10 +404,10 @@ TEST(BSPTree, SplitVertThenDiagVertexData) {
   // The edge of neg_child2 that starts at q2 is split by split2.
   // The edge of pos_child2 that starts at p[2] is split by split2.
   //
-  // neg_child2 most clockwise split plane touched by each vertex:
+  // neg_child2 last split plane touched at each vertex:
   // p[2]: split2.normal()
   // q1: -split1.normal()
-  // q2: -split1.normal()
+  // q2: split2.normal()
   //
   // pos_child2 most clockwise split plane touched by each vertex:
   // p[2]: -split2.normal()
@@ -449,20 +448,20 @@ TEST(BSPTree, SplitVertThenDiagVertexData) {
        neg_child2.contents()[0].edges()) {
     if (edge.vertex == q1) {
       EXPECT_EQ(edge.data().split_by, &tree.root);
-      EXPECT_EQ(edge.data().cw_edge_angle_tracker().current(),
+      EXPECT_EQ(edge.data().edge_boundary_angle(),
                 -split1.normal());
-      EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
+      EXPECT_EQ(edge.data().vertex_boundary_angle(),
                 -split1.normal());
     } else if (edge.vertex == q2) {
       EXPECT_EQ(edge.data().split_by, &pos_child1);
-      EXPECT_EQ(edge.data().cw_edge_angle_tracker().current(),
+      EXPECT_EQ(edge.data().edge_boundary_angle(),
                 split2.normal());
-      EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
-                -split1.normal());
+      EXPECT_EQ(edge.data().vertex_boundary_angle(),
+                split2.normal());
     } else {
       EXPECT_EQ(edge.data().split_by, nullptr);
-      EXPECT_FALSE(edge.data().cw_edge_angle_tracker().AnyReceived());
-      EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
+      EXPECT_TRUE(edge.data().edge_boundary_angle().IsZero());
+      EXPECT_EQ(edge.data().vertex_boundary_angle(),
                 split2.normal());
     }
   }
@@ -472,19 +471,19 @@ TEST(BSPTree, SplitVertThenDiagVertexData) {
        pos_child2.contents()[0].edges()) {
     if (edge.vertex == p[2]) {
       EXPECT_EQ(edge.data().split_by, &pos_child1);
-      EXPECT_EQ(edge.data().cw_edge_angle_tracker().current(),
+      EXPECT_EQ(edge.data().edge_boundary_angle(),
                 -split2.normal());
-      EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
+      EXPECT_EQ(edge.data().vertex_boundary_angle(),
                 -split2.normal());
     } else if (edge.vertex == q2) {
       EXPECT_EQ(edge.data().split_by, nullptr);
-      EXPECT_FALSE(edge.data().cw_edge_angle_tracker().AnyReceived());
-      EXPECT_EQ(edge.data().vertex_angle_tracker().current(),
+      EXPECT_TRUE(edge.data().edge_boundary_angle().IsZero());
+      EXPECT_EQ(edge.data().vertex_boundary_angle(),
                 -split2.normal());
     } else {
       EXPECT_EQ(edge.data().split_by, nullptr);
-      EXPECT_FALSE(edge.data().cw_edge_angle_tracker().AnyReceived());
-      EXPECT_FALSE(edge.data().vertex_angle_tracker().AnyReceived());
+      EXPECT_TRUE(edge.data().edge_boundary_angle().IsZero());
+      EXPECT_TRUE(edge.data().vertex_boundary_angle().IsZero());
     }
   }
 }

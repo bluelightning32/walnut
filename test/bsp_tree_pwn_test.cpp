@@ -283,6 +283,12 @@ TEST_P(BSPTreePWN, EmptyCube) {
 }
 
 TEST_P(BSPTreePWN, BeforeCrossing) {
+  // This test creates a prism that starts 3/4 of the way to the north vertex.
+  // Later the tilted cube containing the prism is split before the prism at
+  // 1/2 of the way to the north vertex.
+  //
+  // Since the split happened before the prism on the M-path, both children
+  // should still have a PWN of 0.
   BSPPolygonId id = tree_.AllocateId();
   EXPECT_EQ(id, 0);
 
@@ -355,7 +361,8 @@ TEST_P(BSPTreePWN, SimpleCrossing) {
 }
 
 TEST_P(BSPTreePWN, SimpleCrossing2) {
-  // This is almost the same as SimpleCrossing, except a full cubes are used.
+  // This is almost the same as SimpleCrossing, except that a full cube is
+  // used.
   BSPPolygonId id = tree_.AllocateId();
   EXPECT_EQ(id, 0);
 

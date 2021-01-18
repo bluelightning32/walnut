@@ -12,8 +12,8 @@
 #include <vector>
 
 #include "walnut/convex_polygon.h"
-#include "walnut/greatest_angle_tracker.h"
 #include "walnut/half_space3.h"
+#include "walnut/r_transformation.h"
 
 namespace walnut {
 
@@ -41,33 +41,34 @@ class BSPEdgeInfo {
 
   // Create a new vertex on the parent's existing edge.
   //
-  // Inherit the edge trackers from the parent, but initialize the vertex
-  // tracker from the edge trackers.
+  // Inherit the edge boundary angle from the parent, but initialize
+  // the vertex boundary angle from the edge boundary angle instead of
+  // inheriting the parent's vertex boundary angle.
   template <size_t num_bits, size_t denom_bits>
   BSPEdgeInfo(const BSPEdgeInfo& parent,
               const HomoPoint3<num_bits, denom_bits>& new_source) :
     split_by(parent.split_by),
-    cw_edge_angle_tracker_(parent.cw_edge_angle_tracker_),
-    vertex_angle_tracker_(parent.cw_edge_angle_tracker_) { }
+    vertex_boundary_angle_(parent.edge_boundary_angle_),
+    edge_boundary_angle_(parent.edge_boundary_angle_) { }
 
   // Create a new line from the parent's existing vertex.
   //
-  // Inherit the vertex trackers from the parent, but default initialize the
-  // edge trackers.
+  // Inherit the vertex boundary angle from the parent, but default initialize
+  // the edge boundary angle.
   template <size_t d_bits, size_t m_bits>
   BSPEdgeInfo(const BSPEdgeInfo& parent,
               const PluckerLine<d_bits, m_bits>& new_line) :
-    vertex_angle_tracker_(parent.vertex_angle_tracker_) { }
+    vertex_boundary_angle_(parent.vertex_boundary_angle_) { }
 
   // Create a new line starting on a new vertex on the parent's existing edge.
   //
-  // Initialize the vertex tracker from the parent's edge trackers. Default
-  // initialize the edge trackers.
+  // Initialize the vertex boundary angle from the parent's edge boundary
+  // angle. Default initialize the edge boundary angle.
   template <size_t num_bits, size_t denom_bits, size_t d_bits, size_t m_bits>
   BSPEdgeInfo(const BSPEdgeInfo& parent,
               const HomoPoint3<num_bits, denom_bits>& new_source,
               const PluckerLine<d_bits, m_bits>& new_line) :
-    vertex_angle_tracker_(parent.cw_edge_angle_tracker_) { }
+    vertex_boundary_angle_(parent.edge_boundary_angle_) { }
 
   bool operator==(const NoVertexData&) const {
     return true;
@@ -76,14 +77,12 @@ class BSPEdgeInfo {
     return false;
   }
 
-  const GreatestAngleTracker</*most_ccw=*/false, NormalRep::component_bits>&
-  cw_edge_angle_tracker() const {
-    return cw_edge_angle_tracker_;
+  const NormalRep& vertex_boundary_angle() const {
+    return vertex_boundary_angle_;
   }
 
-  const GreatestAngleTracker</*most_ccw=*/false, NormalRep::component_bits>&
-  vertex_angle_tracker() const {
-    return vertex_angle_tracker_;
+  const NormalRep& edge_boundary_angle() const {
+    return edge_boundary_angle_;
   }
 
   const BSPNodeRep* split_by = nullptr;
@@ -91,11 +90,17 @@ class BSPEdgeInfo {
  private:
   friend BSPNodeRep;
 
-  GreatestAngleTracker</*most_ccw=*/false, NormalRep::component_bits>
-    cw_edge_angle_tracker_;
+  // The normal of the last boundary facet to touch this vertex, or
+  // `Vector3::Zero` if the vertex has not touched any boundary facets.
+  //
+  // This field is updated directly by BSPNodeRep.
+  NormalRep vertex_boundary_angle_;
 
-  GreatestAngleTracker</*most_ccw=*/false, NormalRep::component_bits>
-    vertex_angle_tracker_;
+  // The normal of the last boundary facet to touch this entire edge, or
+  // `Vector3::Zero` if the edge has not touched any boundary facets.
+  //
+  // This field is updated directly by BSPNodeRep.
+  NormalRep edge_boundary_angle_;
 };
 
 template <size_t point3_bits>
@@ -204,6 +209,7 @@ class BSPNode {
   using InputPolygon = InputPolygonTemplate;
   using PolygonRep = BSPPolygonWrapper<BSPNode>;
   using VertexData = typename PolygonRep::VertexData;
+  using NormalRep = typename VertexData::NormalRep;
   using EdgeRep = typename PolygonRep::EdgeRep;
 
   using HalfSpace3Rep = typename HalfSpace3FromPoint3Builder<
@@ -291,15 +297,29 @@ class BSPNode {
   template <typename LeafCallback>
   void PushContentsToLeaves(LeafCallback leaf_callback);
 
+  // Update the negative and positive child for the crossing (if any) that
+  // occurs at a vertex.
+  //
+  // `edge_comparison` should be -1 if the edge boundary angle is clockwise
+  // from the split_.normal(), or it should be 1 if it is counter-clockwise.
+  // This function should not be called if the vectors are the same.
+  //
+  // crossing_flip should be 1 if the vertex_to_edge direction can be used
+  // directly to update the PWN, or crossing_flip should be -1 if the opposite
+  // should be used.
+  void PushVertexPWNToChildren(BSPPolygonId polygon_id, int edge_comparison,
+                               const NormalRep& edge_boundary_angle,
+                               const EdgeRep& vertex_edge, int crossing_flip);
+
   // Update the children's PWN based on this node's contents.
   //
   // This may only be called on an interior node.
   void PushContentPWNToChildren();
 
-  // Update the angle trackers in the edges and vertices of `polygon` that are
+  // Update the boundary angles in the edges and vertices of `polygon` that are
   // coincident with `split_`.
   //
-  // If `pos_child_` is false, the trackers are updated with split_.normal(),
+  // If `pos_child_` is false, the angles are updated with split_.normal(),
   // otherwise they are updated with -split_.normal().
   //
   // The vertices in the range [coincident_begin, coincident_end) are updated.
@@ -308,7 +328,7 @@ class BSPNode {
   // The caller must ensure coincident_begin <= coincident_end. The function
   // will apply the modulus on the vertex indices, so it is okay for
   // coincident_end to be greater than polygon.vertex_count().
-  void UpdateAngleTrackers(bool pos_child, PolygonRep& polygon,
+  void UpdateBondaryAngles(bool pos_child, PolygonRep& polygon,
       size_t coincident_begin, size_t coincident_end);
 
   // For a leaf node, these are the polygons that are inside the cell. They may
@@ -338,86 +358,108 @@ class BSPNode {
 };
 
 template <typename InputPolygonTemplate>
-void BSPNode<InputPolygonTemplate>::PushContentPWNToChildren() {
-  for (PolygonRep& polygon : contents_) {
-    for (size_t i = 0; i < polygon.vertex_count(); ++i) {
-      const EdgeRep& current_edge = polygon.edge(i);
-      const VertexData& current_vertex_data = current_edge.data();
-      int edge_comparison = RXYCompareBivector(split_.normal(),
-          current_vertex_data.cw_edge_angle_tracker_.current());
-      if (edge_comparison == 0) continue;
+void BSPNode<InputPolygonTemplate>::PushVertexPWNToChildren(
+    BSPPolygonId polygon_id, int edge_comparison,
+    const NormalRep& edge_boundary_angle, const EdgeRep& vertex_edge,
+    int crossing_flip) {
+  const VertexData& vertex_data = vertex_edge.data();
+  const NormalRep& vertex_boundary_angle = vertex_data.vertex_boundary_angle();
+  const int vertex_comparison = RXYCompareBivector(split_.normal(),
+                                                   vertex_boundary_angle);
 
-      const EdgeRep& next_edge =
-        polygon.edge((i + 1)%polygon.vertex_count());
-      const VertexData& next_vertex_data = next_edge.data();
-      const int before_vertex_comparison = RXYCompareBivector(split_.normal(),
-          current_vertex_data.vertex_angle_tracker_.current());
-      const int after_vertex_comparison = RXYCompareBivector(split_.normal(),
-          next_vertex_data.vertex_angle_tracker_.current());
-
-      BSPNode<InputPolygonTemplate>* push_to_child;
-      int change = 0;
-      if (edge_comparison < 0) {
-        push_to_child = negative_child();
-        if (before_vertex_comparison > 0 &&
-            split_.Compare(current_edge.vertex) >= 0) {
-          BigIntWord min_max_comparison =
-            split_.normal().Dot(
-                current_vertex_data.cw_edge_angle_tracker_.current().Cross(
-                  current_vertex_data.vertex_angle_tracker_.current()))
-            .GetSign();
-          if (min_max_comparison < 0) {
-            // I-path is entering the polyhedron.
-            ++change;
-          }
+  // For a crossing at the vertex, the edge boundary angle and the
+  // vertex angle must be on opposite sides of the split normal. That
+  // means that `edge_comparison` and `vertex_comparison` will have
+  // different signs.
+  if (edge_comparison + vertex_comparison == 0) {
+    assert((edge_comparison < 0 && vertex_comparison > 0) ||
+           (edge_comparison > 0 && vertex_comparison < 0));
+    const int vertex_to_edge = RXYCompareBivector(vertex_boundary_angle,
+                                                  edge_boundary_angle);
+    // Since the vertex boundary angle and edge boundary angle are on
+    // opposite sides of the split normal,
+    //   vertex_boundary_angle != edge_boundary_angle
+    //   Compare(vertex_boundary_angle, edge_boundary_angle) != 0
+    assert(vertex_to_edge != 0);
+    BSPNode<InputPolygonTemplate>* push_to_child;
+    int side_comparison = vertex_comparison ^ vertex_to_edge;
+    if (side_comparison >= 0) {
+      // The split normal to vertex rotation is the same direction as
+      // the vertex to current edge rotation.
+      assert((vertex_comparison >= 0) == (vertex_to_edge >= 0));
+      assert((edge_comparison >= 0) != (vertex_to_edge >= 0));
+      push_to_child = negative_child();
+    } else {
+      // The split normal to vertex rotation is the opposite direction
+      // as the vertex to current edge rotation.
+      assert((vertex_comparison >= 0) != (vertex_to_edge >= 0));
+      assert((edge_comparison >= 0) == (vertex_to_edge >= 0));
+      push_to_child = positive_child();
+    }
+    assert (vertex_to_edge == 1 || vertex_to_edge == -1);
+    int side_comparison2 = split_.Compare(vertex_edge.vertex);
+    if ((side_comparison ^ side_comparison2) >= 0) {
+      // min_max_comparison will be positive if the following vectors are
+      // arranged in counter-clockwise order:
+      // * vertex_boundary_angle
+      // * edge_boundary_angle
+      // * split_.normal()
+      //
+      BigIntWord min_max_comparison = split_.normal().Dot(
+          vertex_boundary_angle.Cross(edge_boundary_angle)).GetSign();
+      // * Starting the list of vectors at a different offset does not
+      //   affect the sign.
+      // * Negating split_.normal() negates the sign.
+      // * swapping vertex_boundary_angle and edge_boundary_angle
+      //   negates the sign.
+      //
+      // split_.normal() is negated if (vertex_comparison ^
+      // vertex_to_edge) < 0.
+      //
+      // vertex_boundary_angle and edge_boundary_angle are swapped if
+      // vertex_to_edge < 0.
+      //
+      // So the adjusted sign of min_max_comparison is:
+      //   min_max_comparison ^ (vertex_comparison ^
+      //                         vertex_to_edge) ^ vertex_to_edge
+      // = min_max_comparison ^ vertex_comparison
+      if ((min_max_comparison ^ vertex_comparison) >= 0) {
+        if (push_to_child->pwn_by_id_.size() <= polygon_id) {
+          push_to_child->pwn_by_id_.resize(polygon_id + 1);
         }
-        if (after_vertex_comparison > 0 &&
-            split_.Compare(next_edge.vertex) >= 0) {
-          BigIntWord min_max_comparison =
-            split_.normal().Dot(
-                current_vertex_data.cw_edge_angle_tracker_.current().Cross(
-                  next_vertex_data.vertex_angle_tracker_.current())).GetSign();
-          if (min_max_comparison < 0) {
-            // I-path is exiting the polyhedron.
-            --change;
-          }
-        }
-      } else {
-        push_to_child = positive_child();
-        if (before_vertex_comparison < 0 &&
-            split_.Compare(current_edge.vertex) <= 0) {
-          BigIntWord min_max_comparison =
-            split_.normal().Dot(
-                current_vertex_data.cw_edge_angle_tracker_.current().Cross(
-                  current_vertex_data.vertex_angle_tracker_.current()))
-            .GetSign();
-          if (min_max_comparison > 0) {
-            // I-path is entering the polyhedron.
-            ++change;
-          }
-        }
-        if (after_vertex_comparison < 0 &&
-            split_.Compare(next_edge.vertex) <= 0) {
-          BigIntWord min_max_comparison =
-            split_.normal().Dot(
-                current_vertex_data.cw_edge_angle_tracker_.current().Cross(
-                  next_vertex_data.vertex_angle_tracker_.current())).GetSign();
-          if (min_max_comparison > 0) {
-            // I-path is exiting the polyhedron.
-            --change;
-          }
-        }
+        push_to_child->pwn_by_id_[polygon_id] +=
+          vertex_to_edge * crossing_flip;
       }
-      if (push_to_child->pwn_by_id_.size() <= polygon.id) {
-        push_to_child->pwn_by_id_.resize(polygon.id + 1);
-      }
-      push_to_child->pwn_by_id_[polygon.id] += change;
     }
   }
 }
 
 template <typename InputPolygonTemplate>
-void BSPNode<InputPolygonTemplate>::UpdateAngleTrackers(
+void BSPNode<InputPolygonTemplate>::PushContentPWNToChildren() {
+  for (PolygonRep& polygon : contents_) {
+    for (size_t i = 0; i < polygon.vertex_count(); ++i) {
+      const EdgeRep& current_edge = polygon.edge(i);
+      const VertexData& current_vertex_data = current_edge.data();
+
+      const NormalRep& edge_boundary_angle =
+        current_vertex_data.edge_boundary_angle();
+      int edge_comparison = RXYCompareBivector(split_.normal(),
+                                               edge_boundary_angle);
+      if (edge_comparison == 0) continue;
+
+      PushVertexPWNToChildren(polygon.id, edge_comparison, edge_boundary_angle,
+                              current_edge, /*crossing_flip=*/1);
+
+      const EdgeRep& next_edge =
+        polygon.edge((i + 1)%polygon.vertex_count());
+      PushVertexPWNToChildren(polygon.id, edge_comparison, edge_boundary_angle,
+                              next_edge, /*crossing_flip=*/-1);
+    }
+  }
+}
+
+template <typename InputPolygonTemplate>
+void BSPNode<InputPolygonTemplate>::UpdateBondaryAngles(
     bool pos_child, PolygonRep& polygon, size_t coincident_begin,
     size_t coincident_end) {
   // Typically this function is called with 0 vertices to update. So quickly
@@ -431,12 +473,12 @@ void BSPNode<InputPolygonTemplate>::UpdateAngleTrackers(
   // along the way too.
   for (; pos < coincident_end - 1; ++pos) {
     VertexData& vertex_data = polygon.vertex_data(pos % polygon.vertex_count());
-    vertex_data.cw_edge_angle_tracker_.Receive(normal);
-    vertex_data.vertex_angle_tracker_.Receive(normal);
+    vertex_data.edge_boundary_angle_ = normal;
+    vertex_data.vertex_boundary_angle_ = normal;
   }
   // Update the last target vertex.
   VertexData& vertex_data = polygon.vertex_data(pos % polygon.vertex_count());
-  vertex_data.vertex_angle_tracker_.Receive(normal);
+  vertex_data.vertex_boundary_angle_ = normal;
 }
 
 template <typename InputPolygonTemplate>
@@ -459,27 +501,27 @@ void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
         // the first of those 2 vertices is the edge source.
         children.first.vertex_data(
             children.first.vertex_count() - 2).split_by = this;
-        UpdateAngleTrackers(/*pos_child=*/false, children.first,
+        UpdateBondaryAngles(/*pos_child=*/false, children.first,
                             children.first.vertex_count() - 2,
                             children.first.vertex_count());
         // The first and last vertices of pos_poly will touch the plane. So the
         // first of those 2 vertices is the edge source.
         children.second.vertex_data(
             children.second.vertex_count() - 1).split_by = this;
-        UpdateAngleTrackers(/*pos_child=*/true, children.second,
+        UpdateBondaryAngles(/*pos_child=*/true, children.second,
                             children.second.vertex_count() - 1,
                             children.second.vertex_count() + 1);
 
         negative_child_->contents_.push_back(std::move(children.first));
         positive_child_->contents_.push_back(std::move(children.second));
       } else {
-        UpdateAngleTrackers(/*pos_child=*/false, polygon,
+        UpdateBondaryAngles(/*pos_child=*/false, polygon,
                             info.neg_range().second,
                             polygon.vertex_count() + info.neg_range().first);
         negative_child_->contents_.push_back(std::move(polygon));
       }
     } else if (info.ShouldEmitPositiveChild()) {
-      UpdateAngleTrackers(/*pos_child=*/true, polygon,
+      UpdateBondaryAngles(/*pos_child=*/true, polygon,
                           info.pos_range().second,
                           polygon.vertex_count() + info.pos_range().first);
       positive_child_->contents_.push_back(std::move(polygon));
@@ -563,8 +605,8 @@ std::ostream& operator<<(
     std::ostream& out,
     const BSPEdgeInfo<InputPolygonTemplate, NormalRep>& info) {
   out << "< split_by=" << info.split_by
-      << ", cw_edge_angle_tracker=" << info.cw_edge_angle_tracker().current()
-      << ", vertex_angle_tracker=" << info.vertex_angle_tracker().current()
+      << ", edge_boundary_angle=" << info.edge_boundary_angle()
+      << ", vertex_boundary_angle=" << info.vertex_boundary_angle()
       << " >";
   return out;
 }

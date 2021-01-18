@@ -47,6 +47,8 @@ HomoPoint3<num_bits, denom_bits> RTransform(
 // * Returns 0 if u points in the same or opposite direction as v (as do (u R)
 //   and (v R)).
 // * Returns 1 if (v R) is counter-clockwise from (u R)
+//
+// If either vector is 0, then 0 is returned.
 template <size_t component_bits>
 int RXYCompareBivector(const Vector3<component_bits>& u,
                        const Vector3<component_bits>& v) {
