@@ -328,7 +328,7 @@ class BSPNode {
   // The caller must ensure coincident_begin <= coincident_end. The function
   // will apply the modulus on the vertex indices, so it is okay for
   // coincident_end to be greater than polygon.vertex_count().
-  void UpdateBondaryAngles(bool pos_child, PolygonRep& polygon,
+  void UpdateBoundaryAngles(bool pos_child, PolygonRep& polygon,
       size_t coincident_begin, size_t coincident_end);
 
   // For a leaf node, these are the polygons that are inside the cell. They may
@@ -382,14 +382,16 @@ void BSPNode<InputPolygonTemplate>::PushVertexPWNToChildren(
     //   Compare(vertex_boundary_angle, edge_boundary_angle) != 0
     assert(vertex_to_edge != 0);
     BSPNode<InputPolygonTemplate>* push_to_child;
-    int side_comparison = vertex_comparison ^ vertex_to_edge;
+    int side_comparison = vertex_comparison * vertex_to_edge;
     if (side_comparison >= 0) {
+      assert (side_comparison == 1);
       // The split normal to vertex rotation is the same direction as
       // the vertex to current edge rotation.
       assert((vertex_comparison >= 0) == (vertex_to_edge >= 0));
       assert((edge_comparison >= 0) != (vertex_to_edge >= 0));
       push_to_child = negative_child();
     } else {
+      assert (side_comparison == -1);
       // The split normal to vertex rotation is the opposite direction
       // as the vertex to current edge rotation.
       assert((vertex_comparison >= 0) != (vertex_to_edge >= 0));
@@ -398,7 +400,7 @@ void BSPNode<InputPolygonTemplate>::PushVertexPWNToChildren(
     }
     assert (vertex_to_edge == 1 || vertex_to_edge == -1);
     int side_comparison2 = split_.Compare(vertex_edge.vertex);
-    if ((side_comparison ^ side_comparison2) >= 0) {
+    if (side_comparison * side_comparison2 >= 0) {
       // min_max_comparison will be positive if the following vectors are
       // arranged in counter-clockwise order:
       // * vertex_boundary_angle
@@ -459,7 +461,7 @@ void BSPNode<InputPolygonTemplate>::PushContentPWNToChildren() {
 }
 
 template <typename InputPolygonTemplate>
-void BSPNode<InputPolygonTemplate>::UpdateBondaryAngles(
+void BSPNode<InputPolygonTemplate>::UpdateBoundaryAngles(
     bool pos_child, PolygonRep& polygon, size_t coincident_begin,
     size_t coincident_end) {
   // Typically this function is called with 0 vertices to update. So quickly
@@ -501,27 +503,27 @@ void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
         // the first of those 2 vertices is the edge source.
         children.first.vertex_data(
             children.first.vertex_count() - 2).split_by = this;
-        UpdateBondaryAngles(/*pos_child=*/false, children.first,
+        UpdateBoundaryAngles(/*pos_child=*/false, children.first,
                             children.first.vertex_count() - 2,
                             children.first.vertex_count());
         // The first and last vertices of pos_poly will touch the plane. So the
         // first of those 2 vertices is the edge source.
         children.second.vertex_data(
             children.second.vertex_count() - 1).split_by = this;
-        UpdateBondaryAngles(/*pos_child=*/true, children.second,
+        UpdateBoundaryAngles(/*pos_child=*/true, children.second,
                             children.second.vertex_count() - 1,
                             children.second.vertex_count() + 1);
 
         negative_child_->contents_.push_back(std::move(children.first));
         positive_child_->contents_.push_back(std::move(children.second));
       } else {
-        UpdateBondaryAngles(/*pos_child=*/false, polygon,
+        UpdateBoundaryAngles(/*pos_child=*/false, polygon,
                             info.neg_range().second,
                             polygon.vertex_count() + info.neg_range().first);
         negative_child_->contents_.push_back(std::move(polygon));
       }
     } else if (info.ShouldEmitPositiveChild()) {
-      UpdateBondaryAngles(/*pos_child=*/true, polygon,
+      UpdateBoundaryAngles(/*pos_child=*/true, polygon,
                           info.pos_range().second,
                           polygon.vertex_count() + info.pos_range().first);
       positive_child_->contents_.push_back(std::move(polygon));

@@ -180,6 +180,29 @@ class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
     return pos;
   }
 
+  // Returns a child for the negative side of `split`.
+  //
+  // If the first test parameter is true, then `split` is negated when it is
+  // passed to the BSPNode split call, but then the children are swapped to
+  // compensate. So the output parameter `neg_side_of_split` still reflects the
+  // negative side of the input `split`, even though it may be the positive
+  // child of the actual split plane.
+  void Split(BSPNode<>* parent, HalfSpace3<> split,
+             BSPNode<>*& neg_side_of_split, BSPNode<>*& pos_side_of_split) {
+    EXPECT_TRUE(parent->IsLeaf());
+
+    if (std::get<0>(GetParam())) {
+      split.Negate();
+    }
+    parent->Split(split);
+    if (std::get<0>(GetParam())) {
+      neg_side_of_split = parent->positive_child();
+      pos_side_of_split = parent->negative_child();
+    } else {
+      neg_side_of_split = parent->negative_child();
+      pos_side_of_split = parent->positive_child();
+    }
+  }
 
   // Splits the node with a vertical plane with a normal that is facing north
   // west or south east (depending on the test's first parameter). The distance
@@ -209,8 +232,7 @@ class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
   BSPNode<>* SplitNorthWest(BSPNode<>* parent, const Point3<>& edge_start,
                             const Point3<>& edge_dest, double edge_dist) {
     EXPECT_TRUE(parent->IsLeaf());
-    Vector3<> normal = std::get<0>(GetParam()) ? Vector3<>(-1, 1, -10) :
-                                                 Vector3<>(1, -1, 10);
+    Vector3<> normal = Vector3<>(1, -1, 10);
 
     auto edge_vector = edge_dest - edge_start;
     double dist = double(normal.x()) * (double(edge_start.x()) +
@@ -219,17 +241,10 @@ class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
                                         double(edge_vector.y()) * edge_dist) +
                   double(normal.z()) * (double(edge_start.z()) +
                                         double(edge_vector.z()) * edge_dist);
-    HalfSpace3<> split(normal, HalfSpace3<>::DistInt(long(dist)));
-    parent->Split(split);
     BSPNode<>* return_child;
     BSPNode<>* other_child;
-    if (std::get<0>(GetParam())) {
-      return_child = parent->positive_child();
-      other_child = parent->negative_child();
-    } else {
-      return_child = parent->negative_child();
-      other_child = parent->positive_child();
-    }
+    HalfSpace3<> split(normal, HalfSpace3<>::DistInt(long(dist)));
+    Split(parent, split, return_child, other_child);
     for (BSPPolygonId id = 0; id < tree_.next_id(); ++id) {
       EXPECT_EQ(other_child->GetPWNForId(id), parent->GetPWNForId(id))
         << "id=" << id;
@@ -731,6 +746,126 @@ TEST_P(BSPTreePWN, MPathOvershootsMValue) {
   EXPECT_THAT(child->border_contents(), IsEmpty());
   EXPECT_THAT(child->contents(), SizeIs(1));
   EXPECT_EQ(child->GetPWNForId(id), 1 * GetPWNFlip());
+}
+
+TEST_P(BSPTreePWN, SplitAgainThroughMvalue) {
+  // This test creates 4 rectangular prisms around cube_top. Each prism has a
+  // vertex at cube top.
+  //
+  // +----------------------+
+  // | r1       | r4        |
+  // |          |           |
+  // |          |cube_top   |
+  // |----------+-----------|
+  // | r2       | r3        |
+  // |          |           |
+  // |          |           |
+  // +----------------------+
+  //
+  // The north-east facet is the last of the top boundary facets. So even
+  // though all 4 prisms prism end at the cube top vertex, the north-east
+  // boundary kerf causes the splits to go a little
+  // deeper and the M-value ends up in r2.
+  //
+  // Later the titled cube is split again on the south side. For the negative
+  // child (when the first test parameter is false), this last split has almost
+  // the same 2D projected normal as the previous south split, but the Z
+  // component is a little lower for the last split normal. The last split goes
+  // through cube_top. Its kerf causes the M-value to go a little north. The
+  // north-east split was the previous top split, whose kerf causes the M-value
+  // to go a little west. So the M-value ends up in r1.
+  //
+  // For the positive child of the last split, due to the kerf, the M-path ends
+  // up being on an almost horizontal edge cut out of the south split. The
+  // almost horizontal edge is formed from the intersection of south split and
+  // the last split. The 2D projected normal of the south split points directly
+  // southward, and the 2D projected normal of the last split for the positive
+  // child points directly northward. So the edge formed by the intersection
+  // would be a horizontal edge running from west to east. However, after the R
+  // transform, those two split normal 2d projections are no longer opposite.
+  // The south split normal is shifted a little more to the west than the last
+  // split normal is shifted to the east. So the intersection edge ends up
+  // being higher on the east side. So the M-value ends up in r3.
+  RectangularPrism<> r1(/*min_x=*/cube_north_west.x(),
+                        /*min_y=*/cube_top.y(),
+                        /*min_z=*/cube_bottom.z(),
+                        /*max_x=*/cube_top.x(),
+                        /*max_y=*/cube_north.y(),
+                        /*max_z=*/cube_top.z());
+
+  RectangularPrism<> r2(/*min_x=*/cube_north_west.x(),
+                        /*min_y=*/cube_south.y(),
+                        /*min_z=*/cube_bottom.z(),
+                        /*max_x=*/cube_top.x(),
+                        /*max_y=*/cube_top.y(),
+                        /*max_z=*/cube_top.z());
+
+  RectangularPrism<> r3(/*min_x=*/cube_top.x(),
+                        /*min_y=*/cube_south.y(),
+                        /*min_z=*/cube_bottom.z(),
+                        /*max_x=*/cube_north_east.x(),
+                        /*max_y=*/cube_top.y(),
+                        /*max_z=*/cube_top.z());
+
+  RectangularPrism<> r4(/*min_x=*/cube_top.x(),
+                        /*min_y=*/cube_top.y(),
+                        /*min_z=*/cube_bottom.z(),
+                        /*max_x=*/cube_north_east.x(),
+                        /*max_y=*/cube_north.y(),
+                        /*max_z=*/cube_top.z());
+
+  BSPPolygonId r1_id = tree_.AllocateId();
+  BSPPolygonId r2_id = tree_.AllocateId();
+  BSPPolygonId r3_id = tree_.AllocateId();
+  BSPPolygonId r4_id = tree_.AllocateId();
+
+  std::pair<BSPPolygonId, RectangularPrism<>&> prisms[] = {
+    {r1_id, r1},
+    {r2_id, r2},
+    {r3_id, r3},
+    {r4_id, r4},
+  };
+
+  for (const std::pair<BSPPolygonId, RectangularPrism<>&>& prism : prisms) {
+    for (const ConvexPolygon<>& wall : prism.second.GetWalls()) {
+      AddContent(prism.first, wall);
+    }
+  }
+
+  BSPNode<>* inside_cube = SplitToCube();
+  EXPECT_TRUE(inside_cube->IsLeaf());
+  EXPECT_THAT(inside_cube->border_contents(), IsEmpty());
+  // The outer walls of each prism were cut off, along with the top and bottom.
+  // So each prism has 2 walls left.
+  EXPECT_THAT(inside_cube->contents(), SizeIs(8));
+  EXPECT_EQ(inside_cube->GetPWNForId(r1_id), 0);
+  EXPECT_EQ(inside_cube->GetPWNForId(r2_id), 1 * GetPWNFlip());
+  EXPECT_EQ(inside_cube->GetPWNForId(r3_id), 0);
+  EXPECT_EQ(inside_cube->GetPWNForId(r4_id), 0);
+
+  const Vector3<> down_one(0, 0, 1);
+  HalfSpace3<> fourth_split_plane(cube_top,
+                                  Point3<>(cube_south_west - down_one),
+                                  Point3<>(cube_south_east - down_one));
+  BSPNode<>* neg_fourth_split;
+  BSPNode<>* pos_fourth_split;
+  Split(inside_cube, fourth_split_plane, neg_fourth_split, pos_fourth_split);
+
+  EXPECT_TRUE(neg_fourth_split->IsLeaf());
+  EXPECT_THAT(neg_fourth_split->border_contents(), IsEmpty());
+  EXPECT_THAT(neg_fourth_split->contents(), SizeIs(8));
+  EXPECT_EQ(neg_fourth_split->GetPWNForId(r1_id), 1 * GetPWNFlip());
+  EXPECT_EQ(neg_fourth_split->GetPWNForId(r2_id), 0);
+  EXPECT_EQ(neg_fourth_split->GetPWNForId(r3_id), 0);
+  EXPECT_EQ(neg_fourth_split->GetPWNForId(r4_id), 0);
+
+  EXPECT_TRUE(pos_fourth_split->IsLeaf());
+  EXPECT_THAT(pos_fourth_split->border_contents(), IsEmpty());
+  EXPECT_THAT(pos_fourth_split->contents(), SizeIs(2));
+  EXPECT_EQ(pos_fourth_split->GetPWNForId(r1_id), 0);
+  EXPECT_EQ(pos_fourth_split->GetPWNForId(r2_id), 0);
+  EXPECT_EQ(pos_fourth_split->GetPWNForId(r3_id), 1 * GetPWNFlip());
+  EXPECT_EQ(pos_fourth_split->GetPWNForId(r4_id), 0);
 }
 
 INSTANTIATE_TEST_SUITE_P(, BSPTreePWN,
