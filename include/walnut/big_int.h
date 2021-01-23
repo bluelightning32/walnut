@@ -255,6 +255,10 @@ class BigInt {
     return rep_.GetUIntAbs(was_signed);
   }
 
+  constexpr BigInt<bits+1> GetAbs(bool& was_signed) const {
+    return rep_.GetAbs(was_signed);
+  }
+
   // Returns a negative integer if `*this` is negative, 0 if *`this` is 0, or a
   // positive integer if `*this` is positive.
   constexpr BigIntWord GetSign() const {
@@ -327,6 +331,15 @@ class BigInt {
                             const BigInt<r2_c1_bits>& r2_c1,
                             const BigInt<r2_c2_bits>& r2_c2) {
     return r1_c1*r2_c2 - r2_c1*r1_c2;
+  }
+
+  template <size_t other_bits>
+  constexpr BigInt<std::max(bits, other_bits)>
+  GetGreatestCommonDivisor(const BigInt<other_bits> &other) const {
+    if (other.IsZero()) return *this;
+
+    BigInt<std::max(bits, other_bits)> mod = *this % other;
+    return other.GetGreatestCommonDivisor(mod);
   }
 
   explicit operator double() const {

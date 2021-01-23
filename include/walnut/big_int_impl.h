@@ -638,6 +638,16 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     }
   }
 
+  constexpr BigIntImpl<max_words+1> GetAbs(bool& was_signed) const {
+    BigIntImpl<max_words+1> result = *this;
+    was_signed = GetSign() < 0;
+    if (was_signed) {
+      bool overflow = result.Negate();
+      assert(!overflow);
+    }
+    return result;
+  }
+
   constexpr BigUIntImpl<max_words> GetUIntAbs(bool* was_signed) const {
     *was_signed = BigIntWord{words_[used_words() - 1]} < 0;
     if (*was_signed) {

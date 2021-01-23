@@ -276,4 +276,30 @@ TEST(HalfSpace3FromPoint3Builder, CorrectOutputBits64) {
   TestCorrectOutputBits<64>();
 }
 
+TEST(HalfSpace3, ReduceAllPos) {
+  HalfSpace3<> plane(/*normal=*/Vector3<>(/*x=*/10, /*y=*/5, /*z=*/15),
+                     /*dist=*/BigInt<32>(20));
+
+  HalfSpace3<> reduced(plane);
+  reduced.Reduce();
+  EXPECT_EQ(plane, reduced);
+  EXPECT_EQ(reduced.x(), 2);
+  EXPECT_EQ(reduced.y(), 1);
+  EXPECT_EQ(reduced.z(), 3);
+  EXPECT_EQ(reduced.d(), 4);
+}
+
+TEST(HalfSpace3, ReduceAllNeg) {
+  HalfSpace3<> plane(/*normal=*/Vector3<>(/*x=*/-10, /*y=*/-5, /*z=*/-15),
+                     /*dist=*/BigInt<32>(-20));
+
+  HalfSpace3<> reduced(plane);
+  reduced.Reduce();
+  EXPECT_EQ(plane, reduced);
+  EXPECT_EQ(reduced.x(), -2);
+  EXPECT_EQ(reduced.y(), -1);
+  EXPECT_EQ(reduced.z(), -3);
+  EXPECT_EQ(reduced.d(), -4);
+}
+
 }  // walnut

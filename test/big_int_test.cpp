@@ -391,6 +391,16 @@ TEST(BigInt, GetUIntAbs64Int64Min) {
   EXPECT_TRUE(was_signed);
 }
 
+TEST(BigInt, GetAbs64Int64Min) {
+  const BigInt<64> a{std::numeric_limits<int64_t>::min()};
+  bool was_signed;
+  const auto result = a.GetAbs(was_signed);
+  const BigInt<65> expected = BigInt<65>{1} << 63;
+  EXPECT_GT(result, 0);
+  EXPECT_EQ(result, expected);
+  EXPECT_TRUE(was_signed);
+}
+
 TEST(BigInt, DividePos1byPos1) {
   BigInt<64> a(1);
   BigInt<64> b(1);

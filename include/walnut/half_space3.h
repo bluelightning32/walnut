@@ -274,24 +274,22 @@ class HalfSpace3FromPoint3Builder {
 
 template <size_t vector_bits, size_t dist_bits>
 void HalfSpace3<vector_bits, dist_bits>::Reduce() {
+  auto common_factor = normal_.components()[0];
+  common_factor = common_factor.GetGreatestCommonDivisor(
+      normal_.components()[1]);
+  common_factor = common_factor.GetGreatestCommonDivisor(
+      normal_.components()[2]);
+
+  common_factor = common_factor.GetGreatestCommonDivisor(dist_);
+
   bool unused;
-  auto common_factor = normal_.components()[0].GetUIntAbs(&unused);
+  auto abs_factor = common_factor.GetAbs(unused);
 
-  common_factor = common_factor.GetGreatestCommonDivisor(
-      normal_.components()[1].GetUIntAbs(&unused));
-  common_factor = common_factor.GetGreatestCommonDivisor(
-      normal_.components()[2].GetUIntAbs(&unused));
+  dist_ /= abs_factor;
 
-  common_factor = common_factor.GetGreatestCommonDivisor(
-      dist_.GetUIntAbs(&unused));
-
-  VectorInt signed_factor(common_factor);
-
-  dist_ /= signed_factor;
-
-  normal_.components()[0] /= signed_factor;
-  normal_.components()[1] /= signed_factor;
-  normal_.components()[2] /= signed_factor;
+  normal_.components()[0] /= abs_factor;
+  normal_.components()[1] /= abs_factor;
+  normal_.components()[2] /= abs_factor;
 }
 
 template <size_t vector_bits, size_t dist_bits>
