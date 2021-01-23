@@ -222,27 +222,23 @@ class HomoPoint3 {
 
 template <size_t num_bits, size_t denom_bits>
 void HomoPoint3<num_bits, denom_bits>::Reduce() {
-  bool dist_signed;
-  auto common_factor = dist_denom_.GetUIntAbs(&dist_signed);
+  auto common_factor = dist_denom_.GetGreatestCommonDivisor(
+      vector_from_origin_.x());
+  common_factor = dist_denom_.GetGreatestCommonDivisor(
+      vector_from_origin_.y());
+  common_factor = dist_denom_.GetGreatestCommonDivisor(
+      vector_from_origin_.z());
 
-  bool unused;
-  common_factor = common_factor.GetGreatestCommonDivisor(
-      vector_from_origin_.x().GetUIntAbs(&unused));
-  common_factor = common_factor.GetGreatestCommonDivisor(
-      vector_from_origin_.y().GetUIntAbs(&unused));
-  common_factor = common_factor.GetGreatestCommonDivisor(
-      vector_from_origin_.z().GetUIntAbs(&unused));
-
-  DenomInt signed_factor(common_factor);
-  if (dist_signed) {
-    bool overflowed = signed_factor.Negate();
+  // Prioritize making the dist positive.
+  if ((common_factor.GetSign() < 0) != (dist_denom_.GetSign() < 0)) {
+    bool overflowed = common_factor.Negate();
     assert(!overflowed);
   }
 
-  dist_denom_ /= signed_factor;
-  vector_from_origin_.x() /= signed_factor;
-  vector_from_origin_.y() /= signed_factor;
-  vector_from_origin_.z() /= signed_factor;
+  dist_denom_ /= common_factor;
+  vector_from_origin_.x() /= common_factor;
+  vector_from_origin_.y() /= common_factor;
+  vector_from_origin_.z() /= common_factor;
 }
 
 template <size_t a_bits, size_t b_num_bits, size_t b_denom_bits>

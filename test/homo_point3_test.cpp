@@ -69,4 +69,16 @@ TEST(HomoPoint3, ReduceNegDenom) {
   EXPECT_EQ(reduced.w(), 1);
 }
 
+TEST(HomoPoint3, ReduceAllIntMin) {
+  HomoPoint3<256, 256> original(/*x=*/BigInt<256>::min_value(),
+                                /*y=*/BigInt<256>::min_value(),
+                                /*z=*/BigInt<256>::min_value(),
+                                /*w=*/BigInt<256>::min_value());
+
+  HomoPoint3<256, 256> reduced = original;
+  reduced.Reduce();
+  EXPECT_EQ(reduced, original);
+  EXPECT_EQ(reduced.w(), 1);
+}
+
 }  // walnut
