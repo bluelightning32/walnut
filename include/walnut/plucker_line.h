@@ -148,24 +148,25 @@ class PluckerLine {
   // Returns true when the lines match
   //
   // Two plucker lines are considered equal if they describe the same set
-  // of points. Notably the lines may have a different common scale factors.
-  // The lines are considered equal even if their directions are opposite
-  // (one scale factor is negative).
+  // of points, and their d vectors point the same direction. Notably the lines
+  // may have a different common scale factors.
+  //
+  // The lines are considered not equal if their directions are opposite (one
+  // scale factor is negative).
   template <size_t other_d_bits, size_t other_m_bits>
   bool operator==(const PluckerLine<other_d_bits, other_m_bits>& other) const {
-    using OtherDVector =
-      typename PluckerLine<other_d_bits, other_m_bits>::DVector;
-    typename DVector::BigIntRep scale_other;
-    typename OtherDVector::BigIntRep scale_mine;
-    if (d().x() != 0) {
-      scale_other = d().x();
-      scale_mine = other.d().x();
-    } else if (d().y() != 0) {
-      scale_other = d().y();
-      scale_mine = other.d().y();
+    BigInt<std::max(m_bits, d_bits) + 1> scale_other;
+    BigInt<std::max(other_m_bits, other_d_bits) + 1> scale_mine;
+    bool unused;
+    if (!d().x().IsZero()) {
+      scale_other = d().x().GetAbs(unused);
+      scale_mine = other.d().x().GetAbs(unused);
+    } else if (d().y().IsZero()) {
+      scale_other = d().y().GetAbs(unused);
+      scale_mine = other.d().y().GetAbs(unused);
     } else {
-      scale_other = d().z();
-      scale_mine = other.d().z();
+      scale_other = d().z().GetAbs(unused);
+      scale_mine = other.d().z().GetAbs(unused);
     }
 
     return

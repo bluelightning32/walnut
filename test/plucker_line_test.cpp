@@ -64,22 +64,34 @@ TEST(PluckerLine, IsCoincidentHalfSpace3) {
   EXPECT_FALSE(line.IsCoincident(b));
 }
 
-TEST(PluckerLine, Equality) {
+TEST(PluckerLine, EqualSameDir) {
+  const Point3<> p1(1, 2, 3);
+  const Vector3<> d(5, 7, 11);
+  const PluckerLine<> line(p1, Point3<>(p1 + d.Scale(2)));
+
+  EXPECT_EQ(line, line);
+
+  const PluckerLine<> line2(p1 + d.Scale(3),
+                            p1 + d.Scale(5));
+  EXPECT_EQ(line, line2);
+}
+
+TEST(PluckerLine, NotEqualOppositeDir) {
   const Point3<> p1(1, 2, 3);
   const Vector3<> d(5, 7, 11);
   const PluckerLine<> line(p1, Point3<>(p1 + d.Scale(2)));
 
   const PluckerLine<> line2(p1 + d.Scale(5),
                             p1 + d.Scale(3));
-  EXPECT_EQ(line, line2);
+  EXPECT_NE(line, line2);
 
   const PluckerLine<> line3(p1,
                             Point3<>(p1 + d.Scale(-3)));
-  EXPECT_EQ(line, line3);
+  EXPECT_NE(line, line3);
 
   const PluckerLine<> line4(Point3<>(p1 + d.Scale(2)), p1);
-  EXPECT_EQ(line, line4);
-  EXPECT_EQ(line4, line);
+  EXPECT_NE(line, line4);
+  EXPECT_NE(line4, line);
 }
 
 TEST(PluckerLine, ConstructFromPlanes) {
@@ -123,8 +135,8 @@ TEST(PluckerLine, ConstructFromPlanesOrientation) {
   auto neg_d = line_a_b.d();
   neg_d.Negate();
 
-  // Even lines with opposite directions are considered equal.
-  EXPECT_EQ(line_a_b, line_neg_a_b);
+  // Lines with opposite directions are not considered equal.
+  EXPECT_NE(line_a_b, line_neg_a_b);
 
   EXPECT_EQ(line_a_b.d(), d);
   EXPECT_EQ(line_neg_a_b.d(), neg_d);
