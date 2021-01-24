@@ -97,8 +97,11 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     for (i = 0; i < copy_words; ++i) {
       words_[i] = other.words()[i];
     }
-    if (BigIntWord{words_[i - 1]} < 0 && i < max_words) {
-      ++i;
+    if (BigIntWord{words_[i - 1]} < 0) {
+      assert(i < max_words);
+      if (i < max_words) {
+        ++i;
+      }
     }
     used_ = i * bytes_per_word;
     Trim();

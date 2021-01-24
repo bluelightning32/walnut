@@ -1,5 +1,6 @@
 #include "walnut/plucker_line.h"
 
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace walnut {
@@ -321,6 +322,21 @@ TEST(PluckerLine, Project2DDropZSideness) {
     auto line2d = line.Project2D(/*dimension=*/2);
     EXPECT_GT(line2d.Compare(origin.DropDimension(2)), 0);
   }
+}
+
+TEST(PluckerLine, ReduceAllIntMin) {
+  PluckerLine<256, 256> original(
+      /*d=*/Vector3<256>(/*x=*/BigInt<256>::min_value(),
+                         /*y=*/BigInt<256>::min_value(),
+                         /*z=*/BigInt<256>::min_value()),
+      /*m=*/Vector3<256>(/*x=*/BigInt<256>::min_value(),
+                         /*y=*/BigInt<256>::min_value(),
+                         /*z=*/BigInt<256>::min_value()));
+
+  PluckerLine<256, 256> reduced = original;
+  reduced.Reduce();
+  EXPECT_EQ(reduced, original);
+  EXPECT_EQ(reduced.d().x(), -1);
 }
 
 template <int point3_bits>

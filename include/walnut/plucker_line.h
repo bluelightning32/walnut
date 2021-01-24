@@ -246,29 +246,25 @@ class PluckerLine {
 
 template <size_t d_bits, size_t m_bits>
 void PluckerLine<d_bits, m_bits>::Reduce() {
+  BigInt<std::max(d_bits, m_bits)> common_factor =
+    d_.components()[0].GetGreatestCommonDivisor(d_.components()[1]);
+  common_factor = common_factor.GetGreatestCommonDivisor(d_.components()[2]);
+
+  common_factor = common_factor.GetGreatestCommonDivisor(m_.components()[0]);
+  common_factor = common_factor.GetGreatestCommonDivisor(m_.components()[1]);
+  common_factor = common_factor.GetGreatestCommonDivisor(m_.components()[2]);
+
   bool unused;
-  auto common_factor = d_.components()[0].GetUIntAbs(&unused);
-  common_factor = common_factor.GetGreatestCommonDivisor(
-      d_.components()[1].GetUIntAbs(&unused));
-  common_factor = common_factor.GetGreatestCommonDivisor(
-      d_.components()[2].GetUIntAbs(&unused));
+  BigInt<std::max(d_bits, m_bits) + 1> abs_common_factor =
+    common_factor.GetAbs(unused);
 
-  common_factor = common_factor.GetGreatestCommonDivisor(
-      m_.components()[0].GetUIntAbs(&unused));
-  common_factor = common_factor.GetGreatestCommonDivisor(
-      m_.components()[1].GetUIntAbs(&unused));
-  common_factor = common_factor.GetGreatestCommonDivisor(
-      m_.components()[2].GetUIntAbs(&unused));
+  d_.components()[0] /= abs_common_factor;
+  d_.components()[1] /= abs_common_factor;
+  d_.components()[2] /= abs_common_factor;
 
-  typename DVector::BigIntRep signed_factor(common_factor);
-
-  d_.components()[0] /= signed_factor;
-  d_.components()[1] /= signed_factor;
-  d_.components()[2] /= signed_factor;
-
-  m_.components()[0] /= signed_factor;
-  m_.components()[1] /= signed_factor;
-  m_.components()[2] /= signed_factor;
+  m_.components()[0] /= abs_common_factor;
+  m_.components()[1] /= abs_common_factor;
+  m_.components()[2] /= abs_common_factor;
 }
 
 // This is a wrapper around the PluckerLine constructor that takes 2 Point3's.
