@@ -34,7 +34,7 @@ void SortPolygons(std::vector<Polygon>& polygons) {
 template<typename Container>
 auto
 MakeUnsortedConvexPolygon(const Container& vertices) ->
-ConvexPolygon<std::iterator_traits<
+MutableConvexPolygon<std::iterator_traits<
     decltype(std::begin(vertices))>::value_type::component_bits> {
   using Iterator = decltype(std::begin(vertices));
   using Point3Rep = typename std::iterator_traits<Iterator>::value_type;
@@ -71,7 +71,7 @@ ConvexPolygon<std::iterator_traits<
 template<typename Container>
 auto
 MakeConvexPolygon(const Container& vertices) ->
-ConvexPolygon<std::iterator_traits<
+MutableConvexPolygon<std::iterator_traits<
     decltype(std::begin(vertices))>::value_type::component_bits> {
   auto result = MakeUnsortedConvexPolygon(vertices);
   result.SortVertices();
@@ -605,7 +605,7 @@ TEST(BSPTree, GetNodeBorderEmptyTree) {
     // top
     {p[4], p[5], p[6], p[7]},
   };
-  std::vector<ConvexPolygon<>> expected_facets;
+  std::vector<MutableConvexPolygon<>> expected_facets;
   for (const std::vector<Point3<>>& vertices : expected_facet_vertices) {
     expected_facets.push_back(MakeConvexPolygon(vertices));
   }
@@ -653,7 +653,7 @@ TEST(BSPTree, GetNodeBorder1Split) {
       // diag
       {p[1], p[3], p[4]},
     };
-    std::vector<ConvexPolygon<>> expected_facets;
+    std::vector<MutableConvexPolygon<>> expected_facets;
     for (const std::vector<Point3<>>& vertices : expected_facet_vertices) {
       expected_facets.push_back(MakeConvexPolygon(vertices));
     }

@@ -1,15 +1,15 @@
 #ifndef WALNUT_CONVEX_POLYGON_FACTORY_H__
 #define WALNUT_CONVEX_POLYGON_FACTORY_H__
 
-#include "walnut/convex_polygon.h"
 #include "walnut/monotone_range.h"
+#include "walnut/mutable_convex_polygon.h"
 #include "walnut/orienting_monotone_decomposer.h"
 #include "walnut/planar_range.h"
 
 namespace walnut {
 
 template <typename InputPoint3Template = Point3<32>,
-          typename ConvexPolygonTemplate = ConvexPolygon<
+          typename ConvexPolygonTemplate = MutableConvexPolygon<
             InputPoint3Template::component_bits,
             typename GetVertexData<InputPoint3Template>::VertexData>
          >

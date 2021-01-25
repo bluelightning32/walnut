@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "walnut/convex_polygon.h"
+#include "walnut/mutable_convex_polygon.h"
 #include "walnut/point3.h"
 
 namespace walnut {
@@ -82,7 +82,7 @@ struct AABB {
 
   // Returns a ConvexPolygon for the intersection of this rectangular prism and
   // a plane (represented as a HalfSpace3).
-  template <typename ConvexPolygonRep = ConvexPolygon<point3_bits>>
+  template <typename ConvexPolygonRep = MutableConvexPolygon<point3_bits>>
   ConvexPolygonRep IntersectPlane(const HalfSpace3Rep& plane) const;
 
   // Returns all 6 sides of the prism.

@@ -14,7 +14,7 @@ using testing::Eq;
 template<typename Container>
 auto
 MakeUnsortedConvexPolygon(const Container& vertices) ->
-ConvexPolygon<std::iterator_traits<
+MutableConvexPolygon<std::iterator_traits<
     decltype(std::begin(vertices))>::value_type::component_bits> {
   using Iterator = decltype(std::begin(vertices));
   using Point3Rep = typename std::iterator_traits<Iterator>::value_type;
@@ -246,7 +246,7 @@ TEST(ConvexPolygon, EqualityOperator) {
       input1[2],
       input1[0],
     };
-    ConvexPolygon<32> compare_polygon =
+    MutableConvexPolygon<32> compare_polygon =
       MakeUnsortedConvexPolygon(compare_input);
     EXPECT_EQ(polygon1, compare_polygon);
     EXPECT_EQ(compare_polygon, polygon1);
@@ -1030,7 +1030,7 @@ TEST(ConvexPolygon, ConvertVertexData) {
   };
 
   ConvexPolygon<32> polygon_raw = MakeConvexPolygon(input);
-  ConvexPolygon<32, VertexData> polygon(polygon_raw);
+  MutableConvexPolygon<32, VertexData> polygon(polygon_raw);
 
   EXPECT_EQ(polygon, polygon_raw);
   ASSERT_EQ(polygon.vertex_count(), 3);
@@ -1077,7 +1077,7 @@ TEST_P(ConvexPolygonFindSplitRanges, OnPosSide) {
   };
 
   for (int i = 0; i < 2; ++i) {
-    ConvexPolygon<32> polygon(MakeConvexPolygon(input[i]));
+    MutableConvexPolygon<32> polygon(MakeConvexPolygon(input[i]));
 
     // Test where the polygon is completely in the positive half-space.
     {
@@ -1326,7 +1326,7 @@ TEST(ConvexPolygon, SplitAtExistingVertices) {
   Point3<32> above(0, 0, 11);
   HalfSpace3<> half_space(p[0], above, p[2]);
 
-  ConvexPolygon<> polygon(MakeConvexPolygon(p));
+  MutableConvexPolygon<> polygon(MakeConvexPolygon(p));
   ConvexPolygon<> expected_neg_side(MakeConvexPolygon(neg_side_p));
   ConvexPolygon<> expected_pos_side(MakeConvexPolygon(pos_side_p));
 

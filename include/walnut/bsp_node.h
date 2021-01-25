@@ -11,8 +11,8 @@
 #include <utility>
 #include <vector>
 
-#include "walnut/convex_polygon.h"
 #include "walnut/half_space3.h"
+#include "walnut/mutable_convex_polygon.h"
 #include "walnut/r_transformation.h"
 
 namespace walnut {
@@ -105,15 +105,15 @@ class BSPEdgeInfo {
 
 template <size_t point3_bits>
 class BSPDefaultPolygon :
-  public ConvexPolygon<point3_bits,
+  public MutableConvexPolygon<point3_bits,
     BSPEdgeInfo<BSPNode<BSPDefaultPolygon<point3_bits>>,
                 typename ConvexPolygon<point3_bits>::NormalRep>> {
  public:
   using NormalRep = typename ConvexPolygon<point3_bits>::NormalRep;
   using Parent =
-    ConvexPolygon<point3_bits,
-                  BSPEdgeInfo<BSPNode<BSPDefaultPolygon<point3_bits>>,
-                              NormalRep>>;
+    MutableConvexPolygon<point3_bits,
+                         BSPEdgeInfo<BSPNode<BSPDefaultPolygon<point3_bits>>,
+                                     NormalRep>>;
   using typename Parent::SplitInfoRep;
 
   // Inherit all of the parent class's constructors.
@@ -145,9 +145,9 @@ class BSPPolygonWrapper : public BSPNodeTemplate::InputPolygon {
   using typename Parent::NormalRep;
   using typename Parent::SplitInfoRep;
   using typename Parent::VertexData;
+  using BSPEdgeInfoRep = BSPEdgeInfo<BSPNodeRep, NormalRep>;
 
-  static_assert(std::is_base_of<BSPEdgeInfo<BSPNodeRep, NormalRep>,
-                                VertexData>::value,
+  static_assert(std::is_base_of<BSPEdgeInfoRep, VertexData>::value,
                 "The ConvexPolygon's VertexData must inherit from "
                 "BSPEdgeInfo.");
   static_assert(std::is_base_of<ConvexPolygon<Parent::point3_bits, VertexData>,
@@ -192,6 +192,10 @@ class BSPPolygonWrapper : public BSPNodeTemplate::InputPolygon {
                                             std::move(parent_result.second)));
   }
 
+  BSPEdgeInfoRep& bsp_edge_info(size_t index) {
+    return this->vertex_data(index);
+  }
+
   BSPPolygonId id;
 
   // This is the BSPNode whose split plane is coincident with this polygon's
@@ -211,6 +215,7 @@ class BSPNode {
   using VertexData = typename PolygonRep::VertexData;
   using NormalRep = typename VertexData::NormalRep;
   using EdgeRep = typename PolygonRep::EdgeRep;
+  using BSPEdgeInfoRep = typename PolygonRep::BSPEdgeInfoRep;
 
   using HalfSpace3Rep = typename HalfSpace3FromPoint3Builder<
     InputPolygon::point3_bits>::HalfSpace3Rep;
@@ -474,13 +479,15 @@ void BSPNode<InputPolygonTemplate>::UpdateBoundaryAngles(
   // that need to be updated, and update their corresponding source vertices
   // along the way too.
   for (; pos < coincident_end - 1; ++pos) {
-    VertexData& vertex_data = polygon.vertex_data(pos % polygon.vertex_count());
-    vertex_data.edge_boundary_angle_ = normal;
-    vertex_data.vertex_boundary_angle_ = normal;
+    BSPEdgeInfoRep& edge_info = polygon.bsp_edge_info(
+        pos % polygon.vertex_count());
+    edge_info.edge_boundary_angle_ = normal;
+    edge_info.vertex_boundary_angle_ = normal;
   }
   // Update the last target vertex.
-  VertexData& vertex_data = polygon.vertex_data(pos % polygon.vertex_count());
-  vertex_data.vertex_boundary_angle_ = normal;
+  BSPEdgeInfoRep& edge_info = polygon.bsp_edge_info(
+      pos % polygon.vertex_count());
+  edge_info.vertex_boundary_angle_ = normal;
 }
 
 template <typename InputPolygonTemplate>
@@ -501,14 +508,14 @@ void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
         // As described by the CreateSplitChildren function declaration
         // comment, the last 2 vertices of neg_poly will touch the plane. So
         // the first of those 2 vertices is the edge source.
-        children.first.vertex_data(
+        children.first.bsp_edge_info(
             children.first.vertex_count() - 2).split_by = this;
         UpdateBoundaryAngles(/*pos_child=*/false, children.first,
                             children.first.vertex_count() - 2,
                             children.first.vertex_count());
         // The first and last vertices of pos_poly will touch the plane. So the
         // first of those 2 vertices is the edge source.
-        children.second.vertex_data(
+        children.second.bsp_edge_info(
             children.second.vertex_count() - 1).split_by = this;
         UpdateBoundaryAngles(/*pos_child=*/true, children.second,
                             children.second.vertex_count() - 1,
@@ -554,11 +561,11 @@ void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
         // As described by the CreateSplitChildren function declaration
         // comment, the last 2 vertices of neg_poly will touch the plane. So
         // the first of those 2 vertices is the edge source.
-        children.first.vertex_data(
+        children.first.bsp_edge_info(
             children.first.vertex_count() - 2).split_by = this;
         // The first and last vertices of pos_poly will touch the plane. So the
         // first of those 2 vertices is the edge source.
-        children.second.vertex_data(
+        children.second.bsp_edge_info(
             children.second.vertex_count() - 1).split_by = this;
         negative_child_->border_contents_.push_back(std::move(children.first));
         positive_child_->border_contents_.push_back(

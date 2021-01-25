@@ -108,6 +108,11 @@ struct ConvexPolygonSplitInfo {
 //
 // `VertexDataTemplate` specifies additional data that the caller can associate
 // with each vertex. The type must be copy-constructible.
+//
+// All of the mutating functions are marked as protected. So this class can be
+// instatiated directly and used as an immutable convex polygon, or a derived
+// class such as `MutableConvexPolygon` can be used which exposes the mutating
+// functions.
 template <size_t point3_bits_template = 32,
           typename VertexDataTemplate = NoVertexData>
 class ConvexPolygon {
@@ -204,26 +209,12 @@ class ConvexPolygon {
     return true;
   }
 
-  // `VertexData` must be assignable from `OtherVertexData`.
-  template <size_t other_point3_bits, typename OtherVertexData>
-  ConvexPolygon& operator=(const ConvexPolygon<other_point3_bits,
-                                               OtherVertexData>& other) {
-    plane_ = other.plane();
-    drop_dimension_ = other.drop_dimension();
-    edges_.assign(other.edges().begin(), other.edges().end());
-    return *this;
-  }
-
   size_t vertex_count() const {
     return edges_.size();
   }
 
   const HomoPoint3Rep& vertex(size_t index) const {
     return edges_[index].vertex;
-  }
-
-  VertexData& vertex_data(size_t index) {
-    return edges_[index].data();
   }
 
   const VertexData& vertex_data(size_t index) const {
@@ -256,15 +247,6 @@ class ConvexPolygon {
       }
     }
     return min;
-  }
-
-  // Sorts `edges_`, such that the lexicographically minimum vertex comes
-  // first.
-  //
-  // Sorting the vertices does not affect the shape of the polygon.
-  void SortVertices() {
-    std::rotate(edges_.begin(), edges_.begin() + GetMinimumIndex(),
-                edges_.end());
   }
 
   // Returns true if the other polygon is the same as this.
@@ -606,6 +588,39 @@ class ConvexPolygon {
     return result;
   }
 
+  // Return a string representation of the polygon that uses decimal points to
+  // approximate the vertex coordinates.
+  std::string Approximate() const;
+
+  // Return a string representation of the polygon that uses decimal points to
+  // approximate the vertex coordinates and does not include the extra edge
+  // data fields.
+  std::string ApproximateNoData() const;
+
+ protected:
+  // `VertexData` must be assignable from `OtherVertexData`.
+  template <size_t other_point3_bits, typename OtherVertexData>
+  ConvexPolygon& operator=(const ConvexPolygon<other_point3_bits,
+                                               OtherVertexData>& other) {
+    plane_ = other.plane();
+    drop_dimension_ = other.drop_dimension();
+    edges_.assign(other.edges().begin(), other.edges().end());
+    return *this;
+  }
+
+  VertexData& vertex_data(size_t index) {
+    return edges_[index].data();
+  }
+
+  // Sorts `edges_`, such that the lexicographically minimum vertex comes
+  // first.
+  //
+  // Sorting the vertices does not affect the shape of the polygon.
+  void SortVertices() {
+    std::rotate(edges_.begin(), edges_.begin() + GetMinimumIndex(),
+                edges_.end());
+  }
+
   // Creates both split children.
   //
   // This function may only be called if `split.ShouldEmitNegativeChild()`
@@ -625,16 +640,6 @@ class ConvexPolygon {
     return result;
   }
 
-  // Return a string representation of the polygon that uses decimal points to
-  // approximate the vertex coordinates.
-  std::string Approximate() const;
-
-  // Return a string representation of the polygon that uses decimal points to
-  // approximate the vertex coordinates and does not include the extra edge
-  // data fields.
-  std::string ApproximateNoData() const;
-
- protected:
   // Creates both split children.
   //
   // This function may only be called if `split.ShouldEmitNegativeChild()`

@@ -51,10 +51,8 @@ TEST(AABB, IsInside) {
 TEST(AABB, IntersectPlaneZUp) {
   AABB<> prism(5);
 
-  ConvexPolygon<32> result = prism.IntersectPlane(HalfSpace3<>(/*x=*/0,
-                                                               /*y=*/0,
-                                                               /*z=*/1,
-                                                               /*d=*/0));
+  MutableConvexPolygon<32> result =
+    prism.IntersectPlane(HalfSpace3<>(/*x=*/0, /*y=*/0, /*z=*/1, /*d=*/0));
   result.SortVertices();
   std::vector<HomoPoint3<>> vertices;
   for (size_t i = 0; i < result.vertex_count(); ++i) {
@@ -86,10 +84,8 @@ TEST(AABB, IntersectPlaneZUpFactional) {
 TEST(AABB, IntersectPlaneZDown) {
   AABB<> prism(5);
 
-  ConvexPolygon<32> result = prism.IntersectPlane(HalfSpace3<>(/*x=*/0,
-                                                               /*y=*/0,
-                                                               /*z=*/-1,
-                                                               /*d=*/0));
+  MutableConvexPolygon<32> result =
+    prism.IntersectPlane(HalfSpace3<>(/*x=*/0, /*y=*/0, /*z=*/-1, /*d=*/0));
   result.SortVertices();
   std::vector<HomoPoint3<>> vertices;
   for (size_t i = 0; i < result.vertex_count(); ++i) {
@@ -106,10 +102,8 @@ TEST(AABB, IntersectPlaneZDown) {
 TEST(AABB, IntersectPlaneDiagPos) {
   AABB<> prism(5);
 
-  ConvexPolygon<32> result = prism.IntersectPlane(HalfSpace3<>(/*x=*/1,
-                                                               /*y=*/1,
-                                                               /*z=*/1,
-                                                               /*d=*/12));
+  MutableConvexPolygon<32> result =
+    prism.IntersectPlane(HalfSpace3<>(/*x=*/1, /*y=*/1, /*z=*/1, /*d=*/12));
   result.SortVertices();
   std::vector<HomoPoint3<>> vertices;
   for (size_t i = 0; i < result.vertex_count(); ++i) {
@@ -125,10 +119,8 @@ TEST(AABB, IntersectPlaneDiagPos) {
 TEST(AABB, IntersectPlaneDiagNeg) {
   AABB<> prism(5);
 
-  ConvexPolygon<32> result = prism.IntersectPlane(HalfSpace3<>(/*x=*/-1,
-                                                               /*y=*/-1,
-                                                               /*z=*/-1,
-                                                               /*d=*/12));
+  MutableConvexPolygon<32> result =
+    prism.IntersectPlane(HalfSpace3<>(/*x=*/-1, /*y=*/-1, /*z=*/-1, /*d=*/12));
   result.SortVertices();
   std::vector<HomoPoint3<>> vertices;
   for (size_t i = 0; i < result.vertex_count(); ++i) {
@@ -210,7 +202,7 @@ struct StringVertexData : public std::string {
 TEST(AABB, IntersectPlaneZUpWithData) {
   AABB<> prism(5);
 
-  using ConvexPolygonRep = ConvexPolygon<32, StringVertexData>;
+  using ConvexPolygonRep = MutableConvexPolygon<32, StringVertexData>;
   ConvexPolygonRep result =
     prism.IntersectPlane<ConvexPolygonRep>(HalfSpace3<>(/*x=*/0,
                                                         /*y=*/0,

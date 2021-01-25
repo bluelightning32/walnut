@@ -310,7 +310,7 @@ TEST(ConvexPolygonFactory, VertexData) {
     using std::string::string;
     NoDefaultConstructor() = delete;
   };
-  using ConvexPolygonRep = ConvexPolygon<32, NoDefaultConstructor>;
+  using ConvexPolygonRep = MutableConvexPolygon<32, NoDefaultConstructor>;
   using Point3WithString = Point3WithVertexData<32, NoDefaultConstructor>;
   Point3WithString input[] = {
     Point3WithString(0, 0, 10, "p0"),

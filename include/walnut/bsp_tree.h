@@ -169,7 +169,7 @@ BSPTree<ConvexPolygonTemplate>::GetNodeBorder(
         static_cast<const MappedBSPNode*>(output.on_node_plane)->original;
     }
     for (size_t i = 0; i < output.vertex_count(); ++i) {
-      auto& edge_info = output.vertex_data(i);
+      auto& edge_info = output.bsp_edge_info(i);
       if (edge_info.split_by) {
         edge_info.split_by =
           static_cast<const MappedBSPNode*>(edge_info.split_by)->original;
