@@ -20,6 +20,9 @@ struct AABB {
 
   static constexpr size_t point3_bits = point3_bits_template;
 
+  // Creates an AABB that does not contain any points.
+  AABB() : min_point(1, 1, 1), max_point(0, 0, 0) { }
+
   AABB(Point3Rep min_point, Point3Rep max_point) :
     min_point(min_point),
     max_point(max_point) { }
