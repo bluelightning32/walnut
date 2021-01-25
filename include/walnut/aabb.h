@@ -1,5 +1,5 @@
-#ifndef WALNUT_RECTANGULAR_PRISM_H__
-#define WALNUT_RECTANGULAR_PRISM_H__
+#ifndef WALNUT_AABB_H__
+#define WALNUT_AABB_H__
 
 #include <vector>
 
@@ -8,8 +8,11 @@
 
 namespace walnut {
 
+// Axis-aligned bounding box
+//
+// This is a rectangular prism whose sides are perpendicular to the axes.
 template <size_t point3_bits_template = 32>
-struct RectangularPrism {
+struct AABB {
   using Point3Rep = Point3<point3_bits_template>;
   using BigIntRep = typename Point3Rep::BigIntRep;
   using HalfSpace3Rep =
@@ -17,17 +20,17 @@ struct RectangularPrism {
 
   static constexpr size_t point3_bits = point3_bits_template;
 
-  RectangularPrism(Point3Rep min_point, Point3Rep max_point) :
+  AABB(Point3Rep min_point, Point3Rep max_point) :
     min_point(min_point),
     max_point(max_point) { }
 
-  RectangularPrism(const BigIntRep& min_x, const BigIntRep& min_y,
+  AABB(const BigIntRep& min_x, const BigIntRep& min_y,
                    const BigIntRep& min_z, const BigIntRep& max_x,
                    const BigIntRep& max_y, const BigIntRep& max_z) :
-    RectangularPrism(Point3Rep(min_x, min_y, min_z),
+    AABB(Point3Rep(min_x, min_y, min_z),
                      Point3Rep(max_x, max_y, max_z)) { }
 
-  RectangularPrism(int radius) :
+  AABB(int radius) :
     min_point(/*x=*/-radius, /*y=*/-radius, /*z=*/-radius),
     max_point(/*x=*/radius, /*y=*/radius, /*z=*/radius) { }
 
@@ -90,7 +93,7 @@ struct RectangularPrism {
 
 template <size_t point3_bits>
 template <typename ConvexPolygonRep>
-ConvexPolygonRep RectangularPrism<point3_bits>::IntersectPlane(
+ConvexPolygonRep AABB<point3_bits>::IntersectPlane(
     const HalfSpace3Rep& plane) const {
   int drop_dimension = plane.normal().GetFirstNonzeroDimension();
   if (drop_dimension == -1) {
@@ -162,8 +165,8 @@ ConvexPolygonRep RectangularPrism<point3_bits>::IntersectPlane(
 }
 
 template <size_t point3_bits>
-std::vector<ConvexPolygon<RectangularPrism<point3_bits>::point3_bits>>
-RectangularPrism<point3_bits>::GetWalls() const {
+std::vector<ConvexPolygon<AABB<point3_bits>::point3_bits>>
+AABB<point3_bits>::GetWalls() const {
   Point3<point3_bits> p[] = {
     Point3<point3_bits>(min_point.x(), min_point.y(), min_point.z()),
     Point3<point3_bits>(max_point.x(), min_point.y(), min_point.z()),
@@ -214,7 +217,7 @@ RectangularPrism<point3_bits>::GetWalls() const {
 
 template <size_t point3_bits = 32>
 std::ostream& operator<<(std::ostream& out,
-                         const RectangularPrism<point3_bits>& rect) {
+                         const AABB<point3_bits>& rect) {
   out << "min_point=" << rect.min_point;
   out << " max_point=" << rect.max_point;
   return out;
@@ -222,4 +225,4 @@ std::ostream& operator<<(std::ostream& out,
 
 }  // walnut
 
-#endif // WALNUT_RECTANGULAR_PRISM_H__
+#endif // WALNUT_AABB_H__

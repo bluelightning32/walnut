@@ -10,10 +10,10 @@
 #include "normals_actor.h"
 #include "points_actor.h"
 #include "visualization_window.h"
+#include "walnut/aabb.h"
 #include "walnut/bsp_tree.h"
 #include "walnut/half_space3.h"
 #include "walnut/point3.h"
-#include "walnut/rectangular_prism.h"
 
 constexpr const double pi = 3.14159265358979323846;
 
@@ -63,7 +63,7 @@ std::vector<walnut::BSPTree<>::OutputPolygon> CreateCellBorder(
   leaf = leaf->negative_child();
   node_path.push_back(false);
 
-  walnut::RectangularPrism<> bounding_box(walnut::Point3<>(-8, -8, 0),
+  walnut::AABB<> bounding_box(walnut::Point3<>(-8, -8, 0),
                                           walnut::Point3<>(8, 8, 10));
   return tree.GetNodeBorder(node_path.begin(), node_path.end(), bounding_box);
 }

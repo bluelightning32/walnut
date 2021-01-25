@@ -3,8 +3,8 @@
 
 #include <type_traits>
 
+#include "walnut/aabb.h"
 #include "walnut/bsp_node.h"
-#include "walnut/rectangular_prism.h"
 
 namespace walnut {
 
@@ -69,7 +69,7 @@ class BSPTree {
   std::vector<OutputPolygon> GetNodeBorder(
       Iterator node_path_begin,
       Iterator node_path_end,
-      const RectangularPrism<point3_bits>& bounding_box) const;
+      const AABB<point3_bits>& bounding_box) const;
 
   BSPPolygonId AllocateId() {
     return next_id_++;
@@ -90,7 +90,7 @@ template <typename Iterator>
 std::vector<typename BSPTree<ConvexPolygonTemplate>::OutputPolygon>
 BSPTree<ConvexPolygonTemplate>::GetNodeBorder(
     Iterator node_path_begin, Iterator node_path_end,
-    const RectangularPrism<point3_bits>& bounding_box) const {
+    const AABB<point3_bits>& bounding_box) const {
   struct MappedBSPNode : public BSPNodeRep {
    public:
     using Parent = BSPNodeRep;

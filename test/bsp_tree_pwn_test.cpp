@@ -307,12 +307,12 @@ TEST_P(BSPTreePWN, BeforeCrossing) {
   BSPPolygonId id = tree_.AllocateId();
   EXPECT_EQ(id, 0);
 
-  RectangularPrism<> prism(/*min_x=*/cube_north_west.x(),
-                           /*min_y=*/cube_north.y()*3/4,
-                           /*min_z=*/cube_bottom.z(),
-                           /*max_x=*/cube_north_east.x(),
-                           /*max_y=*/cube_north.y() + 10,
-                           /*max_z=*/cube_top.z());
+  AABB<> prism(/*min_x=*/cube_north_west.x(),
+               /*min_y=*/cube_north.y()*3/4,
+               /*min_z=*/cube_bottom.z(),
+               /*max_x=*/cube_north_east.x(),
+               /*max_y=*/cube_north.y() + 10,
+               /*max_z=*/cube_top.z());
 
   for (const ConvexPolygon<>& wall : prism.GetWalls()) {
     AddContent(id, wall);
@@ -384,12 +384,12 @@ TEST_P(BSPTreePWN, SimpleCrossing2) {
   int y_dist = cube_north.y().ToInt() - cube_north_west.y().ToInt();
 
   Point3<>::BigIntRep polygon_y = cube_north_west.y() + y_dist/2;
-  RectangularPrism<> prism(/*min_x=*/cube_north_west.x(),
-                           /*min_y=*/polygon_y,
-                           /*min_z=*/cube_bottom.z(),
-                           /*max_x=*/cube_north_east.x(),
-                           /*max_y=*/cube_north.y(),
-                           /*max_z=*/cube_top.z());
+  AABB<> prism(/*min_x=*/cube_north_west.x(),
+               /*min_y=*/polygon_y,
+               /*min_z=*/cube_bottom.z(),
+               /*max_x=*/cube_north_east.x(),
+               /*max_y=*/cube_north.y(),
+               /*max_z=*/cube_top.z());
 
   for (const ConvexPolygon<>& wall : prism.GetWalls()) {
     AddContent(id, wall);
@@ -415,12 +415,12 @@ TEST_P(BSPTreePWN, MinimumExcluded) {
   EXPECT_EQ(id, 0);
 
   Point3<>::BigIntRep polygon_x(cube_south_east.x().ToInt()/2);
-  RectangularPrism<> prism(/*min_x=*/polygon_x,
-                           /*min_y=*/cube_south.y(),
-                           /*min_z=*/cube_bottom.z(),
-                           /*max_x=*/cube_north_east.x(),
-                           /*max_y=*/cube_north.y(),
-                           /*max_z=*/cube_top.z());
+  AABB<> prism(/*min_x=*/polygon_x,
+               /*min_y=*/cube_south.y(),
+               /*min_z=*/cube_bottom.z(),
+               /*max_x=*/cube_north_east.x(),
+               /*max_y=*/cube_north.y(),
+               /*max_z=*/cube_top.z());
 
   for (const ConvexPolygon<>& wall : prism.GetWalls()) {
     AddContent(id, wall);
@@ -454,24 +454,24 @@ TEST_P(BSPTreePWN, MPathBends) {
 
   BSPPolygonId prism1_id = tree_.AllocateId();
   Point3<>::BigIntRep prism1_y = cube_north_west.y() + y_dist/5;
-  RectangularPrism<> prism1(/*min_x=*/cube_north_west.x(),
-                            /*min_y=*/prism1_y,
-                            /*min_z=*/cube_bottom.z(),
-                            /*max_x=*/cube_north_east.x(),
-                            /*max_y=*/cube_north.y(),
-                            /*max_z=*/cube_top.z());
+  AABB<> prism1(/*min_x=*/cube_north_west.x(),
+                /*min_y=*/prism1_y,
+                /*min_z=*/cube_bottom.z(),
+                /*max_x=*/cube_north_east.x(),
+                /*max_y=*/cube_north.y(),
+                /*max_z=*/cube_top.z());
   for (const ConvexPolygon<>& wall : prism1.GetWalls()) {
     AddContent(prism1_id, wall);
   }
 
   BSPPolygonId prism2_id = tree_.AllocateId();
   Point3<>::BigIntRep prism2_y = cube_north_west.y() + y_dist*3/5;
-  RectangularPrism<> prism2(/*min_x=*/cube_north_west.x(),
-                            /*min_y=*/prism2_y,
-                            /*min_z=*/cube_bottom.z(),
-                            /*max_x=*/cube_north_east.x(),
-                            /*max_y=*/cube_north.y(),
-                            /*max_z=*/cube_top.z());
+  AABB<> prism2(/*min_x=*/cube_north_west.x(),
+                /*min_y=*/prism2_y,
+                /*min_z=*/cube_bottom.z(),
+                /*max_x=*/cube_north_east.x(),
+                /*max_y=*/cube_north.y(),
+                /*max_z=*/cube_top.z());
   for (const ConvexPolygon<>& wall : prism2.GetWalls()) {
     AddContent(prism2_id, wall);
   }
@@ -504,12 +504,12 @@ TEST_P(BSPTreePWN, SkipEdgesAlongIPath) {
   BSPPolygonId id = tree_.AllocateId();
   Point3<>::BigIntRep bounding_start_y(cube_north.y().ToInt() / 4);
   Point3<>::BigIntRep bounding_end_y(cube_north.y().ToInt() * 3 / 4);
-  RectangularPrism<> bounding_box(/*min_x=*/cube_north_west.x(),
-                                  /*min_y=*/bounding_start_y,
-                                  /*min_z=*/cube_bottom.z(),
-                                  /*max_x=*/cube_top.x(),
-                                  /*max_y=*/bounding_end_y,
-                                  /*max_z=*/cube_top.z());
+  AABB<> bounding_box(/*min_x=*/cube_north_west.x(),
+                      /*min_y=*/bounding_start_y,
+                      /*min_z=*/cube_bottom.z(),
+                      /*max_x=*/cube_top.x(),
+                      /*max_y=*/bounding_end_y,
+                      /*max_z=*/cube_top.z());
   walnut::BSPTree<> slice_top_tree;
   const Point3<> cube_north_west_down(cube_north_west.x(), cube_north_west.y(),
       Point3<>::BigIntRep(cube_north_west.z() - 1));
@@ -556,12 +556,12 @@ TEST_P(BSPTreePWN, MPathGoesThroughStraddlingEdge) {
   BSPPolygonId id = tree_.AllocateId();
   Point3<>::BigIntRep prism_start_y(cube_north.y().ToInt() / 4);
   Point3<>::BigIntRep prism_end_y(cube_north.y().ToInt() * 3 / 4);
-  RectangularPrism<> prism(/*min_x=*/cube_north_west.x(),
-                           /*min_y=*/prism_start_y,
-                           /*min_z=*/cube_bottom.z(),
-                           /*max_x=*/cube_top.x(),
-                           /*max_y=*/prism_end_y,
-                           /*max_z=*/cube_top.z());
+  AABB<> prism(/*min_x=*/cube_north_west.x(),
+               /*min_y=*/prism_start_y,
+               /*min_z=*/cube_bottom.z(),
+               /*max_x=*/cube_top.x(),
+               /*max_y=*/prism_end_y,
+               /*max_z=*/cube_top.z());
   for (const ConvexPolygon<>& wall : prism.GetWalls()) {
     AddContent(id, wall);
   }
@@ -594,12 +594,12 @@ TEST_P(BSPTreePWN, MPathSkipsContentContainedByRecentSplit) {
   BSPPolygonId id = tree_.AllocateId();
   Point3<>::BigIntRep prism_start_y(cube_north.y().ToInt() / 4);
   Point3<>::BigIntRep prism_end_y(cube_north.y().ToInt() * 3 / 4);
-  RectangularPrism<> prism(/*min_x=*/cube_top.x(),
-                           /*min_y=*/prism_start_y,
-                           /*min_z=*/cube_bottom.z(),
-                           /*max_x=*/cube_north_east.x(),
-                           /*max_y=*/prism_end_y,
-                           /*max_z=*/cube_top.z());
+  AABB<> prism(/*min_x=*/cube_top.x(),
+               /*min_y=*/prism_start_y,
+               /*min_z=*/cube_bottom.z(),
+               /*max_x=*/cube_north_east.x(),
+               /*max_y=*/prism_end_y,
+               /*max_z=*/cube_top.z());
   for (const ConvexPolygon<>& wall : prism.GetWalls()) {
     AddContent(id, wall);
   }
@@ -631,12 +631,12 @@ TEST_P(BSPTreePWN, BothEdgeSidesTouchMPath) {
   BSPPolygonId id = tree_.AllocateId();
   Point3<>::BigIntRep prism_start_y(cube_north.y().ToInt() / 4);
   Point3<>::BigIntRep prism_end_y(cube_north.y().ToInt() * 3 / 4);
-  RectangularPrism<> prism(/*min_x=*/cube_north_west.x(),
-                           /*min_y=*/prism_start_y,
-                           /*min_z=*/cube_bottom.z(),
-                           /*max_x=*/cube_top.x(),
-                           /*max_y=*/prism_end_y,
-                           /*max_z=*/cube_top.z());
+  AABB<> prism(/*min_x=*/cube_north_west.x(),
+               /*min_y=*/prism_start_y,
+               /*min_z=*/cube_bottom.z(),
+               /*max_x=*/cube_top.x(),
+               /*max_y=*/prism_end_y,
+               /*max_z=*/cube_top.z());
   for (const ConvexPolygon<>& wall : prism.GetWalls()) {
     AddContent(id, wall);
   }
@@ -723,12 +723,12 @@ TEST_P(BSPTreePWN, MPathOvershootsMValue) {
   EXPECT_EQ(id, 0);
 
   Point3<>::BigIntRep polygon_y(cube_north.y().ToInt()/4);
-  RectangularPrism<> prism(/*min_x=*/cube_north_west.x(),
-                           /*min_y=*/cube_top.y(),
-                           /*min_z=*/cube_bottom.z(),
-                           /*max_x=*/cube_north_east.x(),
-                           /*max_y=*/cube_north.y(),
-                           /*max_z=*/cube_top.z());
+  AABB<> prism(/*min_x=*/cube_north_west.x(),
+               /*min_y=*/cube_top.y(),
+               /*min_z=*/cube_bottom.z(),
+               /*max_x=*/cube_north_east.x(),
+               /*max_y=*/cube_north.y(),
+               /*max_z=*/cube_top.z());
 
   for (const ConvexPolygon<>& wall : prism.GetWalls()) {
     AddContent(id, wall);
@@ -786,47 +786,47 @@ TEST_P(BSPTreePWN, SplitAgainThroughMvalue) {
   // The south split normal is shifted a little more to the west than the last
   // split normal is shifted to the east. So the intersection edge ends up
   // being higher on the east side. So the M-value ends up in r3.
-  RectangularPrism<> r1(/*min_x=*/cube_north_west.x(),
-                        /*min_y=*/cube_top.y(),
-                        /*min_z=*/cube_bottom.z(),
-                        /*max_x=*/cube_top.x(),
-                        /*max_y=*/cube_north.y(),
-                        /*max_z=*/cube_top.z());
+  AABB<> r1(/*min_x=*/cube_north_west.x(),
+            /*min_y=*/cube_top.y(),
+            /*min_z=*/cube_bottom.z(),
+            /*max_x=*/cube_top.x(),
+            /*max_y=*/cube_north.y(),
+            /*max_z=*/cube_top.z());
 
-  RectangularPrism<> r2(/*min_x=*/cube_north_west.x(),
-                        /*min_y=*/cube_south.y(),
-                        /*min_z=*/cube_bottom.z(),
-                        /*max_x=*/cube_top.x(),
-                        /*max_y=*/cube_top.y(),
-                        /*max_z=*/cube_top.z());
+  AABB<> r2(/*min_x=*/cube_north_west.x(),
+            /*min_y=*/cube_south.y(),
+            /*min_z=*/cube_bottom.z(),
+            /*max_x=*/cube_top.x(),
+            /*max_y=*/cube_top.y(),
+            /*max_z=*/cube_top.z());
 
-  RectangularPrism<> r3(/*min_x=*/cube_top.x(),
-                        /*min_y=*/cube_south.y(),
-                        /*min_z=*/cube_bottom.z(),
-                        /*max_x=*/cube_north_east.x(),
-                        /*max_y=*/cube_top.y(),
-                        /*max_z=*/cube_top.z());
+  AABB<> r3(/*min_x=*/cube_top.x(),
+            /*min_y=*/cube_south.y(),
+            /*min_z=*/cube_bottom.z(),
+            /*max_x=*/cube_north_east.x(),
+            /*max_y=*/cube_top.y(),
+            /*max_z=*/cube_top.z());
 
-  RectangularPrism<> r4(/*min_x=*/cube_top.x(),
-                        /*min_y=*/cube_top.y(),
-                        /*min_z=*/cube_bottom.z(),
-                        /*max_x=*/cube_north_east.x(),
-                        /*max_y=*/cube_north.y(),
-                        /*max_z=*/cube_top.z());
+  AABB<> r4(/*min_x=*/cube_top.x(),
+            /*min_y=*/cube_top.y(),
+            /*min_z=*/cube_bottom.z(),
+            /*max_x=*/cube_north_east.x(),
+            /*max_y=*/cube_north.y(),
+            /*max_z=*/cube_top.z());
 
   BSPPolygonId r1_id = tree_.AllocateId();
   BSPPolygonId r2_id = tree_.AllocateId();
   BSPPolygonId r3_id = tree_.AllocateId();
   BSPPolygonId r4_id = tree_.AllocateId();
 
-  std::pair<BSPPolygonId, RectangularPrism<>&> prisms[] = {
+  std::pair<BSPPolygonId, AABB<>&> prisms[] = {
     {r1_id, r1},
     {r2_id, r2},
     {r3_id, r3},
     {r4_id, r4},
   };
 
-  for (const std::pair<BSPPolygonId, RectangularPrism<>&>& prism : prisms) {
+  for (const std::pair<BSPPolygonId, AABB<>&>& prism : prisms) {
     for (const ConvexPolygon<>& wall : prism.second.GetWalls()) {
       AddContent(prism.first, wall);
     }

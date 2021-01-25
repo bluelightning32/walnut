@@ -1,4 +1,4 @@
-#include "walnut/rectangular_prism.h"
+#include "walnut/aabb.h"
 
 #include <string>
 
@@ -9,8 +9,8 @@ namespace walnut {
 
 using testing::ElementsAre;
 
-TEST(RectangularPrism, IsOnBorder) {
-  RectangularPrism<> prism(2);
+TEST(AABB, IsOnBorder) {
+  AABB<> prism(2);
 
   EXPECT_TRUE(prism.IsOnBorder(Point3<>(2, 0, 0)));
   EXPECT_TRUE(prism.IsOnBorder(Point3<>(0, 2, 0)));
@@ -23,8 +23,8 @@ TEST(RectangularPrism, IsOnBorder) {
   EXPECT_FALSE(prism.IsOnBorder(Point3<>(1, 1, 1)));
 }
 
-TEST(RectangularPrism, IsOnBorderHomoPoint3) {
-  RectangularPrism<> prism(Point3<>(-1, -1, -1), Point3<>(2, 2, 2));
+TEST(AABB, IsOnBorderHomoPoint3) {
+  AABB<> prism(Point3<>(-1, -1, -1), Point3<>(2, 2, 2));
 
   EXPECT_TRUE(prism.IsOnBorder(HomoPoint3<>(2, 0, 0, 1)));
   EXPECT_TRUE(prism.IsOnBorder(HomoPoint3<>(-2, 0, 0, -1)));
@@ -37,8 +37,8 @@ TEST(RectangularPrism, IsOnBorderHomoPoint3) {
   EXPECT_FALSE(prism.IsOnBorder(HomoPoint3<>(-1, 0, 0, -1)));
 }
 
-TEST(RectangularPrism, IsInside) {
-  RectangularPrism<> prism(2);
+TEST(AABB, IsInside) {
+  AABB<> prism(2);
 
   EXPECT_TRUE(prism.IsInside(Point3<>(-2, 0, 0)));
   EXPECT_TRUE(prism.IsInside(Point3<>(2, 0, 0)));
@@ -48,8 +48,8 @@ TEST(RectangularPrism, IsInside) {
   EXPECT_FALSE(prism.IsInside(Point3<>(3, 1, 1)));
 }
 
-TEST(RectangularPrism, IntersectPlaneZUp) {
-  RectangularPrism<> prism(5);
+TEST(AABB, IntersectPlaneZUp) {
+  AABB<> prism(5);
 
   ConvexPolygon<32> result = prism.IntersectPlane(HalfSpace3<>(/*x=*/0,
                                                                /*y=*/0,
@@ -68,8 +68,8 @@ TEST(RectangularPrism, IntersectPlaneZUp) {
         ));
 }
 
-TEST(RectangularPrism, IntersectPlaneZUpFactional) {
-  RectangularPrism<> prism(Point3<>(-8, -8, 0), Point3<>(8, 8, 10));
+TEST(AABB, IntersectPlaneZUpFactional) {
+  AABB<> prism(Point3<>(-8, -8, 0), Point3<>(8, 8, 10));
   auto result = prism.IntersectPlane(HalfSpace3<>(/*x=*/0, /*y=*/0, /*z=*/20,
                                                   /*d=*/19));
   result.SortVertices();
@@ -83,8 +83,8 @@ TEST(RectangularPrism, IntersectPlaneZUpFactional) {
                                     HomoPoint3<32>{-8*20,  8*20, 19, 20}));
 }
 
-TEST(RectangularPrism, IntersectPlaneZDown) {
-  RectangularPrism<> prism(5);
+TEST(AABB, IntersectPlaneZDown) {
+  AABB<> prism(5);
 
   ConvexPolygon<32> result = prism.IntersectPlane(HalfSpace3<>(/*x=*/0,
                                                                /*y=*/0,
@@ -103,8 +103,8 @@ TEST(RectangularPrism, IntersectPlaneZDown) {
         ));
 }
 
-TEST(RectangularPrism, IntersectPlaneDiagPos) {
-  RectangularPrism<> prism(5);
+TEST(AABB, IntersectPlaneDiagPos) {
+  AABB<> prism(5);
 
   ConvexPolygon<32> result = prism.IntersectPlane(HalfSpace3<>(/*x=*/1,
                                                                /*y=*/1,
@@ -122,8 +122,8 @@ TEST(RectangularPrism, IntersectPlaneDiagPos) {
         ));
 }
 
-TEST(RectangularPrism, IntersectPlaneDiagNeg) {
-  RectangularPrism<> prism(5);
+TEST(AABB, IntersectPlaneDiagNeg) {
+  AABB<> prism(5);
 
   ConvexPolygon<32> result = prism.IntersectPlane(HalfSpace3<>(/*x=*/-1,
                                                                /*y=*/-1,
@@ -146,7 +146,7 @@ void TestIntersectPlaneLowSlopeMin() {
   const BigInt<point3_bits> min_int = BigInt<point3_bits>::min_value();
   const BigInt<point3_bits> min_plus_1 = min_int + BigInt<point3_bits>(1);
   const BigInt<point3_bits> max_int = BigInt<point3_bits>::max_value();
-  RectangularPrism<point3_bits> prism(Point3<point3_bits>(min_int,
+  AABB<point3_bits> prism(Point3<point3_bits>(min_int,
                                                           min_int,
                                                           min_int),
                                       Point3<point3_bits>(max_int,
@@ -176,15 +176,15 @@ void TestIntersectPlaneLowSlopeMin() {
   }
 }
 
-TEST(RectangularPrism, IntersectPlaneLowSlopeMin64) {
+TEST(AABB, IntersectPlaneLowSlopeMin64) {
   TestIntersectPlaneLowSlopeMin<64>();
 }
 
-TEST(RectangularPrism, IntersectPlaneLowSlopeMin128) {
+TEST(AABB, IntersectPlaneLowSlopeMin128) {
   TestIntersectPlaneLowSlopeMin<128>();
 }
 
-TEST(RectangularPrism, IntersectPlaneLowSlopeMin256) {
+TEST(AABB, IntersectPlaneLowSlopeMin256) {
   TestIntersectPlaneLowSlopeMin<256>();
 }
 
@@ -207,8 +207,8 @@ struct StringVertexData : public std::string {
   using std::string::operator=;
 };
 
-TEST(RectangularPrism, IntersectPlaneZUpWithData) {
-  RectangularPrism<> prism(5);
+TEST(AABB, IntersectPlaneZUpWithData) {
+  AABB<> prism(5);
 
   using ConvexPolygonRep = ConvexPolygon<32, StringVertexData>;
   ConvexPolygonRep result =

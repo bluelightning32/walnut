@@ -1,7 +1,7 @@
+#include "walnut/aabb.h"
 #include "walnut/bsp_tree.h"
 #include "walnut/half_space3.h"
 #include "walnut/point3.h"
-#include "walnut/rectangular_prism.h"
 
 #include "mesh_adapter.h"
 #include "visualization_window.h"
@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
   walnut::BSPTree<> tree;
   walnut::HalfSpace3<> split(p[0], p[1], p[2]);
   tree.root.Split(split);
-  walnut::RectangularPrism<> bounding_box(walnut::Point3<>(0, 0, 0),
+  walnut::AABB<> bounding_box(walnut::Point3<>(0, 0, 0),
                                           walnut::Point3<>(2, 2, 2));
   std::vector<bool> node_path = {false};
   std::vector<walnut::BSPTree<>::OutputPolygon> mesh = tree.GetNodeBorder(

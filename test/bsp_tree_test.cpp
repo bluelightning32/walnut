@@ -574,7 +574,7 @@ TEST(BSPTree, SplitBorderTo2Children) {
 TEST(BSPTree, GetNodeBorderEmptyTree) {
   BSPTree<> tree;
 
-  RectangularPrism<> bounding_box(Point3<>(-1, -1, -1), Point3<>(2, 2, 2));
+  AABB<> bounding_box(Point3<>(-1, -1, -1), Point3<>(2, 2, 2));
   std::vector<bool> node_path = { };
 
   std::vector<BSPTree<>::OutputPolygon> facets = tree.GetNodeBorder(
@@ -638,7 +638,7 @@ TEST(BSPTree, GetNodeBorder1Split) {
     HalfSpace3<> split(p[1], p[3], p[4]);
     tree.root.Split(pos_side ? -split : split);
     std::vector<bool> node_path = {pos_side};
-    RectangularPrism<> bounding_box(Point3<>(-1, -1, -1), Point3<>(2, 2, 2));
+    AABB<> bounding_box(Point3<>(-1, -1, -1), Point3<>(2, 2, 2));
 
     std::vector<BSPTree<>::OutputPolygon> facets = tree.GetNodeBorder(
         node_path.begin(), node_path.end(), bounding_box);
