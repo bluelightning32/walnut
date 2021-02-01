@@ -6,6 +6,7 @@
 #include <utility>
 
 #include "walnut/convex_polygon_edge.h"
+#include "walnut/convex_polygon_vertex_iterator.h"
 #include "walnut/half_space3.h"
 #include "walnut/homo_point3.h"
 #include "walnut/member_forward.h"
@@ -125,6 +126,10 @@ class ConvexPolygon {
     typename HalfSpace3FromPoint3Builder<point3_bits_template>::HalfSpace3Rep;
   using NormalRep = typename HalfSpace3Rep::VectorRep;
   using LineRep = typename EdgeRep::LineRep;
+  using VertexIterator =
+    ConvexPolygonVertexIterator<typename std::vector<EdgeRep>::iterator>;
+  using ConstVertexIterator =
+    ConvexPolygonVertexIterator<typename std::vector<EdgeRep>::const_iterator>;
 
   // The minimum number of bits to support for each component of the vertex3's
   // that the polygon is built from.
@@ -228,6 +233,22 @@ class ConvexPolygon {
 
   const std::vector<EdgeRep>& edges() const {
     return edges_;
+  }
+
+  VertexIterator vertices_begin() {
+    return VertexIterator(edges_.begin());
+  }
+
+  VertexIterator vertices_end() {
+    return VertexIterator(edges_.end());
+  }
+
+  ConstVertexIterator vertices_begin() const {
+    return ConstVertexIterator(edges_.begin());
+  }
+
+  ConstVertexIterator vertices_end() const {
+    return ConstVertexIterator(edges_.end());
   }
 
   const HalfSpace3Rep& plane() const { return plane_; }

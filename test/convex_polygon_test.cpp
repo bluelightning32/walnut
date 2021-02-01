@@ -1522,4 +1522,18 @@ TEST(ConvexPolygon, SplitOnFractionalParallelPlane) {
   }
 }
 
+TEST(ConvexPolygon, VerticesIterator) {
+  Point3<32> input[] = {
+    Point3<32>(0, 0, 10),
+    Point3<32>(1, 0, 11),
+    Point3<32>(1, 1, 12),
+  };
+
+  ConvexPolygon<32> triangle = MakeConvexPolygon(input);
+
+  EXPECT_EQ(&*triangle.vertices_begin(), &triangle.vertex(0));
+  EXPECT_EQ(triangle.vertices_end() - triangle.vertices_begin(),
+            triangle.vertex_count());
+}
+
 }  // walnut
