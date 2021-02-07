@@ -95,6 +95,32 @@ class BigInt {
     return *this;
   }
 
+  constexpr BigInt& operator+=(BigIntHalfWord other) {
+    rep_ += other;
+    return *this;
+  }
+
+  constexpr BigInt& operator++() {
+    ++rep_;
+    return *this;
+  }
+
+  template <size_t other_bits>
+  constexpr BigInt& operator-=(const BigInt<other_bits>& other) {
+    rep_ -= other.rep_;
+    return *this;
+  }
+
+  constexpr BigInt& operator-=(BigIntHalfWord other) {
+    rep_ -= other;
+    return *this;
+  }
+
+  constexpr BigInt& operator--() {
+    --rep_;
+    return *this;
+  }
+
   template <size_t result_bits = 0, size_t other_bits,
             size_t rb = result_bits == 0 ?
               std::max(bits, other_bits) + 1 : result_bits>

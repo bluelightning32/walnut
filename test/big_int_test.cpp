@@ -174,6 +174,17 @@ TEST(BigInt, PlusEqual) {
   EXPECT_EQ(result, BigInt<128>(1) << 120);
 }
 
+TEST(BigInt, SubtractEqual) {
+  BigInt<128> result(-1);
+  BigInt<128> subtract(1);
+
+  for (int i = 0; i < 120; ++i) {
+    result -= (subtract << i);
+  }
+
+  EXPECT_EQ(result, BigInt<128>(-1) << 120);
+}
+
 TEST(BigInt, SubtractUInt64Carry) {
   BigInt<64> a(static_cast<int64_t>(1) << 32);
   BigInt<64> b(static_cast<int64_t>(1) << 31);

@@ -333,6 +333,123 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
     return *this;
   }
 
+  constexpr BigIntImpl& operator+=(BigIntHalfWord other) {
+    if (used_ == sizeof(BigIntHalfWord)) {
+      words_[0] += BigUIntWord{other};
+      if ((BigIntWord)words_[0] < std::numeric_limits<BigIntHalfWord>::min() ||
+          (BigIntWord)words_[0] > std::numeric_limits<BigIntHalfWord>::max()) {
+        used_ = bytes_per_word;
+      }
+      return *this;
+    } else {
+      return *this += BigIntImpl<1>(other);
+    }
+  }
+
+  constexpr BigIntImpl& operator++() {
+    if (used_ == sizeof(BigIntHalfWord)) {
+      ++words_[0];
+      if ((BigIntWord)words_[0] > std::numeric_limits<BigIntHalfWord>::max()) {
+        used_ = bytes_per_word;
+      }
+      return *this;
+    }
+    size_t i = 0;
+    for (; i < used_ / bytes_per_word - 1; i++) {
+      ++words_[i];
+      if (words_[i] != 0) {
+        return *this;
+      }
+    }
+    ++words_[i];
+    if ((BigIntWord)words_[i] == std::numeric_limits<BigIntWord>::min()) {
+      assert(i+1 < max_words);
+      if (i+1 < max_words) {
+        ++i;
+        ++words_[i] = 0;
+      }
+    } else {
+      Trim();
+    }
+    return *this;
+  }
+
+  template <size_t other_words>
+  constexpr BigIntImpl& operator-=(const BigIntImpl<other_words>& other) {
+    if (used_ == sizeof(BigIntHalfWord) && other.used_ == sizeof(BigIntHalfWord)) {
+      words_[0] -= other.words_[0];
+      if ((BigIntWord)words_[0] < std::numeric_limits<BigIntHalfWord>::min() ||
+          (BigIntWord)words_[0] > std::numeric_limits<BigIntHalfWord>::max()) {
+        used_ = bytes_per_word;
+      }
+      return *this;
+    }
+    size_t i = 0;
+    bool carry = false;
+    size_t common_words = GetCommonWordCount(other);
+    BigUIntWord this_extension(SignExtension());
+    BigUIntWord other_extension(other.SignExtension());
+    assert(other.used_ <= max_bytes);
+    for (; i < common_words && i < max_words; i++) {
+      words_[i] = words_[i].Subtract(other.words_[i], carry, &carry);
+    }
+    for (; i < std::min(used_ / bytes_per_word, max_words); i++) {
+      words_[i] = words_[i].Subtract(other_extension, carry, &carry);
+    }
+    for (; i < std::min(other.used_ / bytes_per_word, max_words); i++) {
+      words_[i] = this_extension.Subtract(other.words_[i], carry, &carry);
+    }
+    if (i < max_words) {
+      words_[i] = this_extension.Subtract(other_extension, carry, &carry);
+      i++;
+    }
+    used_ = i * bytes_per_word;
+    Trim();
+    return *this;
+  }
+
+  constexpr BigIntImpl& operator-=(BigIntHalfWord other) {
+    if (used_ == sizeof(BigIntHalfWord)) {
+      words_[0] -= BigUIntWord{other};
+      if ((BigIntWord)words_[0] < std::numeric_limits<BigIntHalfWord>::min() ||
+          (BigIntWord)words_[0] > std::numeric_limits<BigIntHalfWord>::max()) {
+        used_ = bytes_per_word;
+      }
+      return *this;
+    } else {
+      return *this -= BigIntImpl<1>(other);
+    }
+  }
+
+
+  constexpr BigIntImpl& operator--() {
+    if (used_ == sizeof(BigIntHalfWord)) {
+      --words_[0];
+      if ((BigIntWord)words_[0] < std::numeric_limits<BigIntHalfWord>::min()) {
+        used_ = bytes_per_word;
+      }
+      return *this;
+    }
+    size_t i = 0;
+    for (; i < used_ / bytes_per_word - 1; i++) {
+      --words_[i];
+      if (words_[i] != 0) {
+        return *this;
+      }
+    }
+    --words_[i];
+    if ((BigIntWord)words_[i] == std::numeric_limits<BigIntWord>::max()) {
+      assert(i+1 < max_words);
+      if (i+1 < max_words) {
+        ++i;
+        ++words_[i] = (BigIntWord)-1;
+      }
+    } else {
+      Trim();
+    }
+    return *this;
+  }
+
   template <size_t result_words = 0, size_t other_words,
             size_t rw = result_words == 0 ?
               std::max(max_words, other_words) : result_words>

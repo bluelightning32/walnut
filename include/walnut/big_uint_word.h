@@ -305,6 +305,11 @@ class BigUIntWordBase {
     return *impl();
   }
 
+  constexpr ImplType& operator--() {
+    --i_;
+    return *impl();
+  }
+
   constexpr ImplType& operator+=(const ImplType& other) {
     i_ += other.i_;
     return *impl();
