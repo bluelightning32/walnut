@@ -37,6 +37,22 @@ TEST(AABB, IsOnBorderHomoPoint3) {
   EXPECT_FALSE(prism.IsOnBorder(HomoPoint3<>(-1, 0, 0, -1)));
 }
 
+TEST(AABB, IsOnBorderHomoPoint3Denom2) {
+  AABB<> prism(Vector3<>(-1, -1, -1), Vector3<>(2, 2, 2), 2);
+
+  EXPECT_TRUE(prism.IsOnBorder(HomoPoint3<>(2, 0, 0, 2)));
+  EXPECT_TRUE(prism.IsOnBorder(HomoPoint3<>(1, 0, 0, 1)));
+  EXPECT_TRUE(prism.IsOnBorder(HomoPoint3<>(-2, 0, 0, -2)));
+  EXPECT_TRUE(prism.IsOnBorder(HomoPoint3<>(-1, 0, 0, -1)));
+  EXPECT_TRUE(prism.IsOnBorder(HomoPoint3<>(1, 0, 0, -2)));
+  EXPECT_TRUE(prism.IsOnBorder(HomoPoint3<>(-1, 0, 0, 2)));
+
+  EXPECT_FALSE(prism.IsOnBorder(HomoPoint3<>(2, 0, 0, -2)));
+  EXPECT_FALSE(prism.IsOnBorder(HomoPoint3<>(-2, 0, 0, 2)));
+  EXPECT_FALSE(prism.IsOnBorder(HomoPoint3<>(1, 0, 0, 2)));
+  EXPECT_FALSE(prism.IsOnBorder(HomoPoint3<>(-1, 0, 0, -2)));
+}
+
 TEST(AABB, IsInside) {
   AABB<> prism(2);
 
@@ -228,72 +244,47 @@ TEST(AABB, IntersectPlaneZUpWithData) {
 
 class GetAABBPlaneSideTest : public testing::TestWithParam<int> {
  protected:
+  AABB<> GetScaledAABB(const AABB<>& box) const {
+    int mult = GetParam();
+    return AABB<>(box.min_point_num()*mult, box.max_point_num()*mult, mult);
+  }
+
   void ExpectNegativeSide(const HalfSpace3<>& plane, const AABB<>& box) {
     EXPECT_EQ(box.GetPlaneSide(plane), -1);
 
-    int mult = GetParam();
-    EXPECT_EQ(GetAABBPlaneSide(box.min_point().x() * mult,
-                               box.min_point().y() * mult,
-                               box.min_point().z() * mult,
-                               box.max_point().x() * mult,
-                               box.max_point().y() * mult,
-                               box.max_point().z() * mult, BigInt<64>(mult),
-                               plane),
-              -1);
+    EXPECT_EQ(GetScaledAABB(box).GetPlaneSide(plane), -1);
 
     EXPECT_EQ(box.GetPlaneSide(-plane), 1);
 
-    EXPECT_EQ(GetAABBPlaneSide(box.min_point().x() * mult,
-                               box.min_point().y() * mult,
-                               box.min_point().z() * mult,
-                               box.max_point().x() * mult,
-                               box.max_point().y() * mult,
-                               box.max_point().z() * mult, BigInt<64>(mult),
-                               -plane),
-              1);
+    EXPECT_EQ(GetScaledAABB(box).GetPlaneSide(-plane), 1);
   }
 
   void ExpectStraddle(const HalfSpace3<>& plane, const AABB<>& box) {
     EXPECT_EQ(box.GetPlaneSide(plane), 0);
 
-    int mult = GetParam();
-    EXPECT_EQ(GetAABBPlaneSide(box.min_point().x() * mult,
-                               box.min_point().y() * mult,
-                               box.min_point().z() * mult,
-                               box.max_point().x() * mult,
-                               box.max_point().y() * mult,
-                               box.max_point().z() * mult, BigInt<64>(mult),
-                               plane),
-              0);
+    EXPECT_EQ(GetScaledAABB(box).GetPlaneSide(plane), 0);
 
     EXPECT_EQ(box.GetPlaneSide(-plane), 0);
 
-    EXPECT_EQ(GetAABBPlaneSide(box.min_point().x() * mult,
-                               box.min_point().y() * mult,
-                               box.min_point().z() * mult,
-                               box.max_point().x() * mult,
-                               box.max_point().y() * mult,
-                               box.max_point().z() * mult, BigInt<64>(mult),
-                               -plane),
-              0);
+    EXPECT_EQ(GetScaledAABB(box).GetPlaneSide(-plane), 0);
   }
 };
 
 TEST_P(GetAABBPlaneSideTest, SideOfXYZPosNormal) {
   HalfSpace3<> half_space(1, 1, 1, 10);
-  AABB<> aabb(-1, -1, -1, 1, 1, 1);
+  AABB<> aabb(-1, -1, -1, 1, 1, 1, 1);
   ExpectNegativeSide(half_space, aabb);
 }
 
 TEST_P(GetAABBPlaneSideTest, SideOfXYZNegNormal) {
   HalfSpace3<> half_space(-1, -1, -1, 10);
-  AABB<> aabb(-1, -1, -1, 1, 1, 1);
+  AABB<> aabb(-1, -1, -1, 1, 1, 1, 1);
   ExpectNegativeSide(half_space, aabb);
 }
 
 TEST_P(GetAABBPlaneSideTest, Touching) {
   HalfSpace3<> half_space(1, -10, 1, 30);
-  AABB<> aabb(10, -2, 10, 11, -1, 11);
+  AABB<> aabb(10, -2, 10, 11, -1, 11, 1);
   ExpectStraddle(half_space, aabb);
 }
 

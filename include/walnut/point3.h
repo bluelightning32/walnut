@@ -147,6 +147,10 @@ class Point3 {
     }
   }
 
+  void Negate() {
+    vector_from_origin_.Negate();
+  }
+
  private:
   VectorRep vector_from_origin_;
 };
