@@ -12,27 +12,6 @@ namespace walnut {
 // implicitly defined by its component coordinates.
 //
 // The caller is responsible for ensuring these invariants:
-// min_x <= max_x
-// min_y <= max_y
-// min_z <= max_z
-//
-// Returns -1 if the AABB is only present in the negative half-space.
-// Returns 0 if the AABB is present on both sides of the plane, or one of its
-// vertices is touching the plane.
-// Returns 1 if the AABB is only present in the positive half-space.
-template <size_t component_bits, size_t half_space_bits>
-int GetAABBPlaneSide(const BigInt<component_bits>& min_x,
-                     const BigInt<component_bits>& min_y,
-                     const BigInt<component_bits>& min_z,
-                     const BigInt<component_bits>& max_x,
-                     const BigInt<component_bits>& max_y,
-                     const BigInt<component_bits>& max_z,
-                     const HalfSpace3<half_space_bits>& plane);
-
-// Determines which sides of the plane an AABB is present on. The AABB is
-// implicitly defined by its component coordinates.
-//
-// The caller is responsible for ensuring these invariants:
 // min_x * sign(denom) <= max_x * sign(denom)
 // min_y * sign(denom) <= max_y * sign(denom)
 // min_z * sign(denom) <= max_z * sign(denom)
@@ -147,10 +126,7 @@ class AABB {
   // vertices is touching the plane.
   // Returns 1 if the AABB is only present in the positive half-space.
   template <size_t half_space_bits>
-  int GetPlaneSide(const HalfSpace3<half_space_bits>& plane) const {
-    return GetAABBPlaneSide(min_point_.x(), min_point_.y(), min_point_.z(),
-                     max_point_.x(), max_point_.y(), max_point_.z(), plane);
-  }
+  int GetPlaneSide(const HalfSpace3<half_space_bits>& plane) const;
 
   // Returns all 6 sides of the prism.
   std::vector<ConvexPolygon<point3_bits>> GetWalls() const;
@@ -294,26 +270,22 @@ AABB<point3_bits>::GetWalls() const {
   return result;
 }
 
-template <size_t component_bits, size_t half_space_bits>
-int GetAABBPlaneSide(const BigInt<component_bits>& min_x,
-                     const BigInt<component_bits>& min_y,
-                     const BigInt<component_bits>& min_z,
-                     const BigInt<component_bits>& max_x,
-                     const BigInt<component_bits>& max_y,
-                     const BigInt<component_bits>& max_z,
-                     const HalfSpace3<half_space_bits>& plane) {
+template <size_t point3_bits>
+template <size_t half_space_bits>
+int AABB<point3_bits>::GetPlaneSide(
+    const HalfSpace3<half_space_bits>& plane) const {
   const bool x_pos = plane.x().GetSign() > 0;
   const bool y_pos = plane.y().GetSign() > 0;
   const bool z_pos = plane.z().GetSign() > 0;
-  const auto min_value = (x_pos ? min_x : max_x)*plane.x() +
-                         (y_pos ? min_y : max_y)*plane.y() +
-                         (z_pos ? min_z : max_z)*plane.z();
+  const auto min_value = (x_pos ? min_point_.x() : max_point_.x())*plane.x() +
+                         (y_pos ? min_point_.y() : max_point_.y())*plane.y() +
+                         (z_pos ? min_point_.z() : max_point_.z())*plane.z();
   if (min_value > plane.d()) {
     return 1;
   }
-  const auto max_value = (x_pos ? max_x : min_x)*plane.x() +
-                         (y_pos ? max_y : min_y)*plane.y() +
-                         (z_pos ? max_z : min_z)*plane.z();
+  const auto max_value = (x_pos ? max_point_.x() : min_point_.x())*plane.x() +
+                         (y_pos ? max_point_.y() : min_point_.y())*plane.y() +
+                         (z_pos ? max_point_.z() : min_point_.z())*plane.z();
   if (max_value < plane.d()) {
     return -1;
   } else {
