@@ -39,6 +39,7 @@ template <size_t point3_bits_template = 32>
 class AABB {
  public:
   using Point3Rep = Point3<point3_bits_template>;
+  using VectorRep = typename Point3Rep::VectorRep;
   using BigIntRep = typename Point3Rep::BigIntRep;
   using HalfSpace3Rep =
     typename HalfSpace3FromPoint3Builder<point3_bits_template>::HalfSpace3Rep;
@@ -49,8 +50,8 @@ class AABB {
   AABB() : min_point_(1, 1, 1), max_point_(0, 0, 0) { }
 
   AABB(Point3Rep min_point, Point3Rep max_point) :
-    min_point_(min_point),
-    max_point_(max_point) { }
+    min_point_(min_point.vector_from_origin()),
+    max_point_(max_point.vector_from_origin()) { }
 
   AABB(const BigIntRep& min_x, const BigIntRep& min_y,
        const BigIntRep& min_z, const BigIntRep& max_x,
@@ -131,19 +132,19 @@ class AABB {
   // Returns all 6 sides of the prism.
   std::vector<ConvexPolygon<point3_bits>> GetWalls() const;
 
-  const Point3Rep& min_point() const {
-    return min_point_;
+  Point3Rep min_point() const {
+    return Point3Rep(min_point_);
   }
 
-  const Point3Rep& max_point() const {
-    return max_point_;
+  Point3Rep max_point() const {
+    return Point3Rep(max_point_);
   }
 
  private:
   // This point is considered part of the prism
-  Point3Rep min_point_;
+  VectorRep min_point_;
   // This point is considered part of the prism
-  Point3Rep max_point_;
+  VectorRep max_point_;
 };
 
 template <size_t point3_bits>
