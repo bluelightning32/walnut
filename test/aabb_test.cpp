@@ -196,6 +196,16 @@ TEST(AABB, IntersectPlaneLowSlopeMin256) {
   TestIntersectPlaneLowSlopeMin<256>();
 }
 
+TEST(AABB, Equality) {
+  AABB<> prism1(-1, -2, -3, 4, 5, 6, /*denom=*/1);
+  AABB<> prism2(-1, -2, -3, 4, 5, 6, /*denom=*/2);
+  AABB<> prism3(-2, -4, -6, 8, 10, 12, /*denom=*/2);
+
+  EXPECT_EQ(prism1, prism3);
+  EXPECT_NE(prism1, prism2);
+  EXPECT_NE(prism2, prism3);
+}
+
 struct StringVertexData : public std::string {
   StringVertexData() = default;
 

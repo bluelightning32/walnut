@@ -158,6 +158,26 @@ class AABB {
     return max_point_num_;
   }
 
+  const DenomInt& denom() const {
+    return denom_;
+  }
+
+  template <size_t other_num_bits, size_t other_denom_bits>
+  bool operator==(const AABB<other_num_bits, other_denom_bits>& other) const {
+    if (min_point_num() * other.denom() != other.min_point_num() * denom()) {
+      return false;
+    }
+    if (max_point_num() * other.denom() != other.max_point_num() * denom()) {
+      return false;
+    }
+    return true;
+  }
+
+  template <size_t other_num_bits, size_t other_denom_bits>
+  bool operator!=(const AABB<other_num_bits, other_denom_bits>& other) const {
+    return !(*this == other);
+  }
+
  private:
   // min_point_num_/denom_ is part of the prism
   VectorRep min_point_num_;
