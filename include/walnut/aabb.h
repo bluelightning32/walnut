@@ -57,7 +57,8 @@ int GetAABBPlaneSide(const BigInt<component_bits>& min_x,
 //
 // This is a rectangular prism whose sides are perpendicular to the axes.
 template <size_t point3_bits_template = 32>
-struct AABB {
+class AABB {
+ public:
   using Point3Rep = Point3<point3_bits_template>;
   using BigIntRep = typename Point3Rep::BigIntRep;
   using HalfSpace3Rep =
@@ -66,11 +67,11 @@ struct AABB {
   static constexpr size_t point3_bits = point3_bits_template;
 
   // Creates an AABB that does not contain any points.
-  AABB() : min_point(1, 1, 1), max_point(0, 0, 0) { }
+  AABB() : min_point_(1, 1, 1), max_point_(0, 0, 0) { }
 
   AABB(Point3Rep min_point, Point3Rep max_point) :
-    min_point(min_point),
-    max_point(max_point) { }
+    min_point_(min_point),
+    max_point_(max_point) { }
 
   AABB(const BigIntRep& min_x, const BigIntRep& min_y,
        const BigIntRep& min_z, const BigIntRep& max_x,
@@ -81,15 +82,15 @@ struct AABB {
     AABB(Point3Rep(min_x, min_y, min_z), Point3Rep(max_x, max_y, max_z)) { }
 
   AABB(int radius) :
-    min_point(/*x=*/-radius, /*y=*/-radius, /*z=*/-radius),
-    max_point(/*x=*/radius, /*y=*/radius, /*z=*/radius) { }
+    min_point_(/*x=*/-radius, /*y=*/-radius, /*z=*/-radius),
+    max_point_(/*x=*/radius, /*y=*/radius, /*z=*/radius) { }
 
   // Returns true if `p` is on the border (but still inside) of the prism.
   bool IsOnBorder(const Point3Rep& p) const {
     if (!IsInside(p)) return false;
     for (int i = 0; i < 3; ++i) {
-      if (p.components()[i] == min_point.components()[i] ||
-          p.components()[i] == max_point.components()[i]) return true;
+      if (p.components()[i] == min_point_.components()[i] ||
+          p.components()[i] == max_point_.components()[i]) return true;
     }
     return false;
   }
@@ -100,8 +101,8 @@ struct AABB {
     if (!IsInside(p)) return false;
     for (int i = 0; i < 3; ++i) {
       const BigInt<num_bits>& p_comp = p.vector_from_origin().components()[i];
-      if (p_comp == min_point.components()[i] * p.w() ||
-          p_comp == max_point.components()[i] * p.w()) return true;
+      if (p_comp == min_point_.components()[i] * p.w() ||
+          p_comp == max_point_.components()[i] * p.w()) return true;
     }
     return false;
   }
@@ -109,8 +110,8 @@ struct AABB {
   // Returns true if `p` is inside the prism.
   bool IsInside(const Point3Rep& p) const {
     for (int i = 0; i < 3; ++i) {
-      if (p.components()[i] < min_point.components()[i] ||
-          p.components()[i] > max_point.components()[i]) return false;
+      if (p.components()[i] < min_point_.components()[i] ||
+          p.components()[i] > max_point_.components()[i]) return false;
     }
     return true;
   }
@@ -121,8 +122,8 @@ struct AABB {
     const int mult = p.w().GetAbsMult();
     for (int i = 0; i < 3; ++i) {
       auto p_flipped = p.vector_from_origin().components()[i] * mult;
-      if (p_flipped < min_point.components()[i] * p.w() * mult) return false;
-      if (p_flipped > max_point.components()[i] * p.w() * mult) return false;
+      if (p_flipped < min_point_.components()[i] * p.w() * mult) return false;
+      if (p_flipped > max_point_.components()[i] * p.w() * mult) return false;
     }
     return true;
   }
@@ -147,17 +148,26 @@ struct AABB {
   // Returns 1 if the AABB is only present in the positive half-space.
   template <size_t half_space_bits>
   int GetPlaneSide(const HalfSpace3<half_space_bits>& plane) const {
-    return GetAABBPlaneSide(min_point.x(), min_point.y(), min_point.z(),
-                     max_point.x(), max_point.y(), max_point.z(), plane);
+    return GetAABBPlaneSide(min_point_.x(), min_point_.y(), min_point_.z(),
+                     max_point_.x(), max_point_.y(), max_point_.z(), plane);
   }
 
   // Returns all 6 sides of the prism.
   std::vector<ConvexPolygon<point3_bits>> GetWalls() const;
 
+  const Point3Rep& min_point() const {
+    return min_point_;
+  }
+
+  const Point3Rep& max_point() const {
+    return max_point_;
+  }
+
+ private:
   // This point is considered part of the prism
-  Point3Rep min_point;
+  Point3Rep min_point_;
   // This point is considered part of the prism
-  Point3Rep max_point;
+  Point3Rep max_point_;
 };
 
 template <size_t point3_bits>
@@ -184,11 +194,11 @@ ConvexPolygonRep AABB<point3_bits>::IntersectPlane(
   dir3.components()[drop_dimension] = 1;
   HalfSpace3Rep parallelogram_planes[4] = {
     HalfSpace3Rep(-dir1,
-                  -BigInt<point3_bits + 1>(min_point.components()[dim1])),
+                  -BigInt<point3_bits + 1>(min_point_.components()[dim1])),
     HalfSpace3Rep(-dir2,
-                  -BigInt<point3_bits + 1>(min_point.components()[dim2])),
-    HalfSpace3Rep(dir1, max_point.components()[dim1]),
-    HalfSpace3Rep(dir2, max_point.components()[dim2]),
+                  -BigInt<point3_bits + 1>(min_point_.components()[dim2])),
+    HalfSpace3Rep(dir1, max_point_.components()[dim1]),
+    HalfSpace3Rep(dir2, max_point_.components()[dim2]),
   };
 
   std::vector<typename ConvexPolygonRep::EdgeRep> edges;
@@ -203,7 +213,7 @@ ConvexPolygonRep AABB<point3_bits>::IntersectPlane(
   ConvexPolygonRep result(plane, drop_dimension, std::move(edges));
 
   // Now split the parallelogram on the remaining 2 sides of the prism.
-  HalfSpace3Rep drop_top(dir3, max_point.components()[drop_dimension]);
+  HalfSpace3Rep drop_top(dir3, max_point_.components()[drop_dimension]);
   auto split1 = result.GetSplitInfo(drop_top);
   if (!split1.ShouldEmitNegativeChild()) {
     if (split1.ShouldEmitOnPlane()) {
@@ -217,7 +227,7 @@ ConvexPolygonRep AABB<point3_bits>::IntersectPlane(
     result = std::move(result).CreateSplitChildren(std::move(split1)).first;
   }
 
-  HalfSpace3Rep drop_bottom(dir3, min_point.components()[drop_dimension]);
+  HalfSpace3Rep drop_bottom(dir3, min_point_.components()[drop_dimension]);
   auto split2 = result.GetSplitInfo(drop_bottom);
   if (!split2.ShouldEmitPositiveChild()) {
     if (split2.ShouldEmitOnPlane()) {
@@ -237,14 +247,14 @@ template <size_t point3_bits>
 std::vector<ConvexPolygon<AABB<point3_bits>::point3_bits>>
 AABB<point3_bits>::GetWalls() const {
   Point3<point3_bits> p[] = {
-    Point3<point3_bits>(min_point.x(), min_point.y(), min_point.z()),
-    Point3<point3_bits>(max_point.x(), min_point.y(), min_point.z()),
-    Point3<point3_bits>(max_point.x(), max_point.y(), min_point.z()),
-    Point3<point3_bits>(min_point.x(), max_point.y(), min_point.z()),
-    Point3<point3_bits>(min_point.x(), min_point.y(), max_point.z()),
-    Point3<point3_bits>(max_point.x(), min_point.y(), max_point.z()),
-    Point3<point3_bits>(max_point.x(), max_point.y(), max_point.z()),
-    Point3<point3_bits>(min_point.x(), max_point.y(), max_point.z()),
+    Point3<point3_bits>(min_point_.x(), min_point_.y(), min_point_.z()),
+    Point3<point3_bits>(max_point_.x(), min_point_.y(), min_point_.z()),
+    Point3<point3_bits>(max_point_.x(), max_point_.y(), min_point_.z()),
+    Point3<point3_bits>(min_point_.x(), max_point_.y(), min_point_.z()),
+    Point3<point3_bits>(min_point_.x(), min_point_.y(), max_point_.z()),
+    Point3<point3_bits>(max_point_.x(), min_point_.y(), max_point_.z()),
+    Point3<point3_bits>(max_point_.x(), max_point_.y(), max_point_.z()),
+    Point3<point3_bits>(min_point_.x(), max_point_.y(), max_point_.z()),
   };
 
   struct FacetInfo {
@@ -277,8 +287,8 @@ AABB<point3_bits>::GetWalls() const {
     Vector3<point3_bits> normal = Vector3<point3_bits>::Zero();
     normal.components()[facet_info.normal_dimension] = side < 3 ? -1 : 1;
     HalfSpace3Rep plane(normal, /*dist=*/side < 3 ?
-        -min_point.components()[facet_info.normal_dimension] : 
-        max_point.components()[facet_info.normal_dimension]);
+        -min_point_.components()[facet_info.normal_dimension] : 
+        max_point_.components()[facet_info.normal_dimension]);
     result.emplace_back(plane, facet_info.normal_dimension, vertices);
   }
   return result;
@@ -351,8 +361,8 @@ int GetAABBPlaneSide(const BigInt<component_bits>& min_x,
 template <size_t point3_bits = 32>
 std::ostream& operator<<(std::ostream& out,
                          const AABB<point3_bits>& rect) {
-  out << "min_point=" << rect.min_point;
-  out << " max_point=" << rect.max_point;
+  out << "min_point=" << rect.min_point();
+  out << " max_point=" << rect.max_point();
   return out;
 }
 

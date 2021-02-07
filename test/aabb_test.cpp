@@ -231,34 +231,35 @@ class GetAABBPlaneSideTest : public testing::TestWithParam<int> {
   void ExpectNegativeSide(const HalfSpace3<>& plane, const AABB<>& box) {
     EXPECT_EQ(box.GetPlaneSide(plane), -1);
 
-    EXPECT_EQ(GetAABBPlaneSide(box.min_point.x(), box.min_point.y(),
-                               box.min_point.z(), box.max_point.x(),
-                               box.max_point.y(), box.max_point.z(), plane),
+    EXPECT_EQ(GetAABBPlaneSide(box.min_point().x(), box.min_point().y(),
+                               box.min_point().z(), box.max_point().x(),
+                               box.max_point().y(), box.max_point().z(), plane),
               -1);
 
     int mult = GetParam();
-    EXPECT_EQ(GetAABBPlaneSide(box.min_point.x() * mult,
-                               box.min_point.y() * mult,
-                               box.min_point.z() * mult,
-                               box.max_point.x() * mult,
-                               box.max_point.y() * mult,
-                               box.max_point.z() * mult, BigInt<64>(mult),
+    EXPECT_EQ(GetAABBPlaneSide(box.min_point().x() * mult,
+                               box.min_point().y() * mult,
+                               box.min_point().z() * mult,
+                               box.max_point().x() * mult,
+                               box.max_point().y() * mult,
+                               box.max_point().z() * mult, BigInt<64>(mult),
                                plane),
               -1);
 
     EXPECT_EQ(box.GetPlaneSide(-plane), 1);
 
-    EXPECT_EQ(GetAABBPlaneSide(box.min_point.x(), box.min_point.y(),
-                               box.min_point.z(), box.max_point.x(),
-                               box.max_point.y(), box.max_point.z(), -plane),
+    EXPECT_EQ(GetAABBPlaneSide(box.min_point().x(), box.min_point().y(),
+                               box.min_point().z(), box.max_point().x(),
+                               box.max_point().y(),
+                               box.max_point().z(), -plane),
               1);
 
-    EXPECT_EQ(GetAABBPlaneSide(box.min_point.x() * mult,
-                               box.min_point.y() * mult,
-                               box.min_point.z() * mult,
-                               box.max_point.x() * mult,
-                               box.max_point.y() * mult,
-                               box.max_point.z() * mult, BigInt<64>(mult),
+    EXPECT_EQ(GetAABBPlaneSide(box.min_point().x() * mult,
+                               box.min_point().y() * mult,
+                               box.min_point().z() * mult,
+                               box.max_point().x() * mult,
+                               box.max_point().y() * mult,
+                               box.max_point().z() * mult, BigInt<64>(mult),
                                -plane),
               1);
   }
@@ -266,34 +267,35 @@ class GetAABBPlaneSideTest : public testing::TestWithParam<int> {
   void ExpectStraddle(const HalfSpace3<>& plane, const AABB<>& box) {
     EXPECT_EQ(box.GetPlaneSide(plane), 0);
 
-    EXPECT_EQ(GetAABBPlaneSide(box.min_point.x(), box.min_point.y(),
-                               box.min_point.z(), box.max_point.x(),
-                               box.max_point.y(), box.max_point.z(), plane),
+    EXPECT_EQ(GetAABBPlaneSide(box.min_point().x(), box.min_point().y(),
+                               box.min_point().z(), box.max_point().x(),
+                               box.max_point().y(), box.max_point().z(), plane),
               0);
 
     int mult = GetParam();
-    EXPECT_EQ(GetAABBPlaneSide(box.min_point.x() * mult,
-                               box.min_point.y() * mult,
-                               box.min_point.z() * mult,
-                               box.max_point.x() * mult,
-                               box.max_point.y() * mult,
-                               box.max_point.z() * mult, BigInt<64>(mult),
+    EXPECT_EQ(GetAABBPlaneSide(box.min_point().x() * mult,
+                               box.min_point().y() * mult,
+                               box.min_point().z() * mult,
+                               box.max_point().x() * mult,
+                               box.max_point().y() * mult,
+                               box.max_point().z() * mult, BigInt<64>(mult),
                                plane),
               0);
 
     EXPECT_EQ(box.GetPlaneSide(-plane), 0);
 
-    EXPECT_EQ(GetAABBPlaneSide(box.min_point.x(), box.min_point.y(),
-                               box.min_point.z(), box.max_point.x(),
-                               box.max_point.y(), box.max_point.z(), -plane),
+    EXPECT_EQ(GetAABBPlaneSide(box.min_point().x(), box.min_point().y(),
+                               box.min_point().z(), box.max_point().x(),
+                               box.max_point().y(),
+                               box.max_point().z(), -plane),
               0);
 
-    EXPECT_EQ(GetAABBPlaneSide(box.min_point.x() * mult,
-                               box.min_point.y() * mult,
-                               box.min_point.z() * mult,
-                               box.max_point.x() * mult,
-                               box.max_point.y() * mult,
-                               box.max_point.z() * mult, BigInt<64>(mult),
+    EXPECT_EQ(GetAABBPlaneSide(box.min_point().x() * mult,
+                               box.min_point().y() * mult,
+                               box.min_point().z() * mult,
+                               box.max_point().x() * mult,
+                               box.max_point().y() * mult,
+                               box.max_point().z() * mult, BigInt<64>(mult),
                                -plane),
               0);
   }
