@@ -206,6 +206,15 @@ TEST(AABB, Equality) {
   EXPECT_NE(prism2, prism3);
 }
 
+TEST(AABB, Assignment) {
+  AABB<> prism1(-1, -2, -3, 4, 5, 6, /*denom=*/1);
+  AABB<> prism2(-1, -2, -3, 4, 5, 6, /*denom=*/2);
+  EXPECT_NE(prism1, prism2);
+
+  prism1 = prism2;
+  EXPECT_EQ(prism1, prism2);
+}
+
 struct StringVertexData : public std::string {
   StringVertexData() = default;
 
