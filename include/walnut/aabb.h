@@ -355,9 +355,9 @@ int AABB<num_bits, denom_bits>::GetPlaneSide(
   }
 }
 
-template <size_t num_bits = 32>
+template <size_t num_bits, size_t denom_bits>
 std::ostream& operator<<(std::ostream& out,
-                         const AABB<num_bits>& rect) {
+                         const AABB<num_bits, denom_bits>& rect) {
   out << "[ min=" << rect.min_point_num();
   out << " max=" << rect.max_point_num();
   out << " / " << rect.denom() << " ]";
