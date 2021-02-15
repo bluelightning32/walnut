@@ -497,7 +497,7 @@ void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
   for (PolygonRep& polygon : contents_) {
     assert(polygon.vertex_count() > 0);
     typename PolygonRep::SplitInfoRep info = polygon.GetSplitInfo(split_);
-    assert(info.IsValid());
+    assert(info.IsValid(polygon.vertex_count()));
 
     if (info.ShouldEmitNegativeChild()) {
       if (info.ShouldEmitPositiveChild()) {
