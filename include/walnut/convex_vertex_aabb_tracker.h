@@ -121,9 +121,20 @@ class ConvexVertexAABBTracker {
   }
 
  private:
+  // Out of all of the extreme indices, returns the denominator with the
+  // highest absolute value.
+  template <typename VertexIterator>
+  DenomInt GetMaxDenominator(const VertexIterator& begin) const;
+
   // Builds `aabb_` from `min_indices_` and `max_indices_`.
   template <typename VertexIterator>
-  void ApproximateExtremes(const VertexIterator& begin);
+  void ApproximateExtremes(const VertexIterator& begin) {
+    ApproximateExtremes(GetMaxDenominator(begin), begin);
+  }
+
+  // Builds `aabb_` from `min_indices_` and `max_indices_`.
+  template <typename VertexIterator>
+  void ApproximateExtremes(DenomInt denom, const VertexIterator& begin);
 
   std::array<size_t, 3> min_indices_;
   std::array<size_t, 3> max_indices_;
@@ -132,8 +143,9 @@ class ConvexVertexAABBTracker {
 
 template <size_t num_bits, size_t denom_bits>
 template <typename VertexIterator>
-void ConvexVertexAABBTracker<num_bits, denom_bits>::ApproximateExtremes(
-    const VertexIterator& begin) {
+typename ConvexVertexAABBTracker<num_bits, denom_bits>::DenomInt
+ConvexVertexAABBTracker<num_bits, denom_bits>::GetMaxDenominator(
+    const VertexIterator& begin) const {
   DenomInt denom = begin[min_indices_[0]].w().abs();
   for (int i = 1; i < 3; ++i) {
     denom = std::max<DenomInt>(denom, begin[min_indices_[i]].w().abs());
@@ -141,6 +153,13 @@ void ConvexVertexAABBTracker<num_bits, denom_bits>::ApproximateExtremes(
   for (int i = 0; i < 3; ++i) {
     denom = std::max<DenomInt>(denom, begin[max_indices_[i]].w().abs());
   }
+  return denom;
+}
+
+template <size_t num_bits, size_t denom_bits>
+template <typename VertexIterator>
+void ConvexVertexAABBTracker<num_bits, denom_bits>::ApproximateExtremes(
+    DenomInt denom, const VertexIterator& begin) {
   aabb_ = AABBRep(
       rational::RoundDown(begin[min_indices_[0]].x(),
                           begin[min_indices_[0]].w(), denom),
@@ -154,7 +173,7 @@ void ConvexVertexAABBTracker<num_bits, denom_bits>::ApproximateExtremes(
                         begin[max_indices_[1]].w(), denom),
       rational::RoundUp(begin[max_indices_[2]].z(),
                         begin[max_indices_[2]].w(), denom),
-      denom);
+      std::move(denom));
 }
 
 template <size_t num_bits, size_t denom_bits>
