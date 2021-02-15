@@ -73,7 +73,7 @@ struct ConvexPolygonSplitRanges {
 template <size_t point3_bits_template = 32>
 struct ConvexPolygonSplitInfo {
   using HomoPoint3Rep = HomoPoint3<(point3_bits_template - 1)*7 + 10,
-                             (point3_bits_template - 1)*6 + 10>;
+                                   (point3_bits_template - 1)*6 + 10>;
   using LineRep = typename PluckerLineFromPlanesFromPoint3sBuilder<
     point3_bits_template>::PluckerLineRep;
 
