@@ -61,6 +61,11 @@ class ConvexVertexAABBTracker {
     }
   }
 
+  // Creates an empty tracker
+  ConvexVertexAABBTracker() :
+    min_indices_{0, 0, 0},
+    max_indices_{0, 0, 0} { }
+
   // Returns false if the extreme vertex indices are invalid.
   bool IsValidState(size_t vertex_count) const {
     if (vertex_count == 0) {

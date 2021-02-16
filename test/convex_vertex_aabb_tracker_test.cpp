@@ -61,4 +61,9 @@ TEST(ConvexVertexAABBTracker, RotateIndices) {
   EXPECT_EQ(rotated.aabb(), tracker.aabb());
 }
 
+TEST(ConvexVertexAABBTracker, DefaultConstructsInvalid) {
+  ConvexVertexAABBTracker<> tracker;
+  EXPECT_TRUE(tracker.IsValidState(0));
+}
+
 }  // walnut
