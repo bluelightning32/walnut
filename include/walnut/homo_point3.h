@@ -200,6 +200,17 @@ class HomoPoint3 {
     return !(*this == other);
   }
 
+  // Compares `component` from this and `other`, taking w and other.w into
+  // account.
+  //
+  // Returns <0 if the component is less in this than other.
+  // Returns 0 if the is equal in the two points.
+  // Returns >0 if the component is larger in this than other.
+  template <size_t other_num_bits, size_t other_denom_bits>
+  int CompareComponent(size_t component,
+                       const HomoPoint3<other_num_bits,
+                                        other_denom_bits>& other) const;
+
   bool IsValidState() const {
     return vector_from_origin_.IsValidState() && dist_denom_.IsValidState();
   }
@@ -239,6 +250,22 @@ void HomoPoint3<num_bits, denom_bits>::Reduce() {
   vector_from_origin_.x() /= common_factor;
   vector_from_origin_.y() /= common_factor;
   vector_from_origin_.z() /= common_factor;
+}
+
+template <size_t num_bits, size_t denom_bits>
+template <size_t other_num_bits, size_t other_denom_bits>
+int HomoPoint3<num_bits, denom_bits>::CompareComponent(
+    size_t component,
+    const HomoPoint3<other_num_bits, other_denom_bits>& other) const {
+  // Check:
+  // new_min/new_denom < old_min/old_denom
+  // new_min*old_denom * sgn(new_denom*old_denom) <
+  //   old_min*new_denom * sgn(new_denom*old_denom)
+  auto scaled_this =
+    vector_from_origin().components()[component] * other.w();
+  auto scaled_other =
+    other.vector_from_origin().components()[component] * w();
+  return scaled_this.Compare(scaled_other) * other.w().GetAbsMult(w());
 }
 
 template <size_t a_bits, size_t b_num_bits, size_t b_denom_bits>

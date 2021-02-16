@@ -44,34 +44,16 @@ class ConvexVertexAABBTracker {
       ++it;
       for (size_t pos = 1; it != end; ++it, ++pos) {
         for (size_t i = 0; i < 3; ++i) {
-          {
-            // Check:
-            // new_min/new_denom < old_min/old_denom
-            // new_min*old_denom * sgn(new_denom*old_denom) <
-            //   old_min*new_denom * sgn(new_denom*old_denom)
-            const HomoPoint3Rep& old_min = begin[min_indices_[i]];
-            auto scaled_new_min =
-              it->vector_from_origin().components()[i] * old_min.w();
-            auto scaled_old_min =
-              old_min.vector_from_origin().components()[i] * it->w();
-            if (scaled_new_min.Compare(scaled_old_min) *
-                old_min.w().GetAbsMult(it->w()) < 0) {
-              // new_min is lower.
-              min_indices_[i] = pos;
-            }
+          const HomoPoint3Rep& old_min = begin[min_indices_[i]];
+          if (it->CompareComponent(i, old_min) < 0) {
+            // new_min is lower.
+            min_indices_[i] = pos;
           }
 
-          {
-            const HomoPoint3Rep& old_max = begin[max_indices_[i]];
-            auto scaled_new_max =
-              it->vector_from_origin().components()[i] * old_max.w();
-            auto scaled_old_max =
-              old_max.vector_from_origin().components()[i] * it->w();
-            if (scaled_new_max.Compare(scaled_old_max) *
-                old_max.w().GetAbsMult(it->w()) > 0) {
-              // new_max is greater.
-              max_indices_[i] = pos;
-            }
+          const HomoPoint3Rep& old_max = begin[max_indices_[i]];
+          if (it->CompareComponent(i, old_max) > 0) {
+            // new_max is greater.
+            max_indices_[i] = pos;
           }
         }
       }
