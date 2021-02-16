@@ -5,6 +5,7 @@
 #include <iterator>
 
 #include "walnut/aabb.h"
+#include "walnut/convex_polygon_split_info.h"
 #include "walnut/rational.h"
 
 namespace walnut {
@@ -28,6 +29,8 @@ class ConvexVertexAABBTracker {
   using AABBRep = AABB<(point3_bits_template - 1)*7 + 10,
                        (point3_bits_template - 1)*6 + 10>;
   using DenomInt = typename AABBRep::DenomInt;
+  using SplitInfoRep = ConvexPolygonSplitInfo<point3_bits_template>;
+  using HomoPoint3Rep = typename SplitInfoRep::HomoPoint3Rep;
 
   static constexpr size_t point3_bits = point3_bits_template;
 
@@ -37,8 +40,6 @@ class ConvexVertexAABBTracker {
                           const VertexIterator& end) :
       min_indices_{0, 0, 0},
       max_indices_{0, 0, 0} {
-    using HomoPoint3Rep =
-      typename std::iterator_traits<VertexIterator>::value_type;
     VertexIterator it = begin;
     if (it != end) {
       ++it;
@@ -95,6 +96,34 @@ class ConvexVertexAABBTracker {
     }
   }
 
+  // Creates both split children.
+  //
+  // This function may only be called if `split.ShouldEmitNegativeChild()`
+  // `split.ShouldEmitPositiveChild()` are both true.
+  //
+  // `parent_begin` refers to the start of the range of vertices of the parent.
+  // That is the range of vertices before the split. `parent_count` describes
+  // how many vertices are available from `parent_begin`.
+  //
+  // `neg_begin` is the range of the negative child after the split.
+  // `pos_begin` is the range of the negative child after the split. Refer to
+  // ConvexPolygon::CreateSplitChildren for the order that the vertices should
+  // appear in `neg_begin` and `pos_begin`.
+  //
+  // The first entry of the returned pair is the negative child, and the second
+  // entry is the positive child.
+  //
+  // The vertex indices are rotated on the returned trackers so that the last 2
+  // vertices of the negative child will be on the split plane. Whereas for the
+  // postive child, the first and last vertices will be on the split plane.
+  // This ordering is chosen to match `ConvexPolygon::CreateSplitChildren`.
+  template <typename VertexIterator>
+  std::pair<ConvexVertexAABBTracker, ConvexVertexAABBTracker>
+  CreateSplitChildren(const VertexIterator& parent_begin, size_t parent_count,
+                      const VertexIterator& neg_begin,
+                      const VertexIterator& pos_begin,
+                      const SplitInfoRep& split) const;
+
   const std::array<size_t, 3>& min_indices() const {
     return min_indices_;
   }
@@ -105,6 +134,18 @@ class ConvexVertexAABBTracker {
 
   const AABBRep& aabb() const {
     return aabb_;
+  }
+
+  // Returns true if this tracker is equal to `other`
+  //
+  // The extreme indices and bounding box must be equal for the trackers to be
+  // considered equal.
+  template <size_t other_point3_bits>
+  bool operator==(
+      const ConvexVertexAABBTracker<other_point3_bits>& other) const {
+    return min_indices() == other.min_indices() &&
+           max_indices() == other.max_indices() &&
+           aabb() == other.aabb();
   }
 
  private:
@@ -123,10 +164,112 @@ class ConvexVertexAABBTracker {
   template <typename VertexIterator>
   void ApproximateExtremes(DenomInt denom, const VertexIterator& begin);
 
+  static void SplitComponent(size_t component, int min_max_mult,
+                             const HomoPoint3Rep& shared1,
+                             const HomoPoint3Rep& shared2,
+                             size_t parent_shifted, size_t neg_count,
+                             size_t pos_count, size_t pos_range_start_shifted,
+                             size_t pos_range_end_shifted, size_t& neg_output,
+                             size_t& pos_output);
+
   std::array<size_t, 3> min_indices_;
   std::array<size_t, 3> max_indices_;
   AABBRep aabb_;
 };
+
+template <size_t point3_bits>
+void ConvexVertexAABBTracker<point3_bits>::SplitComponent(
+    size_t component, int min_max_mult,
+    const HomoPoint3Rep& shared1, const HomoPoint3Rep& shared2,
+    size_t parent_shifted, size_t neg_count, size_t pos_count,
+    size_t pos_range_start_shifted, size_t pos_range_end_shifted,
+    size_t& neg_output, size_t& pos_output) {
+  if (parent_shifted < neg_count) {
+    // Vertex is only on the negative side.
+    neg_output = parent_shifted;
+    if (shared1.CompareComponent(component, shared2) * min_max_mult > 0) {
+      // shared1 becomes the extreme for the positive child.
+      pos_output = pos_count + 1;
+    } else {
+      // shared2 becomes the extreme for the positive child.
+      pos_output = 0;
+    }
+  } else if (parent_shifted >= pos_range_start_shifted) {
+    if (parent_shifted < pos_range_end_shifted) {
+      // Vertex is only on the positive side.
+      pos_output = parent_shifted - pos_range_start_shifted + 1;
+      if (shared1.CompareComponent(component, shared2) * min_max_mult > 0) {
+        // shared1 becomes the extreme for the negative child.
+        neg_output = neg_count + 1;
+      } else {
+        // shared2 becomes the extreme for the negative child.
+        neg_output = neg_count;
+      }
+    } else {
+      assert(parent_shifted == pos_range_end_shifted);
+      // The vertex is after the range of the positive only child and before
+      // the negative only range. So the vertex is shared1.
+      neg_output = neg_count + 1;
+      pos_output = pos_count + 1;
+    }
+  } else {
+    assert(parent_shifted == neg_count);
+    // The vertex is after the range of the negative only child and before
+    // the positive only range. So the vertex is shared2.
+    neg_output = neg_count;
+    pos_output = 0;
+  }
+}
+
+template <size_t point3_bits>
+template <typename VertexIterator>
+std::pair<ConvexVertexAABBTracker<point3_bits>,
+          ConvexVertexAABBTracker<point3_bits>>
+ConvexVertexAABBTracker<point3_bits>::CreateSplitChildren(
+    const VertexIterator& parent_begin, size_t parent_count,
+    const VertexIterator& neg_begin, const VertexIterator& pos_begin, 
+    const SplitInfoRep& split) const {
+  assert(split.ShouldEmitNegativeChild());
+  assert(split.ShouldEmitPositiveChild());
+  std::pair<ConvexVertexAABBTracker, ConvexVertexAABBTracker> result;
+  size_t neg_shift = parent_count - split.neg_range().first;
+  // Number of vertices that belong to only the negative side.
+  size_t neg_count = split.neg_range().second - split.neg_range().first;
+  size_t pos_count = split.pos_range().second - split.pos_range().first;
+  // For the negative child, shared1 is located at neg_count + 1.
+  // For the positive child, shared1 is located at pos_count + 1.
+  const HomoPoint3Rep& shared1 = neg_begin[neg_count + 1];
+  // For the negative child, shared2 is located at neg_count.
+  // For the positive child, shared2 is located at 0.
+  const HomoPoint3Rep& shared2 = pos_begin[0];
+  size_t pos_range_start_shifted =
+    (split.pos_range().first + neg_shift) % parent_count;
+  size_t pos_range_end_shifted = pos_range_start_shifted + pos_count;
+  assert(pos_range_start_shifted < pos_range_end_shifted);
+  for (size_t component = 0; component < 3; component++) {
+    // Shift the extreme index so that a value of neg_range.first becomes 0.
+    size_t parent_shifted =
+      (min_indices()[component] + neg_shift) % parent_count;
+    SplitComponent(component, /*min_max_mult=*/-1, shared1, shared2,
+                   parent_shifted, neg_count, pos_count,
+                   pos_range_start_shifted, pos_range_end_shifted,
+                   result.first.min_indices_[component],
+                   result.second.min_indices_[component]);
+  }
+  for (size_t component = 0; component < 3; component++) {
+    // Shift the extreme index so that a value of neg_range.first becomes 0.
+    size_t parent_shifted =
+      (max_indices()[component] + neg_shift) % parent_count;
+    SplitComponent(component, /*min_max_mult=*/1, shared1, shared2,
+                   parent_shifted, neg_count, pos_count,
+                   pos_range_start_shifted, pos_range_end_shifted,
+                   result.first.max_indices_[component],
+                   result.second.max_indices_[component]);
+  }
+  result.first.ApproximateExtremes(neg_begin);
+  result.second.ApproximateExtremes(pos_begin);
+  return result;
+}
 
 template <size_t point3_bits>
 template <typename VertexIterator>
