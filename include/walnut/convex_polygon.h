@@ -53,8 +53,7 @@ class ConvexPolygon {
   static constexpr int homo_point3_num_bits = HomoPoint3Rep::num_bits;
   // The minimum number of bits to support the w component for each vertex,
   // after an arbitrary number of splits from planes of the type HalfSpace3Rep.
-  static constexpr int homo_point3_denom_bits =
-    HomoPoint3Rep::denom_bits_template;
+  static constexpr int homo_point3_denom_bits = HomoPoint3Rep::denom_bits;
 
   ConvexPolygon() : plane_(HalfSpace3Rep::Zero()), drop_dimension_(-1) { }
 
@@ -550,6 +549,17 @@ class ConvexPolygon {
   //
   // Sorting the vertices does not affect the shape of the polygon.
   void SortVertices() {
+    RotateVertices(GetMinimumIndex());
+  }
+
+  // Rotates `edges_`, such that the lexicographically minimum vertex comes
+  // first.
+  //
+  // The caller must ensure:
+  //   0 <= offset < vertex_count()
+  //
+  // Rotating the vertices does not affect the shape of the polygon.
+  void RotateVertices(size_t offset) {
     std::rotate(edges_.begin(), edges_.begin() + GetMinimumIndex(),
                 edges_.end());
   }

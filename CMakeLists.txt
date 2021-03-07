@@ -83,6 +83,7 @@ else()
   endmacro()
 endif()
 
+package_add_test(aabb_convex_polygon_test test/aabb_convex_polygon_test.cpp)
 package_add_test(aabb_test test/aabb_test.cpp)
 package_add_test(big_int_test test/big_int_test.cpp)
 package_add_test(big_uint_test test/big_uint_test.cpp)
