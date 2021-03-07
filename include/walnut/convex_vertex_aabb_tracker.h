@@ -1,8 +1,12 @@
 #ifndef WALNUT_CONVEX_VERTEX_AABB_TRACKER_H__
 #define WALNUT_CONVEX_VERTEX_AABB_TRACKER_H__
 
+// For std::max
+#include <algorithm>
 #include <array>
-#include <iterator>
+#include <ostream>
+// For std::pair and std::move
+#include <utility>
 
 #include "walnut/aabb.h"
 #include "walnut/convex_polygon_split_info.h"
