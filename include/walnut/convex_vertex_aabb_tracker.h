@@ -30,8 +30,7 @@ class ConvexVertexAABBTracker {
                        (point3_bits_template - 1)*6 + 10>;
   using NumInt = typename AABBRep::NumInt;
   using DenomInt = typename AABBRep::DenomInt;
-  using SplitInfoRep = ConvexPolygonSplitInfo<point3_bits_template>;
-  using HomoPoint3Rep = typename SplitInfoRep::HomoPoint3Rep;
+  using HomoPoint3Rep = typename AABBRep::HomoPoint3Rep;
 
   static constexpr size_t point3_bits = point3_bits_template;
 
@@ -122,7 +121,7 @@ class ConvexVertexAABBTracker {
   std::pair<ConvexVertexAABBTracker, ConvexVertexAABBTracker>
   CreateSplitChildren(size_t parent_count, const VertexIterator& neg_begin,
                       const VertexIterator& pos_begin,
-                      const SplitInfoRep& split) const;
+                      const ConvexPolygonSplitRanges& split) const;
 
   const std::array<size_t, 3>& min_indices() const {
     return min_indices_;
@@ -248,14 +247,15 @@ std::pair<ConvexVertexAABBTracker<point3_bits>,
           ConvexVertexAABBTracker<point3_bits>>
 ConvexVertexAABBTracker<point3_bits>::CreateSplitChildren(
     size_t parent_count, const VertexIterator& neg_begin,
-    const VertexIterator& pos_begin, const SplitInfoRep& split) const {
+    const VertexIterator& pos_begin,
+    const ConvexPolygonSplitRanges& split) const {
   assert(split.ShouldEmitNegativeChild());
   assert(split.ShouldEmitPositiveChild());
   std::pair<ConvexVertexAABBTracker, ConvexVertexAABBTracker> result;
-  size_t neg_shift = parent_count - split.neg_range().first;
+  size_t neg_shift = parent_count - split.neg_range.first;
   // Number of vertices that belong to only the negative side.
-  size_t neg_count = split.neg_range().second - split.neg_range().first;
-  size_t pos_count = split.pos_range().second - split.pos_range().first;
+  size_t neg_count = split.neg_range.second - split.neg_range.first;
+  size_t pos_count = split.pos_range.second - split.pos_range.first;
   // For the negative child, shared1 is located at neg_count + 1.
   // For the positive child, shared1 is located at pos_count + 1.
   const HomoPoint3Rep& shared1 = neg_begin[neg_count + 1];
@@ -263,7 +263,7 @@ ConvexVertexAABBTracker<point3_bits>::CreateSplitChildren(
   // For the positive child, shared2 is located at 0.
   const HomoPoint3Rep& shared2 = pos_begin[0];
   size_t pos_range_start_shifted =
-    (split.pos_range().first + neg_shift) % parent_count;
+    (split.pos_range.first + neg_shift) % parent_count;
   size_t pos_range_end_shifted = pos_range_start_shifted + pos_count;
   assert(pos_range_start_shifted < pos_range_end_shifted);
   bool min_neg_modified[3];

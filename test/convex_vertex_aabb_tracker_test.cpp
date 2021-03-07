@@ -156,7 +156,7 @@ TEST(ConvexVertexAABBTracker, SplitAtExistingVertices) {
       tracker.CreateSplitChildren(square.vertex_count(),
                                   polygon_children.first.vertices_begin(),
                                   polygon_children.second.vertices_begin(),
-                                  split_info);
+                                  split_info.ranges);
     EXPECT_EQ(tracker_children.first,
         ConvexVertexAABBTracker<>(polygon_children.first.vertices_begin(),
                                   polygon_children.first.vertices_end()));
@@ -217,7 +217,7 @@ TEST(ConvexVertexAABBTracker, SplitBetweenVertices) {
       tracker.CreateSplitChildren(square.vertex_count(),
                                   polygon_children.first.vertices_begin(),
                                   polygon_children.second.vertices_begin(),
-                                  split_info);
+                                  split_info.ranges);
     EXPECT_EQ(tracker_children.first,
         ConvexVertexAABBTracker<>(polygon_children.first.vertices_begin(),
                                   polygon_children.first.vertices_end()));
