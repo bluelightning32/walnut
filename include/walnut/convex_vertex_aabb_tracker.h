@@ -28,6 +28,7 @@ class ConvexVertexAABBTracker {
  public:
   using AABBRep = AABB<(point3_bits_template - 1)*7 + 10,
                        (point3_bits_template - 1)*6 + 10>;
+  using NumInt = typename AABBRep::NumInt;
   using DenomInt = typename AABBRep::DenomInt;
   using SplitInfoRep = ConvexPolygonSplitInfo<point3_bits_template>;
   using HomoPoint3Rep = typename SplitInfoRep::HomoPoint3Rep;
@@ -160,6 +161,17 @@ class ConvexVertexAABBTracker {
     ApproximateExtremes(GetMaxDenominator(begin), begin);
   }
 
+  // Copies `aabb_` from parent, updating components that are different.
+  //
+  // If the calculated denominator matches the parent's existing denominator,
+  // then the parent's bound components are reused if the indices point to
+  // the same value. If the denominator does not match, then all bound
+  // components are recalculated.
+  template <typename VertexIterator>
+  void UpdateExtremes(const ConvexVertexAABBTracker& parent,
+                      const VertexIterator& parent_begin,
+                      const VertexIterator& begin);
+
   // Builds `aabb_` from `min_indices_` and `max_indices_`.
   template <typename VertexIterator>
   void ApproximateExtremes(DenomInt denom, const VertexIterator& begin);
@@ -266,8 +278,8 @@ ConvexVertexAABBTracker<point3_bits>::CreateSplitChildren(
                    result.first.max_indices_[component],
                    result.second.max_indices_[component]);
   }
-  result.first.ApproximateExtremes(neg_begin);
-  result.second.ApproximateExtremes(pos_begin);
+  result.first.UpdateExtremes(*this, parent_begin, neg_begin);
+  result.second.UpdateExtremes(*this, parent_begin, pos_begin);
   return result;
 }
 
@@ -304,6 +316,54 @@ void ConvexVertexAABBTracker<point3_bits>::ApproximateExtremes(
       rational::RoundUp(begin[max_indices_[2]].z(),
                         begin[max_indices_[2]].w(), denom),
       std::move(denom));
+}
+
+template <size_t point3_bits>
+template <typename VertexIterator>
+void ConvexVertexAABBTracker<point3_bits>::UpdateExtremes(
+    const ConvexVertexAABBTracker& parent, const VertexIterator& parent_begin,
+    const VertexIterator& begin) {
+  auto new_denom = GetMaxDenominator(begin);
+  if (new_denom != parent.aabb().denom()) {
+    ApproximateExtremes(std::move(new_denom), begin);
+  } else {
+    NumInt mins[3];
+    for (int i = 0; i < 3; ++i) {
+      const auto& parent_point = parent_begin[parent.min_indices_[i]];
+      const auto& my_point = begin[min_indices_[i]];
+      if (my_point.vector_from_origin().components()[i] ==
+          parent_point.vector_from_origin().components()[i] &&
+          my_point.w() == parent_point.w()) {
+        mins[i] = parent.aabb().min_point_num().components()[i];
+      } else {
+        mins[i] = rational::RoundDown(
+            my_point.vector_from_origin().components()[i], my_point.w(),
+            new_denom);
+      }
+    }
+    NumInt maxes[3];
+    for (int i = 0; i < 3; ++i) {
+      const auto& parent_point = parent_begin[parent.max_indices_[i]];
+      const auto& my_point = begin[max_indices_[i]];
+      if (my_point.vector_from_origin().components()[i] ==
+          parent_point.vector_from_origin().components()[i] &&
+          my_point.w() == parent_point.w()) {
+        maxes[i] = parent.aabb().max_point_num().components()[i];
+      } else {
+        maxes[i] = rational::RoundUp(
+            my_point.vector_from_origin().components()[i], my_point.w(),
+            new_denom);
+      }
+    }
+    aabb_ = AABBRep(
+        std::move(mins[0]),
+        std::move(mins[1]),
+        std::move(mins[2]),
+        std::move(maxes[0]),
+        std::move(maxes[1]),
+        std::move(maxes[2]),
+        std::move(new_denom));
+  }
 }
 
 template <size_t point3_bits>
