@@ -120,8 +120,7 @@ class ConvexVertexAABBTracker {
   // This ordering is chosen to match `ConvexPolygon::CreateSplitChildren`.
   template <typename VertexIterator>
   std::pair<ConvexVertexAABBTracker, ConvexVertexAABBTracker>
-  CreateSplitChildren(const VertexIterator& parent_begin, size_t parent_count,
-                      const VertexIterator& neg_begin,
+  CreateSplitChildren(size_t parent_count, const VertexIterator& neg_begin,
                       const VertexIterator& pos_begin,
                       const SplitInfoRep& split) const;
 
@@ -169,7 +168,7 @@ class ConvexVertexAABBTracker {
   // components are recalculated.
   template <typename VertexIterator>
   void UpdateExtremes(const ConvexVertexAABBTracker& parent,
-                      const VertexIterator& parent_begin,
+                      const bool min_modified[3], const bool max_modified[3],
                       const VertexIterator& begin);
 
   // Builds `aabb_` from `min_indices_` and `max_indices_`.
@@ -182,7 +181,8 @@ class ConvexVertexAABBTracker {
                              size_t parent_shifted, size_t neg_count,
                              size_t pos_count, size_t pos_range_start_shifted,
                              size_t pos_range_end_shifted, size_t& neg_output,
-                             size_t& pos_output);
+                             size_t& pos_output, bool& neg_modifed,
+                             bool& pos_modified);
 
   std::array<size_t, 3> min_indices_;
   std::array<size_t, 3> max_indices_;
@@ -195,10 +195,13 @@ void ConvexVertexAABBTracker<point3_bits>::SplitComponent(
     const HomoPoint3Rep& shared1, const HomoPoint3Rep& shared2,
     size_t parent_shifted, size_t neg_count, size_t pos_count,
     size_t pos_range_start_shifted, size_t pos_range_end_shifted,
-    size_t& neg_output, size_t& pos_output) {
+    size_t& neg_output, size_t& pos_output, bool& neg_modified,
+    bool& pos_modified) {
   if (parent_shifted < neg_count) {
     // Vertex is only on the negative side.
     neg_output = parent_shifted;
+    neg_modified = false;
+    pos_modified = true;
     if (shared1.CompareComponent(component, shared2) * min_max_mult > 0) {
       // shared1 becomes the extreme for the positive child.
       pos_output = pos_count + 1;
@@ -210,6 +213,8 @@ void ConvexVertexAABBTracker<point3_bits>::SplitComponent(
     if (parent_shifted < pos_range_end_shifted) {
       // Vertex is only on the positive side.
       pos_output = parent_shifted - pos_range_start_shifted + 1;
+      neg_modified = true;
+      pos_modified = false;
       if (shared1.CompareComponent(component, shared2) * min_max_mult > 0) {
         // shared1 becomes the extreme for the negative child.
         neg_output = neg_count + 1;
@@ -219,6 +224,8 @@ void ConvexVertexAABBTracker<point3_bits>::SplitComponent(
       }
     } else {
       assert(parent_shifted == pos_range_end_shifted);
+      neg_modified = false;
+      pos_modified = false;
       // The vertex is after the range of the positive only child and before
       // the negative only range. So the vertex is shared1.
       neg_output = neg_count + 1;
@@ -226,6 +233,8 @@ void ConvexVertexAABBTracker<point3_bits>::SplitComponent(
     }
   } else {
     assert(parent_shifted == neg_count);
+    neg_modified = false;
+    pos_modified = false;
     // The vertex is after the range of the negative only child and before
     // the positive only range. So the vertex is shared2.
     neg_output = neg_count;
@@ -238,9 +247,8 @@ template <typename VertexIterator>
 std::pair<ConvexVertexAABBTracker<point3_bits>,
           ConvexVertexAABBTracker<point3_bits>>
 ConvexVertexAABBTracker<point3_bits>::CreateSplitChildren(
-    const VertexIterator& parent_begin, size_t parent_count,
-    const VertexIterator& neg_begin, const VertexIterator& pos_begin, 
-    const SplitInfoRep& split) const {
+    size_t parent_count, const VertexIterator& neg_begin,
+    const VertexIterator& pos_begin, const SplitInfoRep& split) const {
   assert(split.ShouldEmitNegativeChild());
   assert(split.ShouldEmitPositiveChild());
   std::pair<ConvexVertexAABBTracker, ConvexVertexAABBTracker> result;
@@ -258,6 +266,8 @@ ConvexVertexAABBTracker<point3_bits>::CreateSplitChildren(
     (split.pos_range().first + neg_shift) % parent_count;
   size_t pos_range_end_shifted = pos_range_start_shifted + pos_count;
   assert(pos_range_start_shifted < pos_range_end_shifted);
+  bool min_neg_modified[3];
+  bool min_pos_modified[3];
   for (size_t component = 0; component < 3; component++) {
     // Shift the extreme index so that a value of neg_range.first becomes 0.
     size_t parent_shifted =
@@ -266,8 +276,11 @@ ConvexVertexAABBTracker<point3_bits>::CreateSplitChildren(
                    parent_shifted, neg_count, pos_count,
                    pos_range_start_shifted, pos_range_end_shifted,
                    result.first.min_indices_[component],
-                   result.second.min_indices_[component]);
+                   result.second.min_indices_[component],
+                   min_neg_modified[component], min_pos_modified[component]);
   }
+  bool max_neg_modified[3];
+  bool max_pos_modified[3];
   for (size_t component = 0; component < 3; component++) {
     // Shift the extreme index so that a value of neg_range.first becomes 0.
     size_t parent_shifted =
@@ -276,10 +289,13 @@ ConvexVertexAABBTracker<point3_bits>::CreateSplitChildren(
                    parent_shifted, neg_count, pos_count,
                    pos_range_start_shifted, pos_range_end_shifted,
                    result.first.max_indices_[component],
-                   result.second.max_indices_[component]);
+                   result.second.max_indices_[component],
+                   max_neg_modified[component], max_pos_modified[component]);
   }
-  result.first.UpdateExtremes(*this, parent_begin, neg_begin);
-  result.second.UpdateExtremes(*this, parent_begin, pos_begin);
+  result.first.UpdateExtremes(*this, min_neg_modified, max_neg_modified,
+                              neg_begin);
+  result.second.UpdateExtremes(*this, min_pos_modified, max_pos_modified,
+                               pos_begin);
   return result;
 }
 
@@ -321,38 +337,32 @@ void ConvexVertexAABBTracker<point3_bits>::ApproximateExtremes(
 template <size_t point3_bits>
 template <typename VertexIterator>
 void ConvexVertexAABBTracker<point3_bits>::UpdateExtremes(
-    const ConvexVertexAABBTracker& parent, const VertexIterator& parent_begin,
-    const VertexIterator& begin) {
+    const ConvexVertexAABBTracker& parent, const bool min_modified[3],
+    const bool max_modified[3], const VertexIterator& begin) {
   auto new_denom = GetMaxDenominator(begin);
   if (new_denom != parent.aabb().denom()) {
     ApproximateExtremes(std::move(new_denom), begin);
   } else {
     NumInt mins[3];
     for (int i = 0; i < 3; ++i) {
-      const auto& parent_point = parent_begin[parent.min_indices_[i]];
-      const auto& my_point = begin[min_indices_[i]];
-      if (my_point.vector_from_origin().components()[i] ==
-          parent_point.vector_from_origin().components()[i] &&
-          my_point.w() == parent_point.w()) {
-        mins[i] = parent.aabb().min_point_num().components()[i];
-      } else {
+      if (min_modified[i]) {
+        const auto& my_point = begin[min_indices_[i]];
         mins[i] = rational::RoundDown(
             my_point.vector_from_origin().components()[i], my_point.w(),
             new_denom);
+      } else {
+        mins[i] = parent.aabb().min_point_num().components()[i];
       }
     }
     NumInt maxes[3];
     for (int i = 0; i < 3; ++i) {
-      const auto& parent_point = parent_begin[parent.max_indices_[i]];
-      const auto& my_point = begin[max_indices_[i]];
-      if (my_point.vector_from_origin().components()[i] ==
-          parent_point.vector_from_origin().components()[i] &&
-          my_point.w() == parent_point.w()) {
-        maxes[i] = parent.aabb().max_point_num().components()[i];
-      } else {
+      if (max_modified[i]) {
+        const auto& my_point = begin[max_indices_[i]];
         maxes[i] = rational::RoundUp(
             my_point.vector_from_origin().components()[i], my_point.w(),
             new_denom);
+      } else {
+        maxes[i] = parent.aabb().max_point_num().components()[i];
       }
     }
     aabb_ = AABBRep(

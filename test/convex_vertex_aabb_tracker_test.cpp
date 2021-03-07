@@ -153,8 +153,7 @@ TEST(ConvexVertexAABBTracker, SplitAtExistingVertices) {
 
     std::pair<ConvexVertexAABBTracker<>,
               ConvexVertexAABBTracker<>> tracker_children =
-      tracker.CreateSplitChildren(square.vertices_begin(),
-                                  square.vertex_count(),
+      tracker.CreateSplitChildren(square.vertex_count(),
                                   polygon_children.first.vertices_begin(),
                                   polygon_children.second.vertices_begin(),
                                   split_info);
@@ -215,8 +214,7 @@ TEST(ConvexVertexAABBTracker, SplitBetweenVertices) {
 
     std::pair<ConvexVertexAABBTracker<>,
               ConvexVertexAABBTracker<>> tracker_children =
-      tracker.CreateSplitChildren(square.vertices_begin(),
-                                  square.vertex_count(),
+      tracker.CreateSplitChildren(square.vertex_count(),
                                   polygon_children.first.vertices_begin(),
                                   polygon_children.second.vertices_begin(),
                                   split_info);
