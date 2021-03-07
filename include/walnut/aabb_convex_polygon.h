@@ -152,6 +152,10 @@ class AABBConvexPolygon : public ConvexPolygon<point3_bits_template,
     return Parent::operator==(other);
   }
 
+  // Allow the parent's operator== to be used for types that inherit from
+  // ConvexPolygon but not AABBConvexPolygon.
+  using Parent::operator==;
+
  protected:
   // Overrides the non-virtual function from ConvexPolygon.
   template <typename ParentRef, typename SplitInfoRef>

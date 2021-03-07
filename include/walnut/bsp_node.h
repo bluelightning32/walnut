@@ -11,6 +11,7 @@
 #include <utility>
 #include <vector>
 
+#include "walnut/aabb_convex_polygon.h"
 #include "walnut/half_space3.h"
 #include "walnut/mutable_convex_polygon.h"
 #include "walnut/r_transformation.h"
@@ -105,15 +106,15 @@ class BSPEdgeInfo {
 
 template <size_t point3_bits>
 class BSPDefaultPolygon :
-  public MutableConvexPolygon<point3_bits,
+  public AABBConvexPolygon<point3_bits,
     BSPEdgeInfo<BSPNode<BSPDefaultPolygon<point3_bits>>,
                 typename ConvexPolygon<point3_bits>::NormalRep>> {
  public:
   using NormalRep = typename ConvexPolygon<point3_bits>::NormalRep;
   using Parent =
-    MutableConvexPolygon<point3_bits,
-                         BSPEdgeInfo<BSPNode<BSPDefaultPolygon<point3_bits>>,
-                                     NormalRep>>;
+    AABBConvexPolygon<point3_bits,
+                      BSPEdgeInfo<BSPNode<BSPDefaultPolygon<point3_bits>>,
+                                  NormalRep>>;
   using typename Parent::SplitInfoRep;
 
   // Inherit all of the parent class's constructors.
