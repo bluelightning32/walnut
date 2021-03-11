@@ -540,8 +540,8 @@ void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
       // If polygon.plane().normal() and split_.normal() point in the same
       // direction, put polygon in the negative child.
       const int drop_dimension = polygon.drop_dimension();
-      if (polygon.plane().normal().components()[drop_dimension].GetAbsMult(
-            split_.normal().components()[drop_dimension]) >= 0) {
+      if (polygon.plane().normal().components()[drop_dimension].HasSameSign(
+            split_.normal().components()[drop_dimension])) {
         negative_child_->border_contents_.emplace_back(this,
                                                        std::move(polygon));
       } else {
@@ -584,8 +584,8 @@ void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
       // If polygon.plane().normal() and split_.normal() point in the same
       // direction, put polygon in the negative child.
       const int drop_dimension = polygon.drop_dimension();
-      if (polygon.plane().normal().components()[drop_dimension].GetAbsMult(
-            split_.normal().components()[drop_dimension]) >= 0) {
+      if (polygon.plane().normal().components()[drop_dimension].HasSameSign(
+            split_.normal().components()[drop_dimension])) {
         negative_child_->border_contents_.push_back(std::move(polygon));
       } else {
         positive_child_->border_contents_.push_back(std::move(polygon));
