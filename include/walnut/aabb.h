@@ -105,13 +105,13 @@ class AABB {
   // Returns true if `p` is inside or on the border of the prism.
   template <size_t num_bits, size_t denom_bits>
   bool IsInside(const HomoPoint3<num_bits, denom_bits>& p) const {
-    const int mult = p.w().GetAbsMult();
+    const bool flip = p.w().GetSign() < 0;
     for (int i = 0; i < 3; ++i) {
-      auto p_flipped = p.vector_from_origin().components()[i] * denom_ * mult;
-      if (p_flipped < min_point_num_.components()[i] * p.w() * mult) {
+      auto p_scaled = p.vector_from_origin().components()[i] * denom_;
+      if (p_scaled.LessThan(flip, min_point_num_.components()[i] * p.w())) {
         return false;
       }
-      if (p_flipped > max_point_num_.components()[i] * p.w() * mult) {
+      if ((max_point_num_.components()[i] * p.w()).LessThan(flip, p_scaled)) {
         return false;
       }
     }

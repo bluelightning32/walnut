@@ -114,8 +114,8 @@ class ConvexPolygon {
       if (!prev_edge->line.d().IsSameDir(expected_line.d())) return false;
 
       if (prev_edge->line.d().DropDimension(drop_dimension()).Cross(
-            edge.line.d().DropDimension(drop_dimension())).GetAbsMult(
-            normal().components()[drop_dimension()]) < 0) {
+            edge.line.d().DropDimension(drop_dimension())).HasDifferentSign(
+            normal().components()[drop_dimension()])) {
         // The vertex is reflex (not convex and not collinear).
         return false;
       }
