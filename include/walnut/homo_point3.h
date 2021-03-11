@@ -125,13 +125,17 @@ class HomoPoint3 {
     // a.v / a.w <?> b.v / b.w
     // a.v <?> b.v * a.w / b.w (maybe flip sign)
     // a.v * b.w <?> b.v * a.w (maybe flip sign)
-    int sign_flip = b.dist_denom().GetAbsMult(a.dist_denom());
-    auto a_scaled = a.vector_from_origin() * (b.dist_denom() * sign_flip);
-    auto b_scaled = b.vector_from_origin() * (a.dist_denom() * sign_flip);
+    auto a_scaled = a.vector_from_origin() * b.dist_denom();
+    auto b_scaled = b.vector_from_origin() * a.dist_denom();
+    constexpr size_t a_bits = decltype(a_scaled)::component_bits;
+    constexpr size_t b_bits = decltype(b_scaled)::component_bits;
+    typename BigInt<a_bits>::FlippableCompare<b_bits> compare(
+        /*flip=*/b.dist_denom().HasDifferentSign(a.dist_denom()));
     return std::lexicographical_compare(a_scaled.components().rbegin(),
                                         a_scaled.components().rend(),
                                         b_scaled.components().rbegin(),
-                                        b_scaled.components().rend());
+                                        b_scaled.components().rend(),
+                                        compare);
   }
 
   // Returns 0 if (p1, `this`, p3) are collinear.

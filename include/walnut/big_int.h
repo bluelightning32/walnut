@@ -16,6 +16,18 @@ class BigInt {
                                 BigUIntWord::bits_per_word - 1) /
                                BigUIntWord::bits_per_word>;
  public:
+
+  template <size_t other_bits = bits_template>
+  struct FlippableCompare {
+    FlippableCompare(bool flip) : flip(flip) { }
+
+    bool operator()(const BigInt& a, const BigInt<other_bits>& b) {
+      return a.LessThan(flip, b);
+    }
+
+    bool flip;
+  };
+
   static constexpr size_t bits = bits_template;
   static constexpr size_t bits_per_word = BigIntRep::bits_per_word;
   static constexpr size_t bytes_per_word = BigIntRep::bytes_per_word;
@@ -322,6 +334,11 @@ class BigInt {
   template <size_t other_bits>
   constexpr bool HasSameSign(const BigInt<other_bits>& other) const {
     return rep_.HasSameSign(other.rep_);
+  }
+
+  template <size_t other_bits>
+  constexpr bool HasDifferentSign(const BigInt<other_bits>& other) const {
+    return rep_.HasDifferentSign(other.rep_);
   }
 
   constexpr uint32_t low_uint32() const {

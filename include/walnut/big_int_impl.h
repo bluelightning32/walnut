@@ -822,7 +822,12 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
 
   template <size_t other_words>
   constexpr bool HasSameSign(const BigIntImpl<other_words>& other) const {
-    return GetSign() ^ other.GetSign() >= 0;
+    return (GetSign() ^ other.GetSign()) >= 0;
+  }
+
+  template <size_t other_words>
+  constexpr bool HasDifferentSign(const BigIntImpl<other_words>& other) const {
+    return (GetSign() ^ other.GetSign()) < 0;
   }
 
   constexpr BigIntWord SignExtension() const {
