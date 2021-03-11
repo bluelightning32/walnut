@@ -713,20 +713,9 @@ ConvexPolygon<point3_bits, VertexData>::GetOppositeEdgeIndicesBisect(
     auto dist = edge(mid).vertex.vector_from_origin()
                          .DropDimension(drop_dimension).Dot(v_flipped);
     const typename HomoPoint3Rep::DenomInt& dist_denom = edge(mid).vertex.w();
-    // This check works as long as there are no duplicate vertices in the
-    // polygon. Coincident vertices are okay.
-    //
-    // Check if:
-    //   dist/dist_denom > initial_dist/initial_dist_denom
-    //
-    //   dist*initial_dist_denom * adjust > initial_dist*dist_denom * adjust
-    const int unadjusted_compare = (dist*initial_dist_denom).Compare(
-        initial_dist*dist_denom);
-    assert (unadjusted_compare != 0);
-    const int adjust = initial_dist_denom.GetAbsMult(dist_denom);
-    assert(((unadjusted_compare ^ adjust) >= 0) ==
-           (unadjusted_compare * adjust >= 0));
-    if ((unadjusted_compare ^ adjust) >= 0) {
+    if ((initial_dist*dist_denom).LessThan(
+          /*flip=*/initial_dist_denom.HasDifferentSign(dist_denom),
+          dist*initial_dist_denom)) {
       begin = mid + 1;
     } else {
       end = mid;
