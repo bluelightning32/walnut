@@ -14,8 +14,8 @@ namespace walnut {
 // That is, compare(v, u) acts like v < u. If v or u's rotation is outside of
 // that range, then the rotation of its negation is compared instead.
 //
-// This class meets the std requirements for a Comparison. Notably it does meet
-// the transitivity requirements.
+// This class meets the std requirements for a Compare. Notably it meets the
+// transitivity requirements.
 template <size_t coord_bits_template = 33>
 struct Vector2HalfRotationCompare {
  public:
