@@ -209,4 +209,4 @@ std::ostream& operator<<(std::ostream& out,
 
 }  // walnut
 
-#endif // WALNUT_HALF_SPACE3_H__
+#endif // WALNUT_HALF_SPACE2_H__
