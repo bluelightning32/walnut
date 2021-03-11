@@ -297,8 +297,8 @@ class BigInt {
     return rep_.GetAbsMult();
   }
 
-  // Returns 1 if (this * other) >= 0,
-  // else returns -1 if (this * other) < 0.
+  // Returns 1 if this and other >= 0 or if both are negative.
+  // Else, returns -1 if only one of this or other is negative.
   template <size_t other_bits>
   constexpr int GetAbsMult(const BigInt<other_bits>& other) const {
     return (SignExtension() ^ other.SignExtension()) | 1;
