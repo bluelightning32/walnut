@@ -15,6 +15,26 @@ class Vector2 {
  public:
   using BigIntRep = BigInt<coord_bits_template>;
 
+  // Compares two Vector2 by their rotation from the x axis through the y axis
+  // and up to (but not including) the negative axis.
+  //
+  // More specifically for two vectors v and u, where the counter-clockwise
+  // rotation from the x axis to each vector is in the range [0, 0.5), then
+  // compare(v, u) returns true if the v's rotation is strictly less than u's.
+  // That is, compare(v, u) acts like v < u. If v or u's rotation is outside of
+  // that range, then the rotation of its negation is compared instead.
+  //
+  // This class meets the std requirements for a Compare. Notably it meets the
+  // transitivity requirements.
+  struct HalfRotationCompare {
+   public:
+    HalfRotationCompare() = default;
+
+    bool operator()(const Vector2& v, const Vector2& u) const {
+      return v.IsHalfRotationLessThan(u);
+    }
+  };
+
   // The minimum number of bits to support for each coordinate.
   //
   // Note that the BigInt may round up the requested number of bits and end up
@@ -67,9 +87,9 @@ class Vector2 {
   }
 
   template <size_t other_coord_bits>
-  Vector2<std::max(other_coord_bits, coord_bits_template) + 1> operator-(
+  Vector2<std::max(other_coord_bits, coord_bits) + 1> operator-(
       const Vector2<other_coord_bits>& other) const {
-    return Vector2<std::max(other_coord_bits, coord_bits_template) + 1>(
+    return Vector2<std::max(other_coord_bits, coord_bits) + 1>(
         /*x=*/x() - other.x(),
         /*y=*/y() - other.y());
   }
@@ -177,13 +197,24 @@ class Vector2 {
            coords_[1].IsValidState();
   }
 
+  // Returns true if the counter-clockwise angle from the x-axis to normalized
+  // `this` is less than the angle from the x-axis to normalized `u`.
+  //
+  // In this context normalized means that if the counter-clockwise rotation
+  // from the x-axis to the vector is half a rotation or greater, then the
+  // vector is negated.
+  //
+  // Note that this comparison has the transitive property.
+  template <size_t other_coord_bits>
+  bool IsHalfRotationLessThan(const Vector2<other_coord_bits>& other) const;
+
  private:
   std::array<BigIntRep, 2> coords_;
 };
 
-template <size_t coord_bits_template>
+template <size_t coord_bits>
 template <size_t other_coord_bits>
-inline bool Vector2<coord_bits_template>::IsSameDir(
+inline bool Vector2<coord_bits>::IsSameDir(
     const Vector2<other_coord_bits>& other) const {
   BigInt<coord_bits> scale_other;
   BigInt<other_coord_bits> scale_mine;
@@ -199,9 +230,9 @@ inline bool Vector2<coord_bits_template>::IsSameDir(
          y().Multiply(scale_mine) == other.y().Multiply(scale_other);
 }
 
-template <size_t coord_bits_template>
+template <size_t coord_bits>
 template <size_t other_coord_bits>
-inline bool Vector2<coord_bits_template>::IsSameOrOppositeDir(
+inline bool Vector2<coord_bits>::IsSameOrOppositeDir(
     const Vector2<other_coord_bits>& other) const {
   BigInt<coord_bits> scale_other;
   BigInt<other_coord_bits> scale_mine;
@@ -215,6 +246,25 @@ inline bool Vector2<coord_bits_template>::IsSameOrOppositeDir(
 
   return x().Multiply(scale_mine) == other.x().Multiply(scale_other) &&
          y().Multiply(scale_mine) == other.y().Multiply(scale_other);
+}
+
+template <size_t coord_bits>
+template <size_t other_coord_bits>
+inline bool Vector2<coord_bits>::IsHalfRotationLessThan(
+    const Vector2<other_coord_bits>& other) const {
+  // For determining whether to negate `this`, look at the sign of y(), when
+  // y() != 0. If y() == 0, use the sign of x() instead.
+  //
+  // y_0_adjust will be 1 if y() is non-negative and x() is negative.
+  //
+  // So the sign of (y() - y_0_adjust) can be used to determine whether
+  // to negate `this`.
+  bool y_0_adjust = (y().GetSign() >= 0) & (x().GetSign() < 0);
+  bool other_y_0_adjust = (other.y().GetSign() >= 0) &
+                          (other.x().GetSign() < 0);
+  const bool flip = (y() - int(y_0_adjust)).HasDifferentSign(
+      other.y() - int(other_y_0_adjust));
+  return (y() * other.x()).LessThan(flip, other.y() * x());
 }
 
 template <size_t coord_bits>

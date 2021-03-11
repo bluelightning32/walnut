@@ -1,5 +1,9 @@
 #include "walnut/vector2.h"
 
+#include <cmath>
+#include <map>
+#include <random>
+
 #include "gtest/gtest.h"
 
 namespace walnut {
@@ -128,6 +132,65 @@ TEST(Vector2, CrossMax) {
 
   auto allowed_max = decltype(v1.Cross(v2))::max_value();
   EXPECT_GE(allowed_max, expected);
+}
+
+TEST(Vector2, HalfRotationLessThanXAxisAndYAxis) {
+  Vector2<> x(1, 0), y(0, 1);
+
+  EXPECT_TRUE(x.IsHalfRotationLessThan(y));
+  EXPECT_FALSE(y.IsHalfRotationLessThan(x));
+}
+
+TEST(Vector2, HalfRotationLessThanXAxisAndNegXAxisEquivalent) {
+  Vector2<> x(1, 0), neg_x(-1, 0);
+
+  EXPECT_FALSE(x.IsHalfRotationLessThan(neg_x));
+  EXPECT_FALSE(neg_x.IsHalfRotationLessThan(x));
+}
+
+TEST(Vector2, HalfRotationLessThanNegXAxisAndNegYAxis) {
+  Vector2<> neg_x(-1, 0), neg_y(0, -1);
+
+  EXPECT_TRUE(neg_x.IsHalfRotationLessThan(neg_y));
+  EXPECT_FALSE(neg_y.IsHalfRotationLessThan(neg_x));
+}
+
+TEST(Vector2, HalfRotationLessThanDifferentMagnitudes) {
+  Vector2<> u(2, 4), v(3, 6);
+
+  EXPECT_FALSE(u.IsHalfRotationLessThan(v));
+  EXPECT_FALSE(v.IsHalfRotationLessThan(u));
+}
+
+TEST(Vector2, HalfRotationCompareStoreInMap) {
+  std::vector<std::pair<Vector2<>, int>> to_add;
+
+  constexpr const double pi = 3.14159265358979323846;
+  std::mt19937 gen;
+
+  for (int i = 0; i < 32; i += 2) {
+    const double angle = pi * i / 32;
+    const double magnitude = gen() % 5 + 10;
+    to_add.emplace_back(Vector2<>(cos(angle) * magnitude,
+                                  sin(angle) * magnitude), i);
+    const int extra_mult = gen() % 3 + 1;
+    to_add.emplace_back(Vector2<>(-to_add.back().first.x() * extra_mult,
+                                  -to_add.back().first.y() * extra_mult), i+1);
+  }
+
+  using Map = std::map<Vector2<>, int, Vector2<>::HalfRotationCompare>;
+  Map sorted;
+  while (!to_add.empty()) {
+    size_t selected = gen() % to_add.size();
+    sorted.emplace(to_add[selected].first, to_add[selected].second);
+    to_add.erase(to_add.begin() + selected);
+  }
+
+  EXPECT_EQ(sorted.size(), 32/2);
+  Map::iterator it = sorted.begin();
+  for (int i = 0; it != sorted.end(); ++it, ++i) {
+    EXPECT_EQ(it->second/2, i) << it->second;
+  }
 }
 
 }  // walnut
