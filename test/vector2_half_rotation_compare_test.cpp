@@ -6,7 +6,6 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "walnut/convex_polygon_factory.h"
 
 namespace walnut {
 
@@ -26,6 +25,14 @@ TEST(Vector2HalfRotationCompare, XAxisAndNegXAxisEquivalent) {
   EXPECT_FALSE(compare(neg_x, x));
 }
 
+TEST(Vector2HalfRotationCompare, NegXAxisAndNegYAxis) {
+  Vector2<> neg_x(-1, 0), neg_y(0, -1);
+
+  Vector2HalfRotationCompare<> compare;
+  EXPECT_TRUE(compare(neg_x, neg_y));
+  EXPECT_FALSE(compare(neg_y, neg_x));
+}
+
 TEST(Vector2HalfRotationCompare, DifferentMagnitudesEquivalent) {
   Vector2<> u(2, 4), v(3, 6);
 
@@ -40,14 +47,14 @@ TEST(Vector2HalfRotationCompare, StoreInMap) {
   constexpr const double pi = 3.14159265358979323846;
   std::mt19937 gen;
 
-  for (int i = 0; i < 30; i += 2) {
+  for (int i = 0; i < 32; i += 2) {
     const double angle = pi * i / 32;
     const double magnitude = gen() % 5 + 10;
     to_add.emplace_back(Vector2<>(cos(angle) * magnitude,
                                   sin(angle) * magnitude), i);
     const int extra_mult = gen() % 3 + 1;
-    to_add.emplace_back(Vector2<>(to_add.back().first.x() * extra_mult,
-                                  to_add.back().first.y() * extra_mult), i+1);
+    to_add.emplace_back(Vector2<>(-to_add.back().first.x() * extra_mult,
+                                  -to_add.back().first.y() * extra_mult), i+1);
   }
 
   using Map = std::map<Vector2<>, int, Vector2HalfRotationCompare<>>;
@@ -58,10 +65,10 @@ TEST(Vector2HalfRotationCompare, StoreInMap) {
     to_add.erase(to_add.begin() + selected);
   }
 
-  EXPECT_EQ(sorted.size(), 15);
+  EXPECT_EQ(sorted.size(), 32/2);
   Map::iterator it = sorted.begin();
   for (int i = 0; it != sorted.end(); ++it, ++i) {
-    EXPECT_EQ(it->second/2, i);
+    EXPECT_EQ(it->second/2, i) << it->second;
   }
 }
 

@@ -26,9 +26,18 @@ struct Vector2HalfRotationCompare {
   Vector2HalfRotationCompare() = default;
 
   bool operator()(const Vector2Rep& v, const Vector2Rep& u) const {
-    int sign_adjust = v.y().GetAbsMult(u.y());
-    bool result = v.y() * u.x() * sign_adjust < u.y() * v.x() * sign_adjust;
-    return result;
+    // For determining whether to negate y, look at the sign of v.y(), when
+    // v.y() != 0. If v.y() == 0, use the sign of v.x() instead.
+    //
+    // v_y_0_adjust will be 1 if v.y() is non-negative and v.x() is negative.
+    //
+    // So the sign of (v.y() - v_y_0_adjust) can be used to determine whether
+    // to negate v.
+    bool v_y_0_adjust = (v.y().GetSign() >= 0) & (v.x().GetSign() < 0);
+    bool u_y_0_adjust = (u.y().GetSign() >= 0) & (u.x().GetSign() < 0);
+    const bool flip = (v.y() - int(v_y_0_adjust)).HasDifferentSign(
+        u.y() - int(u_y_0_adjust));
+    return (v.y() * u.x()).LessThan(flip, u.y() * v.x());
   }
 };
 
