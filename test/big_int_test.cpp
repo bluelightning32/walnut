@@ -703,4 +703,58 @@ TEST(BigInt, GtEq0Against0) {
   EXPECT_TRUE(a >= b);
 }
 
+TEST(BigInt, LtFlippable0Against0) {
+  const BigInt<128> a(0);
+  const BigInt<128> b(0);
+  EXPECT_FALSE(a.LessThan(/*flip=*/false, b));
+  EXPECT_FALSE(a.LessThan(/*flip=*/true, b));
+}
+
+TEST(BigInt, LtFlippable0Against2Pow63) {
+  const BigInt<128> a(0);
+  const BigInt<128> b = BigInt<128>{1} << 63;
+  EXPECT_TRUE(a.LessThan(/*flip=*/false, b));
+  EXPECT_TRUE(b.LessThan(/*flip=*/true, a));
+
+  EXPECT_FALSE(a.LessThan(/*flip=*/true, b));
+  EXPECT_FALSE(b.LessThan(/*flip=*/false, a));
+}
+
+TEST(BigInt, LtFlippableMinIntAgainstMaxInt) {
+  const BigInt<128> min_value = BigInt<128>::min_value();
+  const BigInt<128> max_value = BigInt<128>::max_value();
+  EXPECT_TRUE(min_value.LessThan(/*flip=*/false, max_value));
+  EXPECT_FALSE(min_value.LessThan(/*flip=*/true, max_value));
+
+  EXPECT_FALSE(max_value.LessThan(/*flip=*/false, min_value));
+  EXPECT_TRUE(max_value.LessThan(/*flip=*/true, min_value));
+}
+
+TEST(BigInt, LtFlippable2Pow63Against2Pow63) {
+  const BigInt<128> a = BigInt<128>{1} << 63;
+  EXPECT_FALSE(a.LessThan(/*flip=*/false, a));
+  EXPECT_FALSE(a.LessThan(/*flip=*/true, a));
+}
+
+TEST(BigInt, LtFlippable2Pow63Against2Pow63Plus1) {
+  const BigInt<128> a = BigInt<128>{1} << 63;
+  const BigInt<128> b = a + 1;
+  EXPECT_TRUE(a.LessThan(/*flip=*/false, b));
+  EXPECT_FALSE(a.LessThan(/*flip=*/true, b));
+
+  EXPECT_FALSE(b.LessThan(/*flip=*/false, a));
+  EXPECT_TRUE(b.LessThan(/*flip=*/true, a));
+}
+
+TEST(BigInt, LtFlippableSmallInts) {
+  for (int i = -5; i < 5; ++i) {
+    for (int j = -5; j < 5; ++j) {
+      const BigInt<128> a(i);
+      const BigInt<128> b(j);
+      EXPECT_EQ(i < j, a.LessThan(/*flip=*/false, b));
+      EXPECT_EQ(j < i, a.LessThan(/*flip=*/true, b));
+    }
+  }
+}
+
 }  // walnut

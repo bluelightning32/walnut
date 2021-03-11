@@ -304,6 +304,11 @@ class BigInt {
     return (SignExtension() ^ other.SignExtension()) | 1;
   }
 
+  template <size_t other_bits>
+  constexpr bool LessThan(bool flip, const BigInt<other_bits>& other) const {
+    return rep_.LessThan(flip, other.rep_);
+  }
+
   // Returns 0 if this is greater than or equal to 0.
   // Returns -1 if this is less than 0.
   constexpr BigIntWord SignExtension() const {

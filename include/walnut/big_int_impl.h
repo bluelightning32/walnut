@@ -555,6 +555,31 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
   }
 
   template <size_t other_max_words>
+  constexpr bool LessThan(bool flip,
+                          const BigIntImpl<other_max_words>& other) const {
+    BigIntWord signed_flip = BigIntWord{0} - flip;
+    if (used_ < other.used_) {
+      return 0 <=
+        (BigIntWord{other.words_[other.used_words() - 1]} ^ signed_flip);
+    }
+    if (used_ > other.used_) {
+      return (BigIntWord{words_[used_words() - 1]} ^ signed_flip) < 0;
+    }
+    size_t i = used_words() - 1;
+    if (words_[i] != other.words_[i]) {
+      return (BigIntWord{words_[i]} ^ signed_flip) <
+             (BigIntWord{other.words_[i]} ^ signed_flip);
+    }
+    BigUIntWord unsigned_flip(signed_flip);
+    for (i--; ssize_t(i) > 0; i--) {
+      if (words_[i] != other.words_[i]) {
+        return (words_[i] ^ unsigned_flip) < (other.words_[i] ^ unsigned_flip);
+      }
+    }
+    return (words_[0] ^ unsigned_flip) < (other.words_[0] ^ unsigned_flip);
+  }
+
+  template <size_t other_max_words>
   constexpr bool operator <= (const BigIntImpl<other_max_words>& other) const {
     if (used_ < other.used_) {
       return 0 <= BigIntWord{other.words_[other.used_words() - 1]};
