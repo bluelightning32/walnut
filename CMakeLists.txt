@@ -111,7 +111,6 @@ package_add_test(point3_test test/point3_test.cpp)
 package_add_test(r_transformation_test test/r_transformation_test.cpp)
 package_add_test(rational_test test/rational_test.cpp)
 package_add_test(vector2_test test/vector2_test.cpp)
-package_add_test(vector2_rotation_compare test/vector2_rotation_compare_test.cpp)
 package_add_test(vector3_test test/vector3_test.cpp)
 
 AUX_SOURCE_DIRECTORY(include/walnut HEADERS)

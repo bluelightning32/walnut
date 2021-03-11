@@ -35,6 +35,24 @@ class Vector2 {
     }
   };
 
+  // Compares two Vector2 by their counter-clockwise rotation from the x axis.
+  //
+  // More specifically for two vectors v and u, where the counter-clockwise
+  // rotation from the x axis to each vector is in the range [0, 1), then
+  // compare(v, u) returns true if the v's rotation is strictly less than u's.
+  // That is, compare(v, u) acts like v < u.
+  //
+  // This class meets the std requirements for a Compare. Notably it meets the
+  // transitivity requirements.
+  struct RotationCompare {
+   public:
+    RotationCompare() = default;
+
+    bool operator()(const Vector2& v, const Vector2& u) const {
+      return v.IsRotationLessThan(u);
+    }
+  };
+
   // The minimum number of bits to support for each coordinate.
   //
   // Note that the BigInt may round up the requested number of bits and end up
@@ -208,6 +226,13 @@ class Vector2 {
   template <size_t other_coord_bits>
   bool IsHalfRotationLessThan(const Vector2<other_coord_bits>& other) const;
 
+  // Returns true if the counter-clockwise angle from the x-axis to `this` is
+  // less than the angle from the x-axis to `u`.
+  //
+  // Note that this comparison has the transitive property.
+  template <size_t other_coord_bits>
+  bool IsRotationLessThan(const Vector2<other_coord_bits>& other) const;
+
  private:
   std::array<BigIntRep, 2> coords_;
 };
@@ -265,6 +290,28 @@ inline bool Vector2<coord_bits>::IsHalfRotationLessThan(
   const bool flip = (y() - int(y_0_adjust)).HasDifferentSign(
       other.y() - int(other_y_0_adjust));
   return (y() * other.x()).LessThan(flip, other.y() * x());
+}
+
+template <size_t coord_bits>
+template <size_t other_coord_bits>
+inline bool Vector2<coord_bits>::IsRotationLessThan(
+    const Vector2<other_coord_bits>& other) const {
+  bool y_sign = y().GetSign() < 0;
+  bool other_y_sign = other.y().GetSign() < 0;
+  // packed_sign is a quadrant that `this` is in, although the quadrant numbers
+  // are out of order.
+  char packed_sign = (char(y_sign) << 1) | char(x().GetSign() < 0);
+  // other_packed_sign is a quadrant that `other` is in, although the quadrant
+  // numbers are out of order.
+  char other_packed_sign =
+    (char(other_y_sign) << 1) | char(other.x().GetSign() < 0);
+  if (packed_sign != other_packed_sign) {
+    // `this` and `other` are in different quadrants. So properly order the
+    // quadrants, then compare the quadrant numbers.
+    return (packed_sign ^ y_sign) < (other_packed_sign ^ other_y_sign);
+  }
+  // `this` and `other` are in the same quadrant. Compare their x/y ratios.
+  return y() * other.x() < other.y() * x();
 }
 
 template <size_t coord_bits>
