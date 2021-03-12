@@ -542,7 +542,11 @@ void BSPNode<InputPolygonTemplate>::UpdateBoundaryAngles(
     BSPEdgeInfoRep& edge_info = polygon.bsp_edge_info(
         pos % polygon.vertex_count());
     if (edge_info.edge_first_coincident_.node == nullptr) {
-      edge_info.edge_first_coincident_ = coincident_info;
+      if (polygon.on_node_plane.node != nullptr) {
+        edge_info.edge_first_coincident_ = polygon.on_node_plane;
+      } else {
+        edge_info.edge_first_coincident_ = coincident_info;
+      }
     }
     edge_info.edge_last_coincident_ = coincident_info;
     edge_info.vertex_last_coincident_ = coincident_info;
@@ -596,14 +600,17 @@ void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
       // If polygon.plane().normal() and split_.normal() point in the same
       // direction, put polygon in the negative child.
       const int drop_dimension = polygon.drop_dimension();
-      if (polygon.plane().normal().components()[drop_dimension].HasSameSign(
-            split_.normal().components()[drop_dimension])) {
-        negative_child_->border_contents_.emplace_back(this,
-                                                       /*pos_side=*/false,
+      bool pos_child =
+        polygon.plane().normal().components()[drop_dimension].HasDifferentSign(
+            split_.normal().components()[drop_dimension]);
+      UpdateBoundaryAngles(pos_child, polygon, /*coincident_begin=*/0,
+                           /*coincident_end=*/polygon.vertex_count() + 1);
+      if (pos_child) {
+        positive_child_->border_contents_.emplace_back(this, /*pos_side=*/true,
                                                        std::move(polygon));
       } else {
-        positive_child_->border_contents_.emplace_back(this,
-                                                       /*pos_side=*/true,
+        negative_child_->border_contents_.emplace_back(this,
+                                                       /*pos_side=*/false,
                                                        std::move(polygon));
       }
     }
@@ -646,7 +653,7 @@ void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
         polygon.plane().normal().components()[drop_dimension].HasDifferentSign(
             split_.normal().components()[drop_dimension]);
       UpdateBoundaryAngles(pos_child, polygon, /*coincident_begin=*/0,
-                           /*coincident_end=*/polygon.vertex_count());
+                           /*coincident_end=*/polygon.vertex_count() + 1);
       if (pos_child) {
         positive_child_->border_contents_.push_back(std::move(polygon));
       } else {

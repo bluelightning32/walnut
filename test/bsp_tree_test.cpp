@@ -550,6 +550,12 @@ TEST(BSPTree, SplitBorderTo2Children) {
   EXPECT_FALSE(
       tree.root.negative_child()->border_contents()[0].on_node_plane.pos_side);
 
+  for (const BSPNode<>::InputPolygon::EdgeRep& edge :
+       tree.root.negative_child()->border_contents()[0].edges()) {
+    EXPECT_EQ(edge.data().edge_last_coincident().node, &tree.root);
+    EXPECT_EQ(edge.data().edge_first_coincident().node, &tree.root);
+  }
+
   // Split the negative child such that the polygon is split into 2 pieces.
   tree.root.negative_child()->Split(half_space);
   ASSERT_FALSE(tree.root.negative_child()->IsLeaf());
@@ -573,20 +579,22 @@ TEST(BSPTree, SplitBorderTo2Children) {
   for (const BSPNode<>::InputPolygon::EdgeRep& edge :
        neg_leaf->border_contents()[0].edges()) {
     if (edge.vertex == expected_neg[1]) {
-      EXPECT_EQ(edge.data().edge_first_coincident().node,
+      EXPECT_EQ(edge.data().edge_last_coincident().node,
                 tree.root.negative_child());
     } else {
-      EXPECT_EQ(edge.data().edge_first_coincident().node, nullptr);
+      EXPECT_EQ(edge.data().edge_last_coincident().node, &tree.root);
     }
+    EXPECT_EQ(edge.data().edge_first_coincident().node, &tree.root);
   }
   for (const BSPNode<>::InputPolygon::EdgeRep& edge :
        pos_leaf->border_contents()[0].edges()) {
     if (edge.vertex == expected_pos[3]) {
-      EXPECT_EQ(edge.data().edge_first_coincident().node,
+      EXPECT_EQ(edge.data().edge_last_coincident().node,
                 tree.root.negative_child());
     } else {
-      EXPECT_EQ(edge.data().edge_first_coincident().node, nullptr);
+      EXPECT_EQ(edge.data().edge_last_coincident().node, &tree.root);
     }
+    EXPECT_EQ(edge.data().edge_first_coincident().node, &tree.root);
   }
 }
 
