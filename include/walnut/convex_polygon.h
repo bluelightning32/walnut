@@ -5,6 +5,7 @@
 #include <vector>
 #include <utility>
 
+#include "walnut/assignable_wrapper.h"
 #include "walnut/convex_polygon_edge.h"
 #include "walnut/convex_polygon_split_info.h"
 #include "walnut/convex_polygon_vertex_iterator.h"
@@ -38,8 +39,9 @@ class ConvexPolygon {
     typename HalfSpace3FromPoint3Builder<point3_bits_template>::HalfSpace3Rep;
   using NormalRep = typename HalfSpace3Rep::VectorRep;
   using LineRep = typename EdgeRep::LineRep;
+  using EdgeVector = std::vector<AssignableWrapper<EdgeRep>>;
   using ConstVertexIterator =
-    ConvexPolygonVertexIterator<typename std::vector<EdgeRep>::const_iterator>;
+    ConvexPolygonVertexIterator<typename EdgeVector::const_iterator>;
 
   // The minimum number of bits to support for each component of the vertex3's
   // that the polygon is built from.
@@ -63,7 +65,7 @@ class ConvexPolygon {
     edges_(other.edges().begin(), other.edges().end()) { }
 
   ConvexPolygon(const HalfSpace3Rep& plane, int drop_dimension,
-                std::vector<EdgeRep> edges) :
+                EdgeVector edges) :
       plane_(plane), drop_dimension_(drop_dimension),
       edges_(std::move(edges)) {
     assert(IsValidState());
@@ -140,7 +142,7 @@ class ConvexPolygon {
     return edges_[index];
   }
 
-  const std::vector<EdgeRep>& edges() const {
+  const EdgeVector& edges() const {
     return edges_;
   }
 
@@ -604,7 +606,7 @@ class ConvexPolygon {
   int drop_dimension_;
   // Each entry in edges_ contains information about that edge and the source
   // vertex of that edge.
-  std::vector<EdgeRep> edges_;
+  EdgeVector edges_;
 };
 
 template <size_t point3_bits, typename EdgeParent>

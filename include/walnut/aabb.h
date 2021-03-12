@@ -219,7 +219,7 @@ ConvexPolygonRep AABB<num_bits, denom_bits>::IntersectPlane(
     HalfSpace3Rep(dir2, max_point_num_.components()[dim2]),
   };
 
-  std::vector<typename ConvexPolygonRep::EdgeRep> edges;
+  typename ConvexPolygonRep::EdgeVector edges;
   edges.reserve(4);
   const HalfSpace3Rep* prev_plane = &parallelogram_planes[(4 + -1*flip) % 4];
   for (int i = 0; i < 4; ++i) {

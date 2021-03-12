@@ -95,8 +95,8 @@ class ConvexPolygonFactory :
       // Skip collinear polygons
       return;
     }
-    std::vector<typename ConvexPolygonRep::EdgeRep> vertices;
-    vertices.reserve((range1_end - range1_begin) + (range2_end - range2_begin));
+    typename ConvexPolygonRep::EdgeVector edges;
+    edges.reserve((range1_end - range1_begin) + (range2_end - range2_begin));
     const InputPoint3* prev;
     const InputPoint3* first;
     if (range1_begin != range1_end) {
@@ -105,12 +105,12 @@ class ConvexPolygonFactory :
       first = prev;
       ++pos1;
       while (pos1 != range1_end) {
-        vertices.emplace_back(*prev, *pos1);
+        edges.emplace_back(*prev, *pos1);
         prev = &*pos1;
         ++pos1;
       }
       for (auto pos2 = range2_begin; pos2 != range2_end; ++pos2) {
-        vertices.emplace_back(*prev, *pos2);
+        edges.emplace_back(*prev, *pos2);
         prev = &*pos2;
       }
     } else {
@@ -119,12 +119,12 @@ class ConvexPolygonFactory :
       first = prev;
       ++pos2;
       while (pos2 != range2_end) {
-        vertices.emplace_back(*prev, *pos2);
+        edges.emplace_back(*prev, *pos2);
         prev = &*pos2;
         ++pos2;
       }
     }
-    vertices.emplace_back(*prev, *first);
+    edges.emplace_back(*prev, *first);
     // orientation is -1 if the polygon is counter-clockwise.
     // plane_orientation_ is -1 if plane_ is already the normal of a
     // counter-clockwise polygon. If both are -1, then plane_ is already
@@ -133,7 +133,7 @@ class ConvexPolygonFactory :
     Emit(ConvexPolygonRep(HalfSpace3Rep(plane_.normal() * flip_orientation,
                                         plane_.d() * flip_orientation),
                           drop_dimension_,
-                          std::move(vertices)));
+                          std::move(edges)));
   }
 
   int drop_dimension_;
