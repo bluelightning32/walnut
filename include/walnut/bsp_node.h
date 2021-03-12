@@ -38,6 +38,18 @@ class BSPEdgeInfo {
   using BSPNodeRep = BSPNodeTemplate;
   using NormalRep = NormalRepTemplate;
 
+  struct CoincidentInfo {
+    const BSPNodeRep* node = nullptr;
+    bool pos_side = false;
+
+    NormalRep split_normal() const {
+      if (node == nullptr) {
+        return NormalRep::Zero();
+      }
+      return pos_side ? -node->split().normal() : node->split().normal();
+    }
+  };
+
   BSPEdgeInfo(const NoVertexData&) { }
 
   // Create a new vertex on the parent's existing edge.
@@ -49,8 +61,8 @@ class BSPEdgeInfo {
   BSPEdgeInfo(const BSPEdgeInfo& parent,
               const HomoPoint3<num_bits, denom_bits>& new_source) :
     split_by(parent.split_by),
-    vertex_boundary_angle_(parent.edge_boundary_angle_),
-    edge_boundary_angle_(parent.edge_boundary_angle_) { }
+    vertex_last_coincident_(parent.edge_last_coincident_),
+    edge_last_coincident_(parent.edge_last_coincident_) { }
 
   // Create a new line from the parent's existing vertex.
   //
@@ -59,7 +71,7 @@ class BSPEdgeInfo {
   template <size_t d_bits, size_t m_bits>
   BSPEdgeInfo(const BSPEdgeInfo& parent,
               const PluckerLine<d_bits, m_bits>& new_line) :
-    vertex_boundary_angle_(parent.vertex_boundary_angle_) { }
+    vertex_last_coincident_(parent.vertex_last_coincident_) { }
 
   // Create a new line starting on a new vertex on the parent's existing edge.
   //
@@ -69,7 +81,7 @@ class BSPEdgeInfo {
   BSPEdgeInfo(const BSPEdgeInfo& parent,
               const HomoPoint3<num_bits, denom_bits>& new_source,
               const PluckerLine<d_bits, m_bits>& new_line) :
-    vertex_boundary_angle_(parent.edge_boundary_angle_) { }
+    vertex_last_coincident_(parent.edge_last_coincident_) { }
 
   bool operator==(const NoVertexData&) const {
     return true;
@@ -78,12 +90,12 @@ class BSPEdgeInfo {
     return false;
   }
 
-  const NormalRep& vertex_boundary_angle() const {
-    return vertex_boundary_angle_;
+  NormalRep vertex_boundary_angle() const {
+    return vertex_last_coincident_.split_normal();
   }
 
-  const NormalRep& edge_boundary_angle() const {
-    return edge_boundary_angle_;
+  NormalRep edge_boundary_angle() const {
+    return edge_last_coincident_.split_normal();
   }
 
   const BSPNodeRep* split_by = nullptr;
@@ -91,17 +103,18 @@ class BSPEdgeInfo {
  private:
   friend BSPNodeRep;
 
-  // The normal of the last boundary facet to touch this vertex, or
-  // `Vector3::Zero` if the vertex has not touched any boundary facets.
+  // The BSPNodeRep deepest in the tree that is coincident with the vertex, or
+  // nullptr, if the vertex is not coincident with any of its ancestor nodes.
   //
   // This field is updated directly by BSPNodeRep.
-  NormalRep vertex_boundary_angle_;
+  CoincidentInfo vertex_last_coincident_;
 
-  // The normal of the last boundary facet to touch this entire edge, or
-  // `Vector3::Zero` if the edge has not touched any boundary facets.
+  // The BSPNodeRep deepest in the tree that is coincident with the entire
+  // edge, or nullptr, if the edge is not coincident with any of its ancestor
+  // nodes.
   //
   // This field is updated directly by BSPNodeRep.
-  NormalRep edge_boundary_angle_;
+  CoincidentInfo edge_last_coincident_;
 };
 
 template <size_t point3_bits>
@@ -474,7 +487,7 @@ void BSPNode<InputPolygonTemplate>::UpdateBoundaryAngles(
   // handle that case first.
   if (coincident_begin == coincident_end) return;
 
-  auto normal = pos_child ? -split_.normal() : split_.normal();
+  typename BSPEdgeInfoRep::CoincidentInfo coincident_info{this, pos_child};
   size_t pos = coincident_begin;
   // Edges go from source to target. So first loop through all of the edges
   // that need to be updated, and update their corresponding source vertices
@@ -482,13 +495,13 @@ void BSPNode<InputPolygonTemplate>::UpdateBoundaryAngles(
   for (; pos < coincident_end - 1; ++pos) {
     BSPEdgeInfoRep& edge_info = polygon.bsp_edge_info(
         pos % polygon.vertex_count());
-    edge_info.edge_boundary_angle_ = normal;
-    edge_info.vertex_boundary_angle_ = normal;
+    edge_info.edge_last_coincident_ = coincident_info;
+    edge_info.vertex_last_coincident_ = coincident_info;
   }
   // Update the last target vertex.
   BSPEdgeInfoRep& edge_info = polygon.bsp_edge_info(
       pos % polygon.vertex_count());
-  edge_info.vertex_boundary_angle_ = normal;
+  edge_info.vertex_last_coincident_ = coincident_info;
 }
 
 template <typename InputPolygonTemplate>
