@@ -20,11 +20,11 @@ Approximate(const ConvexPolygonEdge<point3_bits, Parent>& edge);
 
 template <size_t point3_bits>
 std::string
-Approximate(const ConvexPolygonEdge<point3_bits, NoVertexData>& edge);
+Approximate(const ConvexPolygonEdge<point3_bits, EdgeInfoRoot>& edge);
 
 // An edge of a ConvexPolygon
 template <size_t point3_bits_template = 32,
-          typename ParentTemplate = NoVertexData>
+          typename ParentTemplate = EdgeInfoRoot>
 struct ConvexPolygonEdge : public ParentTemplate {
   using Point3Rep = Point3<point3_bits_template>;
   using HomoPoint3Rep = HomoPoint3<(point3_bits_template - 1)*7 + 10,
@@ -167,7 +167,7 @@ Approximate(const ConvexPolygonEdge<point3_bits, Parent>& edge) {
 
 template <size_t point3_bits>
 std::string
-Approximate(const ConvexPolygonEdge<point3_bits, NoVertexData>& edge) {
+Approximate(const ConvexPolygonEdge<point3_bits, EdgeInfoRoot>& edge) {
   return edge.ApproximateNoData();
 }
 
@@ -181,7 +181,7 @@ std::ostream& operator<<(
 template <size_t point3_bits>
 std::ostream& operator<<(
     std::ostream& out,
-    const ConvexPolygonEdge<point3_bits, NoVertexData>& edge) {
+    const ConvexPolygonEdge<point3_bits, EdgeInfoRoot>& edge) {
   out << edge.vertex();
   return out;
 }

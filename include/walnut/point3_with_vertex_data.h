@@ -1,7 +1,7 @@
 #ifndef WALNUT_POINT3_WITH_VERTEX_DATA_H__
 #define WALNUT_POINT3_WITH_VERTEX_DATA_H__
 
-#include "walnut/no_vertex_data.h"
+#include "walnut/edge_info_root.h"
 #include "walnut/point3.h"
 
 namespace walnut {
@@ -9,7 +9,7 @@ namespace walnut {
 // This is used by FactoryWithVertexData to construct a ConvexPolygon and
 // specify the inital values of the vertex data.
 template <size_t point3_bits = 32,
-          typename VertexDataTemplate = NoVertexData>
+          typename VertexDataTemplate = EdgeInfoRoot>
 struct Point3WithVertexData : public Point3<point3_bits> {
   using Parent = Point3<point3_bits>;
   using VertexData = VertexDataTemplate;
@@ -23,11 +23,11 @@ struct Point3WithVertexData : public Point3<point3_bits> {
 };
 
 // Gets the VertexData field out of Point3Rep. If Point3Rep does not have a
-// VertexData field, then it defaults to NoVertexData.
+// VertexData field, then it defaults to EdgeInfoRoot.
 template <typename Point3Rep, bool leave_as_default = true>
 struct GetVertexData {
   static_assert(leave_as_default == true);
-  using VertexData = NoVertexData;
+  using VertexData = EdgeInfoRoot;
 };
 
 template <typename Point3Rep>

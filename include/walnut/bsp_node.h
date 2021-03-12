@@ -48,7 +48,7 @@ class BSPEdgeInfo {
 
   using BSPNodeSideRep = BSPNodeSide<BSPNodeRep>;
 
-  BSPEdgeInfo(const NoVertexData&) { }
+  BSPEdgeInfo(const EdgeInfoRoot&) { }
 
   // Create a new vertex on the parent's existing edge.
   //
@@ -81,10 +81,10 @@ class BSPEdgeInfo {
               const PluckerLine<d_bits, m_bits>& new_line) :
     vertex_last_coincident_(parent.edge_last_coincident_) { }
 
-  bool operator==(const NoVertexData&) const {
+  bool operator==(const EdgeInfoRoot&) const {
     return true;
   }
-  bool operator!=(const NoVertexData&) const {
+  bool operator!=(const EdgeInfoRoot&) const {
     return false;
   }
 

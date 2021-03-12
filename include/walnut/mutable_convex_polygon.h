@@ -8,7 +8,7 @@ namespace walnut {
 // This derived class exposes some functions from `ConvexPolygon` to do minor
 // mutations.
 template <size_t point3_bits_template = 32,
-          typename VertexDataTemplate = NoVertexData>
+          typename VertexDataTemplate = EdgeInfoRoot>
 class MutableConvexPolygon : public ConvexPolygon<point3_bits_template,
                                                   VertexDataTemplate> {
  public:

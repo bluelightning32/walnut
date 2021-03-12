@@ -1002,22 +1002,22 @@ TEST(ConvexPolygon, GetLastNegSideVertex) {
   }
 }
 
-struct VertexData {
-  VertexData() = default;
-  explicit VertexData(const NoVertexData&) { }
+struct TestEdgeInfo {
+  TestEdgeInfo() = default;
+  explicit TestEdgeInfo(const EdgeInfoRoot&) { }
 
-  bool operator!=(const NoVertexData&) const {
+  bool operator!=(const EdgeInfoRoot&) const {
     return false;
   }
 
-  bool operator!=(const VertexData& other) const {
+  bool operator!=(const TestEdgeInfo& other) const {
     return on_split != other.on_split;
   }
 
   bool on_split = false;
 };
 
-std::ostream& operator<<(std::ostream& out, const VertexData& data) {
+std::ostream& operator<<(std::ostream& out, const TestEdgeInfo& data) {
   out << data.on_split;
   return out;
 }
@@ -1030,7 +1030,7 @@ TEST(ConvexPolygon, ConvertVertexData) {
   };
 
   ConvexPolygon<32> polygon_raw = MakeConvexPolygon(input);
-  MutableConvexPolygon<32, VertexData> polygon(polygon_raw);
+  MutableConvexPolygon<32, TestEdgeInfo> polygon(polygon_raw);
 
   EXPECT_EQ(polygon, polygon_raw);
   ASSERT_EQ(polygon.vertex_count(), 3);

@@ -1,29 +1,29 @@
-#ifndef WALNUT_NO_VERTEX_DATA_H__
-#define WALNUT_NO_VERTEX_DATA_H__
+#ifndef WALNUT_EDGE_INFO_ROOT_H__
+#define WALNUT_EDGE_INFO_ROOT_H__
 
 #include "walnut/homo_point3.h"
 #include "walnut/plucker_line.h"
 
 namespace walnut {
 
-// This is the default data that is attached to every vertex of a
-// ConvexPolygon.
-struct NoVertexData {
-  constexpr NoVertexData() = default;
+// This functions as the root of the inheritance chain of the EdgeInfo class in
+// a ConvexPolygon.
+struct EdgeInfoRoot {
+  constexpr EdgeInfoRoot() = default;
 
   template <typename OtherVertexData>
-  constexpr explicit NoVertexData(const OtherVertexData&) { }
+  constexpr explicit EdgeInfoRoot(const OtherVertexData&) { }
 
   template <size_t num_bits, size_t denom_bits>
-  NoVertexData(const NoVertexData& parent,
+  EdgeInfoRoot(const EdgeInfoRoot& parent,
                const HomoPoint3<num_bits, denom_bits>& new_source) { }
 
   template <size_t d_bits, size_t m_bits>
-  NoVertexData(const NoVertexData& parent,
+  EdgeInfoRoot(const EdgeInfoRoot& parent,
                const PluckerLine<d_bits, m_bits>& new_line) { }
 
   template <size_t num_bits, size_t denom_bits, size_t d_bits, size_t m_bits>
-  NoVertexData(const NoVertexData& parent,
+  EdgeInfoRoot(const EdgeInfoRoot& parent,
                const HomoPoint3<num_bits, denom_bits>& new_source,
                const PluckerLine<d_bits, m_bits>& new_line) { }
 
@@ -33,11 +33,11 @@ struct NoVertexData {
   }
 
   template <typename OtherVertexData>
-  constexpr NoVertexData& operator=(const OtherVertexData& other) {
+  constexpr EdgeInfoRoot& operator=(const OtherVertexData& other) {
     return *this;
   }
 };
 
 }  // walnut
 
-#endif // WALNUT_NO_VERTEX_DATA_H__
+#endif // WALNUT_EDGE_INFO_ROOT_H__

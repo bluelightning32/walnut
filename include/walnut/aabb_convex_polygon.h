@@ -14,7 +14,7 @@ namespace walnut {
 // `EdgeParentTemplate` specifies additional data that the caller can associate
 // with each vertex. The type must be copy-constructible.
 template <size_t point3_bits_template = 32,
-          typename EdgeParentTemplate = NoVertexData>
+          typename EdgeParentTemplate = EdgeInfoRoot>
 class AABBConvexPolygon : public ConvexPolygon<point3_bits_template,
                                                EdgeParentTemplate> {
  public:

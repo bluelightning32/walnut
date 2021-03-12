@@ -27,7 +27,7 @@ namespace walnut {
 // class such as `MutableConvexPolygon` can be used which exposes the mutating
 // functions.
 template <size_t point3_bits_template = 32,
-          typename EdgeParentTemplate = NoVertexData>
+          typename EdgeParentTemplate = EdgeInfoRoot>
 class ConvexPolygon {
  public:
   using EdgeParent = EdgeParentTemplate;
