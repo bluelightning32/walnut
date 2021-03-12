@@ -33,6 +33,8 @@ struct ConvexPolygonEdge : public ParentTemplate {
     point3_bits_template>::PluckerLineRep;
   using Parent = ParentTemplate;
 
+  ConvexPolygonEdge(const ConvexPolygonEdge&) = default;
+
   // Parent must be default-constructible to use this constructor.
   template <size_t other_point3_bits>
   ConvexPolygonEdge(const std::enable_if_t<
@@ -97,16 +99,6 @@ struct ConvexPolygonEdge : public ParentTemplate {
                               OtherVertexData>& other) :
     Parent(other.data()), vertex_(other.vertex()), line_(other.line()) { }
 
-  template <size_t other_point3_bits, typename OtherVertexData>
-  ConvexPolygonEdge& operator=(
-      const ConvexPolygonEdge<other_point3_bits,
-                              OtherVertexData>& other) {
-    vertex_ = other.vertex();
-    line_ = other.line();
-    data() = other.data();
-    return *this;
-  }
-
   static bool LexicographicallyLt(const ConvexPolygonEdge& a,
                                   const ConvexPolygonEdge& b) {
     return HomoPoint3Rep::LexicographicallyLt(a.vertex_, b.vertex_);
@@ -145,6 +137,25 @@ struct ConvexPolygonEdge : public ParentTemplate {
 
   const HomoPoint3Rep& vertex() const {
     return vertex_;
+  }
+
+ protected:
+  // In order to make a std::vector of edges, the vector needs access to the
+  // assignment operator. So to give the vector access, wrap the edge with an
+  // `AssignableWrapper`.
+
+  ConvexPolygonEdge(ConvexPolygonEdge&&) = default;
+
+  ConvexPolygonEdge& operator=(const ConvexPolygonEdge&) = default;
+  ConvexPolygonEdge& operator=(ConvexPolygonEdge&&) = default;
+
+  template <size_t other_point3_bits, typename OtherParent>
+  ConvexPolygonEdge& operator=(const ConvexPolygonEdge<other_point3_bits,
+                                                       OtherParent>& other) {
+    vertex_ = other.vertex();
+    line_ = other.line();
+    data() = other.data();
+    return *this;
   }
 
  private:
