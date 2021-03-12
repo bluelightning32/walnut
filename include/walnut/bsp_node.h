@@ -172,17 +172,13 @@ class BSPPolygonWrapper : public BSPNodeTemplate::InputPolygon {
                                 Parent>::value,
       "The InputPolygonTemplate must inherit from ConvexPolygon.");
 
+  BSPPolygonWrapper() = default;
+
   template <typename OtherPolygon>
   BSPPolygonWrapper(BSPPolygonId id, const BSPNodeRep* on_node_plane,
                     bool pos_side, OtherPolygon&& parent) :
     Parent(std::forward<OtherPolygon>(parent)), id(id),
     on_node_plane{on_node_plane, pos_side} { }
-
-  template <typename OtherPolygon>
-  BSPPolygonWrapper(BSPPolygonId id, const BSPNodeSideRep& on_node_plane,
-                    OtherPolygon&& parent) :
-    Parent(std::forward<OtherPolygon>(parent)), id(id),
-    on_node_plane(on_node_plane) { }
 
   BSPPolygonWrapper(const BSPNodeRep* on_node_plane, bool pos_side,
                     const BSPPolygonWrapper& parent) :
@@ -197,23 +193,18 @@ class BSPPolygonWrapper : public BSPNodeTemplate::InputPolygon {
   // Overload CreateSplitChildren to create the derived polygon type.
   std::pair<BSPPolygonWrapper, BSPPolygonWrapper> CreateSplitChildren(
       const SplitInfoRep& split) const {
-    std::pair<Parent, Parent> parent_result =
-      Parent::CreateSplitChildren(split);
-    return std::make_pair(BSPPolygonWrapper(id, on_node_plane,
-                                            std::move(parent_result.first)),
-                          BSPPolygonWrapper(id, on_node_plane,
-                                            std::move(parent_result.second)));
+    std::pair<BSPPolygonWrapper, BSPPolygonWrapper> result;
+    FillInSplitChildren(*this, split, result.first, result.second);
+    return result;
   }
 
   // Overload CreateSplitChildren to create the derived polygon type.
   std::pair<BSPPolygonWrapper, BSPPolygonWrapper> CreateSplitChildren(
       SplitInfoRep&& split) && {
-    std::pair<Parent, Parent> parent_result =
-      static_cast<Parent&&>(*this).CreateSplitChildren(std::move(split));
-    return std::make_pair(BSPPolygonWrapper(id, on_node_plane,
-                                            std::move(parent_result.first)),
-                          BSPPolygonWrapper(id, on_node_plane,
-                                            std::move(parent_result.second)));
+    std::pair<BSPPolygonWrapper, BSPPolygonWrapper> result;
+    FillInSplitChildren(std::move(*this), std::move(split), result.first,
+                        result.second);
+    return result;
   }
 
   BSPEdgeInfoRep& bsp_edge_info(size_t index) {
@@ -228,6 +219,22 @@ class BSPPolygonWrapper : public BSPNodeTemplate::InputPolygon {
   // pos_side is true if this polygon is a child of the positive child of the
   // split node.
   BSPNodeSideRep on_node_plane;
+
+ protected:
+  // Overrides the non-virtual function from ConvexPolygon.
+  template <typename ParentRef, typename SplitInfoRef>
+  static void FillInSplitChildren(ParentRef&& parent, SplitInfoRef&& split,
+                                  BSPPolygonWrapper& neg_child,
+                                  BSPPolygonWrapper& pos_child) {
+    pos_child.id = parent.id;
+    pos_child.on_node_plane = parent.on_node_plane;
+    neg_child.id = parent.id;
+    neg_child.on_node_plane = parent.on_node_plane;
+
+    Parent::FillInSplitChildren(std::forward<ParentRef>(parent),
+                                std::forward<SplitInfoRef>(split), neg_child,
+                                pos_child);
+  }
 };
 
 // This is a node within a binary space partition tree.
