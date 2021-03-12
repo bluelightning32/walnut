@@ -102,6 +102,14 @@ class BSPEdgeInfo {
 
  private:
   friend BSPNodeRep;
+  template <typename InputPolygon>
+  friend class BSPTree;
+
+  void ResetBSPInfo() {
+    edge_first_coincident_ = BSPNodeSideRep();
+    vertex_last_coincident_ = BSPNodeSideRep();
+    edge_last_coincident_ = BSPNodeSideRep();
+  }
 
   // The BSPNodeRep highest in the tree that is coincident with the entire
   // edge, or nullptr, if the edge is not coincident with any of its ancestor

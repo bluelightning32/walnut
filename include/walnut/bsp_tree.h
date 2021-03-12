@@ -69,21 +69,16 @@ class BSPTree {
   template <typename InputConvexPolygon, typename LeafCallback>
   void AddContent(InputConvexPolygon&& polygon, BSPPolygonId id,
                   LeafCallback leaf_callback) {
+    root.contents_.emplace_back(id, /*on_node_plane=*/nullptr,
+                                /*pos_side=*/false,
+                                std::forward<InputConvexPolygon>(polygon));
     using InputConvexPolygonNoRef =
       typename std::remove_reference<InputConvexPolygon>::type;
     using InputVertexData = typename InputConvexPolygonNoRef::VertexData;
     if (std::is_base_of<VertexData, InputVertexData>::value) {
-      // The input polygon came from a different BSPTree. Make a copy of the
-      // input polygon that does not have the vertex and edge trackers from the
-      // previous tree.
-      ConvexPolygon<InputConvexPolygonNoRef::point3_bits> stripped(
-          std::forward<InputConvexPolygon>(polygon));
-      root.contents_.emplace_back(id, /*on_node_plane=*/nullptr,
-                                  /*pos_side=*/false, std::move(stripped));
-    } else {
-      root.contents_.emplace_back(id, /*on_node_plane=*/nullptr,
-                                  /*pos_side=*/false,
-                                  std::forward<InputConvexPolygon>(polygon));
+      for (size_t i = 0; i < root.contents_.back().vertex_count(); ++i) {
+        root.contents_.back().vertex_data(i).ResetBSPInfo();
+      }
     }
     root.PushContentsToLeaves(leaf_callback);
   }
