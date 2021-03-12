@@ -38,8 +38,6 @@ class ConvexPolygon {
     typename HalfSpace3FromPoint3Builder<point3_bits_template>::HalfSpace3Rep;
   using NormalRep = typename HalfSpace3Rep::VectorRep;
   using LineRep = typename EdgeRep::LineRep;
-  using VertexIterator =
-    ConvexPolygonVertexIterator<typename std::vector<EdgeRep>::iterator>;
   using ConstVertexIterator =
     ConvexPolygonVertexIterator<typename std::vector<EdgeRep>::const_iterator>;
 
@@ -144,14 +142,6 @@ class ConvexPolygon {
 
   const std::vector<EdgeRep>& edges() const {
     return edges_;
-  }
-
-  VertexIterator vertices_begin() {
-    return VertexIterator(edges_.begin());
-  }
-
-  VertexIterator vertices_end() {
-    return VertexIterator(edges_.end());
   }
 
   ConstVertexIterator vertices_begin() const {

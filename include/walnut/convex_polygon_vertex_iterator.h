@@ -5,15 +5,15 @@
 
 namespace walnut {
 
-// An iterator that produces just the vertex field from an iterator that
-// produces a `ConvexPolygonEdge`.
+// An iterator that produces just the const vertex reference from an input
+// iterator that produces a `ConvexPolygonEdge`.
 template <typename EdgeIterator>
 class ConvexPolygonVertexIterator {
  public:
   using difference_type = typename EdgeIterator::difference_type;
   // The extra set of parenthesis around the argument to decltype are necessary
   // so that the argument is considered an expression instead of an entity.
-  using value_type = typename std::remove_reference<decltype((
+  using value_type = const typename std::remove_reference<decltype((
         std::declval<typename EdgeIterator::value_type>().vertex))>::type;
   using pointer = value_type*;
   using reference = value_type&;
@@ -30,6 +30,9 @@ class ConvexPolygonVertexIterator {
   ConvexPolygonVertexIterator(
       const ConvexPolygonVertexIterator<OtherEdgeIterator>& other) :
     edge_iterator_(other.edge_iterator_) { }
+
+  // Many of these functions return auto so that SFINAE kicks in and removes
+  // any operators that are not valid due to the input iterator type.
 
   template <typename OtherEdgeIterator>
   auto operator==(
@@ -91,7 +94,7 @@ class ConvexPolygonVertexIterator {
     return edge_iterator_ -= offset, *this;
   }
 
-  auto& operator[](difference_type offset) const {
+  const auto& operator[](difference_type offset) const {
     return edge_iterator_[offset].vertex;
   }
 
