@@ -58,7 +58,7 @@ class BSPEdgeInfo {
   template <size_t num_bits, size_t denom_bits>
   BSPEdgeInfo(const BSPEdgeInfo& parent,
               const HomoPoint3<num_bits, denom_bits>& new_source) :
-    split_by(parent.split_by),
+    split_by_(parent.split_by()),
     vertex_last_coincident_(parent.edge_last_coincident_),
     edge_last_coincident_(parent.edge_last_coincident_) { }
 
@@ -96,10 +96,15 @@ class BSPEdgeInfo {
     return edge_last_coincident_;
   }
 
-  const BSPNodeRep* split_by = nullptr;
+  const BSPNodeRep* split_by() const {
+    return split_by_;
+  }
 
  private:
   friend BSPNodeRep;
+
+  // This field is updated directly by BSPNodeRep.
+  const BSPNodeRep* split_by_ = nullptr;
 
   // The BSPNodeRep deepest in the tree that is coincident with the vertex, or
   // nullptr, if the vertex is not coincident with any of its ancestor nodes.
@@ -546,14 +551,14 @@ void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
         // comment, the last 2 vertices of neg_poly will touch the plane. So
         // the first of those 2 vertices is the edge source.
         children.first.bsp_edge_info(
-            children.first.vertex_count() - 2).split_by = this;
+            children.first.vertex_count() - 2).split_by_ = this;
         UpdateBoundaryAngles(/*pos_child=*/false, children.first,
                             children.first.vertex_count() - 2,
                             children.first.vertex_count());
         // The first and last vertices of pos_poly will touch the plane. So the
         // first of those 2 vertices is the edge source.
         children.second.bsp_edge_info(
-            children.second.vertex_count() - 1).split_by = this;
+            children.second.vertex_count() - 1).split_by_ = this;
         UpdateBoundaryAngles(/*pos_child=*/true, children.second,
                             children.second.vertex_count() - 1,
                             children.second.vertex_count() + 1);
@@ -599,11 +604,11 @@ void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
         // comment, the last 2 vertices of neg_poly will touch the plane. So
         // the first of those 2 vertices is the edge source.
         children.first.bsp_edge_info(
-            children.first.vertex_count() - 2).split_by = this;
+            children.first.vertex_count() - 2).split_by_ = this;
         // The first and last vertices of pos_poly will touch the plane. So the
         // first of those 2 vertices is the edge source.
         children.second.bsp_edge_info(
-            children.second.vertex_count() - 1).split_by = this;
+            children.second.vertex_count() - 1).split_by_ = this;
         negative_child_->border_contents_.push_back(std::move(children.first));
         positive_child_->border_contents_.push_back(
             std::move(children.second));
@@ -667,7 +672,7 @@ template <typename InputPolygonTemplate, typename NormalRep>
 std::ostream& operator<<(
     std::ostream& out,
     const BSPEdgeInfo<InputPolygonTemplate, NormalRep>& info) {
-  out << "< split_by=" << info.split_by
+  out << "< split_by=" << info.split_by()
       << ", edge_last_coincident=" << info.edge_last_coincident()
       << ", vertex_last_coincident=" << info.vertex_last_coincident()
       << " >";
