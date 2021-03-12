@@ -21,7 +21,7 @@ vtkSmartPointer<vtkPolyData> ConvertWalnutMesh(
     const std::vector<Polygon>& mesh) {
   static_assert(
       std::is_base_of<ConvexPolygon<Polygon::point3_bits,
-                                    typename Polygon::VertexData>,
+                                    typename Polygon::EdgeParent>,
                       Polygon>::value,
       "Polygon must inherit from ConvexPolygon");
   using HomoPoint3Rep = typename Polygon::HomoPoint3Rep;

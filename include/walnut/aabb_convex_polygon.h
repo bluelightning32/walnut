@@ -11,15 +11,14 @@ namespace walnut {
 // is entirely on one side or the other of the splitting half-space. Although
 // the bounding box also has a fixed maintenance cost in `CreateSplitChildren`.
 //
-// `VertexDataTemplate` specifies additional data that the caller can associate
+// `EdgeParentTemplate` specifies additional data that the caller can associate
 // with each vertex. The type must be copy-constructible.
 template <size_t point3_bits_template = 32,
-          typename VertexDataTemplate = NoVertexData>
+          typename EdgeParentTemplate = NoVertexData>
 class AABBConvexPolygon : public ConvexPolygon<point3_bits_template,
-                                               VertexDataTemplate> {
+                                               EdgeParentTemplate> {
  public:
-  using Parent = ConvexPolygon<point3_bits_template, VertexDataTemplate>;
-  using typename Parent::VertexData;
+  using Parent = ConvexPolygon<point3_bits_template, EdgeParentTemplate>;
   using typename Parent::HalfSpace3Rep;
   using typename Parent::EdgeRep;
   using typename Parent::SplitInfoRep;
@@ -33,17 +32,17 @@ class AABBConvexPolygon : public ConvexPolygon<point3_bits_template,
 
   AABBConvexPolygon() { }
 
-  // `VertexData` must be constructible from `OtherVertexData`.
-  template <size_t other_point3_bits, typename OtherVertexData>
+  // `EdgeParent` must be constructible from `OtherEdgeParent`.
+  template <size_t other_point3_bits, typename OtherEdgeParent>
   explicit AABBConvexPolygon(const AABBConvexPolygon<other_point3_bits,
-                                                     OtherVertexData>& other) :
+                                                     OtherEdgeParent>& other) :
     Parent(other),
     aabb_tracker_(other.aabb_tracker_) { }
 
-  // `VertexData` must be constructible from `OtherVertexData`.
-  template <size_t other_point3_bits, typename OtherVertexData>
+  // `EdgeParent` must be constructible from `OtherEdgeParent`.
+  template <size_t other_point3_bits, typename OtherEdgeParent>
   explicit AABBConvexPolygon(const ConvexPolygon<other_point3_bits,
-                                                 OtherVertexData>& other) :
+                                                 OtherEdgeParent>& other) :
       Parent(other),
       aabb_tracker_(Parent::vertices_begin(), Parent::vertices_end()) { }
 
@@ -72,10 +71,10 @@ class AABBConvexPolygon : public ConvexPolygon<point3_bits_template,
     return true;
   }
 
-  // `VertexData` must be assignable from `OtherVertexData`.
-  template <size_t other_point3_bits, typename OtherVertexData>
+  // `EdgeParent` must be assignable from `OtherEdgeParent`.
+  template <size_t other_point3_bits, typename OtherEdgeParent>
   AABBConvexPolygon& operator=(
-      const AABBConvexPolygon<other_point3_bits, OtherVertexData>& other) {
+      const AABBConvexPolygon<other_point3_bits, OtherEdgeParent>& other) {
     Parent::operator=(other);
     aabb_tracker_ = other.aabb_tracker_;
     return *this;
@@ -145,9 +144,9 @@ class AABBConvexPolygon : public ConvexPolygon<point3_bits_template,
 
   using Parent::vertex_data;
 
-  template <size_t other_point3_bits, typename OtherVertexData>
+  template <size_t other_point3_bits, typename OtherEdgeParent>
   bool operator==(const AABBConvexPolygon<other_point3_bits,
-                                          OtherVertexData>& other) const {
+                                          OtherEdgeParent>& other) const {
     if (aabb() != other.aabb()) return false;
     return Parent::operator==(other);
   }

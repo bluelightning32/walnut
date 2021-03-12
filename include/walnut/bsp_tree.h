@@ -8,14 +8,14 @@
 
 namespace walnut {
 
-// InputPolygonTemplate must have a VertexData that inherits from BSPEdgeInfo.
+// InputPolygonTemplate must have a EdgeParent that inherits from BSPEdgeInfo.
 template <typename InputPolygonTemplate = BSPDefaultPolygon<32>>
 class BSPTree {
  public:
   using InputPolygon = InputPolygonTemplate;
   using BSPNodeRep = BSPNode<InputPolygon>;
   using OutputPolygon = typename BSPNodeRep::PolygonRep;
-  using VertexData = typename BSPNodeRep::VertexData;
+  using EdgeParent = typename BSPNodeRep::EdgeParent;
 
   // BSPNode that represents and references a node copied from another tree.
   class MappedBSPNode : public BSPNodeRep {
@@ -74,8 +74,8 @@ class BSPTree {
                                 std::forward<InputConvexPolygon>(polygon));
     using InputConvexPolygonNoRef =
       typename std::remove_reference<InputConvexPolygon>::type;
-    using InputVertexData = typename InputConvexPolygonNoRef::VertexData;
-    if (std::is_base_of<VertexData, InputVertexData>::value) {
+    using InputEdgeParent = typename InputConvexPolygonNoRef::EdgeParent;
+    if (std::is_base_of<EdgeParent, InputEdgeParent>::value) {
       for (size_t i = 0; i < root.contents_.back().vertex_count(); ++i) {
         root.contents_.back().vertex_data(i).ResetBSPInfo();
       }

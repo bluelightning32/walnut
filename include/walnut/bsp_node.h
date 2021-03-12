@@ -173,14 +173,14 @@ class BSPPolygonWrapper : public BSPNodeTemplate::InputPolygon {
   using Parent = typename BSPNodeTemplate::InputPolygon;
   using typename Parent::NormalRep;
   using typename Parent::SplitInfoRep;
-  using typename Parent::VertexData;
+  using typename Parent::EdgeParent;
   using BSPEdgeInfoRep = BSPEdgeInfo<BSPNodeRep, NormalRep>;
   using BSPNodeSideRep = typename BSPEdgeInfoRep::BSPNodeSideRep;
 
-  static_assert(std::is_base_of<BSPEdgeInfoRep, VertexData>::value,
-                "The ConvexPolygon's VertexData must inherit from "
+  static_assert(std::is_base_of<BSPEdgeInfoRep, EdgeParent>::value,
+                "The ConvexPolygon's EdgeParent must inherit from "
                 "BSPEdgeInfo.");
-  static_assert(std::is_base_of<ConvexPolygon<Parent::point3_bits, VertexData>,
+  static_assert(std::is_base_of<ConvexPolygon<Parent::point3_bits, EdgeParent>,
                                 Parent>::value,
       "The InputPolygonTemplate must inherit from ConvexPolygon.");
 
@@ -252,14 +252,14 @@ class BSPPolygonWrapper : public BSPNodeTemplate::InputPolygon {
 // This is a node within a binary space partition tree.
 //
 // `InputPolygonTemplate` must inherit from ConvexPolygon.
-// `InputPolygonTemplate::VertexData` must inherit from BSPEdgeInfo.
+// `InputPolygonTemplate::EdgeParent` must inherit from BSPEdgeInfo.
 template <typename InputPolygonTemplate = BSPDefaultPolygon<32>>
 class BSPNode {
  public:
   using InputPolygon = InputPolygonTemplate;
   using PolygonRep = BSPPolygonWrapper<BSPNode>;
-  using VertexData = typename PolygonRep::VertexData;
-  using NormalRep = typename VertexData::NormalRep;
+  using EdgeParent = typename PolygonRep::EdgeParent;
+  using NormalRep = typename EdgeParent::NormalRep;
   using EdgeRep = typename PolygonRep::EdgeRep;
   using BSPEdgeInfoRep = typename PolygonRep::BSPEdgeInfoRep;
   using BSPNodeSideRep = typename BSPEdgeInfoRep::BSPNodeSideRep;
@@ -420,7 +420,7 @@ void BSPNode<InputPolygonTemplate>::PushVertexPWNToChildren(
     BSPPolygonId polygon_id, int edge_comparison,
     const BSPNodeSideRep& edge_last_coincident, const EdgeRep& vertex_edge,
     int crossing_flip) {
-  const VertexData& vertex_data = vertex_edge.data();
+  const EdgeParent& vertex_data = vertex_edge.data();
   const BSPNodeSideRep& vertex_last_coincident =
     vertex_data.vertex_last_coincident();
   const int vertex_comparison =
@@ -509,7 +509,7 @@ void BSPNode<InputPolygonTemplate>::PushContentPWNToChildren() {
   for (PolygonRep& polygon : contents_) {
     for (size_t i = 0; i < polygon.vertex_count(); ++i) {
       const EdgeRep& current_edge = polygon.edge(i);
-      const VertexData& current_vertex_data = current_edge.data();
+      const EdgeParent& current_vertex_data = current_edge.data();
 
       const BSPNodeSideRep& edge_last_coincident =
         current_vertex_data.edge_last_coincident();
