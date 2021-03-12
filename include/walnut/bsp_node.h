@@ -58,7 +58,7 @@ class BSPEdgeInfo {
   template <size_t num_bits, size_t denom_bits>
   BSPEdgeInfo(const BSPEdgeInfo& parent,
               const HomoPoint3<num_bits, denom_bits>& new_source) :
-    split_by_(parent.split_by()),
+    edge_first_coincident_(parent.edge_first_coincident_),
     vertex_last_coincident_(parent.edge_last_coincident_),
     edge_last_coincident_(parent.edge_last_coincident_) { }
 
@@ -88,6 +88,10 @@ class BSPEdgeInfo {
     return false;
   }
 
+  const BSPNodeSideRep& edge_first_coincident() const {
+    return edge_first_coincident_;
+  }
+
   const BSPNodeSideRep& vertex_last_coincident() const {
     return vertex_last_coincident_;
   }
@@ -96,15 +100,15 @@ class BSPEdgeInfo {
     return edge_last_coincident_;
   }
 
-  const BSPNodeRep* split_by() const {
-    return split_by_;
-  }
-
  private:
   friend BSPNodeRep;
 
+  // The BSPNodeRep highest in the tree that is coincident with the entire
+  // edge, or nullptr, if the edge is not coincident with any of its ancestor
+  // nodes.
+  //
   // This field is updated directly by BSPNodeRep.
-  const BSPNodeRep* split_by_ = nullptr;
+  BSPNodeSideRep edge_first_coincident_;
 
   // The BSPNodeRep deepest in the tree that is coincident with the vertex, or
   // nullptr, if the vertex is not coincident with any of its ancestor nodes.
@@ -368,9 +372,6 @@ class BSPNode {
   // Update the boundary angles in the edges and vertices of `polygon` that are
   // coincident with `split_`.
   //
-  // If `pos_child_` is false, the angles are updated with split_.normal(),
-  // otherwise they are updated with -split_.normal().
-  //
   // The vertices in the range [coincident_begin, coincident_end) are updated.
   // The edges in the range [coincident_begin, coincident_end - 1) are updated.
   //
@@ -540,8 +541,8 @@ void BSPNode<InputPolygonTemplate>::UpdateBoundaryAngles(
   for (; pos < coincident_end - 1; ++pos) {
     BSPEdgeInfoRep& edge_info = polygon.bsp_edge_info(
         pos % polygon.vertex_count());
-    if (edge_info.split_by_ == nullptr) {
-      edge_info.split_by_ = this;
+    if (edge_info.edge_first_coincident_.node == nullptr) {
+      edge_info.edge_first_coincident_ = coincident_info;
     }
     edge_info.edge_last_coincident_ = coincident_info;
     edge_info.vertex_last_coincident_ = coincident_info;
@@ -692,7 +693,7 @@ template <typename InputPolygonTemplate, typename NormalRep>
 std::ostream& operator<<(
     std::ostream& out,
     const BSPEdgeInfo<InputPolygonTemplate, NormalRep>& info) {
-  out << "< split_by=" << info.split_by()
+  out << "< edge_first_coincident=" << info.edge_first_coincident()
       << ", edge_last_coincident=" << info.edge_last_coincident()
       << ", vertex_last_coincident=" << info.vertex_last_coincident()
       << " >";
