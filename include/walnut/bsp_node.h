@@ -32,23 +32,21 @@ class BSPDefaultPolygon;
 
 using BSPPolygonId = size_t;
 
+template <typename BSPNodeTemplate>
+struct BSPNodeSide {
+  using BSPNodeRep = BSPNodeTemplate;
+
+  const BSPNodeRep* node = nullptr;
+  bool pos_side = false;
+};
+
 template <typename BSPNodeTemplate, typename NormalRepTemplate>
 class BSPEdgeInfo {
  public:
   using BSPNodeRep = BSPNodeTemplate;
   using NormalRep = NormalRepTemplate;
 
-  struct CoincidentInfo {
-    const BSPNodeRep* node = nullptr;
-    bool pos_side = false;
-
-    NormalRep split_normal() const {
-      if (node == nullptr) {
-        return NormalRep::Zero();
-      }
-      return pos_side ? -node->split().normal() : node->split().normal();
-    }
-  };
+  using CoincidentInfo = BSPNodeSide<BSPNodeRep>;
 
   BSPEdgeInfo(const NoVertexData&) { }
 
@@ -91,15 +89,16 @@ class BSPEdgeInfo {
   }
 
   NormalRep vertex_boundary_angle() const {
-    return vertex_last_coincident_.split_normal();
+    if (vertex_last_coincident_.node == nullptr) {
+      return NormalRep::Zero();
+    }
+    return vertex_last_coincident_.pos_side ?
+      -vertex_last_coincident_.node->split().normal() :
+      vertex_last_coincident_.node->split().normal();
   }
 
   const CoincidentInfo& edge_last_coincident() const {
     return edge_last_coincident_;
-  }
-
-  NormalRep edge_boundary_angle() const {
-    return edge_last_coincident_.split_normal();
   }
 
   const BSPNodeRep* split_by = nullptr;
@@ -390,7 +389,6 @@ void BSPNode<InputPolygonTemplate>::PushVertexPWNToChildren(
   const NormalRep& vertex_boundary_angle = vertex_data.vertex_boundary_angle();
   const int vertex_comparison = RXYCompareBivector(split_.normal(),
                                                    vertex_boundary_angle);
-  auto edge_boundary_angle = edge_last_coincident.split_normal();
 
   // For a crossing at the vertex, the edge boundary angle and the
   // vertex angle must be on opposite sides of the split normal. That
@@ -399,8 +397,10 @@ void BSPNode<InputPolygonTemplate>::PushVertexPWNToChildren(
   if (edge_comparison + vertex_comparison == 0) {
     assert((edge_comparison < 0 && vertex_comparison > 0) ||
            (edge_comparison > 0 && vertex_comparison < 0));
-    const int vertex_to_edge = RXYCompareBivector(vertex_boundary_angle,
-                                                  edge_boundary_angle);
+    const int vertex_to_edge =
+      RXYCompareBivector(vertex_boundary_angle,
+                         edge_last_coincident.node->split().normal()) *
+      (edge_last_coincident.pos_side ? -1 : 1);
     // Since the vertex boundary angle and edge boundary angle are on
     // opposite sides of the split normal,
     //   vertex_boundary_angle != edge_boundary_angle
@@ -433,7 +433,8 @@ void BSPNode<InputPolygonTemplate>::PushVertexPWNToChildren(
       // * split_.normal()
       //
       BigIntWord min_max_comparison = split_.normal().Dot(
-          vertex_boundary_angle.Cross(edge_boundary_angle)).GetSign();
+          vertex_boundary_angle.Cross(
+            edge_last_coincident.node->split().normal())).GetSign();
       // * Starting the list of vectors at a different offset does not
       //   affect the sign.
       // * Negating split_.normal() negates the sign.
@@ -450,7 +451,8 @@ void BSPNode<InputPolygonTemplate>::PushVertexPWNToChildren(
       //   min_max_comparison ^ (vertex_comparison ^
       //                         vertex_to_edge) ^ vertex_to_edge
       // = min_max_comparison ^ vertex_comparison
-      if ((min_max_comparison ^ vertex_comparison) >= 0) {
+      if ((min_max_comparison ^ vertex_comparison ^
+          (edge_last_coincident.pos_side ? -1 : 1)) >= 0) {
         if (push_to_child->pwn_by_id_.size() <= polygon_id) {
           push_to_child->pwn_by_id_.resize(polygon_id + 1);
         }
@@ -634,12 +636,29 @@ void BSPNode<InputPolygonTemplate>::PushContentsToLeaves(
   }
 }
 
+template <typename BSPNodeTemplate>
+std::ostream& operator<<(std::ostream& out,
+                         const BSPNodeSide<BSPNodeTemplate>& info) {
+  if (info.node == nullptr) {
+    out << "none";
+  } else {
+    out << "[";
+    if (info.pos_side) {
+      out << "pos";
+    } else {
+      out << "neg";
+    }
+    out << " " << info.node->split().normal() << "]";
+  }
+  return out;
+}
+
 template <typename InputPolygonTemplate, typename NormalRep>
 std::ostream& operator<<(
     std::ostream& out,
     const BSPEdgeInfo<InputPolygonTemplate, NormalRep>& info) {
   out << "< split_by=" << info.split_by
-      << ", edge_boundary_angle=" << info.edge_boundary_angle()
+      << ", edge_last_coincident=" << info.edge_last_coincident()
       << ", vertex_boundary_angle=" << info.vertex_boundary_angle()
       << " >";
   return out;
