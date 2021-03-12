@@ -133,12 +133,21 @@ class ConvexPolygon {
     return edges_[index].vertex();
   }
 
-  const EdgeParent& vertex_data(size_t index) const {
-    return edges_[index].data();
+  const EdgeRep& vertex_data(size_t index) const {
+    return edges_[index];
+  }
+
+  EdgeRep& vertex_data(size_t index) {
+    return edges_[index];
   }
 
   // Returns the information about an edge and the source vertex for that edge.
   const EdgeRep& edge(size_t index) const {
+    return edges_[index];
+  }
+
+  // Returns the information about an edge and the source vertex for that edge.
+  EdgeRep& edge(size_t index) {
     return edges_[index];
   }
 
@@ -530,10 +539,6 @@ class ConvexPolygon {
     drop_dimension_ = other.drop_dimension();
     edges_.assign(other.edges().begin(), other.edges().end());
     return *this;
-  }
-
-  EdgeParent& vertex_data(size_t index) {
-    return edges_[index].data();
   }
 
   // Sorts `edges_`, such that the lexicographically minimum vertex comes

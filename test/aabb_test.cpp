@@ -215,23 +215,26 @@ TEST(AABB, Assignment) {
   EXPECT_EQ(prism1, prism2);
 }
 
-struct StringVertexData : public std::string {
+struct StringVertexData {
   StringVertexData() = default;
 
   template <size_t num_bits, size_t denom_bits>
   StringVertexData(const StringVertexData& parent,
-                   const HomoPoint3<num_bits, denom_bits>& new_source) { }
+                   const HomoPoint3<num_bits, denom_bits>& new_source) :
+    str(parent.str) { }
 
   template <size_t d_bits, size_t m_bits>
   StringVertexData(const StringVertexData& parent,
-                   const PluckerLine<d_bits, m_bits>& new_line) { }
+                   const PluckerLine<d_bits, m_bits>& new_line) :
+    str(parent.str) { }
 
   template <size_t num_bits, size_t denom_bits, size_t d_bits, size_t m_bits>
   StringVertexData(const StringVertexData& parent,
                    const HomoPoint3<num_bits, denom_bits>& new_source,
-                   const PluckerLine<d_bits, m_bits>& new_line) { }
+                   const PluckerLine<d_bits, m_bits>& new_line) :
+    str(parent.str) { }
 
-  using std::string::operator=;
+  std::string str;
 };
 
 TEST(AABB, IntersectPlaneZUpWithData) {
@@ -247,11 +250,11 @@ TEST(AABB, IntersectPlaneZUpWithData) {
   std::vector<HomoPoint3<>> vertices;
   for (size_t i = 0; i < result.vertex_count(); ++i) {
     vertices.push_back(result.vertex(i));
-    EXPECT_EQ(result.vertex_data(i), "");
-    result.vertex_data(i) = std::to_string(i);
+    EXPECT_EQ(result.edge(i).str, "");
+    result.edge(i).str = std::to_string(i);
   }
   for (size_t i = 0; i < result.vertex_count(); ++i) {
-    EXPECT_EQ(result.vertex_data(i), std::to_string(i));
+    EXPECT_EQ(result.edge(i).str, std::to_string(i));
   }
   EXPECT_THAT(vertices, ElementsAre(
           Point3<32>{-5, -5, 0},

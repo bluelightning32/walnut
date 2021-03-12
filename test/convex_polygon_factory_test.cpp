@@ -307,8 +307,10 @@ TEST(ConvexPolygonFactory, SelfIntersectingStartAtReflex) {
 
 TEST(ConvexPolygonFactory, VertexData) {
   struct NoDefaultConstructor : public std::string {
-    using std::string::string;
+    NoDefaultConstructor(const char* str) : str(str) { }
     NoDefaultConstructor() = delete;
+
+    std::string str;
   };
   using ConvexPolygonRep = MutableConvexPolygon<32, NoDefaultConstructor>;
   using Point3WithString = Point3WithVertexData<32, NoDefaultConstructor>;
@@ -332,8 +334,8 @@ TEST(ConvexPolygonFactory, VertexData) {
   EXPECT_EQ(polygon.edges()[1].data(), input[1].data);
   EXPECT_EQ(polygon.edges()[2].data(), input[2].data);
 
-  polygon.vertex_data(2) = "new p2";
-  EXPECT_EQ(polygon.edges()[2].data(), "new p2");
+  polygon.edge(2).str = "new p2";
+  EXPECT_EQ(polygon.edges()[2].str, "new p2");
 }
 
 TEST(ConvexPolygonFactory, GetPlaneOrientationAfterProjection) {
