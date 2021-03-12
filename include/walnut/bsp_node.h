@@ -94,6 +94,10 @@ class BSPEdgeInfo {
     return vertex_last_coincident_.split_normal();
   }
 
+  const CoincidentInfo& edge_last_coincident() const {
+    return edge_last_coincident_;
+  }
+
   NormalRep edge_boundary_angle() const {
     return edge_last_coincident_.split_normal();
   }
@@ -230,6 +234,7 @@ class BSPNode {
   using NormalRep = typename VertexData::NormalRep;
   using EdgeRep = typename PolygonRep::EdgeRep;
   using BSPEdgeInfoRep = typename PolygonRep::BSPEdgeInfoRep;
+  using CoincidentInfoRep = typename BSPEdgeInfoRep::CoincidentInfo;
 
   using HalfSpace3Rep = typename HalfSpace3FromPoint3Builder<
     InputPolygon::point3_bits>::HalfSpace3Rep;
@@ -327,7 +332,7 @@ class BSPNode {
   // directly to update the PWN, or crossing_flip should be -1 if the opposite
   // should be used.
   void PushVertexPWNToChildren(BSPPolygonId polygon_id, int edge_comparison,
-                               const NormalRep& edge_boundary_angle,
+                               const CoincidentInfoRep& edge_last_coincident,
                                const EdgeRep& vertex_edge, int crossing_flip);
 
   // Update the children's PWN based on this node's contents.
@@ -379,12 +384,13 @@ class BSPNode {
 template <typename InputPolygonTemplate>
 void BSPNode<InputPolygonTemplate>::PushVertexPWNToChildren(
     BSPPolygonId polygon_id, int edge_comparison,
-    const NormalRep& edge_boundary_angle, const EdgeRep& vertex_edge,
+    const CoincidentInfoRep& edge_last_coincident, const EdgeRep& vertex_edge,
     int crossing_flip) {
   const VertexData& vertex_data = vertex_edge.data();
   const NormalRep& vertex_boundary_angle = vertex_data.vertex_boundary_angle();
   const int vertex_comparison = RXYCompareBivector(split_.normal(),
                                                    vertex_boundary_angle);
+  auto edge_boundary_angle = edge_last_coincident.split_normal();
 
   // For a crossing at the vertex, the edge boundary angle and the
   // vertex angle must be on opposite sides of the split normal. That
@@ -462,19 +468,24 @@ void BSPNode<InputPolygonTemplate>::PushContentPWNToChildren() {
       const EdgeRep& current_edge = polygon.edge(i);
       const VertexData& current_vertex_data = current_edge.data();
 
-      const NormalRep& edge_boundary_angle =
-        current_vertex_data.edge_boundary_angle();
-      int edge_comparison = RXYCompareBivector(split_.normal(),
-                                               edge_boundary_angle);
+      const CoincidentInfoRep& edge_last_coincident =
+        current_vertex_data.edge_last_coincident();
+      if (edge_last_coincident.node == nullptr) continue;
+      int edge_comparison =
+        RXYCompareBivector(split_.normal(),
+                           edge_last_coincident.node->split().normal()) *
+        (edge_last_coincident.pos_side ? -1 : 1);
       if (edge_comparison == 0) continue;
 
-      PushVertexPWNToChildren(polygon.id, edge_comparison, edge_boundary_angle,
-                              current_edge, /*crossing_flip=*/1);
+      PushVertexPWNToChildren(polygon.id, edge_comparison,
+                              edge_last_coincident, current_edge,
+                              /*crossing_flip=*/1);
 
       const EdgeRep& next_edge =
         polygon.edge((i + 1)%polygon.vertex_count());
-      PushVertexPWNToChildren(polygon.id, edge_comparison, edge_boundary_angle,
-                              next_edge, /*crossing_flip=*/-1);
+      PushVertexPWNToChildren(polygon.id, edge_comparison,
+                              edge_last_coincident, next_edge,
+                              /*crossing_flip=*/-1);
     }
   }
 }
