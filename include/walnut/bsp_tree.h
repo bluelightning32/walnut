@@ -23,6 +23,8 @@ class BSPTree {
     using Parent = BSPNodeRep;
     using typename Parent::HalfSpace3Rep;
 
+    MappedBSPNode() = default;
+
     MappedBSPNode(const BSPNodeRep* original) : original_(original) { }
 
     void Reset(const BSPNodeRep* original) {
@@ -91,24 +93,25 @@ class BSPTree {
                leaf_callback);
   }
 
-  // Returns the polyhedron boundary of a BSPNode.
+  // Returns a MappedBSPNode containing the polyhedron boundary of a BSPNode.
   //
-  // The path to the BSPNode is specified as a sequence of bools, indicating
-  // whether to go to the negative child (false) or the positive child (true).
-  // The sequence of bools is specified through the iterators `node_path_begin`
-  // and `node_path_end`.
+  // The path to the BSPNode from the root is specified as a sequence of bools,
+  // indicating whether to go to the negative child (false) or the positive
+  // child (true). The sequence of bools is specified through the iterators
+  // `node_path_begin` and `node_path_end`.
   //
-  // The result is a vector of ConvexPolygons that define the polyhedron of the
-  // boundary. Each returned polygon indicates which BSPNode division it came
-  // from.
+  // The result is a MappedBSPNode that is split the same way as the input
+  // BSPNode. The combination of the border polygons and content polygons in
+  // that mapped node define the polyhedron of the boundary of the input node.
+  // Each returned polygon indicates which BSPNode division it came from
+  // through the on_node_plane->original field.
   //
   // In case the BSPNode border is unbounded, `bounding_box` provides an upper
   // bound for how far the ConvexPolygons will extend.
   template<typename Iterator>
-  std::vector<OutputPolygon> GetNodeBorder(
-      Iterator node_path_begin,
-      Iterator node_path_end,
-      const AABB<point3_bits>& bounding_box) const;
+  MappedBSPNode* GetNodeBorder(
+      Iterator node_path_begin, Iterator node_path_end,
+      const AABB<point3_bits>& bounding_box, MappedBSPNode& mapped_root) const;
 
   BSPPolygonId AllocateId() {
     return next_id_++;
@@ -126,11 +129,12 @@ class BSPTree {
 
 template <typename ConvexPolygonTemplate>
 template <typename Iterator>
-std::vector<typename BSPTree<ConvexPolygonTemplate>::OutputPolygon>
+typename BSPTree<ConvexPolygonTemplate>::MappedBSPNode*
 BSPTree<ConvexPolygonTemplate>::GetNodeBorder(
     Iterator node_path_begin, Iterator node_path_end,
-    const AABB<point3_bits>& bounding_box) const {
-  MappedBSPNode mapped_root(&root);
+    const AABB<point3_bits>& bounding_box,
+    MappedBSPNode& mapped_root) const {
+  mapped_root.Reset(&root);
   for (auto& polygon : bounding_box.GetWalls()) {
     assert(polygon.vertex_count() > 0);
     mapped_root.contents_.emplace_back(/*id=*/0, /*on_node_plane=*/nullptr,
@@ -170,28 +174,7 @@ BSPTree<ConvexPolygonTemplate>::GetNodeBorder(
       mapped_node = mapped_node->negative_child();
     }
   }
-
-  // Convert `on_node_plane` in the polygons in mapped_root to pointers in
-  // root. Also convert split_by in all of the edges from pointers in
-  // mapped_root to pointers in root.
-  for (OutputPolygon& output : mapped_node->contents_) {
-    if (output.on_node_plane) {
-      output.on_node_plane =
-        static_cast<const MappedBSPNode*>(output.on_node_plane)->original();
-    }
-    for (size_t i = 0; i < output.vertex_count(); ++i) {
-      auto& edge_info = output.bsp_edge_info(i);
-      if (edge_info.split_by) {
-        edge_info.split_by =
-          static_cast<const MappedBSPNode*>(edge_info.split_by)->original();
-      }
-    }
-  }
-  // Return the converted polygons.
-  std::vector<OutputPolygon> result(std::move(mapped_node->border_contents_));
-  result.insert(result.end(), mapped_node->contents_.begin(),
-                mapped_node->contents_.end());
-  return result;
+  return mapped_node;
 }
 
 }  // walnut

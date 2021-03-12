@@ -307,8 +307,8 @@ class BSPNode {
   }
 
   void Reset() {
-    contents_.reset();
-    border_contents_.reset();
+    contents_.clear();
+    border_contents_.clear();
     split_ = HalfSpace3Rep();
     negative_child_.reset();
     positive_child_.reset();
