@@ -17,6 +17,45 @@ class BSPTree {
   using OutputPolygon = typename BSPNodeRep::PolygonRep;
   using VertexData = typename BSPNodeRep::VertexData;
 
+  // BSPNode that represents and references a node copied from another tree.
+  class MappedBSPNode : public BSPNodeRep {
+   public:
+    using Parent = BSPNodeRep;
+    using typename Parent::HalfSpace3Rep;
+
+    MappedBSPNode(const BSPNodeRep* original) : original_(original) { }
+
+    void Reset(const BSPNodeRep* original) {
+      Parent::Reset();
+      original_ = original;
+    }
+
+    // Note that this overload hides the `Parent::Split` method that only takes
+    // 1 argument.
+    void Split(const HalfSpace3Rep& half_space,
+               const BSPNodeRep* original_neg_child,
+               const BSPNodeRep* original_pos_child) {
+      Parent::MakeInterior(half_space, new MappedBSPNode(original_neg_child),
+                           new MappedBSPNode(original_pos_child));
+      Parent::PushContentsToChildren();
+    }
+
+    MappedBSPNode* negative_child() {
+      return static_cast<MappedBSPNode*>(Parent::negative_child());
+    }
+
+    MappedBSPNode* positive_child() {
+      return static_cast<MappedBSPNode*>(Parent::positive_child());
+    }
+
+    const BSPNodeRep* original() const {
+     return original_;
+    }
+
+   private:
+    const BSPNodeRep* original_ = nullptr;
+  };
+
   static constexpr int point3_bits = InputPolygon::point3_bits;
 
   // Add a new polygon to this node.
@@ -91,34 +130,6 @@ std::vector<typename BSPTree<ConvexPolygonTemplate>::OutputPolygon>
 BSPTree<ConvexPolygonTemplate>::GetNodeBorder(
     Iterator node_path_begin, Iterator node_path_end,
     const AABB<point3_bits>& bounding_box) const {
-  struct MappedBSPNode : public BSPNodeRep {
-   public:
-    using Parent = BSPNodeRep;
-    using typename Parent::HalfSpace3Rep;
-
-    MappedBSPNode(const BSPNodeRep* original) : original(original) { }
-
-    // Note that this overload hides the `Parent::Split` method that only takes
-    // 1 argument.
-    void Split(const HalfSpace3Rep& half_space,
-               const BSPNodeRep* original_neg_child,
-               const BSPNodeRep* original_pos_child) {
-      Parent::MakeInterior(half_space, new MappedBSPNode(original_neg_child),
-                           new MappedBSPNode(original_pos_child));
-      Parent::PushContentsToChildren();
-    }
-
-    MappedBSPNode* negative_child() {
-      return static_cast<MappedBSPNode*>(Parent::negative_child());
-    }
-
-    MappedBSPNode* positive_child() {
-      return static_cast<MappedBSPNode*>(Parent::positive_child());
-    }
-
-    const BSPNodeRep* original = nullptr;
-  };
-
   MappedBSPNode mapped_root(&root);
   for (auto& polygon : bounding_box.GetWalls()) {
     assert(polygon.vertex_count() > 0);
@@ -161,18 +172,18 @@ BSPTree<ConvexPolygonTemplate>::GetNodeBorder(
   }
 
   // Convert `on_node_plane` in the polygons in mapped_root to pointers in
-  // root+. Also convert split_by in all of the edges from pointers in
-  // mapped_root to pointers in root_.
+  // root. Also convert split_by in all of the edges from pointers in
+  // mapped_root to pointers in root.
   for (OutputPolygon& output : mapped_node->contents_) {
     if (output.on_node_plane) {
       output.on_node_plane =
-        static_cast<const MappedBSPNode*>(output.on_node_plane)->original;
+        static_cast<const MappedBSPNode*>(output.on_node_plane)->original();
     }
     for (size_t i = 0; i < output.vertex_count(); ++i) {
       auto& edge_info = output.bsp_edge_info(i);
       if (edge_info.split_by) {
         edge_info.split_by =
-          static_cast<const MappedBSPNode*>(edge_info.split_by)->original;
+          static_cast<const MappedBSPNode*>(edge_info.split_by)->original();
       }
     }
   }

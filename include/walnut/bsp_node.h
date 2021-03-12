@@ -306,6 +306,15 @@ class BSPNode {
     positive_child_ = std::unique_ptr<BSPNode>(positive_child);
   }
 
+  void Reset() {
+    contents_.reset();
+    border_contents_.reset();
+    split_ = HalfSpace3Rep();
+    negative_child_.reset();
+    positive_child_.reset();
+    pwn_by_id_.clear();
+  }
+
  private:
   // Push the contents all the way down to descendant leaf nodes. Call
   // `leaf_callback` on each leaf node that the contents were pushed to (and
