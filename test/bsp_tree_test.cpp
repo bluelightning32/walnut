@@ -337,22 +337,23 @@ TEST(BSPTree, SplitTwiceVertexData) {
       EXPECT_EQ(edge.data().split_by, &tree.root);
       EXPECT_EQ(edge.data().edge_last_coincident().node, &tree.root);
       EXPECT_TRUE(edge.data().edge_last_coincident().pos_side);
-      EXPECT_EQ(edge.data().vertex_boundary_angle(), split2.normal());
+      EXPECT_EQ(edge.data().vertex_last_coincident().node, &pos_child1);
+      EXPECT_FALSE(edge.data().vertex_last_coincident().pos_side);
     } else if (edge.vertex == q1) {
       EXPECT_EQ(edge.data().split_by, &pos_child1);
       EXPECT_EQ(edge.data().edge_last_coincident().node, &pos_child1);
       EXPECT_FALSE(edge.data().edge_last_coincident().pos_side);
-      EXPECT_EQ(edge.data().vertex_boundary_angle(),
-                split2.normal());
+      EXPECT_EQ(edge.data().vertex_last_coincident().node, &pos_child1);
+      EXPECT_FALSE(edge.data().vertex_last_coincident().pos_side);
     } else if (edge.vertex == q4) {
       EXPECT_EQ(edge.data().split_by, nullptr);
       EXPECT_EQ(edge.data().edge_last_coincident().node, nullptr);
-      EXPECT_EQ(edge.data().vertex_boundary_angle(),
-                -split1.normal());
+      EXPECT_EQ(edge.data().vertex_last_coincident().node, &tree.root);
+      EXPECT_TRUE(edge.data().vertex_last_coincident().pos_side);
     } else {
       EXPECT_EQ(edge.data().split_by, nullptr);
       EXPECT_EQ(edge.data().edge_last_coincident().node, nullptr);
-      EXPECT_TRUE(edge.data().vertex_boundary_angle().IsZero());
+      EXPECT_EQ(edge.data().vertex_last_coincident().node, nullptr);
     }
   }
   // Validate pos_child2.
@@ -362,23 +363,23 @@ TEST(BSPTree, SplitTwiceVertexData) {
       EXPECT_EQ(edge.data().split_by, &tree.root);
       EXPECT_EQ(edge.data().edge_last_coincident().node, &tree.root);
       EXPECT_TRUE(edge.data().edge_last_coincident().pos_side);
-      EXPECT_EQ(edge.data().vertex_boundary_angle(),
-                -split1.normal());
+      EXPECT_EQ(edge.data().vertex_last_coincident().node, &tree.root);
+      EXPECT_TRUE(edge.data().vertex_last_coincident().pos_side);
     } else if (edge.vertex == q2) {
       EXPECT_EQ(edge.data().split_by, &pos_child1);
       EXPECT_EQ(edge.data().edge_last_coincident().node, &pos_child1);
       EXPECT_TRUE(edge.data().edge_last_coincident().pos_side);
-      EXPECT_EQ(edge.data().vertex_boundary_angle(),
-                -split2.normal());
+      EXPECT_EQ(edge.data().vertex_last_coincident().node, &pos_child1);
+      EXPECT_TRUE(edge.data().vertex_last_coincident().pos_side);
     } else if (edge.vertex == q1) {
       EXPECT_EQ(edge.data().split_by, nullptr);
       EXPECT_EQ(edge.data().edge_last_coincident().node, nullptr);
-      EXPECT_EQ(edge.data().vertex_boundary_angle(),
-                -split2.normal());
+      EXPECT_EQ(edge.data().vertex_last_coincident().node, &pos_child1);
+      EXPECT_TRUE(edge.data().vertex_last_coincident().pos_side);
     } else {
       EXPECT_EQ(edge.data().split_by, nullptr);
       EXPECT_EQ(edge.data().edge_last_coincident().node, nullptr);
-      EXPECT_TRUE(edge.data().vertex_boundary_angle().IsZero());
+      EXPECT_EQ(edge.data().vertex_last_coincident().node, nullptr);
     }
   }
 }
@@ -450,19 +451,19 @@ TEST(BSPTree, SplitVertThenDiagVertexData) {
       EXPECT_EQ(edge.data().split_by, &tree.root);
       EXPECT_EQ(edge.data().edge_last_coincident().node, &tree.root);
       EXPECT_TRUE(edge.data().edge_last_coincident().pos_side);
-      EXPECT_EQ(edge.data().vertex_boundary_angle(),
-                -split1.normal());
+      EXPECT_EQ(edge.data().vertex_last_coincident().node, &tree.root);
+      EXPECT_TRUE(edge.data().vertex_last_coincident().pos_side);
     } else if (edge.vertex == q2) {
       EXPECT_EQ(edge.data().split_by, &pos_child1);
       EXPECT_EQ(edge.data().edge_last_coincident().node, &pos_child1);
       EXPECT_FALSE(edge.data().edge_last_coincident().pos_side);
-      EXPECT_EQ(edge.data().vertex_boundary_angle(),
-                split2.normal());
+      EXPECT_EQ(edge.data().vertex_last_coincident().node, &pos_child1);
+      EXPECT_FALSE(edge.data().vertex_last_coincident().pos_side);
     } else {
       EXPECT_EQ(edge.data().split_by, nullptr);
       EXPECT_EQ(edge.data().edge_last_coincident().node, nullptr);
-      EXPECT_EQ(edge.data().vertex_boundary_angle(),
-                split2.normal());
+      EXPECT_EQ(edge.data().vertex_last_coincident().node, &pos_child1);
+      EXPECT_FALSE(edge.data().vertex_last_coincident().pos_side);
     }
   }
   // Validate pos_child2.
@@ -473,17 +474,17 @@ TEST(BSPTree, SplitVertThenDiagVertexData) {
       EXPECT_EQ(edge.data().split_by, &pos_child1);
       EXPECT_EQ(edge.data().edge_last_coincident().node, &pos_child1);
       EXPECT_TRUE(edge.data().edge_last_coincident().pos_side);
-      EXPECT_EQ(edge.data().vertex_boundary_angle(),
-                -split2.normal());
+      EXPECT_EQ(edge.data().vertex_last_coincident().node, &pos_child1);
+      EXPECT_TRUE(edge.data().vertex_last_coincident().pos_side);
     } else if (edge.vertex == q2) {
       EXPECT_EQ(edge.data().split_by, nullptr);
       EXPECT_EQ(edge.data().edge_last_coincident().node, nullptr);
-      EXPECT_EQ(edge.data().vertex_boundary_angle(),
-                -split2.normal());
+      EXPECT_EQ(edge.data().vertex_last_coincident().node, &pos_child1);
+      EXPECT_TRUE(edge.data().vertex_last_coincident().pos_side);
     } else {
       EXPECT_EQ(edge.data().split_by, nullptr);
       EXPECT_EQ(edge.data().edge_last_coincident().node, nullptr);
-      EXPECT_TRUE(edge.data().vertex_boundary_angle().IsZero());
+      EXPECT_EQ(edge.data().vertex_last_coincident().node, nullptr);
     }
   }
 }
