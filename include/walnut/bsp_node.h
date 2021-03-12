@@ -533,6 +533,9 @@ void BSPNode<InputPolygonTemplate>::UpdateBoundaryAngles(
   for (; pos < coincident_end - 1; ++pos) {
     BSPEdgeInfoRep& edge_info = polygon.bsp_edge_info(
         pos % polygon.vertex_count());
+    if (edge_info.split_by_ == nullptr) {
+      edge_info.split_by_ = this;
+    }
     edge_info.edge_last_coincident_ = coincident_info;
     edge_info.vertex_last_coincident_ = coincident_info;
   }
@@ -558,17 +561,11 @@ void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
         assert(children.first.vertex_count() > 2);
         assert(children.second.vertex_count() > 2);
         // As described by the CreateSplitChildren function declaration
-        // comment, the last 2 vertices of neg_poly will touch the plane. So
-        // the first of those 2 vertices is the edge source.
-        children.first.bsp_edge_info(
-            children.first.vertex_count() - 2).split_by_ = this;
+        // comment, the last 2 vertices of neg_poly will touch the plane.
         UpdateBoundaryAngles(/*pos_child=*/false, children.first,
                             children.first.vertex_count() - 2,
                             children.first.vertex_count());
-        // The first and last vertices of pos_poly will touch the plane. So the
-        // first of those 2 vertices is the edge source.
-        children.second.bsp_edge_info(
-            children.second.vertex_count() - 1).split_by_ = this;
+        // The first and last vertices of pos_poly will touch the plane.
         UpdateBoundaryAngles(/*pos_child=*/true, children.second,
                             children.second.vertex_count() - 1,
                             children.second.vertex_count() + 1);
@@ -613,14 +610,14 @@ void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
         std::pair<PolygonRep, PolygonRep> children =
           std::move(polygon).CreateSplitChildren(std::move(info));
         // As described by the CreateSplitChildren function declaration
-        // comment, the last 2 vertices of neg_poly will touch the plane. So
-        // the first of those 2 vertices is the edge source.
-        children.first.bsp_edge_info(
-            children.first.vertex_count() - 2).split_by_ = this;
-        // The first and last vertices of pos_poly will touch the plane. So the
-        // first of those 2 vertices is the edge source.
-        children.second.bsp_edge_info(
-            children.second.vertex_count() - 1).split_by_ = this;
+        // comment, the last 2 vertices of neg_poly will touch the plane.
+        UpdateBoundaryAngles(/*pos_child=*/false, children.first,
+                            children.first.vertex_count() - 2,
+                            children.first.vertex_count());
+        // The first and last vertices of pos_poly will touch the plane.
+        UpdateBoundaryAngles(/*pos_child=*/true, children.second,
+                            children.second.vertex_count() - 1,
+                            children.second.vertex_count() + 1);
         negative_child_->border_contents_.push_back(std::move(children.first));
         positive_child_->border_contents_.push_back(
             std::move(children.second));
@@ -637,11 +634,15 @@ void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
       // If polygon.plane().normal() and split_.normal() point in the same
       // direction, put polygon in the negative child.
       const int drop_dimension = polygon.drop_dimension();
-      if (polygon.plane().normal().components()[drop_dimension].HasSameSign(
-            split_.normal().components()[drop_dimension])) {
-        negative_child_->border_contents_.push_back(std::move(polygon));
-      } else {
+      bool pos_child =
+        polygon.plane().normal().components()[drop_dimension].HasDifferentSign(
+            split_.normal().components()[drop_dimension]);
+      UpdateBoundaryAngles(pos_child, polygon, /*coincident_begin=*/0,
+                           /*coincident_end=*/polygon.vertex_count());
+      if (pos_child) {
         positive_child_->border_contents_.push_back(std::move(polygon));
+      } else {
+        negative_child_->border_contents_.push_back(std::move(polygon));
       }
     }
   }
