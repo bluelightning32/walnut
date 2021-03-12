@@ -104,10 +104,10 @@ class ConvexPolygon {
     const EdgeRep* prev_edge = &edges().back();
     for (const EdgeRep& edge : edges()) {
       if (!edge.IsValidState()) return false;
-      if (!plane().IsCoincident(edge.vertex)) return false;
+      if (!plane().IsCoincident(edge.vertex())) return false;
 
       PluckerLine<LineRep::d_bits * 2, LineRep::m_bits * 2> expected_line(
-          prev_edge->vertex, edge.vertex);
+          prev_edge->vertex(), edge.vertex());
       if (prev_edge->line() != expected_line) return false;
       if (!prev_edge->line().d().IsSameDir(expected_line.d())) return false;
 
@@ -128,7 +128,7 @@ class ConvexPolygon {
   }
 
   const HomoPoint3Rep& vertex(size_t index) const {
-    return edges_[index].vertex;
+    return edges_[index].vertex();
   }
 
   const VertexData& vertex_data(size_t index) const {
@@ -680,11 +680,11 @@ ConvexPolygon<point3_bits, VertexData>::GetOppositeEdgeIndicesBisect(
   bool flipped = initial_dir_sign < 0;
   Vector2<vector_bits> v_flipped = v;
   if (flipped) v_flipped.Negate();
-  auto initial_dist = edge(0).vertex.vector_from_origin()
+  auto initial_dist = edge(0).vertex().vector_from_origin()
                              .DropDimension(drop_dimension).Dot(v_flipped);
 
   const typename HomoPoint3Rep::DenomInt& initial_dist_denom =
-    edge(0).vertex.w();
+    edge(0).vertex().w();
 
   // Current range being considered by the binary search. The range includes
   // the begin side but excludes the end side.
@@ -701,9 +701,9 @@ ConvexPolygon<point3_bits, VertexData>::GetOppositeEdgeIndicesBisect(
         return std::make_pair(0, mid);
       }
     }
-    auto dist = edge(mid).vertex.vector_from_origin()
-                         .DropDimension(drop_dimension).Dot(v_flipped);
-    const typename HomoPoint3Rep::DenomInt& dist_denom = edge(mid).vertex.w();
+    auto dist = vertex(mid).vector_from_origin()
+                           .DropDimension(drop_dimension).Dot(v_flipped);
+    const typename HomoPoint3Rep::DenomInt& dist_denom = vertex(mid).w();
     if ((initial_dist*dist_denom).LessThan(
           /*flip=*/initial_dist_denom.HasDifferentSign(dist_denom),
           dist*initial_dist_denom)) {

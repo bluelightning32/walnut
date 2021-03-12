@@ -39,20 +39,20 @@ struct ConvexPolygonEdge : private VertexDataTemplate {
                             std::is_default_constructible<VertexData>::value,
                             Point3<other_point3_bits>>& vertex,
                     const Point3<other_point3_bits>& next_vertex) :
-    vertex(vertex), line_(vertex, next_vertex) { }
+    vertex_(vertex), line_(vertex, next_vertex) { }
 
   // VertexData must be default-constructible to use this constructor.
   template <size_t num_bits, size_t denom_bits>
   ConvexPolygonEdge(const HomoPoint3<num_bits, denom_bits>& vertex,
                     const HomoPoint3<num_bits, denom_bits>& next_vertex) :
-    vertex(vertex), line_(vertex, next_vertex) { }
+    vertex_(vertex), line_(vertex, next_vertex) { }
 
   // VertexData must be default-constructible to use this constructor.
   //
   // `line` should be in the direction from `vertex` to the next vertex in the
   // polygon.
   ConvexPolygonEdge(const HomoPoint3Rep& vertex, const LineRep& line) :
-    vertex(vertex), line_(line) { }
+    vertex_(vertex), line_(line) { }
 
   // Inherit the line and vertex data from `parent_edge`, but overwrite the
   // vertex.
@@ -61,7 +61,7 @@ struct ConvexPolygonEdge : private VertexDataTemplate {
   ConvexPolygonEdge(const ConvexPolygonEdge& parent_edge,
                     const HomoPoint3Rep& vertex) :
     VertexData(parent_edge.data(), vertex),
-    vertex(vertex),
+    vertex_(vertex),
     line_(parent_edge.line_) { }
 
   // Inherit the vertex and vertex data from `parent_edge`, but overwrite the
@@ -72,7 +72,7 @@ struct ConvexPolygonEdge : private VertexDataTemplate {
   ConvexPolygonEdge(const ConvexPolygonEdge& parent_edge,
                     const LineRep& line) : VertexData(parent_edge.data(),
                                                       line),
-                                           vertex(parent_edge.vertex),
+                                           vertex_(parent_edge.vertex_),
                                            line_(line) { }
 
   // Inherit the vertex data from `parent_edge`, but overwrite the vertex and
@@ -84,33 +84,33 @@ struct ConvexPolygonEdge : private VertexDataTemplate {
                     const HomoPoint3Rep& vertex,
                     const LineRep& line) :
     VertexData(parent_edge.data(), vertex, line),
-    vertex(vertex), line_(line) { }
+    vertex_(vertex), line_(line) { }
 
   template <size_t input_point3_bits = point3_bits_template>
   ConvexPolygonEdge(const Point3WithVertexData<input_point3_bits,
                                                VertexData>& vertex,
                     const Point3<input_point3_bits>& next_vertex) :
-    VertexData(vertex.data), vertex(vertex), line_(vertex, next_vertex) { }
+    VertexData(vertex.data), vertex_(vertex), line_(vertex, next_vertex) { }
 
   template <size_t other_point3_bits, typename OtherVertexData>
   explicit ConvexPolygonEdge(
       const ConvexPolygonEdge<other_point3_bits,
                               OtherVertexData>& other) :
-    VertexData(other.data()), vertex(other.vertex), line_(other.line()) { }
+    VertexData(other.data()), vertex_(other.vertex()), line_(other.line()) { }
 
   template <size_t other_point3_bits, typename OtherVertexData>
   ConvexPolygonEdge& operator=(
       const ConvexPolygonEdge<other_point3_bits,
                               OtherVertexData>& other) {
-    vertex = other.vertex;
-    line_ = other.line_;
+    vertex_ = other.vertex();
+    line_ = other.line();
     data() = other.data();
     return *this;
   }
 
   static bool LexicographicallyLt(const ConvexPolygonEdge& a,
                                   const ConvexPolygonEdge& b) {
-    return HomoPoint3Rep::LexicographicallyLt(a.vertex, b.vertex);
+    return HomoPoint3Rep::LexicographicallyLt(a.vertex_, b.vertex_);
   }
 
   VertexData& data() {
@@ -122,8 +122,8 @@ struct ConvexPolygonEdge : private VertexDataTemplate {
   }
 
   bool IsValidState() const {
-    return vertex.IsValidState() && line_.IsValidState() &&
-           line_.IsCoincident(vertex);
+    return vertex_.IsValidState() && line_.IsValidState() &&
+           line_.IsCoincident(vertex_);
   }
 
   // Return a string representation of the edge that uses decimal points to
@@ -136,7 +136,7 @@ struct ConvexPolygonEdge : private VertexDataTemplate {
   // approximate the vertex coordinates and does not include the data fields.
   std::string ApproximateNoData() const {
     std::ostringstream out;
-    out << vertex.Approximate();
+    out << vertex_.Approximate();
     return out.str();
   }
 
@@ -144,9 +144,13 @@ struct ConvexPolygonEdge : private VertexDataTemplate {
     return line_;
   }
 
-  HomoPoint3Rep vertex;
+  const HomoPoint3Rep& vertex() const {
+    return vertex_;
+  }
 
  private:
+  HomoPoint3Rep vertex_;
+
   // This line starts at `vertex` and goes to the next vertex in the polygon.
   //
   // Notably:
@@ -158,7 +162,7 @@ template <size_t point3_bits, typename VertexData>
 std::string
 Approximate(const ConvexPolygonEdge<point3_bits, VertexData>& edge) {
   std::ostringstream out;
-  out << edge.vertex.Approximate() << ": " << edge.data();
+  out << edge.vertex().Approximate() << ": " << edge.data();
   return out.str();
 }
 
@@ -171,7 +175,7 @@ Approximate(const ConvexPolygonEdge<point3_bits, NoVertexData>& edge) {
 template <size_t point3_bits, typename VertexData>
 std::ostream& operator<<(
     std::ostream& out, const ConvexPolygonEdge<point3_bits, VertexData>& edge) {
-  out << edge.vertex << ": " << edge.data();
+  out << edge.vertex() << ": " << edge.data();
   return out;
 }
 
@@ -179,7 +183,7 @@ template <size_t point3_bits>
 std::ostream& operator<<(
     std::ostream& out,
     const ConvexPolygonEdge<point3_bits, NoVertexData>& edge) {
-  out << edge.vertex;
+  out << edge.vertex();
   return out;
 }
 

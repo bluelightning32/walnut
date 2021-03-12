@@ -457,7 +457,7 @@ void BSPNode<InputPolygonTemplate>::PushVertexPWNToChildren(
       push_to_child = positive_child();
     }
     assert (vertex_to_edge == 1 || vertex_to_edge == -1);
-    int side_comparison2 = split_.Compare(vertex_edge.vertex);
+    int side_comparison2 = split_.Compare(vertex_edge.vertex());
     if (side_comparison * side_comparison2 >= 0) {
       // min_max_comparison will be positive if the following vectors are
       // arranged in counter-clockwise order:

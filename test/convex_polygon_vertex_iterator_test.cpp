@@ -83,7 +83,7 @@ TEST(ConvexPolygonVertexIterator, Dereference) {
   using VertexIterator = ConvexPolygonVertexIterator<VectorIterator>;
   const VertexIterator it(edges.begin());
 
-  EXPECT_EQ(&*it, &edges.begin()->vertex);
+  EXPECT_EQ(&*it, &edges.begin()->vertex());
 }
 
 TEST(ConvexPolygonVertexIterator, PrefixIncrement) {
@@ -172,7 +172,7 @@ TEST(ConvexPolygonVertexIterator, PointsTo) {
   using VertexIterator = ConvexPolygonVertexIterator<VectorIterator>;
   const VertexIterator it(edges.begin());
 
-  EXPECT_EQ(it->x(), edges[0].vertex.x());
+  EXPECT_EQ(it->x(), edges[0].vertex().x());
 }
 
 TEST(ConvexPolygonVertexIterator, AddOffset) {

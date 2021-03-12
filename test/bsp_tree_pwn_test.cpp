@@ -262,7 +262,7 @@ class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
       std::vector<typename InputPolygon::HomoPoint3Rep> vertices;
       for (auto it = polygon.edges().rbegin(); it != polygon.edges().rend();
            ++it) {
-        vertices.push_back(it->vertex);
+        vertices.push_back(it->vertex());
       }
       using ConvexPolygonRep = ConvexPolygon<InputPolygon::point3_bits>;
       tree_.AddContent(ConvexPolygonRep(-polygon.plane(),

@@ -14,7 +14,7 @@ class ConvexPolygonVertexIterator {
   // The extra set of parenthesis around the argument to decltype are necessary
   // so that the argument is considered an expression instead of an entity.
   using value_type = const typename std::remove_reference<decltype((
-        std::declval<typename EdgeIterator::value_type>().vertex))>::type;
+        std::declval<typename EdgeIterator::value_type>().vertex()))>::type;
   using pointer = value_type*;
   using reference = value_type&;
   using iterator_category = typename EdgeIterator::iterator_category;
@@ -47,11 +47,11 @@ class ConvexPolygonVertexIterator {
   }
 
   reference operator*() const {
-    return edge_iterator_->vertex;
+    return edge_iterator_->vertex();
   }
 
   pointer operator->() const {
-    return &edge_iterator_->vertex;
+    return &edge_iterator_->vertex();
   }
 
   ConvexPolygonVertexIterator& operator++() {
@@ -95,7 +95,7 @@ class ConvexPolygonVertexIterator {
   }
 
   const auto& operator[](difference_type offset) const {
-    return edge_iterator_[offset].vertex;
+    return edge_iterator_[offset].vertex();
   }
 
   template <typename OtherEdgeIterator>
