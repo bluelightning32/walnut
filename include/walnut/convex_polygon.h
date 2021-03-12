@@ -16,8 +16,8 @@
 
 namespace walnut {
 
-// A 2D ConvexPolygon embedded in R^3. The vertices are stored using homogeneous
-// coordinates.
+// A 2D ConvexPolygon embedded in R^3. The vertices are stored using
+// homogeneous coordinates.
 //
 // `VertexDataTemplate` specifies additional data that the caller can associate
 // with each vertex. The type must be copy-constructible.
@@ -110,11 +110,11 @@ class ConvexPolygon {
 
       PluckerLine<LineRep::d_bits * 2, LineRep::m_bits * 2> expected_line(
           prev_edge->vertex, edge.vertex);
-      if (prev_edge->line != expected_line) return false;
-      if (!prev_edge->line.d().IsSameDir(expected_line.d())) return false;
+      if (prev_edge->line() != expected_line) return false;
+      if (!prev_edge->line().d().IsSameDir(expected_line.d())) return false;
 
-      if (prev_edge->line.d().DropDimension(drop_dimension()).Cross(
-            edge.line.d().DropDimension(drop_dimension())).HasDifferentSign(
+      if (prev_edge->line().d().DropDimension(drop_dimension()).Cross(
+            edge.line().d().DropDimension(drop_dimension())).HasDifferentSign(
             normal().components()[drop_dimension()])) {
         // The vertex is reflex (not convex and not collinear).
         return false;
@@ -655,8 +655,8 @@ template <size_t vector_bits>
 std::pair<size_t, size_t>
 ConvexPolygon<point3_bits, VertexData>::GetOppositeEdgeIndicesBisect(
     const Vector2<vector_bits>& v, int drop_dimension) const {
-  BigIntWord initial_dir_sign = edge(0).line.d().DropDimension(drop_dimension)
-                                       .Dot(v).GetSign();
+  BigIntWord initial_dir_sign =
+    edge(0).line().d().DropDimension(drop_dimension).Dot(v).GetSign();
   if (initial_dir_sign == 0) {
     // The 0th edge is perpendicular to `v`. Find the first non-perpendicular
     // edge before and after `v`.
@@ -666,13 +666,14 @@ ConvexPolygon<point3_bits, VertexData>::GetOppositeEdgeIndicesBisect(
       // A well formed ConvexPolygon with a valid drop_dimension should always
       // find a match.
       assert(before > 0);
-      before_sign = edge(before).line.d().DropDimension(drop_dimension)
+      before_sign = edge(before).line().d().DropDimension(drop_dimension)
                                 .Dot(v).GetSign();
       if (before_sign != 0) break;
       --before;
     }
     size_t after = 1;
-    while (edge(after).line.d().DropDimension(drop_dimension).Dot(v).IsZero()) {
+    while (edge(after).line().d().DropDimension(drop_dimension)
+                      .Dot(v).IsZero()) {
       assert(after < vertex_count());
       ++after;
     }
@@ -702,8 +703,8 @@ ConvexPolygon<point3_bits, VertexData>::GetOppositeEdgeIndicesBisect(
 
   while (true) {
     size_t mid = (begin + end) / 2;
-    if (edge(mid).line.d().DropDimension(drop_dimension)
-                 .Dot(v_flipped).GetSign() < 0) {
+    if (edge(mid).line().d().DropDimension(drop_dimension)
+                .Dot(v_flipped).GetSign() < 0) {
       if (flipped) {
         return std::make_pair(mid, 0);
       } else {
@@ -744,7 +745,7 @@ size_t ConvexPolygon<point3_bits, VertexData>::GetExtremeIndexBisect(
 
   while (begin + 1 < end) {
     size_t mid = (begin + end) / 2;
-    if (edge(mid % vertex_count()).line.d().DropDimension(drop_dimension)
+    if (edge(mid % vertex_count()).line().d().DropDimension(drop_dimension)
                                   .Dot(v).GetSign() > 0) {
       begin = mid;
     } else {
@@ -756,7 +757,8 @@ size_t ConvexPolygon<point3_bits, VertexData>::GetExtremeIndexBisect(
 
 template <size_t point3_bits, typename VertexData>
 template <size_t vector_bits, size_t dist_bits>
-std::pair<int, size_t> ConvexPolygon<point3_bits, VertexData>::GetPosSideVertex(
+std::pair<int, size_t>
+ConvexPolygon<point3_bits, VertexData>::GetPosSideVertex(
     const HalfSpace2<vector_bits, dist_bits>& half_space, int drop_dimension,
     size_t same_dir_index, size_t opp_dir_index) const {
   // Current range being considered by the binary search. The range excludes
@@ -775,7 +777,7 @@ std::pair<int, size_t> ConvexPolygon<point3_bits, VertexData>::GetPosSideVertex(
           mid % vertex_count()).DropDimension(drop_dimension)) > 0) {
       return std::make_pair(1, mid);
     }
-    if (edge(mid % vertex_count()).line.d().DropDimension(drop_dimension)
+    if (edge(mid % vertex_count()).line().d().DropDimension(drop_dimension)
                                   .Dot(half_space.normal()).GetSign() > 0) {
       begin = mid;
     } else {
@@ -789,7 +791,8 @@ std::pair<int, size_t> ConvexPolygon<point3_bits, VertexData>::GetPosSideVertex(
 
 template <size_t point3_bits, typename VertexData>
 template <size_t vector_bits, size_t dist_bits>
-std::pair<int, size_t> ConvexPolygon<point3_bits, VertexData>::GetNegSideVertex(
+std::pair<int, size_t>
+ConvexPolygon<point3_bits, VertexData>::GetNegSideVertex(
     const HalfSpace2<vector_bits, dist_bits>& half_space, int drop_dimension,
     size_t same_dir_index, size_t opp_dir_index) const {
   const auto opp_result = GetPosSideVertex(-half_space, drop_dimension,
@@ -992,7 +995,8 @@ ConvexPolygon<point3_bits, VertexData>::GetSplitInfo(
     result.has_new_shared_point2 = true;
     size_t last_neg_index = (result.ranges.neg_range.second + vertex_count() -
                              1) % vertex_count();
-    result.new_shared_point2 = edge(last_neg_index).line.Intersect(half_space);
+    result.new_shared_point2 =
+      edge(last_neg_index).line().Intersect(half_space);
   }
 
   if (result.ranges.pos_range.second % vertex_count() ==
@@ -1000,7 +1004,8 @@ ConvexPolygon<point3_bits, VertexData>::GetSplitInfo(
     result.has_new_shared_point1 = true;
     size_t last_pos_index = (result.ranges.pos_range.second + vertex_count() -
                              1) % vertex_count();
-    result.new_shared_point1 = edge(last_pos_index).line.Intersect(half_space);
+    result.new_shared_point1 =
+      edge(last_pos_index).line().Intersect(half_space);
   }
   assert(result.IsValid(vertex_count()));
   return result;

@@ -39,30 +39,30 @@ struct ConvexPolygonEdge : private VertexDataTemplate {
                             std::is_default_constructible<VertexData>::value,
                             Point3<other_point3_bits>>& vertex,
                     const Point3<other_point3_bits>& next_vertex) :
-    vertex(vertex), line(vertex, next_vertex) { }
+    vertex(vertex), line_(vertex, next_vertex) { }
 
   // VertexData must be default-constructible to use this constructor.
   template <size_t num_bits, size_t denom_bits>
   ConvexPolygonEdge(const HomoPoint3<num_bits, denom_bits>& vertex,
                     const HomoPoint3<num_bits, denom_bits>& next_vertex) :
-    vertex(vertex), line(vertex, next_vertex) { }
+    vertex(vertex), line_(vertex, next_vertex) { }
 
   // VertexData must be default-constructible to use this constructor.
   //
   // `line` should be in the direction from `vertex` to the next vertex in the
   // polygon.
   ConvexPolygonEdge(const HomoPoint3Rep& vertex, const LineRep& line) :
-    vertex(vertex), line(line) { }
+    vertex(vertex), line_(line) { }
 
   // Inherit the line and vertex data from `parent_edge`, but overwrite the
   // vertex.
   //
-  // `vertex` must be on `parent_edge.line`.
+  // `vertex` must be on `parent_edge.line_`.
   ConvexPolygonEdge(const ConvexPolygonEdge& parent_edge,
                     const HomoPoint3Rep& vertex) :
     VertexData(parent_edge.data(), vertex),
     vertex(vertex),
-    line(parent_edge.line) { }
+    line_(parent_edge.line_) { }
 
   // Inherit the vertex and vertex data from `parent_edge`, but overwrite the
   // line.
@@ -73,7 +73,7 @@ struct ConvexPolygonEdge : private VertexDataTemplate {
                     const LineRep& line) : VertexData(parent_edge.data(),
                                                       line),
                                            vertex(parent_edge.vertex),
-                                           line(line) { }
+                                           line_(line) { }
 
   // Inherit the vertex data from `parent_edge`, but overwrite the vertex and
   // line.
@@ -84,26 +84,26 @@ struct ConvexPolygonEdge : private VertexDataTemplate {
                     const HomoPoint3Rep& vertex,
                     const LineRep& line) :
     VertexData(parent_edge.data(), vertex, line),
-    vertex(vertex), line(line) { }
+    vertex(vertex), line_(line) { }
 
   template <size_t input_point3_bits = point3_bits_template>
   ConvexPolygonEdge(const Point3WithVertexData<input_point3_bits,
                                                VertexData>& vertex,
                     const Point3<input_point3_bits>& next_vertex) :
-    VertexData(vertex.data), vertex(vertex), line(vertex, next_vertex) { }
+    VertexData(vertex.data), vertex(vertex), line_(vertex, next_vertex) { }
 
   template <size_t other_point3_bits, typename OtherVertexData>
   explicit ConvexPolygonEdge(
       const ConvexPolygonEdge<other_point3_bits,
                               OtherVertexData>& other) :
-    VertexData(other.data()), vertex(other.vertex), line(other.line) { }
+    VertexData(other.data()), vertex(other.vertex), line_(other.line()) { }
 
   template <size_t other_point3_bits, typename OtherVertexData>
   ConvexPolygonEdge& operator=(
       const ConvexPolygonEdge<other_point3_bits,
                               OtherVertexData>& other) {
     vertex = other.vertex;
-    line = other.line;
+    line_ = other.line_;
     data() = other.data();
     return *this;
   }
@@ -122,8 +122,8 @@ struct ConvexPolygonEdge : private VertexDataTemplate {
   }
 
   bool IsValidState() const {
-    return vertex.IsValidState() && line.IsValidState() &&
-           line.IsCoincident(vertex);
+    return vertex.IsValidState() && line_.IsValidState() &&
+           line_.IsCoincident(vertex);
   }
 
   // Return a string representation of the edge that uses decimal points to
@@ -140,12 +140,18 @@ struct ConvexPolygonEdge : private VertexDataTemplate {
     return out.str();
   }
 
+  const LineRep& line() const {
+    return line_;
+  }
+
   HomoPoint3Rep vertex;
+
+ private:
   // This line starts at `vertex` and goes to the next vertex in the polygon.
   //
   // Notably:
   //   next_vertex == vertex + line.d()
-  LineRep line;
+  LineRep line_;
 };
 
 template <size_t point3_bits, typename VertexData>
