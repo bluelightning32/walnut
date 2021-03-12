@@ -163,6 +163,7 @@ class BSPPolygonWrapper : public BSPNodeTemplate::InputPolygon {
   using typename Parent::SplitInfoRep;
   using typename Parent::VertexData;
   using BSPEdgeInfoRep = BSPEdgeInfo<BSPNodeRep, NormalRep>;
+  using BSPNodeSideRep = typename BSPEdgeInfoRep::BSPNodeSideRep;
 
   static_assert(std::is_base_of<BSPEdgeInfoRep, VertexData>::value,
                 "The ConvexPolygon's VertexData must inherit from "
@@ -173,19 +174,25 @@ class BSPPolygonWrapper : public BSPNodeTemplate::InputPolygon {
 
   template <typename OtherPolygon>
   BSPPolygonWrapper(BSPPolygonId id, const BSPNodeRep* on_node_plane,
+                    bool pos_side, OtherPolygon&& parent) :
+    Parent(std::forward<OtherPolygon>(parent)), id(id),
+    on_node_plane{on_node_plane, pos_side} { }
+
+  template <typename OtherPolygon>
+  BSPPolygonWrapper(BSPPolygonId id, const BSPNodeSideRep& on_node_plane,
                     OtherPolygon&& parent) :
-    Parent(std::forward<OtherPolygon>(parent)), id(id), 
+    Parent(std::forward<OtherPolygon>(parent)), id(id),
     on_node_plane(on_node_plane) { }
 
-  BSPPolygonWrapper(const BSPNodeRep* on_node_plane,
+  BSPPolygonWrapper(const BSPNodeRep* on_node_plane, bool pos_side,
                     const BSPPolygonWrapper& parent) :
-    Parent(parent), id(parent.id), 
-    on_node_plane(on_node_plane) { }
+    Parent(parent), id(parent.id),
+    on_node_plane{on_node_plane, pos_side} { }
 
-  BSPPolygonWrapper(const BSPNodeRep* on_node_plane,
+  BSPPolygonWrapper(const BSPNodeRep* on_node_plane, bool pos_side,
                     BSPPolygonWrapper&& parent) :
-    Parent(std::move(parent)), id(parent.id), 
-    on_node_plane(on_node_plane) { }
+    Parent(std::move(parent)), id(parent.id),
+    on_node_plane{on_node_plane, pos_side} { }
 
   // Overload CreateSplitChildren to create the derived polygon type.
   std::pair<BSPPolygonWrapper, BSPPolygonWrapper> CreateSplitChildren(
@@ -217,7 +224,10 @@ class BSPPolygonWrapper : public BSPNodeTemplate::InputPolygon {
 
   // This is the BSPNode whose split plane is coincident with this polygon's
   // plane, or nullptr if no such BSPNode exists.
-  const BSPNodeRep* on_node_plane = nullptr;
+  //
+  // pos_side is true if this polygon is a child of the positive child of the
+  // split node.
+  BSPNodeSideRep on_node_plane;
 };
 
 // This is a node within a binary space partition tree.
@@ -293,7 +303,7 @@ class BSPNode {
       return pwn_by_id_[id];
     } else {
       return 0;
-    } 
+    }
   }
 
  protected:
@@ -584,9 +594,11 @@ void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
       if (polygon.plane().normal().components()[drop_dimension].HasSameSign(
             split_.normal().components()[drop_dimension])) {
         negative_child_->border_contents_.emplace_back(this,
+                                                       /*pos_side=*/false,
                                                        std::move(polygon));
       } else {
         positive_child_->border_contents_.emplace_back(this,
+                                                       /*pos_side=*/true,
                                                        std::move(polygon));
       }
     }

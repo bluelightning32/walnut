@@ -79,9 +79,10 @@ class BSPTree {
       ConvexPolygon<InputConvexPolygonNoRef::point3_bits> stripped(
           std::forward<InputConvexPolygon>(polygon));
       root.contents_.emplace_back(id, /*on_node_plane=*/nullptr,
-                                  std::move(stripped));
+                                  /*pos_side=*/false, std::move(stripped));
     } else {
       root.contents_.emplace_back(id, /*on_node_plane=*/nullptr,
+                                  /*pos_side=*/false,
                                   std::forward<InputConvexPolygon>(polygon));
     }
     root.PushContentsToLeaves(leaf_callback);
@@ -138,7 +139,7 @@ BSPTree<ConvexPolygonTemplate>::GetNodeBorder(
   for (auto& polygon : bounding_box.GetWalls()) {
     assert(polygon.vertex_count() > 0);
     mapped_root.contents_.emplace_back(/*id=*/0, /*on_node_plane=*/nullptr,
-                                       std::move(polygon));
+                                       /*pos_side=*/false, std::move(polygon));
   }
   const BSPNodeRep* original_node = &root;
   // Add the split partitions from the node_path of from the original root into
@@ -146,13 +147,13 @@ BSPTree<ConvexPolygonTemplate>::GetNodeBorder(
   for (Iterator pos = node_path_begin; pos != node_path_end; ++pos) {
     if (*pos) {
       mapped_root.contents_.emplace_back(
-          /*id=*/0, /*on_node_plane=*/nullptr,
+          /*id=*/0, /*on_node_plane=*/nullptr, /*pos_side=*/false,
           bounding_box.IntersectPlane(-original_node->split()));
       assert(mapped_root.contents_.back().vertex_count() > 0);
       original_node = original_node->positive_child();
     } else {
       mapped_root.contents_.emplace_back(
-          /*id=*/0, /*on_node_plane=*/nullptr,
+          /*id=*/0, /*on_node_plane=*/nullptr, /*pos_side=*/false,
           bounding_box.IntersectPlane(original_node->split()));
       assert(mapped_root.contents_.back().vertex_count() > 0);
       original_node = original_node->negative_child();
