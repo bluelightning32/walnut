@@ -48,7 +48,7 @@ class ConvexPolygon {
 
   // Subclasses can inherit from this. `NewEdgeParent` should be the subclass's
   // class's EdgeInfo type.
-  template <typename NewEdgeParent>
+  template <typename FinalPolygon, typename NewEdgeParent>
   using MakeParent = ConvexPolygon<point3_bits_template, NewEdgeParent>;
 
   // The minimum number of bits to support for each component of the vertex3's

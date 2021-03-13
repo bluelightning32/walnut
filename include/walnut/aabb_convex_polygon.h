@@ -30,9 +30,10 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
 
   // Subclasses can inherit from this. `NewEdgeParent` should be the subclass's
   // EdgeInfo type.
-  template <typename NewEdgeParent>
+  template <typename FinalPolygon, typename NewEdgeParent>
   using MakeParent =
-    AABBConvexPolygon<typename Parent::MakeParent<NewEdgeParent>>;
+    AABBConvexPolygon<typename Parent::MakeParent<FinalPolygon,
+                                                  NewEdgeParent>>;
 
   using Parent::point3_bits;
   using Parent::homo_point3_num_bits;
