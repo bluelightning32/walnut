@@ -135,12 +135,12 @@ class BSPEdgeInfo : public ParentTemplate {
 
 template <size_t point3_bits>
 class BSPDefaultPolygon :
-  public AABBConvexPolygon<point3_bits,
+  public AABBConvexPolygon<ConvexPolygon<point3_bits>>::MakeParent<
     BSPEdgeInfo<BSPNode<BSPDefaultPolygon<point3_bits>>>> {
  public:
   using Parent =
-    AABBConvexPolygon<point3_bits,
-                      BSPEdgeInfo<BSPNode<BSPDefaultPolygon<point3_bits>>>>;
+    typename AABBConvexPolygon<ConvexPolygon<point3_bits>>::MakeParent<
+      BSPEdgeInfo<BSPNode<BSPDefaultPolygon<point3_bits>>>>;
   using typename Parent::SplitInfoRep;
 
   // Inherit all of the parent class's constructors.

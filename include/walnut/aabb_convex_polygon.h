@@ -1,30 +1,38 @@
 #ifndef WALNUT_AABB_CONVEX_POLYGON_H__
 #define WALNUT_AABB_CONVEX_POLYGON_H__
 
+#include <type_traits>
+
 #include "walnut/convex_polygon.h"
 #include "walnut/convex_vertex_aabb_tracker.h"
 
 namespace walnut {
 
-// Adds an axis-aligned bounding box on top of `ConvexPolygon`. The
+struct AABBConvexPolygonKey { };
+
+// Adds an axis-aligned bounding box on top of a ConvexPolygon subclass. The
 // axis-aligned bounding box speeds up calls to `GetSplitInfo` when the polygon
 // is entirely on one side or the other of the splitting half-space. Although
 // the bounding box also has a fixed maintenance cost in `CreateSplitChildren`.
-//
-// `EdgeParentTemplate` specifies additional data that the caller can associate
-// with each vertex. The type must be copy-constructible.
-template <size_t point3_bits_template = 32,
-          typename EdgeParentTemplate = EdgeInfoRoot>
-class AABBConvexPolygon : public ConvexPolygon<point3_bits_template,
-                                               EdgeParentTemplate> {
+template <typename ParentTemplate = ConvexPolygon<>>
+class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
  public:
-  using Parent = ConvexPolygon<point3_bits_template, EdgeParentTemplate>;
+  static_assert(!std::is_base_of<AABBConvexPolygonKey, ParentTemplate>::value,
+                "AABBConvexPolygon should not wrap another "
+                "AABBConvexPolygon.");
+  using Parent = ParentTemplate;
   using typename Parent::HalfSpace3Rep;
   using typename Parent::EdgeRep;
   using typename Parent::SplitInfoRep;
   using AABBRep =
     typename ConvexVertexAABBTracker<Parent::homo_point3_num_bits,
                                      Parent::homo_point3_denom_bits>::AABBRep;
+
+  // Subclasses can inherit from this. `NewEdgeParent` should be the subclass's
+  // EdgeInfo type.
+  template <typename NewEdgeParent>
+  using MakeParent =
+    AABBConvexPolygon<typename Parent::MakeParent<NewEdgeParent>>;
 
   using Parent::point3_bits;
   using Parent::homo_point3_num_bits;
@@ -33,16 +41,13 @@ class AABBConvexPolygon : public ConvexPolygon<point3_bits_template,
   AABBConvexPolygon() { }
 
   // `EdgeParent` must be constructible from `OtherEdgeParent`.
-  template <size_t other_point3_bits, typename OtherEdgeParent>
-  explicit AABBConvexPolygon(const AABBConvexPolygon<other_point3_bits,
-                                                     OtherEdgeParent>& other) :
+  template <typename OtherParent>
+  explicit AABBConvexPolygon(const AABBConvexPolygon<OtherParent> & other) :
     Parent(other),
     aabb_tracker_(other.aabb_tracker_) { }
 
-  // `EdgeParent` must be constructible from `OtherEdgeParent`.
-  template <size_t other_point3_bits, typename OtherEdgeParent>
-  explicit AABBConvexPolygon(const ConvexPolygon<other_point3_bits,
-                                                 OtherEdgeParent>& other) :
+  template <typename OtherParentPolygon>
+  explicit AABBConvexPolygon(const OtherParentPolygon& other) :
       Parent(other),
       aabb_tracker_(Parent::vertices_begin(), Parent::vertices_end()) { }
 
@@ -72,9 +77,8 @@ class AABBConvexPolygon : public ConvexPolygon<point3_bits_template,
   }
 
   // `EdgeParent` must be assignable from `OtherEdgeParent`.
-  template <size_t other_point3_bits, typename OtherEdgeParent>
-  AABBConvexPolygon& operator=(
-      const AABBConvexPolygon<other_point3_bits, OtherEdgeParent>& other) {
+  template <typename OtherParent>
+  AABBConvexPolygon& operator=(const AABBConvexPolygon<OtherParent>& other) {
     Parent::operator=(other);
     aabb_tracker_ = other.aabb_tracker_;
     return *this;
@@ -142,9 +146,8 @@ class AABBConvexPolygon : public ConvexPolygon<point3_bits_template,
     return result;
   }
 
-  template <size_t other_point3_bits, typename OtherEdgeParent>
-  bool operator==(const AABBConvexPolygon<other_point3_bits,
-                                          OtherEdgeParent>& other) const {
+  template <typename OtherParent>
+  bool operator==(const AABBConvexPolygon<OtherParent>& other) const {
     if (aabb() != other.aabb()) return false;
     return Parent::operator==(other);
   }
@@ -177,6 +180,15 @@ class AABBConvexPolygon : public ConvexPolygon<point3_bits_template,
   ConvexVertexAABBTracker<homo_point3_num_bits,
                           homo_point3_denom_bits> aabb_tracker_;
 };
+
+// Adds AABBConvexPolygon on top of `Parent`, if `Parent` does not already
+// inherit from AABBConvexPolygon, otherwise this is equal to `Parent`.
+template <typename ParentTemplate>
+using WrapAABBConvexPolygon =
+  std::conditional<
+    std::is_base_of<AABBConvexPolygonKey, ParentTemplate>::value,
+    ParentTemplate, AABBConvexPolygon<ParentTemplate>
+  >;
 
 }  // walnut
 

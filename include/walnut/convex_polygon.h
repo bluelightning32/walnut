@@ -46,6 +46,11 @@ class ConvexPolygon {
   using ConstVertexIterator =
     ConvexPolygonVertexIterator<typename EdgeVector::const_iterator>;
 
+  // Subclasses can inherit from this. `NewEdgeParent` should be the subclass's
+  // class's EdgeInfo type.
+  template <typename NewEdgeParent>
+  using MakeParent = ConvexPolygon<point3_bits_template, NewEdgeParent>;
+
   // The minimum number of bits to support for each component of the vertex3's
   // that the polygon is built from.
   static constexpr size_t point3_bits = point3_bits_template;
