@@ -3,14 +3,14 @@
 
 #include <type_traits>
 
-#include "walnut/aabb.h"
+#include "walnut/aabb_convex_polygon.h"
 #include "walnut/bsp_node.h"
 
 namespace walnut {
 
 // OutputPolygonParentTemplate must have a EdgeParent that inherits from
 // BSPEdgeInfo.
-template <typename OutputPolygonParentTemplate = BSPDefaultPolygon<32>>
+template <typename OutputPolygonParentTemplate = AABBConvexPolygon<>>
 class BSPTree {
  public:
   using OutputPolygonParent = OutputPolygonParentTemplate;

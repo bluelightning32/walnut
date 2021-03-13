@@ -21,14 +21,11 @@ namespace walnut {
 template <typename BSPNodeTemplate, typename ParentTemplate>
 class BSPEdgeInfo;
 
-template <typename BSPNodeTemplate>
+template <typename OutputPolygonParentTemplate>
 class BSPNode;
 
 template <typename OutputPolygonParentTemplate>
 class BSPTree;
-
-template <size_t point3_bits_template>
-class BSPDefaultPolygon;
 
 template <typename BSPNodeTemplate>
 class BSPPolygonWrapper;
@@ -47,8 +44,8 @@ template <typename BSPNodeTemplate, typename ParentTemplate = EdgeInfoRoot>
 class BSPEdgeInfo : public ParentTemplate {
  public:
   using BSPNodeRep = BSPNodeTemplate;
-
   using BSPNodeSideRep = BSPNodeSide<BSPNodeRep>;
+  using PolygonRep = typename BSPNodeRep::PolygonRep;
 
   BSPEdgeInfo(const EdgeInfoRoot&) { }
 
@@ -133,42 +130,16 @@ class BSPEdgeInfo : public ParentTemplate {
   BSPNodeSideRep edge_last_coincident_;
 };
 
-template <size_t point3_bits>
-class BSPDefaultPolygon :
-  public AABBConvexPolygon<ConvexPolygon<point3_bits>>::MakeParent<
-    BSPEdgeInfo<BSPNode<BSPDefaultPolygon<point3_bits>>>> {
- public:
-  using Parent =
-    typename AABBConvexPolygon<ConvexPolygon<point3_bits>>::MakeParent<
-      BSPEdgeInfo<BSPNode<BSPDefaultPolygon<point3_bits>>>>;
-  using typename Parent::SplitInfoRep;
-
-  // Inherit all of the parent class's constructors.
-  using Parent::Parent;
-
-  // Overload CreateSplitChildren to create the derived polygon type.
-  std::pair<BSPDefaultPolygon, BSPDefaultPolygon> CreateSplitChildren(
-      const SplitInfoRep& split) const {
-    std::pair<BSPDefaultPolygon, BSPDefaultPolygon> result;
-    Parent::FillInSplitChildren(*this, split, result.first, result.second);
-    return result;
-  }
-
-  // Overload CreateSplitChildren to create the derived polygon type.
-  std::pair<BSPDefaultPolygon, BSPDefaultPolygon> CreateSplitChildren(
-      SplitInfoRep&& split) && {
-    std::pair<BSPDefaultPolygon, BSPDefaultPolygon> result;
-    Parent::FillInSplitChildren(std::move(*this), std::move(split),
-                                result.first, result.second);
-    return result;
-  }
-};
-
 template <typename BSPNodeTemplate>
-class BSPPolygonWrapper : public BSPNodeTemplate::OutputPolygonParent {
+class BSPPolygonWrapper :
+  public BSPNodeTemplate::OutputPolygonParent::MakeParent<
+    BSPEdgeInfo<BSPNodeTemplate>
+  > {
  public:
   using BSPNodeRep = BSPNodeTemplate;
-  using Parent = typename BSPNodeTemplate::OutputPolygonParent;
+  using Parent = typename BSPNodeTemplate::OutputPolygonParent::MakeParent<
+    BSPEdgeInfo<BSPNodeRep>
+  >;
   using typename Parent::SplitInfoRep;
   using typename Parent::EdgeParent;
   using BSPEdgeInfoRep = BSPEdgeInfo<BSPNodeRep>;
@@ -246,7 +217,7 @@ class BSPPolygonWrapper : public BSPNodeTemplate::OutputPolygonParent {
   }
 
  private:
-  friend BSPTree<Parent>;
+  friend BSPTree<typename BSPNodeTemplate::OutputPolygonParent>;
 
   void ResetBSPInfo() {
     for (size_t i = 0; i < Parent::vertex_count(); ++i) {
@@ -258,8 +229,7 @@ class BSPPolygonWrapper : public BSPNodeTemplate::OutputPolygonParent {
 // This is a node within a binary space partition tree.
 //
 // `OutputPolygonParentTemplate` must inherit from ConvexPolygon.
-// `OutputPolygonParentTemplate::EdgeParent` must inherit from BSPEdgeInfo.
-template <typename OutputPolygonParentTemplate = BSPDefaultPolygon<32>>
+template <typename OutputPolygonParentTemplate = AABBConvexPolygon<>>
 class BSPNode {
  public:
   using OutputPolygonParent = OutputPolygonParentTemplate;
