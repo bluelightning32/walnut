@@ -18,8 +18,7 @@
 
 namespace walnut {
 
-template <typename BSPNodeTemplate, typename NormalRepTemplate,
-          typename ParentTemplate>
+template <typename BSPNodeTemplate, typename ParentTemplate>
 class BSPEdgeInfo;
 
 template <typename BSPNodeTemplate>
@@ -44,12 +43,10 @@ struct BSPNodeSide {
   bool pos_side = false;
 };
 
-template <typename BSPNodeTemplate, typename NormalRepTemplate,
-          typename ParentTemplate = EdgeInfoRoot>
+template <typename BSPNodeTemplate, typename ParentTemplate = EdgeInfoRoot>
 class BSPEdgeInfo : public ParentTemplate {
  public:
   using BSPNodeRep = BSPNodeTemplate;
-  using NormalRep = NormalRepTemplate;
 
   using BSPNodeSideRep = BSPNodeSide<BSPNodeRep>;
 
@@ -139,14 +136,11 @@ class BSPEdgeInfo : public ParentTemplate {
 template <size_t point3_bits>
 class BSPDefaultPolygon :
   public AABBConvexPolygon<point3_bits,
-    BSPEdgeInfo<BSPNode<BSPDefaultPolygon<point3_bits>>,
-                typename ConvexPolygon<point3_bits>::NormalRep>> {
+    BSPEdgeInfo<BSPNode<BSPDefaultPolygon<point3_bits>>>> {
  public:
-  using NormalRep = typename ConvexPolygon<point3_bits>::NormalRep;
   using Parent =
     AABBConvexPolygon<point3_bits,
-                      BSPEdgeInfo<BSPNode<BSPDefaultPolygon<point3_bits>>,
-                                  NormalRep>>;
+                      BSPEdgeInfo<BSPNode<BSPDefaultPolygon<point3_bits>>>>;
   using typename Parent::SplitInfoRep;
 
   // Inherit all of the parent class's constructors.
@@ -175,10 +169,9 @@ class BSPPolygonWrapper : public BSPNodeTemplate::InputPolygon {
  public:
   using BSPNodeRep = BSPNodeTemplate;
   using Parent = typename BSPNodeTemplate::InputPolygon;
-  using typename Parent::NormalRep;
   using typename Parent::SplitInfoRep;
   using typename Parent::EdgeParent;
-  using BSPEdgeInfoRep = BSPEdgeInfo<BSPNodeRep, NormalRep>;
+  using BSPEdgeInfoRep = BSPEdgeInfo<BSPNodeRep>;
   using BSPNodeSideRep = typename BSPEdgeInfoRep::BSPNodeSideRep;
 
   static_assert(std::is_base_of<BSPEdgeInfoRep, EdgeParent>::value,
@@ -272,7 +265,6 @@ class BSPNode {
   using InputPolygon = InputPolygonTemplate;
   using PolygonRep = BSPPolygonWrapper<BSPNode>;
   using EdgeParent = typename PolygonRep::EdgeParent;
-  using NormalRep = typename EdgeParent::NormalRep;
   using EdgeRep = typename PolygonRep::EdgeRep;
   using BSPEdgeInfoRep = typename PolygonRep::BSPEdgeInfoRep;
   using BSPNodeSideRep = typename BSPEdgeInfoRep::BSPNodeSideRep;
@@ -715,10 +707,10 @@ std::ostream& operator<<(std::ostream& out,
   return out;
 }
 
-template <typename InputPolygonTemplate, typename NormalRep>
+template <typename InputPolygonTemplate, typename ParentTemplate>
 std::ostream& operator<<(
     std::ostream& out,
-    const BSPEdgeInfo<InputPolygonTemplate, NormalRep>& info) {
+    const BSPEdgeInfo<InputPolygonTemplate, ParentTemplate>& info) {
   out << "< edge_first_coincident=" << info.edge_first_coincident()
       << ", edge_last_coincident=" << info.edge_last_coincident()
       << ", vertex_last_coincident=" << info.vertex_last_coincident()
