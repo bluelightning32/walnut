@@ -11,7 +11,7 @@
 
 namespace walnut {
 
-template <size_t point3_bits_template, typename VertexDataTemplate>
+template <size_t point3_bits_template, typename ParentTemplate>
 struct ConvexPolygonEdge;
 
 template <size_t point3_bits, typename Parent>
@@ -93,10 +93,9 @@ struct ConvexPolygonEdge : public ParentTemplate {
                     const Point3<input_point3_bits>& next_vertex) :
     Parent(vertex.data), vertex_(vertex), line_(vertex, next_vertex) { }
 
-  template <size_t other_point3_bits, typename OtherVertexData>
+  template <size_t other_point3_bits, typename OtherParent>
   explicit ConvexPolygonEdge(
-      const ConvexPolygonEdge<other_point3_bits,
-                              OtherVertexData>& other) :
+      const ConvexPolygonEdge<other_point3_bits, OtherParent>& other) :
     Parent(other), vertex_(other.vertex()), line_(other.line()) { }
 
   static bool LexicographicallyLt(const ConvexPolygonEdge& a,
