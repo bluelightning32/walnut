@@ -258,19 +258,19 @@ TEST(BSPTree, SplitTo2Children) {
   for (const BSPNode<>::InputPolygon::EdgeRep& edge :
        tree.root.negative_child()->contents()[0].edges()) {
     if (edge.vertex() == expected_neg[1]) {
-      EXPECT_EQ(edge.data().edge_first_coincident().node, &tree.root);
-      EXPECT_FALSE(edge.data().edge_first_coincident().pos_side);
+      EXPECT_EQ(edge.edge_first_coincident().node, &tree.root);
+      EXPECT_FALSE(edge.edge_first_coincident().pos_side);
     } else {
-      EXPECT_EQ(edge.data().edge_first_coincident().node, nullptr);
+      EXPECT_EQ(edge.edge_first_coincident().node, nullptr);
     }
   }
   for (const BSPNode<>::InputPolygon::EdgeRep& edge :
        tree.root.positive_child()->contents()[0].edges()) {
     if (edge.vertex() == expected_pos[3]) {
-      EXPECT_EQ(edge.data().edge_first_coincident().node, &tree.root);
-      EXPECT_TRUE(edge.data().edge_first_coincident().pos_side);
+      EXPECT_EQ(edge.edge_first_coincident().node, &tree.root);
+      EXPECT_TRUE(edge.edge_first_coincident().pos_side);
     } else {
-      EXPECT_EQ(edge.data().edge_first_coincident().node, nullptr);
+      EXPECT_EQ(edge.edge_first_coincident().node, nullptr);
     }
   }
 }
@@ -340,56 +340,56 @@ TEST(BSPTree, SplitTwiceVertexData) {
   for (const BSPNode<>::InputPolygon::EdgeRep& edge :
        neg_child2.contents()[0].edges()) {
     if (edge.vertex() == q2) {
-      EXPECT_EQ(edge.data().edge_first_coincident().node, &tree.root);
-      EXPECT_TRUE(edge.data().edge_first_coincident().pos_side);
-      EXPECT_EQ(edge.data().edge_last_coincident().node, &tree.root);
-      EXPECT_TRUE(edge.data().edge_last_coincident().pos_side);
-      EXPECT_EQ(edge.data().vertex_last_coincident().node, &pos_child1);
-      EXPECT_FALSE(edge.data().vertex_last_coincident().pos_side);
+      EXPECT_EQ(edge.edge_first_coincident().node, &tree.root);
+      EXPECT_TRUE(edge.edge_first_coincident().pos_side);
+      EXPECT_EQ(edge.edge_last_coincident().node, &tree.root);
+      EXPECT_TRUE(edge.edge_last_coincident().pos_side);
+      EXPECT_EQ(edge.vertex_last_coincident().node, &pos_child1);
+      EXPECT_FALSE(edge.vertex_last_coincident().pos_side);
     } else if (edge.vertex() == q1) {
-      EXPECT_EQ(edge.data().edge_first_coincident().node, &pos_child1);
-      EXPECT_FALSE(edge.data().edge_first_coincident().pos_side);
-      EXPECT_EQ(edge.data().edge_last_coincident().node, &pos_child1);
-      EXPECT_FALSE(edge.data().edge_last_coincident().pos_side);
-      EXPECT_EQ(edge.data().vertex_last_coincident().node, &pos_child1);
-      EXPECT_FALSE(edge.data().vertex_last_coincident().pos_side);
+      EXPECT_EQ(edge.edge_first_coincident().node, &pos_child1);
+      EXPECT_FALSE(edge.edge_first_coincident().pos_side);
+      EXPECT_EQ(edge.edge_last_coincident().node, &pos_child1);
+      EXPECT_FALSE(edge.edge_last_coincident().pos_side);
+      EXPECT_EQ(edge.vertex_last_coincident().node, &pos_child1);
+      EXPECT_FALSE(edge.vertex_last_coincident().pos_side);
     } else if (edge.vertex() == q4) {
-      EXPECT_EQ(edge.data().edge_first_coincident().node, nullptr);
-      EXPECT_EQ(edge.data().edge_last_coincident().node, nullptr);
-      EXPECT_EQ(edge.data().vertex_last_coincident().node, &tree.root);
-      EXPECT_TRUE(edge.data().vertex_last_coincident().pos_side);
+      EXPECT_EQ(edge.edge_first_coincident().node, nullptr);
+      EXPECT_EQ(edge.edge_last_coincident().node, nullptr);
+      EXPECT_EQ(edge.vertex_last_coincident().node, &tree.root);
+      EXPECT_TRUE(edge.vertex_last_coincident().pos_side);
     } else {
-      EXPECT_EQ(edge.data().edge_first_coincident().node, nullptr);
-      EXPECT_EQ(edge.data().edge_last_coincident().node, nullptr);
-      EXPECT_EQ(edge.data().vertex_last_coincident().node, nullptr);
+      EXPECT_EQ(edge.edge_first_coincident().node, nullptr);
+      EXPECT_EQ(edge.edge_last_coincident().node, nullptr);
+      EXPECT_EQ(edge.vertex_last_coincident().node, nullptr);
     }
   }
   // Validate pos_child2.
   for (const BSPNode<>::InputPolygon::EdgeRep& edge :
        pos_child2.contents()[0].edges()) {
     if (edge.vertex() == q3) {
-      EXPECT_EQ(edge.data().edge_first_coincident().node, &tree.root);
-      EXPECT_TRUE(edge.data().edge_first_coincident().pos_side);
-      EXPECT_EQ(edge.data().edge_last_coincident().node, &tree.root);
-      EXPECT_TRUE(edge.data().edge_last_coincident().pos_side);
-      EXPECT_EQ(edge.data().vertex_last_coincident().node, &tree.root);
-      EXPECT_TRUE(edge.data().vertex_last_coincident().pos_side);
+      EXPECT_EQ(edge.edge_first_coincident().node, &tree.root);
+      EXPECT_TRUE(edge.edge_first_coincident().pos_side);
+      EXPECT_EQ(edge.edge_last_coincident().node, &tree.root);
+      EXPECT_TRUE(edge.edge_last_coincident().pos_side);
+      EXPECT_EQ(edge.vertex_last_coincident().node, &tree.root);
+      EXPECT_TRUE(edge.vertex_last_coincident().pos_side);
     } else if (edge.vertex() == q2) {
-      EXPECT_EQ(edge.data().edge_first_coincident().node, &pos_child1);
-      EXPECT_TRUE(edge.data().edge_first_coincident().pos_side);
-      EXPECT_EQ(edge.data().edge_last_coincident().node, &pos_child1);
-      EXPECT_TRUE(edge.data().edge_last_coincident().pos_side);
-      EXPECT_EQ(edge.data().vertex_last_coincident().node, &pos_child1);
-      EXPECT_TRUE(edge.data().vertex_last_coincident().pos_side);
+      EXPECT_EQ(edge.edge_first_coincident().node, &pos_child1);
+      EXPECT_TRUE(edge.edge_first_coincident().pos_side);
+      EXPECT_EQ(edge.edge_last_coincident().node, &pos_child1);
+      EXPECT_TRUE(edge.edge_last_coincident().pos_side);
+      EXPECT_EQ(edge.vertex_last_coincident().node, &pos_child1);
+      EXPECT_TRUE(edge.vertex_last_coincident().pos_side);
     } else if (edge.vertex() == q1) {
-      EXPECT_EQ(edge.data().edge_first_coincident().node, nullptr);
-      EXPECT_EQ(edge.data().edge_last_coincident().node, nullptr);
-      EXPECT_EQ(edge.data().vertex_last_coincident().node, &pos_child1);
-      EXPECT_TRUE(edge.data().vertex_last_coincident().pos_side);
+      EXPECT_EQ(edge.edge_first_coincident().node, nullptr);
+      EXPECT_EQ(edge.edge_last_coincident().node, nullptr);
+      EXPECT_EQ(edge.vertex_last_coincident().node, &pos_child1);
+      EXPECT_TRUE(edge.vertex_last_coincident().pos_side);
     } else {
-      EXPECT_EQ(edge.data().edge_first_coincident().node, nullptr);
-      EXPECT_EQ(edge.data().edge_last_coincident().node, nullptr);
-      EXPECT_EQ(edge.data().vertex_last_coincident().node, nullptr);
+      EXPECT_EQ(edge.edge_first_coincident().node, nullptr);
+      EXPECT_EQ(edge.edge_last_coincident().node, nullptr);
+      EXPECT_EQ(edge.vertex_last_coincident().node, nullptr);
     }
   }
 }
@@ -458,24 +458,24 @@ TEST(BSPTree, SplitVertThenDiagVertexData) {
   for (const BSPNode<>::InputPolygon::EdgeRep& edge :
        neg_child2.contents()[0].edges()) {
     if (edge.vertex() == q1) {
-      EXPECT_EQ(edge.data().edge_first_coincident().node, &tree.root);
-      EXPECT_TRUE(edge.data().edge_first_coincident().pos_side);
-      EXPECT_EQ(edge.data().edge_last_coincident().node, &tree.root);
-      EXPECT_TRUE(edge.data().edge_last_coincident().pos_side);
-      EXPECT_EQ(edge.data().vertex_last_coincident().node, &tree.root);
-      EXPECT_TRUE(edge.data().vertex_last_coincident().pos_side);
+      EXPECT_EQ(edge.edge_first_coincident().node, &tree.root);
+      EXPECT_TRUE(edge.edge_first_coincident().pos_side);
+      EXPECT_EQ(edge.edge_last_coincident().node, &tree.root);
+      EXPECT_TRUE(edge.edge_last_coincident().pos_side);
+      EXPECT_EQ(edge.vertex_last_coincident().node, &tree.root);
+      EXPECT_TRUE(edge.vertex_last_coincident().pos_side);
     } else if (edge.vertex() == q2) {
-      EXPECT_EQ(edge.data().edge_first_coincident().node, &pos_child1);
-      EXPECT_FALSE(edge.data().edge_first_coincident().pos_side);
-      EXPECT_EQ(edge.data().edge_last_coincident().node, &pos_child1);
-      EXPECT_FALSE(edge.data().edge_last_coincident().pos_side);
-      EXPECT_EQ(edge.data().vertex_last_coincident().node, &pos_child1);
-      EXPECT_FALSE(edge.data().vertex_last_coincident().pos_side);
+      EXPECT_EQ(edge.edge_first_coincident().node, &pos_child1);
+      EXPECT_FALSE(edge.edge_first_coincident().pos_side);
+      EXPECT_EQ(edge.edge_last_coincident().node, &pos_child1);
+      EXPECT_FALSE(edge.edge_last_coincident().pos_side);
+      EXPECT_EQ(edge.vertex_last_coincident().node, &pos_child1);
+      EXPECT_FALSE(edge.vertex_last_coincident().pos_side);
     } else {
-      EXPECT_EQ(edge.data().edge_first_coincident().node, nullptr);
-      EXPECT_EQ(edge.data().edge_last_coincident().node, nullptr);
-      EXPECT_EQ(edge.data().vertex_last_coincident().node, &pos_child1);
-      EXPECT_FALSE(edge.data().vertex_last_coincident().pos_side);
+      EXPECT_EQ(edge.edge_first_coincident().node, nullptr);
+      EXPECT_EQ(edge.edge_last_coincident().node, nullptr);
+      EXPECT_EQ(edge.vertex_last_coincident().node, &pos_child1);
+      EXPECT_FALSE(edge.vertex_last_coincident().pos_side);
     }
   }
   // Validate pos_child2.
@@ -483,21 +483,21 @@ TEST(BSPTree, SplitVertThenDiagVertexData) {
   for (const BSPNode<>::InputPolygon::EdgeRep& edge :
        pos_child2.contents()[0].edges()) {
     if (edge.vertex() == p[2]) {
-      EXPECT_EQ(edge.data().edge_first_coincident().node, &pos_child1);
-      EXPECT_TRUE(edge.data().edge_first_coincident().pos_side);
-      EXPECT_EQ(edge.data().edge_last_coincident().node, &pos_child1);
-      EXPECT_TRUE(edge.data().edge_last_coincident().pos_side);
-      EXPECT_EQ(edge.data().vertex_last_coincident().node, &pos_child1);
-      EXPECT_TRUE(edge.data().vertex_last_coincident().pos_side);
+      EXPECT_EQ(edge.edge_first_coincident().node, &pos_child1);
+      EXPECT_TRUE(edge.edge_first_coincident().pos_side);
+      EXPECT_EQ(edge.edge_last_coincident().node, &pos_child1);
+      EXPECT_TRUE(edge.edge_last_coincident().pos_side);
+      EXPECT_EQ(edge.vertex_last_coincident().node, &pos_child1);
+      EXPECT_TRUE(edge.vertex_last_coincident().pos_side);
     } else if (edge.vertex() == q2) {
-      EXPECT_EQ(edge.data().edge_first_coincident().node, nullptr);
-      EXPECT_EQ(edge.data().edge_last_coincident().node, nullptr);
-      EXPECT_EQ(edge.data().vertex_last_coincident().node, &pos_child1);
-      EXPECT_TRUE(edge.data().vertex_last_coincident().pos_side);
+      EXPECT_EQ(edge.edge_first_coincident().node, nullptr);
+      EXPECT_EQ(edge.edge_last_coincident().node, nullptr);
+      EXPECT_EQ(edge.vertex_last_coincident().node, &pos_child1);
+      EXPECT_TRUE(edge.vertex_last_coincident().pos_side);
     } else {
-      EXPECT_EQ(edge.data().edge_first_coincident().node, nullptr);
-      EXPECT_EQ(edge.data().edge_last_coincident().node, nullptr);
-      EXPECT_EQ(edge.data().vertex_last_coincident().node, nullptr);
+      EXPECT_EQ(edge.edge_first_coincident().node, nullptr);
+      EXPECT_EQ(edge.edge_last_coincident().node, nullptr);
+      EXPECT_EQ(edge.vertex_last_coincident().node, nullptr);
     }
   }
 }
@@ -552,8 +552,8 @@ TEST(BSPTree, SplitBorderTo2Children) {
 
   for (const BSPNode<>::InputPolygon::EdgeRep& edge :
        tree.root.negative_child()->border_contents()[0].edges()) {
-    EXPECT_EQ(edge.data().edge_last_coincident().node, &tree.root);
-    EXPECT_EQ(edge.data().edge_first_coincident().node, &tree.root);
+    EXPECT_EQ(edge.edge_last_coincident().node, &tree.root);
+    EXPECT_EQ(edge.edge_first_coincident().node, &tree.root);
   }
 
   // Split the negative child such that the polygon is split into 2 pieces.
@@ -579,22 +579,22 @@ TEST(BSPTree, SplitBorderTo2Children) {
   for (const BSPNode<>::InputPolygon::EdgeRep& edge :
        neg_leaf->border_contents()[0].edges()) {
     if (edge.vertex() == expected_neg[1]) {
-      EXPECT_EQ(edge.data().edge_last_coincident().node,
+      EXPECT_EQ(edge.edge_last_coincident().node,
                 tree.root.negative_child());
     } else {
-      EXPECT_EQ(edge.data().edge_last_coincident().node, &tree.root);
+      EXPECT_EQ(edge.edge_last_coincident().node, &tree.root);
     }
-    EXPECT_EQ(edge.data().edge_first_coincident().node, &tree.root);
+    EXPECT_EQ(edge.edge_first_coincident().node, &tree.root);
   }
   for (const BSPNode<>::InputPolygon::EdgeRep& edge :
        pos_leaf->border_contents()[0].edges()) {
     if (edge.vertex() == expected_pos[3]) {
-      EXPECT_EQ(edge.data().edge_last_coincident().node,
+      EXPECT_EQ(edge.edge_last_coincident().node,
                 tree.root.negative_child());
     } else {
-      EXPECT_EQ(edge.data().edge_last_coincident().node, &tree.root);
+      EXPECT_EQ(edge.edge_last_coincident().node, &tree.root);
     }
-    EXPECT_EQ(edge.data().edge_first_coincident().node, &tree.root);
+    EXPECT_EQ(edge.edge_first_coincident().node, &tree.root);
   }
 }
 

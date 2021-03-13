@@ -330,9 +330,9 @@ TEST(ConvexPolygonFactory, VertexData) {
   ConvexPolygonRep polygon = collector.GetSortedPolygonResult()[0];
 
   ASSERT_EQ(polygon.vertex_count(), 3);
-  EXPECT_EQ(polygon.edges()[0].data(), input[0].data);
-  EXPECT_EQ(polygon.edges()[1].data(), input[1].data);
-  EXPECT_EQ(polygon.edges()[2].data(), input[2].data);
+  EXPECT_EQ(polygon.edges()[0].str, input[0].data.str);
+  EXPECT_EQ(polygon.edges()[1].str, input[1].data.str);
+  EXPECT_EQ(polygon.edges()[2].str, input[2].data.str);
 
   polygon.edge(2).str = "new p2";
   EXPECT_EQ(polygon.edges()[2].str, "new p2");

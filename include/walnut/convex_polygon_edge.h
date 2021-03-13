@@ -62,7 +62,7 @@ struct ConvexPolygonEdge : public ParentTemplate {
   // `vertex` must be on `parent_edge.line_`.
   ConvexPolygonEdge(const ConvexPolygonEdge& parent_edge,
                     const HomoPoint3Rep& vertex) :
-    Parent(parent_edge.data(), vertex),
+    Parent(parent_edge, vertex),
     vertex_(vertex),
     line_(parent_edge.line_) { }
 
@@ -72,7 +72,7 @@ struct ConvexPolygonEdge : public ParentTemplate {
   // `line` should be in the direction from `vertex` to the next vertex in the
   // polygon.
   ConvexPolygonEdge(const ConvexPolygonEdge& parent_edge,
-                    const LineRep& line) : Parent(parent_edge.data(), line),
+                    const LineRep& line) : Parent(parent_edge, line),
                                            vertex_(parent_edge.vertex_),
                                            line_(line) { }
 
@@ -84,7 +84,7 @@ struct ConvexPolygonEdge : public ParentTemplate {
   ConvexPolygonEdge(const ConvexPolygonEdge& parent_edge,
                     const HomoPoint3Rep& vertex,
                     const LineRep& line) :
-    Parent(parent_edge.data(), vertex, line),
+    Parent(parent_edge, vertex, line),
     vertex_(vertex), line_(line) { }
 
   template <size_t input_point3_bits = point3_bits_template>
@@ -97,19 +97,11 @@ struct ConvexPolygonEdge : public ParentTemplate {
   explicit ConvexPolygonEdge(
       const ConvexPolygonEdge<other_point3_bits,
                               OtherVertexData>& other) :
-    Parent(other.data()), vertex_(other.vertex()), line_(other.line()) { }
+    Parent(other), vertex_(other.vertex()), line_(other.line()) { }
 
   static bool LexicographicallyLt(const ConvexPolygonEdge& a,
                                   const ConvexPolygonEdge& b) {
     return HomoPoint3Rep::LexicographicallyLt(a.vertex_, b.vertex_);
-  }
-
-  Parent& data() {
-    return *this;
-  }
-
-  const Parent& data() const {
-    return *this;
   }
 
   bool IsValidState() const {
@@ -152,9 +144,9 @@ struct ConvexPolygonEdge : public ParentTemplate {
   template <size_t other_point3_bits, typename OtherParent>
   ConvexPolygonEdge& operator=(const ConvexPolygonEdge<other_point3_bits,
                                                        OtherParent>& other) {
+    Parent::operator=(other);
     vertex_ = other.vertex();
     line_ = other.line();
-    data() = other.data();
     return *this;
   }
 
@@ -172,7 +164,8 @@ template <size_t point3_bits, typename Parent>
 std::string
 Approximate(const ConvexPolygonEdge<point3_bits, Parent>& edge) {
   std::ostringstream out;
-  out << edge.vertex().Approximate() << ": " << edge.data();
+  out << edge.vertex().Approximate() << ": "
+      << static_cast<const Parent&>(edge);
   return out.str();
 }
 
@@ -185,7 +178,7 @@ Approximate(const ConvexPolygonEdge<point3_bits, EdgeInfoRoot>& edge) {
 template <size_t point3_bits, typename Parent>
 std::ostream& operator<<(
     std::ostream& out, const ConvexPolygonEdge<point3_bits, Parent>& edge) {
-  out << edge.vertex() << ": " << edge.data();
+  out << edge.vertex() << ": " << static_cast<const Parent&>(edge);
   return out;
 }
 
