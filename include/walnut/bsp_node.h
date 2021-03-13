@@ -24,7 +24,7 @@ class BSPEdgeInfo;
 template <typename BSPNodeTemplate>
 class BSPNode;
 
-template <typename InputPolygonTemplate>
+template <typename OutputPolygonParentTemplate>
 class BSPTree;
 
 template <size_t point3_bits_template>
@@ -165,10 +165,10 @@ class BSPDefaultPolygon :
 };
 
 template <typename BSPNodeTemplate>
-class BSPPolygonWrapper : public BSPNodeTemplate::InputPolygon {
+class BSPPolygonWrapper : public BSPNodeTemplate::OutputPolygonParent {
  public:
   using BSPNodeRep = BSPNodeTemplate;
-  using Parent = typename BSPNodeTemplate::InputPolygon;
+  using Parent = typename BSPNodeTemplate::OutputPolygonParent;
   using typename Parent::SplitInfoRep;
   using typename Parent::EdgeParent;
   using BSPEdgeInfoRep = BSPEdgeInfo<BSPNodeRep>;
@@ -179,7 +179,7 @@ class BSPPolygonWrapper : public BSPNodeTemplate::InputPolygon {
                 "BSPEdgeInfo.");
   static_assert(std::is_base_of<ConvexPolygon<Parent::point3_bits, EdgeParent>,
                                 Parent>::value,
-      "The InputPolygonTemplate must inherit from ConvexPolygon.");
+      "The OutputPolygonParentTemplate must inherit from ConvexPolygon.");
 
   BSPPolygonWrapper() = default;
 
@@ -257,12 +257,12 @@ class BSPPolygonWrapper : public BSPNodeTemplate::InputPolygon {
 
 // This is a node within a binary space partition tree.
 //
-// `InputPolygonTemplate` must inherit from ConvexPolygon.
-// `InputPolygonTemplate::EdgeParent` must inherit from BSPEdgeInfo.
-template <typename InputPolygonTemplate = BSPDefaultPolygon<32>>
+// `OutputPolygonParentTemplate` must inherit from ConvexPolygon.
+// `OutputPolygonParentTemplate::EdgeParent` must inherit from BSPEdgeInfo.
+template <typename OutputPolygonParentTemplate = BSPDefaultPolygon<32>>
 class BSPNode {
  public:
-  using InputPolygon = InputPolygonTemplate;
+  using OutputPolygonParent = OutputPolygonParentTemplate;
   using PolygonRep = BSPPolygonWrapper<BSPNode>;
   using EdgeParent = typename PolygonRep::EdgeParent;
   using EdgeRep = typename PolygonRep::EdgeRep;
@@ -270,10 +270,10 @@ class BSPNode {
   using BSPNodeSideRep = typename BSPEdgeInfoRep::BSPNodeSideRep;
 
   using HalfSpace3Rep = typename HalfSpace3FromPoint3Builder<
-    InputPolygon::point3_bits>::HalfSpace3Rep;
-  friend class BSPTree<InputPolygon>;
+    OutputPolygonParent::point3_bits>::HalfSpace3Rep;
+  friend class BSPTree<OutputPolygonParent>;
 
-  static constexpr int point3_bits = InputPolygon::point3_bits;
+  static constexpr int point3_bits = OutputPolygonParent::point3_bits;
 
   BSPNode() = default;
 
@@ -420,8 +420,8 @@ class BSPNode {
   std::vector<int64_t> pwn_by_id_;
 };
 
-template <typename InputPolygonTemplate>
-void BSPNode<InputPolygonTemplate>::PushVertexPWNToChildren(
+template <typename OutputPolygonParent>
+void BSPNode<OutputPolygonParent>::PushVertexPWNToChildren(
     BSPPolygonId polygon_id, int edge_comparison,
     const BSPNodeSideRep& edge_last_coincident, const EdgeRep& vertex_edge,
     int crossing_flip) {
@@ -451,7 +451,7 @@ void BSPNode<InputPolygonTemplate>::PushVertexPWNToChildren(
     //   vertex_boundary_angle != edge_boundary_angle
     //   Compare(vertex_boundary_angle, edge_boundary_angle) != 0
     assert(vertex_to_edge != 0);
-    BSPNode<InputPolygonTemplate>* push_to_child;
+    BSPNode<OutputPolygonParent>* push_to_child;
     int side_comparison = vertex_comparison * vertex_to_edge;
     if (side_comparison >= 0) {
       assert (side_comparison == 1);
@@ -508,8 +508,8 @@ void BSPNode<InputPolygonTemplate>::PushVertexPWNToChildren(
   }
 }
 
-template <typename InputPolygonTemplate>
-void BSPNode<InputPolygonTemplate>::PushContentPWNToChildren() {
+template <typename OutputPolygonParent>
+void BSPNode<OutputPolygonParent>::PushContentPWNToChildren() {
   for (PolygonRep& polygon : contents_) {
     for (size_t i = 0; i < polygon.vertex_count(); ++i) {
       const EdgeRep& current_edge = polygon.const_edge(i);
@@ -536,8 +536,8 @@ void BSPNode<InputPolygonTemplate>::PushContentPWNToChildren() {
   }
 }
 
-template <typename InputPolygonTemplate>
-void BSPNode<InputPolygonTemplate>::UpdateBoundaryAngles(
+template <typename OutputPolygonParent>
+void BSPNode<OutputPolygonParent>::UpdateBoundaryAngles(
     bool pos_child, PolygonRep& polygon, size_t coincident_begin,
     size_t coincident_end) {
   // Typically this function is called with 0 vertices to update. So quickly
@@ -568,8 +568,8 @@ void BSPNode<InputPolygonTemplate>::UpdateBoundaryAngles(
   edge_info.vertex_last_coincident_ = coincident_info;
 }
 
-template <typename InputPolygonTemplate>
-void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
+template <typename OutputPolygonParent>
+void BSPNode<OutputPolygonParent>::PushContentsToChildren() {
   PushContentPWNToChildren();
 
   for (PolygonRep& polygon : contents_) {
@@ -629,7 +629,8 @@ void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
 
   for (PolygonRep& polygon : border_contents_) {
     assert(polygon.vertex_count() > 0);
-    typename InputPolygon::SplitInfoRep info = polygon.GetSplitInfo(split_);
+    typename OutputPolygonParent::SplitInfoRep info =
+      polygon.GetSplitInfo(split_);
 
     if (info.ShouldEmitNegativeChild()) {
       if (info.ShouldEmitPositiveChild()) {
@@ -674,9 +675,9 @@ void BSPNode<InputPolygonTemplate>::PushContentsToChildren() {
   }
 }
 
-template <typename InputPolygonTemplate>
+template <typename OutputPolygonParent>
 template <typename LeafCallback>
-void BSPNode<InputPolygonTemplate>::PushContentsToLeaves(
+void BSPNode<OutputPolygonParent>::PushContentsToLeaves(
     LeafCallback leaf_callback) {
   if (contents_.empty() && border_contents_.empty()) {
     return;
@@ -707,10 +708,10 @@ std::ostream& operator<<(std::ostream& out,
   return out;
 }
 
-template <typename InputPolygonTemplate, typename ParentTemplate>
+template <typename OutputPolygonParent, typename ParentTemplate>
 std::ostream& operator<<(
     std::ostream& out,
-    const BSPEdgeInfo<InputPolygonTemplate, ParentTemplate>& info) {
+    const BSPEdgeInfo<OutputPolygonParent, ParentTemplate>& info) {
   out << "< edge_first_coincident=" << info.edge_first_coincident()
       << ", edge_last_coincident=" << info.edge_last_coincident()
       << ", vertex_last_coincident=" << info.vertex_last_coincident()

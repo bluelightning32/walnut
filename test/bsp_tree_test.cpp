@@ -255,7 +255,7 @@ TEST(BSPTree, SplitTo2Children) {
   EXPECT_EQ(tree.root.positive_child()->contents()[0],
             MakeConvexPolygon(expected_pos));
 
-  for (const BSPNode<>::InputPolygon::EdgeRep& edge :
+  for (const BSPNode<>::EdgeRep& edge :
        tree.root.negative_child()->contents()[0].edges()) {
     if (edge.vertex() == expected_neg[1]) {
       EXPECT_EQ(edge.edge_first_coincident().node, &tree.root);
@@ -264,7 +264,7 @@ TEST(BSPTree, SplitTo2Children) {
       EXPECT_EQ(edge.edge_first_coincident().node, nullptr);
     }
   }
-  for (const BSPNode<>::InputPolygon::EdgeRep& edge :
+  for (const BSPNode<>::EdgeRep& edge :
        tree.root.positive_child()->contents()[0].edges()) {
     if (edge.vertex() == expected_pos[3]) {
       EXPECT_EQ(edge.edge_first_coincident().node, &tree.root);
@@ -337,7 +337,7 @@ TEST(BSPTree, SplitTwiceVertexData) {
   ASSERT_EQ(pos_child2.contents().size(), 1);
 
   // Validate neg_child2.
-  for (const BSPNode<>::InputPolygon::EdgeRep& edge :
+  for (const BSPNode<>::EdgeRep& edge :
        neg_child2.contents()[0].edges()) {
     if (edge.vertex() == q2) {
       EXPECT_EQ(edge.edge_first_coincident().node, &tree.root);
@@ -365,7 +365,7 @@ TEST(BSPTree, SplitTwiceVertexData) {
     }
   }
   // Validate pos_child2.
-  for (const BSPNode<>::InputPolygon::EdgeRep& edge :
+  for (const BSPNode<>::EdgeRep& edge :
        pos_child2.contents()[0].edges()) {
     if (edge.vertex() == q3) {
       EXPECT_EQ(edge.edge_first_coincident().node, &tree.root);
@@ -455,7 +455,7 @@ TEST(BSPTree, SplitVertThenDiagVertexData) {
 
   // Validate neg_child2.
   EXPECT_EQ(neg_child2.contents()[0].vertex_count(), 3);
-  for (const BSPNode<>::InputPolygon::EdgeRep& edge :
+  for (const BSPNode<>::EdgeRep& edge :
        neg_child2.contents()[0].edges()) {
     if (edge.vertex() == q1) {
       EXPECT_EQ(edge.edge_first_coincident().node, &tree.root);
@@ -480,7 +480,7 @@ TEST(BSPTree, SplitVertThenDiagVertexData) {
   }
   // Validate pos_child2.
   EXPECT_EQ(pos_child2.contents()[0].vertex_count(), 3);
-  for (const BSPNode<>::InputPolygon::EdgeRep& edge :
+  for (const BSPNode<>::EdgeRep& edge :
        pos_child2.contents()[0].edges()) {
     if (edge.vertex() == p[2]) {
       EXPECT_EQ(edge.edge_first_coincident().node, &pos_child1);
@@ -550,7 +550,7 @@ TEST(BSPTree, SplitBorderTo2Children) {
   EXPECT_FALSE(
       tree.root.negative_child()->border_contents()[0].on_node_plane.pos_side);
 
-  for (const BSPNode<>::InputPolygon::EdgeRep& edge :
+  for (const BSPNode<>::EdgeRep& edge :
        tree.root.negative_child()->border_contents()[0].edges()) {
     EXPECT_EQ(edge.edge_last_coincident().node, &tree.root);
     EXPECT_EQ(edge.edge_first_coincident().node, &tree.root);
@@ -576,7 +576,7 @@ TEST(BSPTree, SplitBorderTo2Children) {
   EXPECT_EQ(pos_leaf->border_contents()[0].on_node_plane.node, &tree.root);
   EXPECT_FALSE(pos_leaf->border_contents()[0].on_node_plane.pos_side);
 
-  for (const BSPNode<>::InputPolygon::EdgeRep& edge :
+  for (const BSPNode<>::EdgeRep& edge :
        neg_leaf->border_contents()[0].edges()) {
     if (edge.vertex() == expected_neg[1]) {
       EXPECT_EQ(edge.edge_last_coincident().node,
@@ -586,7 +586,7 @@ TEST(BSPTree, SplitBorderTo2Children) {
     }
     EXPECT_EQ(edge.edge_first_coincident().node, &tree.root);
   }
-  for (const BSPNode<>::InputPolygon::EdgeRep& edge :
+  for (const BSPNode<>::EdgeRep& edge :
        pos_leaf->border_contents()[0].edges()) {
     if (edge.vertex() == expected_pos[3]) {
       EXPECT_EQ(edge.edge_last_coincident().node,

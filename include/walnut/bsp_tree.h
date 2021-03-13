@@ -8,12 +8,13 @@
 
 namespace walnut {
 
-// InputPolygonTemplate must have a EdgeParent that inherits from BSPEdgeInfo.
-template <typename InputPolygonTemplate = BSPDefaultPolygon<32>>
+// OutputPolygonParentTemplate must have a EdgeParent that inherits from
+// BSPEdgeInfo.
+template <typename OutputPolygonParentTemplate = BSPDefaultPolygon<32>>
 class BSPTree {
  public:
-  using InputPolygon = InputPolygonTemplate;
-  using BSPNodeRep = BSPNode<InputPolygon>;
+  using OutputPolygonParent = OutputPolygonParentTemplate;
+  using BSPNodeRep = BSPNode<OutputPolygonParent>;
   using OutputPolygon = typename BSPNodeRep::PolygonRep;
   using EdgeParent = typename BSPNodeRep::EdgeParent;
 
@@ -58,7 +59,7 @@ class BSPTree {
     const BSPNodeRep* original_ = nullptr;
   };
 
-  static constexpr int point3_bits = InputPolygon::point3_bits;
+  static constexpr int point3_bits = OutputPolygonParent::point3_bits;
 
   // Add a new polygon to this node.
   //
