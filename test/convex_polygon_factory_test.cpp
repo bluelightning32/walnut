@@ -306,7 +306,7 @@ TEST(ConvexPolygonFactory, SelfIntersectingStartAtReflex) {
 }
 
 TEST(ConvexPolygonFactory, VertexData) {
-  struct NoDefaultConstructor : public std::string {
+  struct NoDefaultConstructor : public EdgeInfoRoot {
     NoDefaultConstructor(const char* str) : str(str) { }
     NoDefaultConstructor() = delete;
 

@@ -31,6 +31,9 @@ template <size_t point3_bits_template = 32,
           typename EdgeParentTemplate = EdgeInfoRoot>
 class ConvexPolygon {
  public:
+  static_assert(std::is_base_of<EdgeInfoRoot, EdgeParentTemplate>::value,
+                "EdgeParentTemplate should inherit from EdgeInfoRoot");
+
   using EdgeParent = EdgeParentTemplate;
   using EdgeRep = ConvexPolygonEdge<point3_bits_template, EdgeParent>;
   using SplitInfoRep = ConvexPolygonSplitInfo<point3_bits_template>;

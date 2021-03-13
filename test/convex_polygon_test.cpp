@@ -1006,7 +1006,7 @@ TEST(ConvexPolygon, GetLastNegSideVertex) {
   }
 }
 
-struct TestEdgeInfo {
+struct TestEdgeInfo : public EdgeInfoRoot {
   TestEdgeInfo() = default;
   explicit TestEdgeInfo(const EdgeInfoRoot&) { }
 

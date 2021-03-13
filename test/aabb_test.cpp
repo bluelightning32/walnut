@@ -215,7 +215,7 @@ TEST(AABB, Assignment) {
   EXPECT_EQ(prism1, prism2);
 }
 
-struct StringVertexData {
+struct StringVertexData : public EdgeInfoRoot {
   StringVertexData() = default;
 
   template <size_t num_bits, size_t denom_bits>

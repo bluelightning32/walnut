@@ -18,7 +18,8 @@
 
 namespace walnut {
 
-template <typename BSPNodeTemplate, typename NormalRepTemplate>
+template <typename BSPNodeTemplate, typename NormalRepTemplate,
+          typename ParentTemplate>
 class BSPEdgeInfo;
 
 template <typename BSPNodeTemplate>
@@ -43,8 +44,9 @@ struct BSPNodeSide {
   bool pos_side = false;
 };
 
-template <typename BSPNodeTemplate, typename NormalRepTemplate>
-class BSPEdgeInfo {
+template <typename BSPNodeTemplate, typename NormalRepTemplate,
+          typename ParentTemplate = EdgeInfoRoot>
+class BSPEdgeInfo : public ParentTemplate {
  public:
   using BSPNodeRep = BSPNodeTemplate;
   using NormalRep = NormalRepTemplate;
