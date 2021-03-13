@@ -1039,9 +1039,9 @@ TEST(ConvexPolygon, ConvertVertexData) {
   EXPECT_EQ(polygon, polygon_raw);
   ASSERT_EQ(polygon.vertex_count(), 3);
 
-  EXPECT_FALSE(polygon.vertex_data(0).on_split);
-  polygon.vertex_data(0).on_split = true;
-  EXPECT_TRUE(polygon.vertex_data(0).on_split);
+  EXPECT_FALSE(polygon.edge(0).on_split);
+  polygon.edge(0).on_split = true;
+  EXPECT_TRUE(polygon.edge(0).on_split);
 }
 
 using FindSplitRangesFunc = ConvexPolygonSplitRanges (ConvexPolygon<32>::*)(

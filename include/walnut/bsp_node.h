@@ -30,6 +30,9 @@ class BSPTree;
 template <size_t point3_bits_template>
 class BSPDefaultPolygon;
 
+template <typename BSPNodeTemplate>
+class BSPPolygonWrapper;
+
 using BSPPolygonId = size_t;
 
 template <typename BSPNodeTemplate>
@@ -102,8 +105,7 @@ class BSPEdgeInfo {
 
  private:
   friend BSPNodeRep;
-  template <typename InputPolygon>
-  friend class BSPTree;
+  friend BSPPolygonWrapper<BSPNodeRep>;
 
   void ResetBSPInfo() {
     edge_first_coincident_ = BSPNodeSideRep();
@@ -220,7 +222,7 @@ class BSPPolygonWrapper : public BSPNodeTemplate::InputPolygon {
   }
 
   BSPEdgeInfoRep& bsp_edge_info(size_t index) {
-    return this->vertex_data(index);
+    return this->edge(index);
   }
 
   BSPPolygonId id;
@@ -246,6 +248,15 @@ class BSPPolygonWrapper : public BSPNodeTemplate::InputPolygon {
     Parent::FillInSplitChildren(std::forward<ParentRef>(parent),
                                 std::forward<SplitInfoRef>(split), neg_child,
                                 pos_child);
+  }
+
+ private:
+  friend BSPTree<Parent>;
+
+  void ResetBSPInfo() {
+    for (size_t i = 0; i < Parent::vertex_count(); ++i) {
+      Parent::edge(i).ResetBSPInfo();
+    }
   }
 };
 
@@ -420,9 +431,8 @@ void BSPNode<InputPolygonTemplate>::PushVertexPWNToChildren(
     BSPPolygonId polygon_id, int edge_comparison,
     const BSPNodeSideRep& edge_last_coincident, const EdgeRep& vertex_edge,
     int crossing_flip) {
-  const EdgeParent& vertex_data = vertex_edge.data();
   const BSPNodeSideRep& vertex_last_coincident =
-    vertex_data.vertex_last_coincident();
+    vertex_edge.vertex_last_coincident();
   const int vertex_comparison =
     RXYCompareBivector(split_.normal(),
                        vertex_last_coincident.node->split().normal()) *
@@ -509,10 +519,9 @@ void BSPNode<InputPolygonTemplate>::PushContentPWNToChildren() {
   for (PolygonRep& polygon : contents_) {
     for (size_t i = 0; i < polygon.vertex_count(); ++i) {
       const EdgeRep& current_edge = polygon.const_edge(i);
-      const EdgeParent& current_vertex_data = current_edge.data();
 
       const BSPNodeSideRep& edge_last_coincident =
-        current_vertex_data.edge_last_coincident();
+        current_edge.edge_last_coincident();
       if (edge_last_coincident.node == nullptr) continue;
       int edge_comparison =
         RXYCompareBivector(split_.normal(),

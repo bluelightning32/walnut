@@ -133,10 +133,6 @@ class ConvexPolygon {
     return edges_[index].vertex();
   }
 
-  const EdgeRep& vertex_data(size_t index) const {
-    return edges_[index];
-  }
-
   // Returns the information about an edge and the source vertex for that edge.
   const EdgeRep& edge(size_t index) const {
     return edges_[index];
@@ -526,10 +522,6 @@ class ConvexPolygon {
   std::string ApproximateNoData() const;
 
  protected:
-  EdgeRep& vertex_data(size_t index) {
-    return edges_[index];
-  }
-
   // Returns the information about an edge and the source vertex for that edge.
   EdgeRep& edge(size_t index) {
     return edges_[index];
@@ -644,7 +636,9 @@ bool ConvexPolygon<point3_bits, EdgeParent>::operator==(
         other.vertex(j % vertex_count()).DropDimension(drop_dimension())) {
       return false;
     }
-    if (vertex_data(i) != other.vertex_data(j % vertex_count())) {
+    const EdgeParent& edge_parent = edge(i);
+    const OtherEdgeParent& other_edge_parent = other.edge(j % vertex_count());
+    if (edge_parent != other_edge_parent) {
       return false;
     }
   }

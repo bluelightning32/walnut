@@ -76,9 +76,7 @@ class BSPTree {
       typename std::remove_reference<InputConvexPolygon>::type;
     using InputEdgeParent = typename InputConvexPolygonNoRef::EdgeParent;
     if (std::is_base_of<EdgeParent, InputEdgeParent>::value) {
-      for (size_t i = 0; i < root.contents_.back().vertex_count(); ++i) {
-        root.contents_.back().vertex_data(i).ResetBSPInfo();
-      }
+      root.contents_.back().ResetBSPInfo();
     }
     root.PushContentsToLeaves(leaf_callback);
   }

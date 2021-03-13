@@ -142,8 +142,6 @@ class AABBConvexPolygon : public ConvexPolygon<point3_bits_template,
     return result;
   }
 
-  using Parent::vertex_data;
-
   template <size_t other_point3_bits, typename OtherEdgeParent>
   bool operator==(const AABBConvexPolygon<other_point3_bits,
                                           OtherEdgeParent>& other) const {

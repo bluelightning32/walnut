@@ -22,7 +22,6 @@ class MutableConvexPolygon : public ConvexPolygon<point3_bits_template,
 
   // Exposes the protected mutating functions
   using Parent::operator=;
-  using Parent::vertex_data;
   using Parent::edge;
   using Parent::SortVertices;
   using Parent::CreateSplitChildren;
