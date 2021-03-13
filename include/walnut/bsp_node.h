@@ -508,7 +508,7 @@ template <typename InputPolygonTemplate>
 void BSPNode<InputPolygonTemplate>::PushContentPWNToChildren() {
   for (PolygonRep& polygon : contents_) {
     for (size_t i = 0; i < polygon.vertex_count(); ++i) {
-      const EdgeRep& current_edge = polygon.edge(i);
+      const EdgeRep& current_edge = polygon.const_edge(i);
       const EdgeParent& current_vertex_data = current_edge.data();
 
       const BSPNodeSideRep& edge_last_coincident =
@@ -525,7 +525,7 @@ void BSPNode<InputPolygonTemplate>::PushContentPWNToChildren() {
                               /*crossing_flip=*/1);
 
       const EdgeRep& next_edge =
-        polygon.edge((i + 1)%polygon.vertex_count());
+        polygon.const_edge((i + 1)%polygon.vertex_count());
       PushVertexPWNToChildren(polygon.id, edge_comparison,
                               edge_last_coincident, next_edge,
                               /*crossing_flip=*/-1);

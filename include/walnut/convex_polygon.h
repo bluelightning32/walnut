@@ -137,18 +137,13 @@ class ConvexPolygon {
     return edges_[index];
   }
 
-  EdgeRep& vertex_data(size_t index) {
-    return edges_[index];
-  }
-
   // Returns the information about an edge and the source vertex for that edge.
   const EdgeRep& edge(size_t index) const {
     return edges_[index];
   }
 
-  // Returns the information about an edge and the source vertex for that edge.
-  EdgeRep& edge(size_t index) {
-    return edges_[index];
+  const EdgeRep& const_edge(size_t index) const {
+    return edge(index);
   }
 
   const EdgeVector& edges() const {
@@ -531,6 +526,15 @@ class ConvexPolygon {
   std::string ApproximateNoData() const;
 
  protected:
+  EdgeRep& vertex_data(size_t index) {
+    return edges_[index];
+  }
+
+  // Returns the information about an edge and the source vertex for that edge.
+  EdgeRep& edge(size_t index) {
+    return edges_[index];
+  }
+
   // `EdgeParent` must be assignable from `OtherEdgeParent`.
   template <size_t other_point3_bits, typename OtherEdgeParent>
   ConvexPolygon& operator=(const ConvexPolygon<other_point3_bits,

@@ -275,12 +275,13 @@ TEST(ConvexPolygon, CounterClockwiseTriangleEdges) {
     const Point3<32>& input_vertex = input[i];
     const Point3<32>& next_input_vertex = input[
         (i + 1) % polygon.vertex_count()];
-    EXPECT_TRUE(polygon.edge(i).line().IsCoincident(vertex));
-    EXPECT_TRUE(polygon.edge(i).line().IsCoincident(next_vertex));
-    EXPECT_TRUE(polygon.edge(i).line().IsCoincident(input_vertex));
-    EXPECT_TRUE(polygon.edge(i).line().IsCoincident(next_input_vertex));
+    EXPECT_TRUE(polygon.const_edge(i).line().IsCoincident(vertex));
+    EXPECT_TRUE(polygon.const_edge(i).line().IsCoincident(next_vertex));
+    EXPECT_TRUE(polygon.const_edge(i).line().IsCoincident(input_vertex));
+    EXPECT_TRUE(polygon.const_edge(i).line().IsCoincident(next_input_vertex));
     EXPECT_GT(
-        (next_input_vertex - input_vertex).Dot(polygon.edge(i).line().d()), 0);
+        (next_input_vertex - input_vertex).Dot(
+          polygon.const_edge(i).line().d()), 0);
   }
 }
 
@@ -303,12 +304,13 @@ TEST(ConvexPolygon, CounterClockwiseSquareEdges) {
     const Point3<32>& input_vertex = input[i];
     const Point3<32>& next_input_vertex = input[
         (i + 1) % polygon.vertex_count()];
-    EXPECT_TRUE(polygon.edge(i).line().IsCoincident(vertex));
-    EXPECT_TRUE(polygon.edge(i).line().IsCoincident(next_vertex));
-    EXPECT_TRUE(polygon.edge(i).line().IsCoincident(input_vertex));
-    EXPECT_TRUE(polygon.edge(i).line().IsCoincident(next_input_vertex));
+    EXPECT_TRUE(polygon.const_edge(i).line().IsCoincident(vertex));
+    EXPECT_TRUE(polygon.const_edge(i).line().IsCoincident(next_vertex));
+    EXPECT_TRUE(polygon.const_edge(i).line().IsCoincident(input_vertex));
+    EXPECT_TRUE(polygon.const_edge(i).line().IsCoincident(next_input_vertex));
     EXPECT_GT(
-        (next_input_vertex - input_vertex).Dot(polygon.edge(i).line().d()), 0);
+        (next_input_vertex - input_vertex).Dot(
+          polygon.const_edge(i).line().d()), 0);
   }
 }
 
@@ -331,12 +333,13 @@ TEST(ConvexPolygon, ClockwiseSquareEdges) {
     const Point3<32>& input_vertex = input[i];
     const Point3<32>& next_input_vertex = input[
         (i + 1) % polygon.vertex_count()];
-    EXPECT_TRUE(polygon.edge(i).line().IsCoincident(vertex));
-    EXPECT_TRUE(polygon.edge(i).line().IsCoincident(next_vertex));
-    EXPECT_TRUE(polygon.edge(i).line().IsCoincident(input_vertex));
-    EXPECT_TRUE(polygon.edge(i).line().IsCoincident(next_input_vertex));
+    EXPECT_TRUE(polygon.const_edge(i).line().IsCoincident(vertex));
+    EXPECT_TRUE(polygon.const_edge(i).line().IsCoincident(next_vertex));
+    EXPECT_TRUE(polygon.const_edge(i).line().IsCoincident(input_vertex));
+    EXPECT_TRUE(polygon.const_edge(i).line().IsCoincident(next_input_vertex));
     EXPECT_GT(
-        (next_input_vertex - input_vertex).Dot(polygon.edge(i).line().d()), 0);
+        (next_input_vertex - input_vertex).Dot(
+          polygon.const_edge(i).line().d()), 0);
   }
 }
 
@@ -363,12 +366,13 @@ TEST(ConvexPolygon, RedundantEdges) {
     const Point3<32>& input_vertex = input[i];
     const Point3<32>& next_input_vertex = input[
         (i + 1) % polygon.vertex_count()];
-    EXPECT_TRUE(polygon.edge(i).line().IsCoincident(vertex));
-    EXPECT_TRUE(polygon.edge(i).line().IsCoincident(next_vertex));
-    EXPECT_TRUE(polygon.edge(i).line().IsCoincident(input_vertex));
-    EXPECT_TRUE(polygon.edge(i).line().IsCoincident(next_input_vertex));
+    EXPECT_TRUE(polygon.const_edge(i).line().IsCoincident(vertex));
+    EXPECT_TRUE(polygon.const_edge(i).line().IsCoincident(next_vertex));
+    EXPECT_TRUE(polygon.const_edge(i).line().IsCoincident(input_vertex));
+    EXPECT_TRUE(polygon.const_edge(i).line().IsCoincident(next_input_vertex));
     EXPECT_GT(
-        (next_input_vertex - input_vertex).Dot(polygon.edge(i).line().d()), 0);
+        (next_input_vertex - input_vertex).Dot(
+          polygon.const_edge(i).line().d()), 0);
   }
 }
 
@@ -400,17 +404,17 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesBisectStartPerp) {
   std::pair<size_t, size_t> opp_edges = polygon.GetOppositeEdgeIndicesBisect(
       vector, /*drop_dimension=*/2);
 
-  EXPECT_GT(polygon.edge(opp_edges.first).line().d().DropDimension(2)
+  EXPECT_GT(polygon.const_edge(opp_edges.first).line().d().DropDimension(2)
                    .Dot(vector), 0);
-  EXPECT_LT(polygon.edge(opp_edges.second).line().d().DropDimension(2)
+  EXPECT_LT(polygon.const_edge(opp_edges.second).line().d().DropDimension(2)
                    .Dot(vector), 0);
 
   vector.Negate();
   opp_edges = polygon.GetOppositeEdgeIndicesBisect(vector,
                                                    /*drop_dimension=*/2);
-  EXPECT_GT(polygon.edge(opp_edges.first).line().d().DropDimension(2)
+  EXPECT_GT(polygon.const_edge(opp_edges.first).line().d().DropDimension(2)
                    .Dot(vector), 0);
-  EXPECT_LT(polygon.edge(opp_edges.second).line().d().DropDimension(2)
+  EXPECT_LT(polygon.const_edge(opp_edges.second).line().d().DropDimension(2)
                    .Dot(vector), 0);
 }
 
@@ -437,9 +441,9 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesBisect) {
     std::pair<size_t, size_t> opp_edges = polygon.GetOppositeEdgeIndicesBisect(
         vector, /*drop_dimension=*/2);
 
-    EXPECT_GT(polygon.edge(opp_edges.first).line().d().DropDimension(2)
+    EXPECT_GT(polygon.const_edge(opp_edges.first).line().d().DropDimension(2)
                      .Dot(vector), 0);
-    EXPECT_LT(polygon.edge(opp_edges.second).line().d().DropDimension(2)
+    EXPECT_LT(polygon.const_edge(opp_edges.second).line().d().DropDimension(2)
                      .Dot(vector), 0);
 
     std::rotate(std::begin(p), std::begin(p) + 1, std::end(p));
@@ -471,8 +475,8 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesCWMidSameDir) {
   Vector2<> vector(0, -1);
   std::pair<size_t, size_t> opp_edges = polygon.GetOppositeEdgeIndicesBisect(
       vector, /*drop_dimension=*/2);
-  const auto& edge1_dir = polygon.edge(opp_edges.first).line().d();
-  const auto& edge2_dir = polygon.edge(opp_edges.second).line().d();
+  const auto& edge1_dir = polygon.const_edge(opp_edges.first).line().d();
+  const auto& edge2_dir = polygon.const_edge(opp_edges.second).line().d();
   EXPECT_GT(vector.Dot(edge1_dir.DropDimension(2)), 0);
   EXPECT_LT(vector.Dot(edge2_dir.DropDimension(2)), 0);
 }
@@ -499,8 +503,8 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesCCWMidSameDir) {
   std::pair<size_t, size_t> opp_edges = polygon.GetOppositeEdgeIndicesBisect(
       vector, /*drop_dimension=*/2);
 
-  const auto& edge1_dir = polygon.edge(opp_edges.first).line().d();
-  const auto& edge2_dir = polygon.edge(opp_edges.second).line().d();
+  const auto& edge1_dir = polygon.const_edge(opp_edges.first).line().d();
+  const auto& edge2_dir = polygon.const_edge(opp_edges.second).line().d();
   EXPECT_LT(edge1_dir.DropDimension(2).Dot(vector) *
             edge2_dir.DropDimension(2).Dot(vector).GetSign(), 0);
 }
@@ -583,8 +587,8 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesDenom) {
       std::pair<size_t, size_t> opp_edges =
         polygon.GetOppositeEdgeIndicesBisect(
             vector, /*drop_dimension=*/2);
-      const auto& edge1_dir = polygon.edge(opp_edges.first).line().d();
-      const auto& edge2_dir = polygon.edge(opp_edges.second).line().d();
+      const auto& edge1_dir = polygon.const_edge(opp_edges.first).line().d();
+      const auto& edge2_dir = polygon.const_edge(opp_edges.second).line().d();
       EXPECT_LT(edge1_dir.DropDimension(2).Dot(vector) *
                 edge2_dir.DropDimension(2).Dot(vector).GetSign(), 0);
     }
@@ -1299,8 +1303,9 @@ void SplitHelper(const ConvexPolygon<>& polygon,
     for (size_t i = 0; i < output->vertex_count(); ++i) {
       PluckerLine<> expected_line(
           output->vertex(i), output->vertex((i + 1) % output->vertex_count()));
-      EXPECT_EQ(output->edge(i).line(), expected_line);
-      EXPECT_TRUE(output->edge(i).line().d().IsSameDir(expected_line.d()));
+      EXPECT_EQ(output->const_edge(i).line(), expected_line);
+      EXPECT_TRUE(
+          output->const_edge(i).line().d().IsSameDir(expected_line.d()));
     }
   }
 }
