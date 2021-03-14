@@ -2,8 +2,7 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "walnut/convex_polygon_factory.h"
-#include "walnut/homo_point3.h"
+#include "walnut/point3.h"
 
 namespace walnut {
 

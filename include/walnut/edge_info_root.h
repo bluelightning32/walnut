@@ -28,6 +28,11 @@ struct EdgeInfoRoot {
                const PluckerLine<d_bits, m_bits>& new_line) { }
 
   template <typename OtherEdge>
+  constexpr bool operator==(const OtherEdge& other) const {
+    return true;
+  }
+
+  template <typename OtherEdge>
   constexpr bool operator!=(const OtherEdge& other) const {
     return false;
   }
