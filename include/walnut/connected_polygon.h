@@ -25,6 +25,8 @@ struct ConnectedEdge : public ParentTemplate {
 
   ConnectedEdge(const ConnectedEdge&) = default;
 
+  ConnectedEdge(const Parent& other) : Parent(other) { }
+
   using Parent::Parent;
 
   bool operator==(const ConnectedEdge& other) const {

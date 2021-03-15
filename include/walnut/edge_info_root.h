@@ -11,8 +11,7 @@ namespace walnut {
 struct EdgeInfoRoot {
   constexpr EdgeInfoRoot() = default;
 
-  template <typename OtherEdge>
-  constexpr explicit EdgeInfoRoot(const OtherEdge&) { }
+  constexpr explicit EdgeInfoRoot(const EdgeInfoRoot&) = default;
 
   template <size_t num_bits, size_t denom_bits>
   EdgeInfoRoot(const EdgeInfoRoot& parent,
@@ -27,18 +26,15 @@ struct EdgeInfoRoot {
                const HomoPoint3<num_bits, denom_bits>& new_source,
                const PluckerLine<d_bits, m_bits>& new_line) { }
 
-  template <typename OtherEdge>
-  constexpr bool operator==(const OtherEdge& other) const {
+  constexpr bool operator==(const EdgeInfoRoot& other) const {
     return true;
   }
 
-  template <typename OtherEdge>
-  constexpr bool operator!=(const OtherEdge& other) const {
+  constexpr bool operator!=(const EdgeInfoRoot& other) const {
     return false;
   }
 
-  template <typename OtherEdge>
-  constexpr EdgeInfoRoot& operator=(const OtherEdge& other) {
+  constexpr EdgeInfoRoot& operator=(const EdgeInfoRoot& other) {
     return *this;
   }
 };
