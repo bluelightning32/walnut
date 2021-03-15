@@ -1,6 +1,7 @@
 #ifndef WALNUT_CONNECTED_POLYGON_H__
 #define WALNUT_CONNECTED_POLYGON_H__
 
+#include "gtest/gtest_prod.h"
 #include "walnut/convex_polygon.h"
 
 namespace walnut {
@@ -87,10 +88,54 @@ struct ConnectedEdge : public ParentTemplate {
   template <typename ParentPolygon, typename FinalPolygon, typename EdgeParent>
   friend class ConnectedPolygon;
 
+  FRIEND_TEST(ConnectedEdge, ReversePartnerList);
+
   struct ExtraConnection {
+    ExtraConnection() = default;
+    ExtraConnection(const ExtraConnection&) = default;
+    ExtraConnection(ExtraConnection&&) = default;
+
+    ExtraConnection(const HomoPoint3Rep& start, ConnectedEdge* partner) :
+      start(start), partner(partner) { }
+
     HomoPoint3Rep start;
     ConnectedEdge* partner = nullptr;
   };
+
+  using ExtraConnectionIterator =
+    typename std::vector<ExtraConnection>::iterator;
+
+  void ResetPartners() {
+    partner_ = nullptr;
+    extra_partners_.clear();
+  }
+
+  void ReversePartnerList() {
+    if (!extra_partners_.empty()) {
+      // First reverse the partner pointers.
+      using std::swap;
+      ExtraConnectionIterator begin = extra_partners_.begin();
+      ExtraConnectionIterator end = extra_partners_.end();
+      --end;
+      swap(partner_, end->partner);
+      while (begin != end) {
+        --end;
+        swap(begin->partner, end->partner);
+        if (begin == end) break;
+        ++begin;
+      }
+
+      // Now reverse the locations.
+      begin = extra_partners_.begin();
+      end = extra_partners_.end();
+      while (begin != end) {
+        --end;
+        swap(begin->start, end->start);
+        if (begin == end) break;
+        ++begin;
+      }
+    }
+  }
 
   // Through the friend statement, this field is be modified by
   // ConnectedPolygon.
