@@ -227,7 +227,7 @@ class Vector2 {
   bool IsHalfRotationLessThan(const Vector2<other_coord_bits>& other) const;
 
   // Returns true if the counter-clockwise angle from the x-axis to `this` is
-  // less than the angle from the x-axis to `u`.
+  // less than the angle from the x-axis to `other`.
   //
   // Note that this comparison has the transitive property.
   template <size_t other_coord_bits>
