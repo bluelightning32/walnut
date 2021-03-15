@@ -59,6 +59,20 @@ BigInt<num_bits + new_denom_bits> RoundDown(
   return new_num;
 }
 
+template <size_t num1_bits, size_t denom1_bits, size_t num2_bits,
+          size_t denom2_bits>
+bool IsLessThan(
+    const BigInt<num1_bits>& num1,
+    const BigInt<denom1_bits>& denom1,
+    const BigInt<num2_bits>& num2,
+    const BigInt<denom2_bits>& denom2) {
+  // num1 / denom1 <? num2 / denom2
+  // num1 * denom2 <? num2 * denom1 (flip if (denom1 * denom2) is negative)
+  return (num1 * denom2).LessThan(
+      /*flip=*/(denom1.GetSign() < 0) ^ (denom2.GetSign() < 0),
+      num2 * denom1);
+}
+
 // Returns true if num1/denom1 == num2/denom2.
 template <size_t num_bits1, size_t denom_bits1,
           size_t num_bits2, size_t denom_bits2>

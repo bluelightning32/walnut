@@ -85,4 +85,64 @@ TEST(rational, RoundDownPosPosNeg) {
   EXPECT_EQ(num2, -3);
 }
 
+TEST(rational, IsLessThanPosDenomPosDenom) {
+  // 1/3 < 1/2
+  EXPECT_TRUE(rational::IsLessThan(/*num1=*/BigInt<32>{1},
+                                   /*denom1=*/BigInt<32>{3},
+                                   /*num2=*/BigInt<32>{1},
+                                   /*denom2=*/BigInt<32>{2}));
+
+  // !( 1/2 < 1/3 )
+  EXPECT_FALSE(rational::IsLessThan(/*num1=*/BigInt<32>{1},
+                                    /*denom1=*/BigInt<32>{2},
+                                    /*num2=*/BigInt<32>{1},
+                                    /*denom2=*/BigInt<32>{3}));
+
+  // 3/2 < 5/2
+  EXPECT_TRUE(rational::IsLessThan(/*num1=*/BigInt<32>{3},
+                                   /*denom1=*/BigInt<32>{2},
+                                   /*num2=*/BigInt<32>{5},
+                                   /*denom2=*/BigInt<32>{2}));
+}
+
+TEST(rational, IsLessThanPosDenomNegDenom) {
+  // 1/1 < -5/-1
+  EXPECT_TRUE(rational::IsLessThan(/*num1=*/BigInt<32>{1},
+                                   /*denom1=*/BigInt<32>{1},
+                                   /*num2=*/BigInt<32>{-5},
+                                   /*denom2=*/BigInt<32>{-1}));
+
+  // -1/1 < -1/-1
+  EXPECT_TRUE(rational::IsLessThan(/*num1=*/BigInt<32>{-1},
+                                   /*denom1=*/BigInt<32>{1},
+                                   /*num2=*/BigInt<32>{-1},
+                                   /*denom2=*/BigInt<32>{-1}));
+
+  // !( 1/1 < 1/-1 )
+  EXPECT_FALSE(rational::IsLessThan(/*num1=*/BigInt<32>{1},
+                                    /*denom1=*/BigInt<32>{1},
+                                    /*num2=*/BigInt<32>{1},
+                                    /*denom2=*/BigInt<32>{-1}));
+}
+
+TEST(rational, IsLessThanNegDenomNegDenom) {
+  // 1/-1 < -5/-1
+  EXPECT_TRUE(rational::IsLessThan(/*num1=*/BigInt<32>{1},
+                                   /*denom1=*/BigInt<32>{-1},
+                                   /*num2=*/BigInt<32>{-5},
+                                   /*denom2=*/BigInt<32>{-1}));
+
+  // !( -1/-1 < 1/-1 )
+  EXPECT_FALSE(rational::IsLessThan(/*num1=*/BigInt<32>{-1},
+                                    /*denom1=*/BigInt<32>{-1},
+                                    /*num2=*/BigInt<32>{1},
+                                    /*denom2=*/BigInt<32>{-1}));
+
+  // !( 1/-1 < 1/-1 )
+  EXPECT_FALSE(rational::IsLessThan(/*num1=*/BigInt<32>{1},
+                                    /*denom1=*/BigInt<32>{-1},
+                                    /*num2=*/BigInt<32>{1},
+                                    /*denom2=*/BigInt<32>{-1}));
+}
+
 }  // walnut
