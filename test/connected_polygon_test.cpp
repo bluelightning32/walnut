@@ -75,4 +75,12 @@ TEST(ConnectedPolygon, SplitInMiddle) {
   EXPECT_TRUE(children.second.IsValidState());
 }
 
+TEST(ConnectedPolygon, GetNextEdge) {
+  AABBConvexPolygon<ConnectedPolygon<>> polygon(MakeRectangle());
+
+  for (size_t i = 0; i < 4; ++i) {
+    EXPECT_EQ(&polygon.edge(i).GetNextEdge(), &polygon.edge((i + 1)%4));
+  }
+}
+
 }  // walnut

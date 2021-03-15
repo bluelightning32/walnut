@@ -298,11 +298,11 @@ inline bool Vector2<coord_bits>::IsRotationLessThan(
     const Vector2<other_coord_bits>& other) const {
   bool y_sign = y().GetSign() < 0;
   bool other_y_sign = other.y().GetSign() < 0;
-  // packed_sign is a quadrant that `this` is in, although the quadrant numbers
-  // are out of order.
-  char packed_sign = (char(y_sign) << 1) | char(x().GetSign() < 0);
-  // other_packed_sign is a quadrant that `other` is in, although the quadrant
+  // packed_sign is the quadrant that `this` is in, although the quadrant
   // numbers are out of order.
+  char packed_sign = (char(y_sign) << 1) | char(x().GetSign() < 0);
+  // other_packed_sign is the quadrant that `other` is in, although the
+  // quadrant numbers are out of order.
   char other_packed_sign =
     (char(other_y_sign) << 1) | char(other.x().GetSign() < 0);
   if (packed_sign != other_packed_sign) {
