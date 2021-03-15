@@ -12,7 +12,7 @@ namespace walnut {
 // the half-edge connects to more half edges due to T-junctions. The vector of
 // edges in the parent polygon must remain stable during the connection
 // process, because inserting new edges would break existing EdgeConnections.
-// So instead the extra connections are stored in `extra_neighbors_`.
+// So instead the extra connections are stored in `extra_partners_`.
 template <typename HomoPoint3Template, typename FinalPolygonTemplate,
           typename ParentTemplate>
 struct ConnectedEdge : public ParentTemplate {
@@ -32,8 +32,8 @@ struct ConnectedEdge : public ParentTemplate {
   bool operator==(const ConnectedEdge& other) const {
     if (!Parent::operator==(other)) return false;
 
-    if (extra_neighbors_ != other.extra_neighbors_) return false;
-    return neighbor_ == other.neighbor_;
+    if (extra_partners_ != other.extra_partners_) return false;
+    return partner_ == other.partner_;
   }
 
   // Allow the parent's operator== to be used for types that inherit from
@@ -48,28 +48,28 @@ struct ConnectedEdge : public ParentTemplate {
     return *polygon_;
   }
 
-  const ConnectedEdge* neighbor() const {
-    return neighbor_;
+  const ConnectedEdge* partner() const {
+    return partner_;
   }
 
-  ConnectedEdge* neighbor() {
-    return neighbor_;
+  ConnectedEdge* partner() {
+    return partner_;
   }
 
-  size_t extra_neighbor_count() const {
-    return extra_neighbors_.size();
+  size_t extra_partner_count() const {
+    return extra_partners_.size();
   }
 
-  const HomoPoint3Rep& extra_neighbor_start(size_t i) const {
-    return extra_neighbors_[i].start;
+  const HomoPoint3Rep& extra_partner_start(size_t i) const {
+    return extra_partners_[i].start;
   }
 
-  const ConnectedEdge& extra_neighbor(size_t i) const {
-    return *extra_neighbors_[i].neighbor;
+  const ConnectedEdge& extra_partner(size_t i) const {
+    return *extra_partners_[i].partner;
   }
 
-  ConnectedEdge& extra_neighbor(size_t i) {
-    return *extra_neighbors_[i].neighbor;
+  ConnectedEdge& extra_partner(size_t i) {
+    return *extra_partners_[i].partner;
   }
 
   size_t edge_index() const {
@@ -89,15 +89,15 @@ struct ConnectedEdge : public ParentTemplate {
 
   struct ExtraConnection {
     HomoPoint3Rep start;
-    ConnectedEdge* neighbor = nullptr;
+    ConnectedEdge* partner = nullptr;
   };
 
   // Through the friend statement, this field is be modified by
   // ConnectedPolygon.
   FinalPolygon* polygon_ = nullptr;
 
-  ConnectedEdge* neighbor_ = nullptr;
-  std::vector<ExtraConnection> extra_neighbors_;
+  ConnectedEdge* partner_ = nullptr;
+  std::vector<ExtraConnection> extra_partners_;
 };
 
 
