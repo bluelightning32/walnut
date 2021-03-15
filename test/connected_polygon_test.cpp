@@ -75,11 +75,12 @@ TEST(ConnectedPolygon, SplitInMiddle) {
   EXPECT_TRUE(children.second.IsValidState());
 }
 
-TEST(ConnectedPolygon, GetNextEdge) {
+TEST(ConnectedPolygon, edge_index) {
   AABBConvexPolygon<ConnectedPolygon<>> polygon(MakeRectangle());
 
-  for (size_t i = 0; i < 4; ++i) {
-    EXPECT_EQ(&polygon.edge(i).GetNextEdge(), &polygon.edge((i + 1)%4));
+  for (size_t i = 0; i < polygon.vertex_count(); ++i) {
+    EXPECT_EQ(&polygon.edge(i).polygon(), &polygon);
+    EXPECT_EQ(polygon.edge(i).edge_index(), i);
   }
 }
 

@@ -72,10 +72,9 @@ struct ConnectedEdge : public ParentTemplate {
     return *extra_neighbors_[i].neighbor;
   }
 
-  const ConnectedEdge& GetNextEdge() const {
-    size_t edge_index =
-      this - static_cast<const ConnectedEdge*>(polygon().edges().data());
-    return polygon().edge((edge_index + 1) % polygon().vertex_count());
+  size_t edge_index() const {
+    using FinalEdgeRep = typename FinalPolygon::EdgeVector::value_type;
+    return static_cast<const FinalEdgeRep *>(this) - polygon().edges().data();
   }
 
  protected:
