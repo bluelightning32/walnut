@@ -5,13 +5,6 @@
 
 namespace walnut {
 
-template <typename FinalPolygon>
-struct EdgeConnection {
-  FinalPolygon* polygon = nullptr;
-  size_t edge_index;
-};
-
-
 // A half edge of a ConnectedPolygon
 //
 // Usually a half edge will only connect with one other half edge. However,
@@ -26,12 +19,7 @@ struct ConnectedEdge : public ParentTemplate {
   using HomoPoint3Rep = HomoPoint3Template;
   using FinalPolygon = FinalPolygonTemplate;
   using Parent = ParentTemplate;
-  using EdgeConnectionRep = EdgeConnection<FinalPolygon>;
-
-  struct ExtraConnection {
-    HomoPoint3Rep start;
-    EdgeConnectionRep neighbor;
-  };
+  using ConnectedEdgeRep = ConnectedEdge;
 
   ConnectedEdge() = default;
 
@@ -50,12 +38,36 @@ struct ConnectedEdge : public ParentTemplate {
   // the parent type, but not ConnectedEdge.
   using Parent::operator==;
 
-  const EdgeConnectionRep& neighbor() const {
+  const FinalPolygon& polygon() const {
+    return *polygon_;
+  }
+
+  FinalPolygon& polygon() {
+    return *polygon_;
+  }
+
+  const ConnectedEdge* neighbor() const {
     return neighbor_;
   }
 
-  const std::vector<ExtraConnection>& extra_neighbors() const {
-    return extra_neighbors_;
+  ConnectedEdge* neighbor() {
+    return neighbor_;
+  }
+
+  size_t extra_neighbor_count() const {
+    return extra_neighbors_.size();
+  }
+
+  const HomoPoint3Rep& extra_neighbor_start(size_t i) const {
+    return extra_neighbors_[i].start;
+  }
+
+  const ConnectedEdge& extra_neighbor(size_t i) const {
+    return *extra_neighbors_[i].neighbor;
+  }
+
+  ConnectedEdge& extra_neighbor(size_t i) {
+    return *extra_neighbors_[i].neighbor;
   }
 
  protected:
@@ -65,7 +77,19 @@ struct ConnectedEdge : public ParentTemplate {
   ConnectedEdge& operator=(ConnectedEdge&&) = default;
 
  private:
-  EdgeConnectionRep neighbor_;
+  template <typename ParentPolygon, typename FinalPolygon, typename EdgeParent>
+  friend class ConnectedPolygon;
+
+  struct ExtraConnection {
+    HomoPoint3Rep start;
+    ConnectedEdge* neighbor = nullptr;
+  };
+
+  // Through the friend statement, this field is be modified by
+  // ConnectedPolygon.
+  FinalPolygon* polygon_ = nullptr;
+
+  ConnectedEdge* neighbor_ = nullptr;
   std::vector<ExtraConnection> extra_neighbors_;
 };
 
@@ -125,7 +149,14 @@ class ConnectedPolygon : public ParentTemplate::MakeParent<
 
   ConnectedPolygon() = default;
 
-  using Parent::Parent;
+  template <typename OtherPolygon,
+            std::enable_if_t<std::is_constructible<Parent,
+                                                   OtherPolygon>::value,
+                             bool> = true>
+  ConnectedPolygon(OtherPolygon&& other) :
+      Parent(std::forward<OtherPolygon>(other)) {
+    SetEdgeBackPointers();
+  }
 
   // Overrides the non-virtual function from ConvexPolygon.
   std::pair<ConnectedPolygon, ConnectedPolygon> CreateSplitChildren(
@@ -144,8 +175,49 @@ class ConnectedPolygon : public ParentTemplate::MakeParent<
     return result;
   }
 
+  bool IsValidState() const {
+    if (!Parent::IsValidState()) {
+      return false;
+    }
+    for (size_t i = 0; i < vertex_count(); ++i) {
+      if (&edge(i).polygon() != this) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  using Parent::edge;
+  using Parent::vertex_count;
+
  protected:
-  using Parent::FillInSplitChildren;
+  template <typename ParentRef, typename SplitInfoRef>
+  static void FillInSplitChildren(ParentRef&& parent, SplitInfoRef&& split,
+                                  ConnectedPolygon& neg_child,
+                                  ConnectedPolygon& pos_child) {
+    Parent::FillInSplitChildren(std::forward<ParentRef>(parent),
+                                std::forward<SplitInfoRef>(split), neg_child,
+                                pos_child);
+    neg_child.SetEdgeBackPointers();
+    pos_child.SetEdgeBackPointers();
+  }
+
+  template <typename OtherPolygon>
+  std::enable_if_t<std::is_assignable<Parent,
+                                      OtherPolygon>::value,
+                   ConnectedPolygon&>
+  operator=(OtherPolygon&& other) {
+    Parent::operator=(std::forward<OtherPolygon>(other));
+    SetEdgeBackPointers();
+    return *this;
+  }
+
+ private:
+  void SetEdgeBackPointers() {
+    for (size_t i = 0; i < vertex_count(); ++i) {
+      edge(i).polygon_ = this;
+    }
+  }
 };
 
 }  // walnut
