@@ -101,7 +101,7 @@ TEST(ConnectedEdge, ReversePartnerList) {
   polygon.edge(2).ReversePartnerList();
   EXPECT_EQ(polygon.edge(2).partner(), &polygon.edge(1));
   ASSERT_EQ(polygon.edge(2).extra_partner_count(), 1);
-  EXPECT_EQ(&polygon.edge(2).extra_partner(0), &polygon.edge(0));
+  EXPECT_EQ(polygon.edge(2).extra_partner(0), &polygon.edge(0));
   EXPECT_EQ(polygon.edge(2).extra_partner_start(0), HomoPoint3Rep(1, 0, 0, 1));
 
   polygon.edge(3).partner_ = &polygon.edge(0);
@@ -112,9 +112,9 @@ TEST(ConnectedEdge, ReversePartnerList) {
   polygon.edge(3).ReversePartnerList();
   EXPECT_EQ(polygon.edge(3).partner(), &polygon.edge(2));
   ASSERT_EQ(polygon.edge(3).extra_partner_count(), 2);
-  EXPECT_EQ(&polygon.edge(3).extra_partner(0), &polygon.edge(1));
+  EXPECT_EQ(polygon.edge(3).extra_partner(0), &polygon.edge(1));
   EXPECT_EQ(polygon.edge(3).extra_partner_start(0), HomoPoint3Rep(2, 0, 0, 1));
-  EXPECT_EQ(&polygon.edge(3).extra_partner(1), &polygon.edge(0));
+  EXPECT_EQ(polygon.edge(3).extra_partner(1), &polygon.edge(0));
   EXPECT_EQ(polygon.edge(3).extra_partner_start(1), HomoPoint3Rep(1, 0, 0, 1));
 }
 

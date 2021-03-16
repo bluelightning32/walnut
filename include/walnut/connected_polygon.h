@@ -65,12 +65,12 @@ struct ConnectedEdge : public ParentTemplate {
     return extra_partners_[i].start;
   }
 
-  const ConnectedEdge& extra_partner(size_t i) const {
-    return *extra_partners_[i].partner;
+  const ConnectedEdge* extra_partner(size_t i) const {
+    return extra_partners_[i].partner;
   }
 
-  ConnectedEdge& extra_partner(size_t i) {
-    return *extra_partners_[i].partner;
+  ConnectedEdge* extra_partner(size_t i) {
+    return extra_partners_[i].partner;
   }
 
   size_t edge_index() const {
@@ -239,6 +239,8 @@ class ConnectedPolygon : public ParentTemplate::MakeParent<
     return true;
   }
 
+  // The edges must be mutable in order to connect them. So expose both the
+  // const and non-const edge functions from the parent.
   using Parent::edge;
   using Parent::vertex_count;
 
