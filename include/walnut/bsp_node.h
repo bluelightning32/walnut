@@ -132,14 +132,15 @@ class BSPEdgeInfo : public ParentTemplate {
 
 template <typename BSPNodeTemplate>
 class BSPPolygonWrapper :
-  public BSPNodeTemplate::OutputPolygonParent::MakeParent<
+  public BSPNodeTemplate::OutputPolygonParent::template MakeParent<
     BSPPolygonWrapper<BSPNodeTemplate>, BSPEdgeInfo<BSPNodeTemplate>
   > {
  public:
   using BSPNodeRep = BSPNodeTemplate;
-  using Parent = typename BSPNodeTemplate::OutputPolygonParent::MakeParent<
-    BSPPolygonWrapper<BSPNodeTemplate>, BSPEdgeInfo<BSPNodeRep>
-  >;
+  using Parent =
+    typename BSPNodeTemplate::OutputPolygonParent::template MakeParent<
+      BSPPolygonWrapper<BSPNodeTemplate>, BSPEdgeInfo<BSPNodeRep>
+    >;
   using typename Parent::SplitInfoRep;
   using typename Parent::EdgeParent;
   using BSPEdgeInfoRep = BSPEdgeInfo<BSPNodeRep>;

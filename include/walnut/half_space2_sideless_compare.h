@@ -16,8 +16,8 @@ struct HalfSpace2SidelessCompare {
   using HalfSpace2Rep = HalfSpace2<vector_bits_template, dist_bits_template>;
   using VectorRep = typename HalfSpace2Rep::VectorRep;
 
-  static constexpr size_t vector_bits = HalfSpace2Rep::vector_bits_template;
-  static constexpr size_t dist_bits = HalfSpace2Rep::dist_bits_template;
+  static constexpr size_t vector_bits = HalfSpace2Rep::vector_bits;
+  static constexpr size_t dist_bits = HalfSpace2Rep::dist_bits;
 
   bool operator()(const HalfSpace2Rep& h1, const HalfSpace2Rep& h2) const {
     if (h1.normal().IsHalfRotationLessThan(h2.normal())) {

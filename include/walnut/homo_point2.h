@@ -17,12 +17,8 @@ class HomoPoint2 {
 
   // The minimum number of bits to support for each of the x and y coordinates.
   static constexpr size_t num_bits = num_bits_template;
-  // The maximum number of bits supported for the x and y coordinates.
-  static constexpr size_t max_num_bits = NumInt::max_bits;
   // The minimum number of bits to support for the w coordinate.
   static constexpr size_t denom_bits = denom_bits_template;
-  // The maximum number of bits supported for the w coordinate.
-  static constexpr size_t max_denom_bits = DenomInt::max_bits;
 
   NumInt& x() {
     return vector_from_origin_.x();

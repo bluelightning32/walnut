@@ -51,7 +51,7 @@ MutableConvexPolygon<std::iterator_traits<
 template<typename Container>
 auto
 MakeConvexPolygon(const Container& vertices) ->
-ConvexPolygon<std::iterator_traits<
+MutableConvexPolygon<std::iterator_traits<
     decltype(std::begin(vertices))>::value_type::component_bits> {
   auto result = MakeUnsortedConvexPolygon(vertices);
   result.SortVertices();

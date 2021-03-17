@@ -32,8 +32,8 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
   // EdgeInfo type.
   template <typename FinalPolygon, typename NewEdgeParent>
   using MakeParent =
-    AABBConvexPolygon<typename Parent::MakeParent<FinalPolygon,
-                                                  NewEdgeParent>>;
+    AABBConvexPolygon<typename Parent::template MakeParent<FinalPolygon,
+                                                           NewEdgeParent>>;
 
   using Parent::point3_bits;
   using Parent::homo_point3_num_bits;

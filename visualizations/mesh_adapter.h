@@ -33,7 +33,7 @@ vtkSmartPointer<vtkPolyData> ConvertWalnutMesh(
     converted_polygon->GetPointIds()->SetNumberOfIds(polygon.vertex_count());
     for (size_t i = 0; i < polygon.vertex_count(); ++i) {
       HomoPoint3Rep point = polygon.vertex(i);
-      double w = point.w();
+      double w(point.w());
       vtkIdType point_id = points->InsertNextPoint(double(point.x()) / w,
                                                    double(point.y()) / w,
                                                    double(point.z()) / w);
