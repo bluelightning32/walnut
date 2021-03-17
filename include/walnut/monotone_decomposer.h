@@ -103,7 +103,8 @@ class MonotoneDecomposer : public MonotoneTriangulator<Point3RepTemplate> {
                          const_iterator range2_begin,
                          const_iterator range2_end) = 0;
 
-  void Emit(bool p3_is_top_chain, const Point3Rep& p1, const Point3Rep& p2, const Point3Rep& p3) override {
+  void EmitTriangle(bool p3_is_top_chain, const Point3Rep& p1,
+                    const Point3Rep& p2, const Point3Rep& p3) override {
     if (!convex_top_.empty()) {
       assert(!convex_bottom_.empty());
       if (convex_top_.back() == p1 && convex_bottom_.back() == p2) {

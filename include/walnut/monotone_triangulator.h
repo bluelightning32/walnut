@@ -44,7 +44,7 @@ class MonotoneTriangulator {
   // With the top and bottom chains combined, at least 3 vertices must be given
   // as input.
   //
-  // `Emit` is called for each triangle produced.
+  // `EmitTriangle` is called for each triangle produced.
   //
   // After Build returns, `this` is left in a state ready for Build to be
   // called again.
@@ -64,8 +64,8 @@ class MonotoneTriangulator {
   // `p1` and `p2` come from `reflex_stack`. `p3` is a newer vertex from one
   // of the chains. `p3_is_top_chain` is set to true when `p3` comes from the
   // top chain, or false if it comes from the bottom chain.
-  virtual void Emit(bool p3_is_top_chain, const Point3Rep& p1,
-                    const Point3Rep& p2, const Point3Rep& p3) = 0;
+  virtual void EmitTriangle(bool p3_is_top_chain, const Point3Rep& p1,
+                            const Point3Rep& p2, const Point3Rep& p3) = 0;
 
  private:
   void ProcessVertex(int drop_dimension, bool is_top, const Point3Rep& v);
@@ -174,7 +174,7 @@ void MonotoneTriangulator<Point3RepTemplate>::ProcessVertex(
       }
 
       if (p2->Get2DTwistDir(drop_dimension, *p1, v) <= 0) {
-        Emit(/*p3_is_top_chain=*/is_top, *p1, *p2, v);
+        EmitTriangle(/*p3_is_top_chain=*/is_top, *p1, *p2, v);
         reflex_stack_.pop_back();
       } else {
         break;
@@ -199,7 +199,7 @@ void MonotoneTriangulator<Point3RepTemplate>::SwitchChains(
       p2 = reflex_stack_[i + 1];
     }
 
-    Emit(/*p3_is_top_chain=*/!top_chain_is_current_, *p1, *p2, next);
+    EmitTriangle(/*p3_is_top_chain=*/!top_chain_is_current_, *p1, *p2, next);
   }
   reflex_stack_.clear();
   reflex_stack_.push_back(reflex_back);
