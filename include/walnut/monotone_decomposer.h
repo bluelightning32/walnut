@@ -77,8 +77,8 @@ class MonotoneDecomposer : public MonotoneTriangulator<Point3RepTemplate> {
     drop_dimension_ = drop_dimension;
     Parent::Build(drop_dimension, monotone_dimension,
                   top_begin, top_end, bottom_begin, bottom_end);
-    Emit(orientation_, convex_top_.rbegin(), convex_top_.rend(),
-         convex_bottom_.begin(), convex_bottom_.end());
+    EmitRange(orientation_, convex_top_.rbegin(), convex_top_.rend(),
+              convex_bottom_.begin(), convex_bottom_.end());
     convex_top_.clear();
     convex_bottom_.clear();
   }
@@ -98,9 +98,10 @@ class MonotoneDecomposer : public MonotoneTriangulator<Point3RepTemplate> {
   //
   // The next 4 arguments represent 2 iterator ranges of vertices. To get the
   // actual list of vertices for the polygon, calculate range1 + range2.
-  virtual void Emit(int orientation, const_reverse_iterator range1_begin,
-                    const_reverse_iterator range1_end,
-                    const_iterator range2_begin, const_iterator range2_end) = 0;
+  virtual void EmitRange(int orientation, const_reverse_iterator range1_begin,
+                         const_reverse_iterator range1_end,
+                         const_iterator range2_begin,
+                         const_iterator range2_end) = 0;
 
   void Emit(bool p3_is_top_chain, const Point3Rep& p1, const Point3Rep& p2, const Point3Rep& p3) override {
     if (!convex_top_.empty()) {
@@ -138,8 +139,8 @@ class MonotoneDecomposer : public MonotoneTriangulator<Point3RepTemplate> {
           orientation_ = 0;
         }
       }
-      Emit(orientation_, convex_top_.rbegin(), convex_top_.rend(),
-           convex_bottom_.begin(), convex_bottom_.end());
+      EmitRange(orientation_, convex_top_.rbegin(), convex_top_.rend(),
+                convex_bottom_.begin(), convex_bottom_.end());
       convex_top_.clear();
       convex_bottom_.clear();
     }

@@ -62,9 +62,10 @@ class ResultCollector : public MonotoneDecomposer<Point3<32>> {
   }
 
  protected:
-  void Emit(int orientation, const_reverse_iterator range1_begin,
-            const_reverse_iterator range1_end, const_iterator range2_begin,
-            const_iterator range2_end) override {
+  void EmitRange(int orientation, const_reverse_iterator range1_begin,
+                 const_reverse_iterator range1_end,
+                 const_iterator range2_begin,
+                 const_iterator range2_end) override {
     result_.emplace_back(orientation, std::vector<Point3<32>>());
     result_.back().second.reserve((range1_end - range1_begin) +
                            (range2_end - range2_begin));

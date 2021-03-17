@@ -132,9 +132,10 @@ class OrientingMonotoneDecomposer :
                          Chain2Iterator chain2_begin,
                          Chain2Iterator chain2_end);
 
-  void Emit(int orientation, const_reverse_iterator range1_begin,
-            const_reverse_iterator range1_end,
-            const_iterator range2_begin, const_iterator range2_end) override {
+  void EmitRange(int orientation, const_reverse_iterator range1_begin,
+                 const_reverse_iterator range1_end,
+                 const_iterator range2_begin,
+                 const_iterator range2_end) final {
     if (flipped_) {
       EmitOriented(-orientation,
                    const_reverse_iterator(range2_end),
