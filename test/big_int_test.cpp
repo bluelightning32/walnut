@@ -60,9 +60,15 @@ TEST(BigInt, LeftShiftPos) {
 
 TEST(BigInt, LeftShiftNeg) {
   BigInt<64> a(-3);
-  EXPECT_EQ(a << 1, BigInt<64>{static_cast<int64_t>(-3) << 1});
-  EXPECT_EQ(a << 61, BigInt<64>{static_cast<int64_t>(-3) << 61});
-  EXPECT_EQ(a << 62, BigInt<64>{static_cast<int64_t>(1) << 62});
+  EXPECT_EQ(a << 1, BigInt<64>{static_cast<int64_t>(-3) *
+                               static_cast<int64_t>(
+                                 (static_cast<uint64_t>(1) << 1))});
+  EXPECT_EQ(a << 61, BigInt<64>{static_cast<int64_t>(-3) *
+                                static_cast<int64_t>(
+                                  (static_cast<uint64_t>(1) << 61))});
+  EXPECT_EQ(a << 62, BigInt<64>{static_cast<int64_t>(1) *
+                                static_cast<int64_t>(
+                                  (static_cast<uint64_t>(1) << 62))});
 
   BigInt<128> b(-3);
   EXPECT_GT(b << 63, b << 64);
@@ -75,7 +81,8 @@ TEST(BigInt, LeftShiftNeg) {
   EXPECT_LE(b << 65, b << 64);
   EXPECT_EQ((b << 63).low_uint64(), static_cast<uint64_t>(1) << 63);
 
-  BigInt<128> c(static_cast<int64_t>(-1) << 62);
+  BigInt<128> c(static_cast<int64_t>(-1) *
+                static_cast<int64_t>(static_cast<uint64_t>(1) << 62));
   EXPECT_GT(c, c << 1);
   EXPECT_GE(c, c << 1);
   EXPECT_GT(c << 1, c << 2);
@@ -119,7 +126,9 @@ TEST(BigInt, AddInt32CarryNeg) {
   BigInt<64> b(std::numeric_limits<int32_t>::min());
   BigInt<64> result = a.Add(b);
 
-  EXPECT_EQ(result.low_uint64(), static_cast<int64_t>(-1) << 32);
+  EXPECT_EQ(result.low_uint64(),
+            static_cast<int64_t>(-1) *
+            static_cast<int64_t>(static_cast<uint64_t>(1) << 32));
   EXPECT_LT(result, a);
   EXPECT_GT(a, result);
 }
@@ -212,7 +221,9 @@ TEST(BigInt, SubtractInt64ToNeg) {
 
   EXPECT_EQ(result.low_uint64(), static_cast<uint64_t>(-1) << 32);
   EXPECT_EQ(result.Add<>(b), a);
-  EXPECT_EQ(result, BigInt<64>{static_cast<int64_t>(-1) << 32});
+  EXPECT_EQ(result, BigInt<64>{static_cast<int64_t>(-1) *
+                               static_cast<int64_t>(
+                                   static_cast<uint64_t>(1) << 32)});
 }
 
 TEST(BigInt, SubtractCarryFrom127) {
