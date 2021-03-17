@@ -87,6 +87,8 @@ struct ConnectedEdge : public ParentTemplate {
  private:
   template <typename ParentPolygon, typename FinalPolygon, typename EdgeParent>
   friend class ConnectedPolygon;
+  template <typename EdgeTemplate>
+  friend class EdgeLineConnector;
 
   FRIEND_TEST(ConnectedEdge, ReversePartnerList);
 
@@ -160,7 +162,7 @@ struct ConnectedEdge : public ParentTemplate {
 template <typename ParentTemplate = ConvexPolygon<>,
           typename FinalPolygonTemplate = void,
           typename EdgeParentTemplate = EdgeInfoRoot>
-class ConnectedPolygon : public ParentTemplate::MakeParent<
+class ConnectedPolygon : public ParentTemplate::template MakeParent<
                                   FinalPolygonTemplate,
                                   ConnectedEdge<
                                     typename ParentTemplate::HomoPoint3Rep,
@@ -187,10 +189,12 @@ class ConnectedPolygon : public ParentTemplate::MakeParent<
   using HomoPoint3Rep = typename ParentTemplate::HomoPoint3Rep;
   using ConnectedEdgeRep = ConnectedEdge<HomoPoint3Rep, FinalPolygon,
                                          EdgeParent>;
-  using Parent = typename ParentTemplate::MakeParent<FinalPolygon,
-                                                     ConnectedEdgeRep>;
+  using Parent =
+    typename ParentTemplate::template MakeParent<FinalPolygon,
+                                                 ConnectedEdgeRep>;
   using typename Parent::EdgeRep;
   using typename Parent::SplitInfoRep;
+  using typename Parent::HalfSpace3Rep;
 
   // Subclasses can inherit from this. `NewEdgeParent` should be the subclass's
   // EdgeInfo type.
@@ -209,6 +213,15 @@ class ConnectedPolygon : public ParentTemplate::MakeParent<
       Parent(std::forward<OtherPolygon>(other)) {
     SetEdgeBackPointers();
   }
+
+  template <size_t num_bits, size_t denom_bits>
+  ConnectedPolygon(const HalfSpace3Rep& plane, int drop_dimension,
+                   const std::vector<HomoPoint3<num_bits,
+                                                denom_bits>>& vertices) :
+      Parent(plane, drop_dimension, vertices) {
+    SetEdgeBackPointers();
+  }
+
 
   // Overrides the non-virtual function from ConvexPolygon.
   std::pair<ConnectedPolygon, ConnectedPolygon> CreateSplitChildren(
@@ -273,6 +286,23 @@ class ConnectedPolygon : public ParentTemplate::MakeParent<
     }
   }
 };
+
+template <typename HomoPoint3Rep, typename FinalPolygon,
+          typename Parent>
+std::ostream& operator<<(std::ostream& out,
+                         const ConnectedEdge<HomoPoint3Rep, FinalPolygon,
+                                             Parent>& edge) {
+  out << "polygon=" << &edge.polygon() << " partner=" << edge.partner();
+  if (edge.extra_partner_count()) {
+    out << " [ ";
+    for (size_t i = 0; i < edge.extra_partner_count(); ++i) {
+      if (i > 0) out << ", ";
+      out << edge.extra_partner_start(i) << "=" << edge.extra_partner(i);
+    }
+    out << " ]";
+  }
+  return out;
+}
 
 }  // walnut
 
