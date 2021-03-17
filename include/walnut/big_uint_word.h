@@ -422,6 +422,11 @@ class BigUIntWordGCC
   constexpr BigUIntWordGCC(const Parent& other)
     : Parent(other) {
   }
+
+  explicit constexpr BigUIntWordGCC(uint32_t i) : Parent(i) { }
+
+  explicit constexpr BigUIntWordGCC(int i) : Parent(i) { }
+
   // Also allow all of Parent's constructors.
   using Parent::Parent;
 

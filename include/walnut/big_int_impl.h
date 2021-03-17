@@ -93,8 +93,8 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
                      std::min(other.used_bytes(), int(max_words * bytes_per_word)) :
                      other.used_bytes();
     size_t copy_words = (copy_bytes + bytes_per_word - 1) / bytes_per_word;
-    size_t i;
-    for (i = 0; i < copy_words; ++i) {
+    size_t i = 0;
+    for (; i < copy_words; ++i) {
       words_[i] = other.words()[i];
     }
     if (BigIntWord{words_[i - 1]} < 0) {
@@ -128,8 +128,8 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
                      std::min(other.used_bytes(), int(max_words * bytes_per_word)) :
                      other.used_bytes();
     size_t copy_words = (copy_bytes + bytes_per_word - 1) / bytes_per_word;
-    size_t i;
-    for (i = 0; i < copy_words; ++i) {
+    size_t i = 0;
+    for (; i < copy_words; ++i) {
       words_[i] = other.words()[i];
     }
     if (BigIntWord{words_[i - 1]} < 0 && i < max_words) {
@@ -879,9 +879,9 @@ class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
   template <size_t other_words>
   constexpr BigIntImpl<max_words> DivideRemainderSlow(const BigIntImpl<other_words>& other,
       BigIntImpl<std::min(max_words, other_words)>* remainder_out) const {
-    bool this_signed;
+    bool this_signed = false;
     BigUIntImpl<max_words> this_uint = GetUIntAbs(&this_signed);
-    bool other_signed;
+    bool other_signed = false;
     BigUIntImpl<other_words> other_uint = other.GetUIntAbs(&other_signed);
 
     BigUIntImpl<std::min(max_words, other_words)> remainder;

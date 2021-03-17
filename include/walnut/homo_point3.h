@@ -22,12 +22,8 @@ class HomoPoint3 {
   // The minimum number of bits to support for each of the x, y, and z
   // components.
   static constexpr size_t num_bits = num_bits_template;
-  // The maximum number of bits supported for the x, y, and z components.
-  static constexpr size_t max_num_bits = NumInt::max_bits;
   // The minimum number of bits to support for the w component.
   static constexpr size_t denom_bits = denom_bits_template;
-  // The maximum number of bits supported for the w component.
-  static constexpr size_t max_denom_bits = DenomInt::max_bits;
 
   NumInt& x() {
     return vector_from_origin_.x();
@@ -129,7 +125,7 @@ class HomoPoint3 {
     auto b_scaled = b.vector_from_origin() * a.dist_denom();
     constexpr size_t a_bits = decltype(a_scaled)::component_bits;
     constexpr size_t b_bits = decltype(b_scaled)::component_bits;
-    typename BigInt<a_bits>::FlippableCompare<b_bits> compare(
+    typename BigInt<a_bits>::template FlippableCompare<b_bits> compare(
         /*flip=*/b.dist_denom().HasDifferentSign(a.dist_denom()));
     return std::lexicographical_compare(a_scaled.components().rbegin(),
                                         a_scaled.components().rend(),

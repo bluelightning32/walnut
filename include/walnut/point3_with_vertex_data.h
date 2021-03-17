@@ -24,16 +24,17 @@ struct Point3WithVertexData : public Point3<point3_bits> {
 
 // Gets the VertexData field out of Point3Rep. If Point3Rep does not have a
 // VertexData field, then it defaults to EdgeInfoRoot.
-template <typename Point3Rep, bool leave_as_default = true>
+template <typename Point3Rep, typename = void>
 struct GetVertexData {
-  static_assert(leave_as_default == true);
   using VertexData = EdgeInfoRoot;
 };
 
 template <typename Point3Rep>
 struct GetVertexData<Point3Rep,
-                     std::is_same<typename Point3Rep::VertexData,
-                                  typename Point3Rep::VertexData>::value> {
+                     std::enable_if_t<
+                       std::is_same<typename Point3Rep::VertexData,
+                       typename Point3Rep::VertexData>::value>
+                    > {
   using VertexData = typename Point3Rep::VertexData;
 };
 
