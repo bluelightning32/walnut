@@ -93,8 +93,8 @@ TEST(EdgeLineConnector, PairAdjacentFlat) {
     std::cout << message << std::endl;
     errored = true;
   };
-  connector(connect_edges.begin(), connect_edges.end(), /*sorted_dimension=*/0,
-            error_handler);
+  connector.Connect(connect_edges.begin(), connect_edges.end(),
+                    /*sorted_dimension=*/0, error_handler);
   EXPECT_FALSE(errored);
   EXPECT_EQ(t1.edge(0).extra_partner_count(), 0);
   EXPECT_EQ(t1.edge(0).partner(), &t2.edge(0));
@@ -134,8 +134,8 @@ TEST(EdgeLineConnector, SplitPairAdjacentFlat) {
     std::cout << message << std::endl;
     errored = true;
   };
-  connector(connect_edges.begin(), connect_edges.end(), /*sorted_dimension=*/0,
-            error_handler);
+  connector.Connect(connect_edges.begin(), connect_edges.end(),
+                    /*sorted_dimension=*/0, error_handler);
   EXPECT_FALSE(errored);
   using ExtraConnection = ConnectedPolygon<>::EdgeRep::ExtraConnection;
   EXPECT_EQ(t1.edge(0).partner(), &t2_b.edge(0));
@@ -217,8 +217,8 @@ TEST(EdgeLineConnector, EightShareEdge) {
     std::cout << message << std::endl;
     errored = true;
   };
-  connector(connect_edges.begin(), connect_edges.end(), /*sorted_dimension=*/0,
-            error_handler);
+  connector.Connect(connect_edges.begin(), connect_edges.end(),
+                    /*sorted_dimension=*/0, error_handler);
   EXPECT_FALSE(errored);
   EXPECT_EQ(t1.edge(0).partner(), &t8.edge(0));
   EXPECT_EQ(t1.edge(0).extra_partner_count(), 0);
@@ -287,8 +287,8 @@ TEST(EdgeLineConnector, TwoCoplanarPolygons) {
     std::cout << message << std::endl;
     errored = true;
   };
-  connector(connect_edges.begin(), connect_edges.end(), /*sorted_dimension=*/0,
-            error_handler);
+  connector.Connect(connect_edges.begin(), connect_edges.end(),
+                    /*sorted_dimension=*/0, error_handler);
   EXPECT_FALSE(errored);
   EXPECT_EQ(t1.edge(0).partner(), &t2.edge(0));
   EXPECT_EQ(t1.edge(0).extra_partner_count(), 0);
@@ -355,8 +355,8 @@ TEST(EdgeLineConnector, SplitCoplanarPolygons) {
     std::cout << message << std::endl;
     errored = true;
   };
-  connector(connect_edges.begin(), connect_edges.end(), /*sorted_dimension=*/0,
-            error_handler);
+  connector.Connect(connect_edges.begin(), connect_edges.end(),
+                    /*sorted_dimension=*/0, error_handler);
   EXPECT_FALSE(errored);
   using ExtraConnection = ConnectedPolygon<>::EdgeRep::ExtraConnection;
   EXPECT_EQ(t1.edge(0).partner(), &t2_b.edge(0));

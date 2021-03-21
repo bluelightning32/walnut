@@ -18,10 +18,11 @@ namespace walnut {
 // Given a sorted range of std::reference_wrapper<ConnectedEdge>s all on the
 // same line, this in place algorithm connects the half-edges together.
 //
-// Typically one instantiates the class, then calls the () operator to connect
-// the edges. This algorithm exists as a class so that the std::vector
-// intermediate data structures can be stored as member variables and reused
-// between calls to the algorithm.
+// Typically one instantiates the class, calls `SortEdgesInPlane` to sort a
+// range of edges, splits up the edges based on the lines, then calls `Connect`
+// to connect each group of edges on the same line. This algorithm exists as a
+// class so that the std::vector intermediate data structures can be stored as
+// member variables and reused between calls to the algorithm.
 template <typename EdgeTemplate = ConnectedPolygon<>::EdgeRep>
 class EdgeLineConnector {
  public:
@@ -70,9 +71,9 @@ class EdgeLineConnector {
   // `error` is called, as many half-edges as possible will be connected. The
   // ones that cannot be connected will have nullptr partners.
   template <typename Iterator>
-  void operator()(Iterator edges_begin, const Iterator& edges_end,
-                  int sorted_dimension,
-                  const std::function<void(const std::string&)>& error) {
+  void Connect(Iterator edges_begin, const Iterator& edges_end,
+               int sorted_dimension,
+               const std::function<void(const std::string&)>& error) {
     assert(end_events_.empty());
     assert(need_partners_.empty());
 
