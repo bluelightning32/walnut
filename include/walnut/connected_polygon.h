@@ -265,6 +265,11 @@ class ConnectedPolygon : public ParentTemplate::template MakeParent<
     SetEdgeBackPointers();
   }
 
+  ConnectedPolygon(ConnectedPolygon&& other) :
+      Parent(std::forward<ConnectedPolygon>(other)) {
+    SetEdgeBackPointers();
+  }
+
   template <size_t num_bits, size_t denom_bits>
   ConnectedPolygon(const HalfSpace3Rep& plane, int drop_dimension,
                    const std::vector<HomoPoint3<num_bits,

@@ -45,7 +45,17 @@ TEST(ConnectedPolygon, CopyConstruct) {
   ConnectedPolygon<> polygon(MakeRectangle());
 
   ConnectedPolygon<> polygon2(polygon);
+  ASSERT_TRUE(polygon2.IsValidState());
   EXPECT_EQ(polygon2, polygon);
+}
+
+TEST(ConnectedPolygon, MoveConstruct) {
+  ConnectedPolygon<> polygon(MakeRectangle());
+
+  ConnectedPolygon<> polygon2(polygon);
+  ConnectedPolygon<> polygon3(std::move(polygon));
+  ASSERT_TRUE(polygon3.IsValidState());
+  EXPECT_EQ(polygon3, polygon2);
 }
 
 TEST(ConnectedPolygon, SplitInMiddle) {
