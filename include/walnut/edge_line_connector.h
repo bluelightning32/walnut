@@ -78,6 +78,7 @@ class EdgeLineConnector {
     ActiveEdgeMap active_edges((RotationCompare(sorted_dimension)));
     EndEventsCompare end_events_compare(sorted_dimension);
 
+    const HomoPoint3Rep* prev_location = nullptr;
     while (edges_begin != edges_end) {
       const HomoPoint3Rep* current_location;
       if (end_events_.empty() ||
@@ -92,6 +93,10 @@ class EdgeLineConnector {
         ProcessEndEvents(sorted_dimension, active_edges, *current_location,
                          end_events_compare);
       }
+      assert (prev_location == nullptr ||
+              IsLocationLessThan(*prev_location, *current_location,
+                                 sorted_dimension));
+      prev_location = current_location;
 
       while (edges_begin != edges_end &&
              GetBeginLocation(*edges_begin,

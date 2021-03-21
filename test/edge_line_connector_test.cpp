@@ -277,4 +277,81 @@ TEST(EdgeLineConnector, TwoCoplanarPolygons) {
   EXPECT_EQ(t4.edge(0).extra_partner_count(), 0);
 }
 
+TEST(EdgeLineConnector, SplitCoplanarPolygons) {
+  // This test has up to 2 coplanar polygons at any point on the edge. However,
+  // the coplanar polygons are interrupted in the middle at different points.
+  //
+  // Top view of the triangles. The arrows show the polygon normals.
+  //
+  // <- t4(+)  t3(-)->&<-t2(+)    t1(-) ->
+  //  3*pi/4        pi/2         pi/4
+  //       \          |          /
+  //        \         |         /
+  //         \        |        /
+  //          \       |       /
+  //           \      |      /
+  //            \     |     /
+  //             \    |    /
+  //              \   |   /
+  //               \  |  /
+  //                \ | /
+  //                 \|/
+  int p = 1;
+  int q = 2;
+  int r = 5;
+  int s = 7;
+  ConnectedPolygon<> t1 = MakeTriangle(/*start=*/s, /*end=*/p, /*extra=*/1,
+                                       /*angle=*/pi/4);
+  ConnectedPolygon<> t2_a = MakeTriangle(/*start=*/p, /*end=*/q, /*extra=*/2,
+                                         /*angle=*/pi/2);
+  ConnectedPolygon<> t2_b = MakeTriangle(/*start=*/q, /*end=*/s, /*extra=*/2,
+                                         /*angle=*/pi/2);
+  ConnectedPolygon<> t3_a = MakeTriangle(/*start=*/s, /*end=*/r, /*extra=*/3,
+                                         /*angle=*/pi/2);
+  ConnectedPolygon<> t3_b = MakeTriangle(/*start=*/r, /*end=*/p, /*extra=*/3,
+                                         /*angle=*/pi/2);
+  ConnectedPolygon<> t4 = MakeTriangle(/*start=*/p, /*end=*/s, /*extra=*/4,
+                                       /*angle=*/3*pi/4);
+
+  using EdgeVector =
+    std::vector<std::reference_wrapper<ConnectedPolygon<>::EdgeRep>>;
+  EdgeVector connect_edges{
+    t1.edge(0),
+    t2_a.edge(0),
+    t3_b.edge(0),
+    t4.edge(0),
+    t2_b.edge(0),
+    t3_a.edge(0),
+  };
+  EdgeLineConnector<> connector;
+  bool errored = false;
+  auto error_handler = [&errored](const std::string& message) {
+    std::cout << message << std::endl;
+    errored = true;
+  };
+  connector(connect_edges.begin(), connect_edges.end(), /*sorted_dimension=*/0,
+            error_handler);
+  EXPECT_FALSE(errored);
+  using ExtraConnection = ConnectedPolygon<>::EdgeRep::ExtraConnection;
+  EXPECT_EQ(t1.edge(0).partner(), &t2_b.edge(0));
+  EXPECT_THAT(t1.edge(0).extra_partners(),
+              ElementsAre(ExtraConnection(t2_b.vertex(0), &t2_a.edge(0))));
+
+  EXPECT_EQ(t2_a.edge(0).partner(), &t1.edge(0));
+  EXPECT_EQ(t2_a.edge(0).extra_partner_count(), 0);
+
+  EXPECT_EQ(t2_b.edge(0).partner(), &t1.edge(0));
+  EXPECT_EQ(t2_b.edge(0).extra_partner_count(), 0);
+
+  EXPECT_EQ(t4.edge(0).partner(), &t3_b.edge(0));
+  EXPECT_THAT(t4.edge(0).extra_partners(),
+              ElementsAre(ExtraConnection(t3_b.vertex(0), &t3_a.edge(0))));
+
+  EXPECT_EQ(t3_a.edge(0).partner(), &t4.edge(0));
+  EXPECT_EQ(t3_a.edge(0).extra_partner_count(), 0);
+
+  EXPECT_EQ(t3_b.edge(0).partner(), &t4.edge(0));
+  EXPECT_EQ(t3_b.edge(0).extra_partner_count(), 0);
+}
+
 }  // walnut
