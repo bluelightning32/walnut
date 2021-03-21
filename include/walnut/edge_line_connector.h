@@ -155,7 +155,8 @@ class EdgeLineConnector {
       bool e1_pos = IsPositiveEdge(*e1, sorted_dimension);
       bool e2_pos = IsPositiveEdge(*e2, sorted_dimension);
       if (e1_pos != e2_pos) {
-        return e1_pos < e2_pos;
+        // Positive edges come before negative edges.
+        return e2_pos < e1_pos;
       }
       return e1 < e2;
     }

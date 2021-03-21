@@ -170,4 +170,62 @@ TEST(EdgeLineConnector, EightShareEdge) {
   EXPECT_EQ(t8.edge(0).extra_partner_count(), 0);
 }
 
+TEST(EdgeLineConnector, TwoCoplanarPolygons) {
+  //
+  // Top view of the triangles. The arrows show the polygon normals.
+  //
+  // <- t4(+)  t3(-)->&<-t2(+)    t1(-) ->
+  //  3*pi/4        pi/2         pi/4
+  //       \          |          /
+  //        \         |         /
+  //         \        |        /
+  //          \       |       /
+  //           \      |      /
+  //            \     |     /
+  //             \    |    /
+  //              \   |   /
+  //               \  |  /
+  //                \ | /
+  //                 \|/
+  int p = 1;
+  int q = 7;
+  ConnectedPolygon<> t1 = MakeTriangle(/*start=*/q, /*end=*/p, /*extra=*/1,
+                                       /*angle=*/pi/4);
+  ConnectedPolygon<> t2 = MakeTriangle(/*start=*/p, /*end=*/q, /*extra=*/2,
+                                       /*angle=*/pi/2);
+  ConnectedPolygon<> t3 = MakeTriangle(/*start=*/q, /*end=*/p, /*extra=*/3,
+                                       /*angle=*/pi/2);
+  ConnectedPolygon<> t4 = MakeTriangle(/*start=*/p, /*end=*/q, /*extra=*/4,
+                                       /*angle=*/3*pi/4);
+
+  using EdgeVector =
+    std::vector<std::reference_wrapper<ConnectedPolygon<>::EdgeRep>>;
+  EdgeVector connect_edges{
+    t1.edge(0),
+    t2.edge(0),
+    t3.edge(0),
+    t4.edge(0),
+  };
+  EdgeLineConnector<> connector;
+  bool errored = false;
+  auto error_handler = [&errored](const std::string& message) {
+    std::cout << message << std::endl;
+    errored = true;
+  };
+  connector(connect_edges.begin(), connect_edges.end(), /*sorted_dimension=*/0,
+            error_handler);
+  EXPECT_FALSE(errored);
+  EXPECT_EQ(t1.edge(0).partner(), &t2.edge(0));
+  EXPECT_EQ(t1.edge(0).extra_partner_count(), 0);
+
+  EXPECT_EQ(t2.edge(0).partner(), &t1.edge(0));
+  EXPECT_EQ(t2.edge(0).extra_partner_count(), 0);
+
+  EXPECT_EQ(t3.edge(0).partner(), &t4.edge(0));
+  EXPECT_EQ(t3.edge(0).extra_partner_count(), 0);
+
+  EXPECT_EQ(t4.edge(0).partner(), &t3.edge(0));
+  EXPECT_EQ(t4.edge(0).extra_partner_count(), 0);
+}
+
 }  // walnut
