@@ -95,6 +95,19 @@ TEST(PluckerLine, NotEqualOppositeDir) {
   EXPECT_NE(line4, line);
 }
 
+TEST(PluckerLine, NotEqualWithZeroMY) {
+  const Point3<> p1(0, 0, 0);
+  const Point3<> p2(-2, -2, 0);
+  const Point3<> p3(-2, 0, 0);
+
+  // { d={ -2, -2, 0 } m={ 0, 0, 0 } }
+  const PluckerLine<> line(p1, p2);
+  // { d={ 0, 2, 0 } m={ 0, 0, -4 } }
+  const PluckerLine<> line2(p2, p3);
+  EXPECT_NE(line, line2);
+  EXPECT_NE(line2, line);
+}
+
 TEST(PluckerLine, ConstructFromPlanes) {
   const Point3<> p1(1, 2, 3);
   const Point3<> p2(5, 7, 11);

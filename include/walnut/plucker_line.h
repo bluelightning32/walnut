@@ -161,7 +161,7 @@ class PluckerLine {
     if (!d().x().IsZero()) {
       scale_other = d().x().GetAbs(unused);
       scale_mine = other.d().x().GetAbs(unused);
-    } else if (d().y().IsZero()) {
+    } else if (!d().y().IsZero()) {
       scale_other = d().y().GetAbs(unused);
       scale_mine = other.d().y().GetAbs(unused);
     } else {
