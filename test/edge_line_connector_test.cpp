@@ -7,6 +7,8 @@
 
 namespace walnut {
 
+using testing::ElementsAre;
+
 // Returns a triangle.
 //
 // l is a line that starts at (0, 0, 0) and goes in the <1, -1, 0> direction
@@ -72,6 +74,53 @@ TEST(EdgeLineConnector, PairAdjacentFlat) {
   EXPECT_EQ(t1.edge(0).partner(), &t2.edge(0));
   EXPECT_EQ(t2.edge(0).extra_partner_count(), 0);
   EXPECT_EQ(t2.edge(0).partner(), &t1.edge(0));
+}
+
+TEST(EdgeLineConnector, SplitPairAdjacentFlat) {
+  //
+  //     p <- t1(+)    |
+  //      \            |
+  //     ^ \  ^        |
+  //     |  \ |        |
+  //     |   \         |
+  // t2(-) <- q        |
+  //
+  int p = 1;
+  int q = 3;
+  int r = 7;
+  ConnectedPolygon<> t1 = MakeTriangle(/*start=*/p, /*end=*/r, /*extra=*/2,
+                                       /*angle=*/0);
+  ConnectedPolygon<> t2_a = MakeTriangle(/*start=*/r, /*end=*/q, /*extra=*/2,
+                                         /*angle=*/pi);
+  ConnectedPolygon<> t2_b = MakeTriangle(/*start=*/q, /*end=*/p, /*extra=*/2,
+                                         /*angle=*/pi);
+
+  using EdgeVector =
+    std::vector<std::reference_wrapper<ConnectedPolygon<>::EdgeRep>>;
+  EdgeVector connect_edges{
+    t1.edge(0),
+    t2_b.edge(0),
+    t2_a.edge(0),
+  };
+  EdgeLineConnector<> connector;
+  bool errored = false;
+  auto error_handler = [&errored](const std::string& message) {
+    std::cout << message << std::endl;
+    errored = true;
+  };
+  connector(connect_edges.begin(), connect_edges.end(), /*sorted_dimension=*/0,
+            error_handler);
+  EXPECT_FALSE(errored);
+  using ExtraConnection = ConnectedPolygon<>::EdgeRep::ExtraConnection;
+  EXPECT_EQ(t1.edge(0).partner(), &t2_b.edge(0));
+  EXPECT_THAT(t1.edge(0).extra_partners(),
+              ElementsAre(ExtraConnection(t2_b.vertex(0), &t2_a.edge(0))));
+
+  EXPECT_EQ(t2_a.edge(0).extra_partner_count(), 0);
+  EXPECT_EQ(t2_a.edge(0).partner(), &t1.edge(0));
+
+  EXPECT_EQ(t2_b.edge(0).extra_partner_count(), 0);
+  EXPECT_EQ(t2_b.edge(0).partner(), &t1.edge(0));
 }
 
 TEST(EdgeLineConnector, EightShareEdge) {

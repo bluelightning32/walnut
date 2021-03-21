@@ -96,6 +96,7 @@ class EdgeLineConnector {
       while (edges_begin != edges_end &&
              GetBeginLocation(*edges_begin,
                               sorted_dimension) == *current_location) {
+        assert(&edges_begin->get() != nullptr);
         auto add_info = active_edges.emplace(&edges_begin->get(), nullptr);
         assert(add_info.second);
         ++edges_begin;
@@ -177,11 +178,11 @@ class EdgeLineConnector {
     EndEventsCompare(int sorted_dimension) :
       sorted_dimension(sorted_dimension) { }
 
-    // Returns true if the endpoint of e1 is strictly less than the endpoint of
-    // e2.
+    // Returns true if the endpoint of e1 is strictly greater than the endpoint
+    // of e2.
     bool operator()(const ActiveEdge& e1, const ActiveEdge& e2) const {
-      return IsLocationLessThan(GetEndLocation(*e1->first, sorted_dimension),
-                                GetEndLocation(*e2->first, sorted_dimension),
+      return IsLocationLessThan(GetEndLocation(*e2->first, sorted_dimension),
+                                GetEndLocation(*e1->first, sorted_dimension),
                                 sorted_dimension);
     }
 
@@ -257,6 +258,7 @@ class EdgeLineConnector {
       if (remove->second != nullptr) {
         ActiveEdge found = active_edges.find(remove->second);
         assert(found != active_edges.end());
+        assert(found->second == remove->first);
         found->second = nullptr;
         need_partners_.push_back(found);
       }
@@ -281,6 +283,7 @@ class EdgeLineConnector {
         // partner list to put it in the proper order.
         end_events_.back()->first->ReversePartnerList();
       }
+      assert(end_events_.back()->first == end_events_.back()->second);
       active_edges.erase(end_events_.back());
       end_events_.pop_back();
     }
@@ -312,6 +315,19 @@ class EdgeLineConnector {
         }
       }
       assert(new_partner != active_edges.end());
+      assert(new_partner->first != nullptr);
+      if (needs_partner->second == new_partner->first) {
+        // needs_partner already points to its new target.
+        continue;
+      }
+      if (needs_partner->second != nullptr) {
+        assert(needs_partner->second != needs_partner->first);
+        ActiveEdge old_target = active_edges.find(needs_partner->second);
+        assert(old_target != active_edges.end());
+        assert(old_target != new_partner);
+        need_partners_.push_back(old_target);
+        needs_partner->second = nullptr;
+      }
       bool partner_pos_edge =
         IsPositiveEdge(*new_partner->first, sorted_dimension);
       if (pos_edge == partner_pos_edge) {
@@ -322,7 +338,6 @@ class EdgeLineConnector {
             << ", closest=" << *new_partner->first
             << " pos_edge=" << partner_pos_edge << ".";
         error(out.str());
-        assert(needs_partner->second == nullptr);
         AddPartner(sorted_dimension, *needs_partner->first, pos_edge, location,
                    nullptr);
       } else {
@@ -336,16 +351,9 @@ class EdgeLineConnector {
   // target.
   void Repartner(int sorted_dimension, ActiveEdge source, bool source_pos,
                  const HomoPoint3Rep& location, ActiveEdge target) {
-    if (source->second == target->first) {
-      // They are already partnered.
-      return;
-    }
-    if (target->second != source->first && target->second != nullptr) {
+    if (target->second != source->first) {
       need_partners_.push_back(target);
     }
-    target->second = source->first;
-    AddPartner(sorted_dimension, *target->first, !source_pos, location,
-               source->first);
     source->second = target->first;
     AddPartner(sorted_dimension, *source->first, source_pos, location,
                target->first);
@@ -369,6 +377,7 @@ class EdgeLineConnector {
           location.w(),
           compare_endpoint.vector_from_origin().components()[sorted_dimension],
           compare_endpoint.w())) {
+      assert(edge.partner_ == nullptr);
       edge.partner_ = target;
     } else {
       edge.extra_partners_.emplace_back(location, target);

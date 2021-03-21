@@ -22,6 +22,22 @@ struct ConnectedEdge : public ParentTemplate {
   using Parent = ParentTemplate;
   using ConnectedEdgeRep = ConnectedEdge;
 
+  struct ExtraConnection {
+    ExtraConnection() = default;
+    ExtraConnection(const ExtraConnection&) = default;
+    ExtraConnection(ExtraConnection&&) = default;
+
+    ExtraConnection(const HomoPoint3Rep& start, ConnectedEdge* partner) :
+      start(start), partner(partner) { }
+
+    bool operator==(const ExtraConnection& other) const {
+      return partner == other.partner && start == other.start;
+    }
+
+    HomoPoint3Rep start;
+    ConnectedEdge* partner = nullptr;
+  };
+
   ConnectedEdge() = default;
 
   ConnectedEdge(const ConnectedEdge&) = default;
@@ -61,6 +77,10 @@ struct ConnectedEdge : public ParentTemplate {
     return extra_partners_.size();
   }
 
+  const std::vector<ExtraConnection>& extra_partners() const {
+    return extra_partners_;
+  }
+
   const HomoPoint3Rep& extra_partner_start(size_t i) const {
     return extra_partners_[i].start;
   }
@@ -91,18 +111,6 @@ struct ConnectedEdge : public ParentTemplate {
   friend class EdgeLineConnector;
 
   FRIEND_TEST(ConnectedEdge, ReversePartnerList);
-
-  struct ExtraConnection {
-    ExtraConnection() = default;
-    ExtraConnection(const ExtraConnection&) = default;
-    ExtraConnection(ExtraConnection&&) = default;
-
-    ExtraConnection(const HomoPoint3Rep& start, ConnectedEdge* partner) :
-      start(start), partner(partner) { }
-
-    HomoPoint3Rep start;
-    ConnectedEdge* partner = nullptr;
-  };
 
   using ExtraConnectionIterator =
     typename std::vector<ExtraConnection>::iterator;
