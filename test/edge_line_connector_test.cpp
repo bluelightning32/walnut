@@ -1,6 +1,10 @@
 #include "walnut/edge_line_connector.h"
 
+// For std::shuffle
+#include <algorithm>
 #include <cmath>
+// For std::mt19937
+#include <random>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -29,6 +33,28 @@ ConnectedPolygon<> MakeTriangle(int start, int end, int extra, double angle) {
                   10 * (-extra + std::cos(angle)),
                   10 * std::sin(angle), 10),
     HomoPoint3Rep(start, -start, 0, 1),
+  };
+  ConnectedPolygon<>::HalfSpace3Rep plane(p[0], p[1], p[2]);
+  const int drop_dimension = plane.normal().GetFirstNonzeroDimension();
+  ConnectedPolygon<> result(plane, drop_dimension, p);
+  assert(result.IsValidState());
+  return result;
+}
+
+// Returns a triangle given 2 points of one edge.
+//
+// A 0 z component is added to p1 and p2. A non-zero z component is given to
+// p3.
+ConnectedPolygon<> MakeTriangle(const HomoPoint2<>& p1,
+                                const HomoPoint2<>& p2) {
+  using HomoPoint3Rep = ConnectedPolygon<>::HomoPoint3Rep;
+  std::vector<HomoPoint3Rep> p = {
+    // The ConvexPolygon constructor shifts the edges by one as part of
+    // calculating the edge direction. The last vertex in the list becomes the
+    // first in the polygon. So start with the second vertex to compensate.
+    HomoPoint3Rep(p2.x(), p2.y(), HomoPoint2<>::NumInt(0), p2.w()),
+    HomoPoint3Rep(p2.x(), p2.y(), HomoPoint2<>::NumInt(1), p2.w()),
+    HomoPoint3Rep(p1.x(), p1.y(), HomoPoint2<>::NumInt(0), p1.w()),
   };
   ConnectedPolygon<>::HalfSpace3Rep plane(p[0], p[1], p[2]);
   const int drop_dimension = plane.normal().GetFirstNonzeroDimension();
@@ -352,6 +378,147 @@ TEST(EdgeLineConnector, SplitCoplanarPolygons) {
 
   EXPECT_EQ(t3_b.edge(0).partner(), &t4.edge(0));
   EXPECT_EQ(t3_b.edge(0).extra_partner_count(), 0);
+}
+
+void SortEdges(
+    std::vector<std::reference_wrapper<ConnectedPolygon<>::EdgeRep>> &edges) {
+  EdgeLineConnector<>::SortEdgesInPlane(edges.begin(), edges.end(),
+                                        /*drop_dimension=*/2);
+
+  using LineRep = ConnectedPolygon<>::LineRep;
+  const LineRep* prev_line = nullptr;
+  std::set<std::array<int, 3>> seen_lines;
+  const ConnectedPolygon<>::EdgeRep* prev_edge = nullptr;
+  using EdgeRef = std::reference_wrapper<ConnectedPolygon<>::EdgeRep>;
+  for (const EdgeRef& edge : edges) {
+    int sorted_dimension;
+    if (!edge.get().line().d().x().IsZero()) {
+      sorted_dimension = 0;
+    } else {
+      sorted_dimension = 1;
+    }
+    if (prev_line == nullptr || (edge.get().line() != *prev_line &&
+                                 edge.get().line() != -*prev_line)) {
+      prev_line = &edge.get().line();
+      LineRep reduced;
+      if (edge.get().line().d().components()[sorted_dimension] < 0) {
+        reduced = -edge.get().line();
+      } else {
+        reduced = edge.get().line();
+      }
+      reduced.Reduce();
+      auto projected = reduced.Project2D(/*drop_dimension=*/2);
+      std::array<int, 3> reduced_array{projected.x().ToInt(),
+                                       projected.y().ToInt(),
+                                       projected.d().ToInt()};
+      auto added = seen_lines.insert(reduced_array);
+      ASSERT_TRUE(added.second);
+    } else {
+      if (prev_edge->GetBeginLocation(sorted_dimension) !=
+          edge.get().GetBeginLocation(sorted_dimension)) {
+        ASSERT_TRUE(
+            EdgeLineConnector<>::IsLocationLessThan(
+              prev_edge->GetBeginLocation(sorted_dimension),
+              edge.get().GetBeginLocation(sorted_dimension),
+              sorted_dimension));
+      }
+    }
+    prev_edge = &edge.get();
+  }
+}
+
+void ShuffleAndSortEdges(std::vector<ConnectedPolygon<>>& triangles) {
+  using EdgeRef = std::reference_wrapper<ConnectedPolygon<>::EdgeRep>;
+  std::vector<EdgeRef> edges;
+  for (ConnectedPolygon<>& triangle : triangles) {
+    ASSERT_TRUE(triangle.IsValidState());
+    edges.push_back(triangle.edge(0));
+  }
+  std::mt19937 g(0);
+  std::shuffle(edges.begin(), edges.end(), g);
+
+  SortEdges(edges);
+}
+
+TEST(EdgeLineConnector, DifferentDistInMiddle) {
+  std::vector<ConnectedPolygon<>> triangles{
+    MakeTriangle(HomoPoint2<>(0, 0, 1), HomoPoint2<>(-1, 0, 1)),
+    MakeTriangle(HomoPoint2<>(1, 1, 1), HomoPoint2<>(0, 1, 1)),
+    MakeTriangle(HomoPoint2<>(0, 0, 1), HomoPoint2<>(1, 0, 1)),
+  };
+
+  using EdgeRef = std::reference_wrapper<ConnectedPolygon<>::EdgeRep>;
+  std::vector<EdgeRef> edges{
+    triangles[0].edge(0),
+    triangles[1].edge(0),
+    triangles[2].edge(0),
+  };
+  SortEdges(edges);
+}
+
+TEST(EdgeLineConnector, DifferentDirectionInMiddle) {
+  std::vector<ConnectedPolygon<>> triangles{
+    MakeTriangle(HomoPoint2<>(0, 0, 1), HomoPoint2<>(-1, 0, 1)),
+    MakeTriangle(HomoPoint2<>(0, 0, 1), HomoPoint2<>(1, 1, 1)),
+    MakeTriangle(HomoPoint2<>(0, 0, 1), HomoPoint2<>(1, 0, 1)),
+  };
+
+  using EdgeRef = std::reference_wrapper<ConnectedPolygon<>::EdgeRep>;
+  std::vector<EdgeRef> edges{
+    triangles[0].edge(0),
+    triangles[1].edge(0),
+    triangles[2].edge(0),
+  };
+  SortEdges(edges);
+}
+
+TEST(EdgeLineConnector, SortEdgesInPlaneSameDenom) {
+  std::vector<ConnectedPolygon<>> triangles;
+  for (int p1_x = -1; p1_x <= 1; ++p1_x) {
+    for (int p1_y = -1; p1_y <= 1; ++p1_y) {
+      HomoPoint2<> p1(p1_x, p1_y, 1);
+      for (int p2_x = -1; p2_x <= 1; ++p2_x) {
+        for (int p2_y = -1; p2_y <= 1; ++p2_y) {
+          if (p1_x == p2_x && p1_y == p2_y) {
+            continue;
+          }
+          HomoPoint2<> p2(p2_x, p2_y, 1);
+          ConnectedPolygon<> triangle = MakeTriangle(p1, p2);
+          ASSERT_TRUE(triangle.IsValidState());
+          triangles.push_back(std::move(triangle));
+        }
+      }
+    }
+  }
+  ShuffleAndSortEdges(triangles);
+}
+
+TEST(EdgeLineConnector, SortEdgesInPlaneDifferentDenoms) {
+  std::vector<ConnectedPolygon<>> triangles;
+  for (int p1_d = -2; p1_d <= 2; ++p1_d) {
+    if (p1_d == 0) continue;
+    for (int p1_x = -1; p1_x <= 1; ++p1_x) {
+      for (int p1_y = -1; p1_y <= 1; ++p1_y) {
+        HomoPoint2<> p1(p1_x, p1_y, p1_d);
+        for (int p2_d = -2; p2_d <= 2; ++p2_d) {
+          if (p2_d == 0) continue;
+          for (int p2_x = -1; p2_x <= 1; ++p2_x) {
+            for (int p2_y = -1; p2_y <= 1; ++p2_y) {
+              if (p1_x * p2_d == p2_x * p1_d &&
+                  p1_y * p2_d == p2_y * p1_d) {
+                continue;
+              }
+              HomoPoint2<> p2(p2_x, p2_y, p2_d);
+              ConnectedPolygon<> triangle = MakeTriangle(p1, p2);
+              ASSERT_TRUE(triangle.IsValidState());
+              triangles.push_back(std::move(triangle));
+            }
+          }
+        }
+      }
+    }
+  }
+  ShuffleAndSortEdges(triangles);
 }
 
 }  // walnut

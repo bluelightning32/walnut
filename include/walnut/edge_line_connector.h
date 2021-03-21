@@ -40,6 +40,7 @@ class EdgeLineConnector {
   using DenomInt = typename HomoPoint3Rep::DenomInt;
   using NormalRep = typename PolygonRep::NormalRep;
   using ProjectedNormalRep = Vector2<NormalRep::component_bits>;
+  using LineRep = typename EdgeRep::LineRep;
 
   // Connects the adjacent edges in the range of ConnectedEdges.
   //
@@ -130,6 +131,62 @@ class EdgeLineConnector {
     assert(need_partners_.empty());
   }
 
+  // In place sorts a range of ConnectedEdges in such a fashion that they are
+  // safe to group by line and then pass to `operator()`.
+  //
+  // From `edges_begin` up to `edges_end` defines a range of
+  // std::reference_wrapper<ConnectedEdge>s. All of those edges must be
+  // coincident with the same plane. The `drop_dimension` component of that
+  // plane's normal must be non-zero.
+  template <typename Iterator>
+  static void SortEdgesInPlane(const Iterator& edges_begin,
+                               const Iterator& edges_end, int drop_dimension) {
+    struct EdgeCompare {
+      EdgeCompare(int drop_dimension) : drop_dimension(drop_dimension) { }
+
+      bool operator()(std::reference_wrapper<const EdgeRep> e1,
+                      std::reference_wrapper<const EdgeRep> e2) const {
+        const LineRep& e1_line = e1.get().line();
+        const LineRep& e2_line = e2.get().line();
+        const auto e1_2dline = e1_line.d().DropDimension(drop_dimension);
+        const auto e2_2dline = e2_line.d().DropDimension(drop_dimension);
+        if (!e1_2dline.IsSameOrOppositeDir(e2_2dline)) {
+          return e1_2dline.IsHalfRotationLessThan(e2_2dline);
+        }
+        int sorted_dimension = (
+            e1_line.d().components()[(drop_dimension + 1) % 3].IsZero() ?
+            drop_dimension + 2 : drop_dimension + 1) % 3;
+        auto scaled_e1_dist = e1_line.m().components()[drop_dimension] *
+                              e2_line.d().components()[sorted_dimension];
+        auto scaled_e2_dist = e2_line.m().components()[drop_dimension] *
+                              e1_line.d().components()[sorted_dimension];
+        if (scaled_e1_dist != scaled_e2_dist) {
+          assert(!e1_line.d().components()[sorted_dimension].IsZero());
+          assert(!e2_line.d().components()[sorted_dimension].IsZero());
+          return scaled_e1_dist.LessThan(
+              /*flip=*/(e2_line.d().components()[sorted_dimension] < 0) ^
+                       (e1_line.d().components()[sorted_dimension] < 0),
+              scaled_e2_dist);
+        }
+        return IsLocationLessThan(e1.get().GetBeginLocation(sorted_dimension),
+                                  e2.get().GetBeginLocation(sorted_dimension),
+                                  sorted_dimension);
+      }
+
+      int drop_dimension;
+    };
+    std::sort(edges_begin, edges_end, EdgeCompare(drop_dimension));
+  }
+
+  // Returns true if l1[dim]/l1.w() < l2[dim]/l2.w()
+  static bool IsLocationLessThan(const HomoPoint3Rep& l1,
+                                 const HomoPoint3Rep& l2,
+                                 int sorted_dimension) {
+    return rational::IsLessThan(
+        l1.vector_from_origin().components()[sorted_dimension], l1.w(),
+        l2.vector_from_origin().components()[sorted_dimension], l2.w());
+  }
+
  private:
   // Compares EdgeRep pointers based on a 2D projection of the connected
   // polygon's normal.
@@ -196,15 +253,6 @@ class EdgeLineConnector {
   };
 
   using EndEventsIterator = typename std::vector<ActiveEdge>::iterator;
-
-  // Returns true if l1[dim]/l1.w() < l2[dim]/l2.w()
-  static bool IsLocationLessThan(const HomoPoint3Rep& l1,
-                                 const HomoPoint3Rep& l2,
-                                 int sorted_dimension) {
-    return rational::IsLessThan(
-        l1.vector_from_origin().components()[sorted_dimension], l1.w(),
-        l2.vector_from_origin().components()[sorted_dimension], l2.w());
-  }
 
   // Process elements from `end_events_` that match `location`.
   //

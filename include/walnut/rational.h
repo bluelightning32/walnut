@@ -91,10 +91,10 @@ bool Equals(const BigInt<num_bits1>& num1, const BigInt<denom_bits1>& denom1,
 // `y1_x2` must be set to y1*x2, and `y2_x1` must be set to y2*x1.
 //
 // Note that this comparison has the transitive property.
-template <size_t coord_bits, size_t mult_bits>
+template <size_t x_bits, size_t y_bits, size_t mult_bits>
 inline bool IsHalfRotationLessThan(
-    const BigInt<coord_bits>& x1, const BigInt<coord_bits>& y1,
-    const BigInt<coord_bits>& x2, const BigInt<coord_bits>& y2,
+    const BigInt<x_bits>& x1, const BigInt<y_bits>& y1,
+    const BigInt<x_bits>& x2, const BigInt<y_bits>& y2,
     const BigInt<mult_bits>& y1_x2,
     const BigInt<mult_bits>& y2_x1) {
   // For determining whether to negate `this`, look at the sign of y1, when
