@@ -4,6 +4,7 @@
 #include <array>
 
 #include "walnut/big_int.h"
+#include "walnut/rational.h"
 
 namespace walnut {
 
@@ -224,7 +225,10 @@ class Vector2 {
   //
   // Note that this comparison has the transitive property.
   template <size_t other_coord_bits>
-  bool IsHalfRotationLessThan(const Vector2<other_coord_bits>& other) const;
+  bool IsHalfRotationLessThan(const Vector2<other_coord_bits>& other) const {
+    return rational::IsHalfRotationLessThan(x(), y(), other.x(), other.y(),
+                                            y() * other.x(), other.y() * x());
+  }
 
   // Returns true if the counter-clockwise angle from the x-axis to `this` is
   // less than the angle from the x-axis to `other`.
@@ -271,25 +275,6 @@ inline bool Vector2<coord_bits>::IsSameOrOppositeDir(
 
   return x().Multiply(scale_mine) == other.x().Multiply(scale_other) &&
          y().Multiply(scale_mine) == other.y().Multiply(scale_other);
-}
-
-template <size_t coord_bits>
-template <size_t other_coord_bits>
-inline bool Vector2<coord_bits>::IsHalfRotationLessThan(
-    const Vector2<other_coord_bits>& other) const {
-  // For determining whether to negate `this`, look at the sign of y(), when
-  // y() != 0. If y() == 0, use the sign of x() instead.
-  //
-  // y_0_adjust will be 1 if y() is non-negative and x() is negative.
-  //
-  // So the sign of (y() - y_0_adjust) can be used to determine whether
-  // to negate `this`.
-  bool y_0_adjust = (y().GetSign() >= 0) & (x().GetSign() < 0);
-  bool other_y_0_adjust = (other.y().GetSign() >= 0) &
-                          (other.x().GetSign() < 0);
-  const bool flip = (y() - int(y_0_adjust)).HasDifferentSign(
-      other.y() - int(other_y_0_adjust));
-  return (y() * other.x()).LessThan(flip, other.y() * x());
 }
 
 template <size_t coord_bits>
