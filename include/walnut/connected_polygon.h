@@ -98,6 +98,49 @@ struct ConnectedEdge : public ParentTemplate {
     return static_cast<const FinalEdgeRep *>(this) - polygon().edges().data();
   }
 
+  // Returns true if this edge is positive in the `sorted_dimension` component.
+  bool IsPositive(int sorted_dimension) const {
+    using FinalEdgeRep = typename FinalPolygon::EdgeRep;
+    const FinalEdgeRep& final_this = static_cast<const FinalEdgeRep&>(*this);
+    return final_this.line().d().components()[sorted_dimension].GetSign() >= 0;
+  }
+
+  // Returns the start vertex of the next edge in this edges's polygon.
+  const HomoPoint3Rep& next_vertex() const {
+    using FinalEdgeRep = typename FinalPolygon::EdgeRep;
+    const FinalEdgeRep& next_edge =
+      polygon().edge((edge_index() + 1) % polygon().vertex_count());
+    return next_edge.vertex();
+  }
+
+  // Returns the begin location of this edge as defined by the
+  // `EdgeLineConnector`.
+  const HomoPoint3Rep& GetBeginLocation(int sorted_dimension) const {
+    if (IsPositive(sorted_dimension)) {
+      // This is a positive edge. It starts at the start point of the edge.
+      using FinalEdgeRep = typename FinalPolygon::EdgeRep;
+      const FinalEdgeRep& final_this = static_cast<const FinalEdgeRep&>(*this);
+      return final_this.vertex();
+    } else {
+      // This is a negative edge. It starts at the start of the next edge.
+      return next_vertex();
+    }
+  }
+
+  // Returns the end location of this edge as defined by the
+  // `EdgeLineConnector`.
+  const HomoPoint3Rep& GetEndLocation(int sorted_dimension) const {
+    if (IsPositive(sorted_dimension)) {
+      // This is a positive edge. It ends at the start of the next edge.
+      return next_vertex();
+    } else {
+      // This is a negative edge. It ends at the start point of the edge.
+      using FinalEdgeRep = typename FinalPolygon::EdgeRep;
+      const FinalEdgeRep& final_this = static_cast<const FinalEdgeRep&>(*this);
+      return final_this.vertex();
+    }
+  }
+
  protected:
   ConnectedEdge(ConnectedEdge&&) = default;
 

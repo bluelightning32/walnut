@@ -83,13 +83,14 @@ class EdgeLineConnector {
       const HomoPoint3Rep* current_location;
       if (end_events_.empty() ||
           IsLocationLessThan(
-            GetBeginLocation(*edges_begin, sorted_dimension),
-            GetEndLocation(*end_events_.front()->first, sorted_dimension),
+            edges_begin->get().GetBeginLocation(sorted_dimension),
+            end_events_.front()->first->GetEndLocation(sorted_dimension),
             sorted_dimension)) {
-        current_location = &GetBeginLocation(*edges_begin, sorted_dimension);
+        current_location =
+          &edges_begin->get().GetBeginLocation(sorted_dimension);
       } else {
         current_location =
-          &GetEndLocation(*end_events_.front()->first, sorted_dimension);
+          &end_events_.front()->first->GetEndLocation(sorted_dimension);
         ProcessEndEvents(sorted_dimension, active_edges, *current_location,
                          end_events_compare);
       }
@@ -99,8 +100,8 @@ class EdgeLineConnector {
       prev_location = current_location;
 
       while (edges_begin != edges_end &&
-             GetBeginLocation(*edges_begin,
-                              sorted_dimension) == *current_location) {
+             edges_begin->get().GetBeginLocation(sorted_dimension) ==
+               *current_location) {
         assert(&edges_begin->get() != nullptr);
         auto add_info = active_edges.emplace(&edges_begin->get(), nullptr);
         assert(add_info.second);
@@ -118,7 +119,7 @@ class EdgeLineConnector {
 
     while (!end_events_.empty()) {
       const HomoPoint3Rep& current_location =
-        GetEndLocation(*end_events_.front()->first, sorted_dimension);
+        end_events_.front()->first->GetEndLocation(sorted_dimension);
       ProcessEndEvents(sorted_dimension, active_edges, current_location,
                        end_events_compare);
       ProcessNeedPartners(sorted_dimension, active_edges, current_location,
@@ -145,7 +146,7 @@ class EdgeLineConnector {
       const NormalRep& polygon_normal = edge.polygon().normal();
       ProjectedNormalRep result =
         polygon_normal.DropDimension(sorted_dimension);
-      if (!IsPositiveEdge(edge, sorted_dimension)) {
+      if (!edge.IsPositive(sorted_dimension)) {
         // This is a negative edge.
         result.Negate();
       }
@@ -158,8 +159,8 @@ class EdgeLineConnector {
       if (!e1_normal.IsSameDir(e2_normal)) {
         return e1_normal.IsRotationLessThan(e2_normal);
       }
-      bool e1_pos = IsPositiveEdge(*e1, sorted_dimension);
-      bool e2_pos = IsPositiveEdge(*e2, sorted_dimension);
+      bool e1_pos = e1->IsPositive(sorted_dimension);
+      bool e2_pos = e2->IsPositive(sorted_dimension);
       if (e1_pos != e2_pos) {
         // Positive edges come before negative edges.
         return e2_pos < e1_pos;
@@ -186,8 +187,8 @@ class EdgeLineConnector {
     // Returns true if the endpoint of e1 is strictly greater than the endpoint
     // of e2.
     bool operator()(const ActiveEdge& e1, const ActiveEdge& e2) const {
-      return IsLocationLessThan(GetEndLocation(*e2->first, sorted_dimension),
-                                GetEndLocation(*e1->first, sorted_dimension),
+      return IsLocationLessThan(e2->first->GetEndLocation(sorted_dimension),
+                                e1->first->GetEndLocation(sorted_dimension),
                                 sorted_dimension);
     }
 
@@ -196,32 +197,6 @@ class EdgeLineConnector {
 
   using EndEventsIterator = typename std::vector<ActiveEdge>::iterator;
 
-  static bool IsPositiveEdge(const EdgeRep& edge, int sorted_dimension) {
-    return edge.line().d().components()[sorted_dimension].GetSign() >= 0;
-  }
-
-  static const HomoPoint3Rep& GetBeginLocation(const EdgeRep& edge,
-                                               int sorted_dimension) {
-    if (IsPositiveEdge(edge, sorted_dimension)) {
-      // This is a positive edge. It starts at the start point of the edge.
-      return edge.vertex();
-    } else {
-      // This is a negative edge. It starts at the start of the next edge.
-      return GetNextEdge(edge).vertex();
-    }
-  }
-
-  static const HomoPoint3Rep& GetEndLocation(const EdgeRep& edge,
-                                             int sorted_dimension) {
-    if (IsPositiveEdge(edge, sorted_dimension)) {
-      // This is a positive edge. It ends at the start of the next edge.
-      return GetNextEdge(edge).vertex();
-    } else {
-      // This is a negative edge. It ends at the start point of the edge.
-      return edge.vertex();
-    }
-  }
-
   // Returns true if l1[dim]/l1.w() < l2[dim]/l2.w()
   static bool IsLocationLessThan(const HomoPoint3Rep& l1,
                                  const HomoPoint3Rep& l2,
@@ -229,11 +204,6 @@ class EdgeLineConnector {
     return rational::IsLessThan(
         l1.vector_from_origin().components()[sorted_dimension], l1.w(),
         l2.vector_from_origin().components()[sorted_dimension], l2.w());
-  }
-
-  static const EdgeRep& GetNextEdge(const EdgeRep& from) {
-    return from.polygon().edge((from.edge_index() + 1) %
-                               from.polygon().vertex_count());
   }
 
   // Process elements from `end_events_` that match `location`.
@@ -251,8 +221,8 @@ class EdgeLineConnector {
     // is the part of end_events_ which is not a heap.
     EndEventsIterator heap_end = end_events_.end();
     while (end_events_.begin() != heap_end &&
-           GetEndLocation(*end_events_.front()->first,
-                          sorted_dimension) == location) {
+           end_events_.front()->first->GetEndLocation(sorted_dimension) ==
+             location) {
       ActiveEdge remove = end_events_.front();
       // If the active edge is still pointing to another edge, mark put that
       // partner in the list of edges that need a new partner.
@@ -282,7 +252,7 @@ class EdgeLineConnector {
     // Look at all the entries in end_events_ at or after heap_end, and remove
     // them from active_events and end_events_.
     while (end_events_.end() != heap_end) {
-      if (!IsPositiveEdge(*end_events_.back()->first, sorted_dimension)) {
+      if (!end_events_.back()->first->IsPositive(sorted_dimension)) {
         // The partner list is built in reverse order for negative half-edges.
         // Now that this negative half-edge is no longer active, reverse the
         // partner list to put it in the proper order.
@@ -302,7 +272,7 @@ class EdgeLineConnector {
     while (!need_partners_.empty()) {
       ActiveEdge needs_partner = need_partners_.back();
       need_partners_.pop_back();
-      bool pos_edge = IsPositiveEdge(*needs_partner->first, sorted_dimension);
+      bool pos_edge = needs_partner->first->IsPositive(sorted_dimension);
       // This starts out pointing to needs_partner. It is then moved to the
       // location of the new partner.
       ActiveEdge new_partner = needs_partner;
@@ -333,8 +303,7 @@ class EdgeLineConnector {
         need_partners_.push_back(old_target);
         needs_partner->second = nullptr;
       }
-      bool partner_pos_edge =
-        IsPositiveEdge(*new_partner->first, sorted_dimension);
+      bool partner_pos_edge = new_partner->first->IsPositive(sorted_dimension);
       if (pos_edge == partner_pos_edge) {
         std::ostringstream out;
         out << "The closest edge has the same polarity as its neighbor"
@@ -376,7 +345,7 @@ class EdgeLineConnector {
   void AddPartner(int sorted_dimension, EdgeRep& edge, bool pos_edge,
                   const HomoPoint3Rep& location, EdgeRep* target) {
     const HomoPoint3Rep& compare_endpoint =
-      pos_edge ? edge.vertex() : GetNextEdge(edge).vertex();
+      pos_edge ? edge.vertex() : edge.next_vertex();
     if (rational::Equals(
           location.vector_from_origin().components()[sorted_dimension],
           location.w(),
