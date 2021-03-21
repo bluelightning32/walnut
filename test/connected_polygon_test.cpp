@@ -1,5 +1,7 @@
 #include "walnut/connected_polygon.h"
 
+#include <vector>
+
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "walnut/aabb_convex_polygon.h"
@@ -47,6 +49,14 @@ TEST(ConnectedPolygon, CopyConstruct) {
   ConnectedPolygon<> polygon2(polygon);
   ASSERT_TRUE(polygon2.IsValidState());
   EXPECT_EQ(polygon2, polygon);
+}
+
+TEST(ConnectedPolygon, VectorInitializerList) {
+  std::vector<ConnectedPolygon<>> v{
+    MakeRectangle(),
+    MakeRectangle(),
+  };
+  EXPECT_EQ(v[0], v[1]);
 }
 
 TEST(ConnectedPolygon, MoveConstruct) {

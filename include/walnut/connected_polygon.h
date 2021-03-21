@@ -265,8 +265,11 @@ class ConnectedPolygon : public ParentTemplate::template MakeParent<
     SetEdgeBackPointers();
   }
 
-  ConnectedPolygon(ConnectedPolygon&& other) :
-      Parent(std::forward<ConnectedPolygon>(other)) {
+  ConnectedPolygon(const ConnectedPolygon& other) : Parent(other) {
+    SetEdgeBackPointers();
+  }
+
+  ConnectedPolygon(ConnectedPolygon&& other) : Parent(std::move(other)) {
     SetEdgeBackPointers();
   }
 
