@@ -298,17 +298,17 @@ class EdgeLineConnector {
       // location of the new partner.
       ActiveEdge new_partner = needs_partner;
       if (pos_edge) {
-        // Find the next edge in the counter-clockwise direction.
-        ++new_partner;
-        if (new_partner == active_edges.end()) {
-          new_partner = active_edges.begin();
-        }
-      } else {
         // Find the next edge in the clockwise direction.
         if (new_partner == active_edges.begin()) {
           new_partner = active_edges.end();
         }
         --new_partner;
+      } else {
+        // Find the next edge in the counter-clockwise direction.
+        ++new_partner;
+        if (new_partner == active_edges.end()) {
+          new_partner = active_edges.begin();
+        }
       }
       assert(new_partner != active_edges.end());
       bool partner_pos_edge =
