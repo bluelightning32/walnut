@@ -135,22 +135,11 @@ class BigIntBase {
     return *this;
   }
 
-  constexpr BigIntBase& operator = (BigUIntWord value) {
+  constexpr BigIntBase& operator=(BigUIntWord value) {
     words_[0] = value;
     used_ = CanTrimLastHalf(words_[0]) ?
       sizeof(BigUIntHalfWord) : bytes_per_word;
     return *this;
-  }
-
-  template <typename Result, typename Other>
-  constexpr Result operator&(const Other& other) const {
-    Result result;
-    result.used_ = std::min(used_, other.used_);
-    for (size_t i = 0; i < result.used_words(); i++) {
-      result.words_[i] = words_[i] & other.words_[i];
-    }
-    result.Trim();
-    return result;
   }
 
   template <typename Result, size_t other_max_words, typename OtherPolicy>
