@@ -111,25 +111,23 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImplTrimPolicy>
       return BigUIntImpl<rw>(words_[0].Subtract(other.words_[0]));
     }
     BigUIntImpl<rw> result;
+    result.Allocate(std::min(std::max(used_words(), other.used_words()),
+                             size_t(BigUIntImpl<rw>::max_words)) *
+                    bytes_per_word);
     size_t i = 0;
     bool carry = false;
     size_t common_words = GetCommonWordCount(other);
     for (; i < common_words && i < rw; i++) {
       result.words_[i] = words_[i].Subtract(other.words_[i], carry, &carry);
     }
-    for (; i < std::min(used_bytes() / BigUIntWord::bytes_per_word, rw); i++) {
+    for (; i < std::min(used_bytes() / bytes_per_word, rw); i++) {
       result.words_[i] = words_[i].Subtract(carry, &carry);
     }
-    for (; i < std::min(other.used_bytes() / BigUIntWord::bytes_per_word, rw); i++) {
+    for (; i < std::min(other.used_bytes() / bytes_per_word, rw); i++) {
       result.words_[i] = BigUIntWord(0).Subtract(other.words_[i], carry, &carry);
     }
-    if (carry) {
-      while (i < rw) {
-        result.words_[i] = -1;
-        i++;
-      }
-    }
-    result.used_ = i * BigUIntWord::bytes_per_word;
+    assert(!carry);
+    assert(used_bytes() == i * bytes_per_word);
     result.Trim();
     return result;
   }

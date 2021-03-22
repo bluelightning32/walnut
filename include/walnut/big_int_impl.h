@@ -422,9 +422,9 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
       return BigIntImpl<rw>(BigIntWord{words_[0].Subtract(other.words_[0])});
     }
     BigIntImpl<rw> result;
-    result.Allocate(std::min(std::max(used_bytes(), other.used_bytes()) +
-                               bytes_per_word,
-                             size_t(BigIntImpl<rw>::max_bytes)));
+    result.Allocate(std::min(std::max(used_words(), other.used_words()) + 1,
+                             size_t(BigIntImpl<rw>::max_words)) *
+                    bytes_per_word);
     size_t i = 0;
     bool carry = false;
     size_t common_words = GetCommonWordCount(other);
