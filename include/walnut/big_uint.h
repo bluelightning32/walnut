@@ -39,6 +39,7 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImplTrimPolicy>
   using Parent::max_bits;
   using Parent::max_bytes;
   using Parent::used_bytes;
+  using Parent::used_words;
 
   constexpr BigUIntImpl() : BigUIntImpl(static_cast<BigUIntHalfWord>(0)) {
   }
@@ -255,7 +256,6 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImplTrimPolicy>
   using Parent::Trim;
   using Parent::words_;
 
-  using Parent::used_words;
   using Parent::GetCommonWordCount;
   using Parent::Allocate;
 

@@ -64,15 +64,10 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
 
   template <size_t other_max_words>
   constexpr BigIntImpl(const BigUIntImpl<other_max_words>& other)
-   : Parent(max_words < other_max_words ?
-             std::min(other.used_bytes(), max_words * bytes_per_word) :
-             other.used_bytes()) {
-    this->AssignWithoutTrim(other, used_bytes());
-    if (BigIntWord{this->word(used_words() - 1)} < 0) {
-      this->AddHighWord(BigUIntWord{0});
-    }
-    Trim();
-  }
+   : Parent(/*used=*/other.used_bytes() + bytes_per_word *
+              (BigIntWord{other.word(other.used_words() - 1)} < 0),
+            /*copy=*/other.used_bytes(),
+            /*from=*/other) { }
 
   template <size_t other_max_words>
   constexpr BigIntImpl<max_words>& operator = (

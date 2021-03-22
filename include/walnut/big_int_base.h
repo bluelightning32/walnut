@@ -56,6 +56,18 @@ class BigIntBase {
   }
 
   template <size_t other_max_words, typename OtherPolicy>
+  constexpr BigIntBase(size_t used, size_t copy,
+                       const BigIntBase<other_max_words, OtherPolicy>& from) :
+      used_(std::min(size_t(max_bytes), used)) {
+    size_t copy_words = std::min(size_t(max_words),
+                                 (copy + bytes_per_word - 1) / bytes_per_word);
+    for (size_t i = 0; i < copy_words; ++i) {
+      words_[i] = from.words_[i];
+    }
+    Trim();
+  }
+
+  template <size_t other_max_words, typename OtherPolicy>
   constexpr BigIntBase(const BigIntBase<other_max_words, OtherPolicy>& other) :
       used_(max_words < other_max_words ?
                   std::min(other.used_bytes(),
