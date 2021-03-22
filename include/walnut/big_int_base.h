@@ -111,7 +111,7 @@ class BigIntBase {
 
   constexpr void AssignWithoutTrim(const BigUIntWord* words, size_t used) {
     assert(used <= max_bytes);
-    used_ = used;
+    Allocate(used);
     for (size_t i = 0; i < (used + bytes_per_word - 1) / bytes_per_word; ++i) {
       words_[i] = words[i];
     }
