@@ -184,6 +184,10 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImplTrimPolicy>
     bool carry = false;
     size_t pos = shift / bits_per_word;
     unsigned shift_mod = shift % bits_per_word;
+    size_t old_used = used_bytes();
+    Allocate(std::max(used_bytes(),
+                      (pos + 1 + (pos + 1< max_words && shift_mod)) *
+                        bytes_per_word));
     words_[pos] = words_[pos].Add(add << shift_mod, &carry);
     pos++;
     if (pos < max_words && shift_mod) {
@@ -192,9 +196,10 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImplTrimPolicy>
       pos++;
     }
     for (; pos < max_words && carry; pos++) {
+      Allocate(std::max(used_bytes(), (pos + 1) * bytes_per_word));
       words_[pos] = words_[pos].Add(carry, &carry);
     }
-    used_ = std::max(used_bytes(), pos * bytes_per_word);
+    assert(used_bytes() == std::max(old_used, pos * bytes_per_word));
     Trim();
     return *this;
   }
@@ -250,6 +255,7 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImplTrimPolicy>
 
   using Parent::used_words;
   using Parent::GetCommonWordCount;
+  using Parent::Allocate;
 
   // Divide `this` by `other`. Return the quotient and store the remainder in `remainder_out`.
   //
