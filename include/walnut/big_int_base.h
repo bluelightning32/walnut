@@ -151,6 +151,7 @@ class BigIntBase {
       return other.template MultiplySlow<Result>(*this);
     }
     Result result;
+    result.Allocate((used_words() + other.used_words()) * bytes_per_word);
     int k = 0;
     {
       BigUIntWord add;
@@ -170,7 +171,7 @@ class BigIntBase {
       result.words_[k] = add.Add(carry, &carry);
     }
     k++;
-    result.used_ = k * BigUIntWord::bytes_per_word;
+    assert(result.used_bytes() == k * BigUIntWord::bytes_per_word);
     return result;
   }
 
