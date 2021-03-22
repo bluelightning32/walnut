@@ -14,6 +14,7 @@ class BigIntBase {
   friend class BigIntBaseOperations;
 
  public:
+  using TrimPolicy = TrimPolicyTemplate;
   static constexpr size_t max_words = max_words_template;
   static constexpr size_t bits_per_word = BigUIntWord::bits_per_word;
   static constexpr size_t bits_per_byte = 8;
@@ -65,6 +66,26 @@ class BigIntBase {
     int word_index = shift / bits_per_word;
     int word_offset = shift % bits_per_word;
     return words_[word_index].ShiftRight(words_[word_index+1], word_offset);
+  }
+
+  constexpr void Trim() {
+    int i = used_ / bytes_per_word - 1;
+    if (i > 0) {
+      BigUIntWord check = words_[i];
+      BigUIntWord next;
+      do {
+        --i;
+        next = words_[i];
+
+        if (!TrimPolicy::CanTrim(/*low=*/next, /*high=*/check)) break;
+
+        check = next;
+        used_-= bytes_per_word;
+      } while (i > 0);
+    }
+    if (used_ == bytes_per_word && TrimPolicy::CanTrimLastHalf(words_[0])) {
+      used_ = sizeof(BigUIntHalfWord);
+    }
   }
 
   // The number of bytes used in words_.
@@ -125,26 +146,6 @@ class BigIntBaseOperations : public BigIntBase<max_words_template, TrimPolicy> {
       words_[i] = other.words_[i];
     }
     this->Trim();
-  }
-
-  constexpr void Trim() {
-    int i = used_ / bytes_per_word - 1;
-    if (i > 0) {
-      BigUIntWord check = words_[i];
-      BigUIntWord next;
-      do {
-        --i;
-        next = words_[i];
-
-        if (!TrimPolicy::CanTrim(/*low=*/next, /*high=*/check)) break;
-
-        check = next;
-        used_-= bytes_per_word;
-      } while (i > 0);
-    }
-    if (used_ == bytes_per_word && TrimPolicy::CanTrimLastHalf(words_[0])) {
-      used_ = sizeof(BigUIntHalfWord);
-    }
   }
 
   template <size_t other_max_words, typename OtherPolicy>
