@@ -10,8 +10,6 @@ namespace walnut {
 // Common base for BigIntImpl and BigUIntImpl
 template <size_t max_words_template, typename TrimPolicyTemplate>
 class BigIntBase {
-  template <size_t max_words, typename TrimPolicy>
-  friend class BigIntBaseOperations;
   template <size_t other_max_words, typename OtherTrimPolicy>
   friend class BigIntBase;
 
@@ -191,32 +189,6 @@ class BigIntBase {
   // words_[0] holds the lowest significant bits. Within each element of
   // words_, the bit order is in the machine native order.
   BigUIntWord words_[max_words];
-};
-
-// Adds operations that require Trim.
-//
-// TrimPolicy must implement CanTrim and CanTrimLastHalf.
-template <size_t max_words_template, typename TrimPolicy>
-class BigIntBaseOperations : public BigIntBase<max_words_template, TrimPolicy> {
-  template <size_t other_max_words, typename OtherTimePolicy>
-  friend class BigIntBaseOperations;
-
- public:
-  using Parent = BigIntBase<max_words_template, TrimPolicy>;
-  using Parent::max_words;
-  using Parent::bits_per_word;
-  using Parent::bits_per_byte;
-  using Parent::bytes_per_word;
-  using Parent::max_bits;
-  using Parent::max_bytes;
-
- protected:
-  using Parent::Parent;
-  using Parent::used_;
-  using Parent::words_;
-  using Parent::AssignIgnoreOverflow;
-  using Parent::operator=;
-
 };
 
 }  // walnut

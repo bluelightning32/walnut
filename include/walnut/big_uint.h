@@ -22,8 +22,7 @@ class BigUIntImplTrimPolicy {
 };
 
 template <size_t max_words>
-class BigUIntImpl : public BigIntBaseOperations<max_words,
-                                                BigUIntImplTrimPolicy>
+class BigUIntImpl : public BigIntBase<max_words, BigUIntImplTrimPolicy>
 {
   template <size_t other_max_words, typename OtherMixin>
   friend class BigIntBase;
@@ -31,7 +30,7 @@ class BigUIntImpl : public BigIntBaseOperations<max_words,
   template <size_t other_words>
   friend class BigUIntImpl;
 
-  using Parent = BigIntBaseOperations<max_words, BigUIntImplTrimPolicy>;
+  using Parent = BigIntBase<max_words, BigUIntImplTrimPolicy>;
 
  public:
   using Parent::bits_per_word;
