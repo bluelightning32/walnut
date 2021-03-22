@@ -84,29 +84,31 @@ class BigIntBase {
 
 // Adds operations that require Trim.
 //
-// TrimMixin must implement Trim, and TrimMixin must inherit from BigIntBase.
+// TrimMixin must implement CanTrim and CanTrimLastHalf, and TrimMixin must
+// inherit from BigIntBase.
 template <typename TrimMixin>
 class BigIntBaseOperations : public TrimMixin {
   template <typename OtherTrimBase>
   friend class BigIntBaseOperations;
 
  public:
-  using TrimMixin::max_words;
-  using TrimMixin::bits_per_word;
-  using TrimMixin::bits_per_byte;
-  using TrimMixin::bytes_per_word;
-  using TrimMixin::max_bits;
-  using TrimMixin::max_bytes;
+  using Parent = TrimMixin;
+  using Parent::max_words;
+  using Parent::bits_per_word;
+  using Parent::bits_per_byte;
+  using Parent::bytes_per_word;
+  using Parent::max_bits;
+  using Parent::max_bytes;
 
  protected:
-  using TrimMixin::TrimMixin;
-  using TrimMixin::used_;
-  using TrimMixin::words_;
-  using TrimMixin::CanTrim;
-  using TrimMixin::CanTrimLastHalf;
+  using Parent::Parent;
+  using Parent::used_;
+  using Parent::words_;
+  using Parent::CanTrim;
+  using Parent::CanTrimLastHalf;
 
   constexpr BigIntBaseOperations(const BigUIntWord* words, size_t used) :
-      TrimMixin(used) {
+      Parent(used) {
     assert(used_ <= max_bytes);
     for (size_t i = 0; i < (used + bytes_per_word - 1) / bytes_per_word; ++i) {
       words_[i] = words[i];
@@ -117,7 +119,7 @@ class BigIntBaseOperations : public TrimMixin {
   template <typename OtherMixin>
   constexpr BigIntBaseOperations(
       const BigIntBaseOperations<OtherMixin>& other) :
-      TrimMixin(max_words < OtherMixin::max_words ?
+      Parent(max_words < OtherMixin::max_words ?
                   std::min(other.used_, size_t(max_words * bytes_per_word)) :
                   other.used_) {
     assert(other.used_ <= max_bytes);
