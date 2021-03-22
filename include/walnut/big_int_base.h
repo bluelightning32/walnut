@@ -179,8 +179,8 @@ class BigIntBase {
     const size_t used = used_words();
     assert(used < max_words);
     if (used < max_words) {
+      Allocate((used + 1) * bytes_per_word);
       words_[used] = word;
-      used_ = (used + 1) * bytes_per_word;
     }
   }
 
