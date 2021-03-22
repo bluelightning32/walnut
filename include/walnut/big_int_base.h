@@ -104,8 +104,6 @@ class BigIntBaseOperations : public TrimMixin {
   using Parent::Parent;
   using Parent::used_;
   using Parent::words_;
-  using Parent::CanTrim;
-  using Parent::CanTrimLastHalf;
 
   constexpr BigIntBaseOperations(const BigUIntWord* words, size_t used) :
       Parent(used) {
@@ -139,13 +137,13 @@ class BigIntBaseOperations : public TrimMixin {
         --i;
         next = words_[i];
 
-        if (!CanTrim(/*low=*/next, /*high=*/check)) break;
+        if (!TrimMixin::CanTrim(/*low=*/next, /*high=*/check)) break;
 
         check = next;
         used_-= bytes_per_word;
       } while (i > 0);
     }
-    if (used_ == bytes_per_word && CanTrimLastHalf(words_[0])) {
+    if (used_ == bytes_per_word && TrimMixin::CanTrimLastHalf(words_[0])) {
       used_ = sizeof(BigUIntHalfWord);
     }
   }
