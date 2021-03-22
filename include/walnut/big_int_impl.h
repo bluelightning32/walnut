@@ -708,6 +708,7 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
   //
   // A return value of false means it did not overflow.
   constexpr bool Negate() {
+    Allocate(used_words() * bytes_per_word);
     bool carry = true;
     size_t i = 0;
     const BigUIntWord old_last_word(words_[used_words() - 1]);
@@ -725,9 +726,12 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
       // is false). This means that *this was equal to min_value, and it just
       // overflowed back to min_value. So allocate another word.
       overflowed = i == max_words;
-      if (!overflowed) ++i;
+      if (!overflowed) {
+        ++i;
+        Allocate(i * bytes_per_word);
+      }
     }
-    used_ = i * bytes_per_word;
+    assert(used_words() == i);
     Trim();
     return overflowed;
   }
@@ -818,7 +822,6 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
 
  protected:
   using Parent::Trim;
-  using Parent::used_;
   using Parent::words_;
 
   using Parent::used_words;
