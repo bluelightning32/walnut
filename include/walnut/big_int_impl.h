@@ -14,14 +14,8 @@ namespace walnut {
 template <size_t max_words>
 class BigIntImplTrimMixin : public BigIntBase<max_words> {
   using Parent = BigIntBase<max_words>;
- public:
-  using Parent::bytes_per_word;
-
  protected:
   using Parent::Parent;
-
-  using Parent::used_;
-  using Parent::words_;
 
   static constexpr bool CanTrim(BigUIntWord low, BigUIntWord high) {
     // The high word must be 0 or -1.
@@ -38,26 +32,6 @@ class BigIntImplTrimMixin : public BigIntBase<max_words> {
         BigUIntWord{std::numeric_limits<BigIntHalfWord>::max()}.Add(
             unsigned_int_min));
     return last.Add(unsigned_int_min) <= limit;
-  }
-
-  constexpr void Trim() {
-    int i = used_ / bytes_per_word - 1;
-    if (i > 0) {
-      BigUIntWord check = words_[i];
-      BigUIntWord next;
-      do {
-        --i;
-        next = words_[i];
-
-        if (!CanTrim(/*low=*/next, /*high=*/check)) break;
-
-        check = next;
-        used_-= bytes_per_word;
-      } while (i > 0);
-    }
-    if (used_ == bytes_per_word && CanTrimLastHalf(words_[0])) {
-      used_ = sizeof(BigUIntHalfWord);
-    }
   }
 };
 
