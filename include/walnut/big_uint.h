@@ -222,19 +222,22 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImplTrimPolicy>
         words_[out] = words_[out].Subtract(subtract, carry, &carry);
         prev = other.words_[in];
       }
-      if (out < max_words) {
+      if (out < used_words()) {
         words_[out] = words_[out].Subtract(prev >> prev_right_shift, carry, &carry);
         out++;
+      } else {
+        assert(prev >> prev_right_shift == 0);
       }
     } else {
       for (; in < other.used_words() && out < max_words; in++, out++) {
         words_[out] = words_[out].Subtract(other.words_[in], carry, &carry);
       }
     }
-    for (; carry && out < max_words; out++) {
+    for (; carry && out < used_words(); out++) {
       words_[out] = words_[out].Subtract(carry, &carry);
     }
-    used_ = std::max(out * bytes_per_word, used_bytes());
+    assert(!carry);
+    assert(out <= used_words());
     Trim();
     return *this;
   }
@@ -250,7 +253,6 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImplTrimPolicy>
 
  protected:
   using Parent::Trim;
-  using Parent::used_;
   using Parent::words_;
 
   using Parent::used_words;
