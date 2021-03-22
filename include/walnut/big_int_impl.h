@@ -102,19 +102,14 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
 
   static constexpr BigIntImpl max_value(int set_last_word_bits) {
     BigIntImpl result;
+    result.Allocate(max_bytes);
     for (size_t i = 0; i < max_words - 1; ++i) {
       result.words_[i] = BigUIntWord::max_value();
     }
     for (int i = 0; i < set_last_word_bits; ++i) {
       result.words_[max_words - 1] |= BigUIntWord{1} << i;
     }
-    if (max_words > 1 ||
-        result.words_[max_words - 1] >
-          BigUIntWord{std::numeric_limits<BigIntHalfWord>::max()}) {
-      result.used_ = max_bytes;
-    } else {
-      result.used_ = sizeof(BigUIntHalfWord);
-    }
+    result.Trim();
     return result;
   }
 
@@ -124,17 +119,12 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
 
   static constexpr BigIntImpl min_value(int clear_last_word_bits) {
     BigIntImpl result;
+    result.Allocate(max_bytes);
     result.words_[max_words - 1] = BigUIntWord{-1};
     for (int i = 0; i < clear_last_word_bits; ++i) {
       result.words_[max_words - 1] &= ~(BigUIntWord{1} << i);
     }
-    if (max_words > 1 ||
-        result.words_[max_words - 1] <
-          BigUIntWord{std::numeric_limits<BigIntHalfWord>::min()}) {
-      result.used_ = max_bytes;
-    } else {
-      result.used_ = sizeof(BigUIntHalfWord);
-    }
+    result.Trim();
     return result;
   }
 
@@ -152,9 +142,12 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
     const int word_left_shift = shift % bits_per_word;
     // The if statement is necessary to avoid shifting by bits_per_word.
     if (word_left_shift > 0) {
+      size_t copy = std::min(used_words(), result_words - out);
+      size_t allocate = std::min(copy + out + 1, result_words);
+      result.Allocate(allocate * bytes_per_word);
       BigUIntWord prev(0);
       const int prev_right_shift = bits_per_word - word_left_shift;
-      for (; in < used_words() && out < result_words; in++, out++) {
+      for (; in < copy; in++, out++) {
         result.words_[out] = words_[in] << word_left_shift |
                                prev >> prev_right_shift;
         prev = words_[in];
@@ -163,12 +156,13 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
         result.words_[out] = BigIntWord(prev) >> prev_right_shift;
         out++;
       }
-      result.used_ = out * bytes_per_word;
+      assert(result.used_bytes() == out * bytes_per_word);
     } else {
-      for (; in < used_words() && out < result_words; in++, out++) {
+      size_t copy = std::min(used_words(), result_words - out);
+      result.Allocate((copy + out) * bytes_per_word);
+      for (; in < copy; in++, out++) {
         result.words_[out] = words_[in];
       }
-      result.used_ = out * bytes_per_word;
     }
     result.Trim();
     return result;

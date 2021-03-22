@@ -192,6 +192,10 @@ class BigIntBase {
     }
   }
 
+  constexpr void Allocate(size_t used) {
+    used_ = used;
+  }
+
   // The number of bytes used in words_.
   //
   // Invariant:
