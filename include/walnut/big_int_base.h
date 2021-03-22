@@ -12,6 +12,8 @@ template <size_t max_words_template, typename TrimPolicyTemplate>
 class BigIntBase {
   template <size_t max_words, typename TrimPolicy>
   friend class BigIntBaseOperations;
+  template <size_t other_max_words, typename OtherTimePolicy>
+  friend class BigIntBase;
 
  public:
   using TrimPolicy = TrimPolicyTemplate;
@@ -88,6 +90,23 @@ class BigIntBase {
     }
   }
 
+  template <size_t other_max_words, typename OtherPolicy>
+  constexpr void AssignIgnoreOverflow(
+      const BigIntBase<other_max_words, OtherPolicy>& other) {
+    size_t copy_bytes = max_words < other_max_words ?
+                          std::min(other.used_,
+                                   size_t(max_words * bytes_per_word)) :
+                          other.used_;
+    size_t copy_words = (copy_bytes + bytes_per_word - 1) / bytes_per_word;
+    for (size_t i = 0; i < copy_words; i++) {
+      words_[i] = other.words_[i];
+    }
+    used_ = copy_bytes;
+    if (max_words < other_max_words) {
+      this->Trim();
+    }
+  }
+
   // The number of bytes used in words_.
   //
   // Invariant:
@@ -124,6 +143,7 @@ class BigIntBaseOperations : public BigIntBase<max_words_template, TrimPolicy> {
   using Parent::Parent;
   using Parent::used_;
   using Parent::words_;
+  using Parent::AssignIgnoreOverflow;
 
   constexpr BigIntBaseOperations(const BigUIntWord* words, size_t used) :
       Parent(used) {
@@ -154,23 +174,6 @@ class BigIntBaseOperations : public BigIntBase<max_words_template, TrimPolicy> {
     assert(other.used_ <= max_bytes);
     AssignIgnoreOverflow(other);
     return *this;
-  }
-
-  template <size_t other_max_words, typename OtherPolicy>
-  constexpr void AssignIgnoreOverflow(
-      const BigIntBaseOperations<other_max_words, OtherPolicy>& other) {
-    size_t copy_bytes = max_words < other_max_words ?
-                          std::min(other.used_,
-                                   size_t(max_words * bytes_per_word)) :
-                          other.used_;
-    size_t copy_words = (copy_bytes + bytes_per_word - 1) / bytes_per_word;
-    for (size_t i = 0; i < copy_words; i++) {
-      words_[i] = other.words_[i];
-    }
-    used_ = copy_bytes;
-    if (max_words < other_max_words) {
-      this->Trim();
-    }
   }
 
   template <typename Result, typename Other>
