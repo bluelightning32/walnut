@@ -463,10 +463,10 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
     }
     if (used_bytes() <= bytes_per_word && other.used_bytes() <= bytes_per_word) {
       BigIntImpl<result_words> result;
+      result.Allocate(bytes_per_word * 2);
       result.words_[0] = words_[0].Multiply(other.words_[0], &result.words_[1]);
       result.words_[1] -= other.words_[0].SignExtension() & words_[0];
       result.words_[1] -= words_[0].SignExtension() & other.words_[0];
-      result.used_ = bytes_per_word * 2;
       result.Trim();
       return result;
     }
