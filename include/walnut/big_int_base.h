@@ -176,6 +176,15 @@ class BigIntBase {
     return result;
   }
 
+  constexpr void AddHighWord(BigUIntWord word) {
+    const size_t used = used_words();
+    assert(used < max_words);
+    if (used < max_words) {
+      words_[used] = word;
+      used_ = (used + 1) * bytes_per_word;
+    }
+  }
+
   // The number of bytes used in words_.
   //
   // Invariant:

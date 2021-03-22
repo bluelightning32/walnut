@@ -48,6 +48,7 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
   using Parent::bytes_per_word;
   using Parent::max_bits;
   using Parent::max_bytes;
+  using Parent::used_bytes;
 
   constexpr BigIntImpl() : BigIntImpl(0) {
   }
@@ -68,22 +69,17 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
 
   template <size_t other_max_words>
   constexpr BigIntImpl(const BigUIntImpl<other_max_words>& other)
-   : Parent(sizeof(BigIntHalfWord)) {
-    int copy_bytes = max_words < other_max_words ?
-                     std::min(other.used_bytes(), int(max_words * bytes_per_word)) :
-                     other.used_bytes();
-    size_t copy_words = (copy_bytes + bytes_per_word - 1) / bytes_per_word;
+   : Parent(max_words < other_max_words ?
+             std::min(other.used_bytes(), int(max_words * bytes_per_word)) :
+             other.used_bytes()) {
+    size_t copy_words = (used_bytes() + bytes_per_word - 1) / bytes_per_word;
     size_t i = 0;
     for (; i < copy_words; ++i) {
       words_[i] = other.words()[i];
     }
     if (BigIntWord{words_[i - 1]} < 0) {
-      assert(i < max_words);
-      if (i < max_words) {
-        ++i;
-      }
+      this->AddHighWord(BigUIntWord{0});
     }
-    used_ = i * bytes_per_word;
     Trim();
   }
 
