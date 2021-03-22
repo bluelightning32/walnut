@@ -48,6 +48,28 @@ class BigIntBase {
  protected:
   constexpr BigIntBase(int used) : used_(used) { }
 
+  constexpr BigIntBase(const BigUIntWord* words, size_t used) :
+      used_(used) {
+    assert(used_ <= max_bytes);
+    for (size_t i = 0; i < (used + bytes_per_word - 1) / bytes_per_word; ++i) {
+      words_[i] = words[i];
+    }
+    this->Trim();
+  }
+
+  template <size_t other_max_words, typename OtherPolicy>
+  constexpr BigIntBase(const BigIntBase<other_max_words, OtherPolicy>& other) :
+      used_(max_words < other_max_words ?
+                  std::min(other.used_, size_t(max_words * bytes_per_word)) :
+                  other.used_) {
+    assert(other.used_ <= max_bytes);
+    size_t copy_words = (used_ + bytes_per_word - 1) / bytes_per_word;
+    for (size_t i = 0; i < copy_words; i++) {
+      words_[i] = other.words_[i];
+    }
+    this->Trim();
+  }
+
   constexpr size_t used_words() const {
     return (used_ + bytes_per_word - 1) / bytes_per_word;
   }
@@ -195,28 +217,6 @@ class BigIntBaseOperations : public BigIntBase<max_words_template, TrimPolicy> {
   using Parent::AssignIgnoreOverflow;
   using Parent::operator=;
 
-  constexpr BigIntBaseOperations(const BigUIntWord* words, size_t used) :
-      Parent(used) {
-    assert(used_ <= max_bytes);
-    for (size_t i = 0; i < (used + bytes_per_word - 1) / bytes_per_word; ++i) {
-      words_[i] = words[i];
-    }
-    this->Trim();
-  }
-
-  template <size_t other_max_words, typename OtherPolicy>
-  constexpr BigIntBaseOperations(
-      const BigIntBaseOperations<other_max_words, OtherPolicy>& other) :
-      Parent(max_words < other_max_words ?
-                  std::min(other.used_, size_t(max_words * bytes_per_word)) :
-                  other.used_) {
-    assert(other.used_ <= max_bytes);
-    size_t copy_words = (used_ + bytes_per_word - 1) / bytes_per_word;
-    for (size_t i = 0; i < copy_words; i++) {
-      words_[i] = other.words_[i];
-    }
-    this->Trim();
-  }
 };
 
 }  // walnut
