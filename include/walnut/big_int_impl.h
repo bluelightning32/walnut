@@ -67,12 +67,8 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
    : Parent(max_words < other_max_words ?
              std::min(other.used_bytes(), int(max_words * bytes_per_word)) :
              other.used_bytes()) {
-    size_t copy_words = (used_bytes() + bytes_per_word - 1) / bytes_per_word;
-    size_t i = 0;
-    for (; i < copy_words; ++i) {
-      words_[i] = other.words()[i];
-    }
-    if (BigIntWord{words_[i - 1]} < 0) {
+    this->AssignWithoutTrim(other.words(), used_bytes());
+    if (BigIntWord{this->words()[used_words() - 1]} < 0) {
       this->AddHighWord(BigUIntWord{0});
     }
     Trim();
@@ -86,9 +82,7 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
   }
 
   constexpr BigIntImpl& operator = (BigIntWord value) {
-    used_ = static_cast<BigIntHalfWord>(value) == value ?
-      sizeof(BigIntHalfWord) : bytes_per_word;
-    words_[0] = value;
+    Parent::operator=(BigUIntWord{value});
     return *this;
   }
 
@@ -98,15 +92,10 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
     int copy_bytes = max_words < other_max_words ?
                      std::min(other.used_bytes(), int(max_words * bytes_per_word)) :
                      other.used_bytes();
-    size_t copy_words = (copy_bytes + bytes_per_word - 1) / bytes_per_word;
-    size_t i = 0;
-    for (; i < copy_words; ++i) {
-      words_[i] = other.words()[i];
+    this->AssignWithoutTrim(other.words(), copy_bytes);
+    if (BigIntWord{words_[used_words() - 1]} < 0 && used_words() < max_words) {
+      this->AddHighWord(BigUIntWord{0});
     }
-    if (BigIntWord{words_[i - 1]} < 0 && i < max_words) {
-      ++i;
-    }
-    used_ = i * bytes_per_word;
     Trim();
     return *this;
   }

@@ -61,10 +61,7 @@ class BigIntBase {
                   std::min(other.used_, size_t(max_words * bytes_per_word)) :
                   other.used_) {
     assert(other.used_ <= max_bytes);
-    size_t copy_words = (used_ + bytes_per_word - 1) / bytes_per_word;
-    for (size_t i = 0; i < copy_words; i++) {
-      words_[i] = other.words_[i];
-    }
+    AssignWithoutTrim(other.words(), used_);
     this->Trim();
   }
 
@@ -110,28 +107,38 @@ class BigIntBase {
     }
   }
 
+  constexpr void AssignWithoutTrim(const BigUIntWord* words, size_t used) {
+    assert(used <= max_bytes);
+    used_ = used;
+    for (size_t i = 0; i < (used + bytes_per_word - 1) / bytes_per_word; ++i) {
+      words_[i] = words[i];
+    }
+  }
+
   template <size_t other_max_words, typename OtherPolicy>
   constexpr void AssignIgnoreOverflow(
       const BigIntBase<other_max_words, OtherPolicy>& other) {
-    size_t copy_bytes = max_words < other_max_words ?
-                          std::min(other.used_,
-                                   size_t(max_words * bytes_per_word)) :
-                          other.used_;
-    size_t copy_words = (copy_bytes + bytes_per_word - 1) / bytes_per_word;
-    for (size_t i = 0; i < copy_words; i++) {
-      words_[i] = other.words_[i];
-    }
-    used_ = copy_bytes;
+    AssignWithoutTrim(other.words(),
+        max_words < other_max_words ?
+        std::min(other.used_, size_t(max_words * bytes_per_word)) :
+        other.used_);
     if (max_words < other_max_words) {
       this->Trim();
     }
   }
 
   template <size_t other_max_words, typename OtherPolicy>
-  constexpr BigIntBase operator=(
+  constexpr BigIntBase& operator=(
       const BigIntBase<other_max_words, OtherPolicy>& other) {
     assert(other.used_ <= max_bytes);
     AssignIgnoreOverflow(other);
+    return *this;
+  }
+
+  constexpr BigIntBase& operator = (BigUIntWord value) {
+    words_[0] = value;
+    used_ = CanTrimLastHalf(words_[0]) ?
+      sizeof(BigUIntHalfWord) : bytes_per_word;
     return *this;
   }
 
