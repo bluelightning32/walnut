@@ -10,7 +10,7 @@ namespace walnut {
 // Common base for BigIntImpl and BigUIntImpl
 template <size_t max_words_template>
 class BigIntBase {
-  template <typename TrimMixin>
+  template <size_t max_words, typename TrimPolicy>
   friend class BigIntBaseOperations;
 
  public:
@@ -84,15 +84,14 @@ class BigIntBase {
 
 // Adds operations that require Trim.
 //
-// TrimMixin must implement CanTrim and CanTrimLastHalf, and TrimMixin must
-// inherit from BigIntBase.
-template <typename TrimMixin>
-class BigIntBaseOperations : public TrimMixin {
-  template <typename OtherTrimBase>
+// TrimPolicy must implement CanTrim and CanTrimLastHalf.
+template <size_t max_words_template, typename TrimPolicy>
+class BigIntBaseOperations : public BigIntBase<max_words_template> {
+  template <size_t other_max_words, typename OtherTimePolicy>
   friend class BigIntBaseOperations;
 
  public:
-  using Parent = TrimMixin;
+  using Parent = BigIntBase<max_words_template>;
   using Parent::max_words;
   using Parent::bits_per_word;
   using Parent::bits_per_byte;
@@ -114,10 +113,10 @@ class BigIntBaseOperations : public TrimMixin {
     this->Trim();
   }
 
-  template <typename OtherMixin>
+  template <size_t other_max_words, typename OtherPolicy>
   constexpr BigIntBaseOperations(
-      const BigIntBaseOperations<OtherMixin>& other) :
-      Parent(max_words < OtherMixin::max_words ?
+      const BigIntBaseOperations<other_max_words, OtherPolicy>& other) :
+      Parent(max_words < other_max_words ?
                   std::min(other.used_, size_t(max_words * bytes_per_word)) :
                   other.used_) {
     assert(other.used_ <= max_bytes);
@@ -137,29 +136,29 @@ class BigIntBaseOperations : public TrimMixin {
         --i;
         next = words_[i];
 
-        if (!TrimMixin::CanTrim(/*low=*/next, /*high=*/check)) break;
+        if (!TrimPolicy::CanTrim(/*low=*/next, /*high=*/check)) break;
 
         check = next;
         used_-= bytes_per_word;
       } while (i > 0);
     }
-    if (used_ == bytes_per_word && TrimMixin::CanTrimLastHalf(words_[0])) {
+    if (used_ == bytes_per_word && TrimPolicy::CanTrimLastHalf(words_[0])) {
       used_ = sizeof(BigUIntHalfWord);
     }
   }
 
-  template <typename OtherMixin>
+  template <size_t other_max_words, typename OtherPolicy>
   constexpr BigIntBaseOperations operator=(
-      const BigIntBaseOperations<OtherMixin>& other) {
+      const BigIntBaseOperations<other_max_words, OtherPolicy>& other) {
     assert(other.used_ <= max_bytes);
     AssignIgnoreOverflow(other);
     return *this;
   }
 
-  template <typename OtherMixin>
+  template <size_t other_max_words, typename OtherPolicy>
   constexpr void AssignIgnoreOverflow(
-      const BigIntBaseOperations<OtherMixin>& other) {
-    size_t copy_bytes = max_words < OtherMixin::max_words ?
+      const BigIntBaseOperations<other_max_words, OtherPolicy>& other) {
+    size_t copy_bytes = max_words < other_max_words ?
                           std::min(other.used_,
                                    size_t(max_words * bytes_per_word)) :
                           other.used_;
@@ -168,7 +167,7 @@ class BigIntBaseOperations : public TrimMixin {
       words_[i] = other.words_[i];
     }
     used_ = copy_bytes;
-    if (max_words < OtherMixin::max_words) {
+    if (max_words < other_max_words) {
       this->Trim();
     }
   }
@@ -184,9 +183,9 @@ class BigIntBaseOperations : public TrimMixin {
     return result;
   }
 
-  template <typename Result, typename OtherMixin>
+  template <typename Result, size_t other_max_words, typename OtherPolicy>
   constexpr Result MultiplySlow(
-      const BigIntBaseOperations<OtherMixin>& other) const {
+      const BigIntBaseOperations<other_max_words, OtherPolicy>& other) const {
     if (used_ < other.used_) {
       return other.template MultiplySlow<Result>(*this);
     }

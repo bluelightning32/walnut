@@ -11,12 +11,8 @@
 
 namespace walnut {
 
-template <size_t max_words>
-class BigIntImplTrimMixin : public BigIntBase<max_words> {
-  using Parent = BigIntBase<max_words>;
- protected:
-  using Parent::Parent;
-
+class BigIntImplTrimPolicy {
+ public:
   static constexpr bool CanTrim(BigUIntWord low, BigUIntWord high) {
     // The high word must be 0 or -1.
     if (high.Add(BigUIntWord{1}) > BigUIntWord{1}) return false;
@@ -36,15 +32,15 @@ class BigIntImplTrimMixin : public BigIntBase<max_words> {
 };
 
 template <size_t max_words>
-class BigIntImpl : public BigIntBaseOperations<BigIntImplTrimMixin<max_words>>
+class BigIntImpl : public BigIntBaseOperations<max_words, BigIntImplTrimPolicy>
 {
-  template <typename OtherMixin>
+  template <size_t other_max_words, typename OtherMixin>
   friend class BigIntBaseOperations;
 
   template <size_t other_max_words>
   friend class BigIntImpl;
 
-  using Parent = BigIntBaseOperations<BigIntImplTrimMixin<max_words>>;
+  using Parent = BigIntBaseOperations<max_words, BigIntImplTrimPolicy>;
 
  public:
   using Parent::bits_per_word;
