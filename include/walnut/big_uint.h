@@ -26,7 +26,7 @@ class BigUIntImpl : public BigIntBaseOperations<max_words,
                                                 BigUIntImplTrimPolicy>
 {
   template <size_t other_max_words, typename OtherMixin>
-  friend class BigIntBaseOperations;
+  friend class BigIntBase;
 
   template <size_t other_words>
   friend class BigUIntImpl;

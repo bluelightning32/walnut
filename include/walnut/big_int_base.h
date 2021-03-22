@@ -12,7 +12,7 @@ template <size_t max_words_template, typename TrimPolicyTemplate>
 class BigIntBase {
   template <size_t max_words, typename TrimPolicy>
   friend class BigIntBaseOperations;
-  template <size_t other_max_words, typename OtherTimePolicy>
+  template <size_t other_max_words, typename OtherTrimPolicy>
   friend class BigIntBase;
 
  public:
@@ -115,6 +115,47 @@ class BigIntBase {
     return *this;
   }
 
+  template <typename Result, typename Other>
+  constexpr Result operator&(const Other& other) const {
+    Result result;
+    result.used_ = std::min(used_, other.used_);
+    for (size_t i = 0; i < result.used_words(); i++) {
+      result.words_[i] = words_[i] & other.words_[i];
+    }
+    result.Trim();
+    return result;
+  }
+
+  template <typename Result, size_t other_max_words, typename OtherPolicy>
+  constexpr Result MultiplySlow(
+      const BigIntBase<other_max_words, OtherPolicy>& other) const {
+    if (used_ < other.used_) {
+      return other.template MultiplySlow<Result>(*this);
+    }
+    Result result;
+    int k = 0;
+    {
+      BigUIntWord add;
+      for (size_t i = 0; i < this->used_words(); ++i, ++k) {
+        result.words_[k] = other.words_[0].MultiplyAdd(words_[i], add, /*carry_in=*/false, &add);
+      }
+      result.words_[k] = add;
+    }
+    for (size_t j = 1; j < other.used_words(); j++) {
+      k = j;
+      BigUIntWord add;
+      bool carry = false;
+      for (size_t i = 0; i < this->used_words(); ++i, ++k) {
+        add = add.Add(result.words_[k], carry, &carry);
+        result.words_[k] = other.words_[j].MultiplyAdd(words_[i], add, /*carry_in=*/false, &add);
+      }
+      result.words_[k] = add.Add(carry, &carry);
+    }
+    k++;
+    result.used_ = k * BigUIntWord::bytes_per_word;
+    return result;
+  }
+
   // The number of bytes used in words_.
   //
   // Invariant:
@@ -175,47 +216,6 @@ class BigIntBaseOperations : public BigIntBase<max_words_template, TrimPolicy> {
       words_[i] = other.words_[i];
     }
     this->Trim();
-  }
-
-  template <typename Result, typename Other>
-  constexpr Result operator&(const Other& other) const {
-    Result result;
-    result.used_ = std::min(used_, other.used_);
-    for (size_t i = 0; i < result.used_words(); i++) {
-      result.words_[i] = words_[i] & other.words_[i];
-    }
-    result.Trim();
-    return result;
-  }
-
-  template <typename Result, size_t other_max_words, typename OtherPolicy>
-  constexpr Result MultiplySlow(
-      const BigIntBaseOperations<other_max_words, OtherPolicy>& other) const {
-    if (used_ < other.used_) {
-      return other.template MultiplySlow<Result>(*this);
-    }
-    Result result;
-    int k = 0;
-    {
-      BigUIntWord add;
-      for (size_t i = 0; i < this->used_words(); ++i, ++k) {
-        result.words_[k] = other.words_[0].MultiplyAdd(words_[i], add, /*carry_in=*/false, &add);
-      }
-      result.words_[k] = add;
-    }
-    for (size_t j = 1; j < other.used_words(); j++) {
-      k = j;
-      BigUIntWord add;
-      bool carry = false;
-      for (size_t i = 0; i < this->used_words(); ++i, ++k) {
-        add = add.Add(result.words_[k], carry, &carry);
-        result.words_[k] = other.words_[j].MultiplyAdd(words_[i], add, /*carry_in=*/false, &add);
-      }
-      result.words_[k] = add.Add(carry, &carry);
-    }
-    k++;
-    result.used_ = k * BigUIntWord::bytes_per_word;
-    return result;
   }
 };
 

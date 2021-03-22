@@ -35,7 +35,7 @@ template <size_t max_words>
 class BigIntImpl : public BigIntBaseOperations<max_words, BigIntImplTrimPolicy>
 {
   template <size_t other_max_words, typename OtherMixin>
-  friend class BigIntBaseOperations;
+  friend class BigIntBase;
 
   template <size_t other_max_words>
   friend class BigIntImpl;
