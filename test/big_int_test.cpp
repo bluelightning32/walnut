@@ -183,6 +183,28 @@ TEST(BigInt, PlusEqual) {
   EXPECT_EQ(result, BigInt<128>(1) << 120);
 }
 
+TEST(BigInt, PlusEqualCountDown) {
+  BigInt<128> result(1);
+  BigInt<128> add(1);
+
+  for (int i = 119; i >= 0; --i) {
+    result += (add << i);
+  }
+
+  EXPECT_EQ(result, BigInt<128>(1) << 120);
+}
+
+TEST(BigInt, PlusEqualNeg) {
+  BigInt<128> result(-1);
+  BigInt<128> add(-1);
+
+  for (int i = 0; i < 120; ++i) {
+    result += (add << i);
+  }
+
+  EXPECT_EQ(result, BigInt<128>(-1) << 120);
+}
+
 TEST(BigInt, SubtractEqual) {
   BigInt<128> result(-1);
   BigInt<128> subtract(1);
