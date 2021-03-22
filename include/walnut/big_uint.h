@@ -64,7 +64,7 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImplTrimPolicy>
 
   template <size_t result_words=max_words>
   constexpr BigUIntImpl<result_words> operator << (size_t shift) const {
-    if (used_bytes()  == sizeof(BigUIntHalfWord) && shift <= 32) {
+    if (used_bytes() == sizeof(BigUIntHalfWord) && shift <= 32) {
       return BigUIntImpl<result_words>(words_[0].low_uint64() << shift);
     }
 
@@ -76,9 +76,12 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImplTrimPolicy>
     const int word_left_shift = shift % bits_per_word;
     // The if statement is necessary to avoid shifting by bits_per_word.
     if (word_left_shift > 0) {
+      size_t copy = std::min(used_words(), result_words - out);
+      size_t allocate = std::min(copy + out + 1, result_words);
+      result.Allocate(allocate * bytes_per_word);
       BigUIntWord prev(0);
       const int prev_right_shift = bits_per_word - word_left_shift;
-      for (; in < used_words() && out < result_words; in++, out++) {
+      for (; in < copy; in++, out++) {
         result.words_[out] = words_[in] << word_left_shift |
                                prev >> prev_right_shift;
         prev = words_[in];
@@ -88,11 +91,13 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImplTrimPolicy>
         out++;
       }
     } else {
-      for (; in < used_words() && out < result_words; in++, out++) {
+      size_t copy = std::min(used_words(), result_words - out);
+      result.Allocate((copy + out) * bytes_per_word);
+      for (; in < copy; in++, out++) {
         result.words_[out] = words_[in];
       }
     }
-    result.used_ = out * BigUIntWord::bytes_per_word;
+    assert(result.used_bytes() == out * BigUIntWord::bytes_per_word);
     result.Trim();
     return result;
   }
