@@ -22,12 +22,7 @@ class BigIntImplTrimPolicy {
   }
 
   static constexpr bool CanTrimLastHalf(BigUIntWord last) {
-    const constexpr BigUIntWord unsigned_int_min{BigUIntHalfWord(
-      std::numeric_limits<BigIntHalfWord>::min())};
-    const constexpr BigUIntWord limit(
-        BigUIntWord{std::numeric_limits<BigIntHalfWord>::max()}.Add(
-            unsigned_int_min));
-    return last.Add(unsigned_int_min) <= limit;
+    return static_cast<BigIntHalfWord>(BigIntWord{last}) == BigIntWord{last};
   }
 };
 
