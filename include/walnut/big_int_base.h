@@ -8,7 +8,7 @@
 namespace walnut {
 
 // Common base for BigIntImpl and BigUIntImpl
-template <size_t max_words_template>
+template <size_t max_words_template, typename TrimPolicyTemplate>
 class BigIntBase {
   template <size_t max_words, typename TrimPolicy>
   friend class BigIntBaseOperations;
@@ -49,9 +49,9 @@ class BigIntBase {
     return (used_ + bytes_per_word - 1) / bytes_per_word;
   }
 
-  template <size_t other_words>
+  template <size_t other_words, typename OtherTrimPolicy>
   constexpr size_t GetCommonWordCount(
-      const BigIntBase<other_words>& other) const {
+      const BigIntBase<other_words, OtherTrimPolicy>& other) const {
     return (std::min(used_bytes(), other.used_bytes()) +
             bytes_per_word - 1) / bytes_per_word;
   }
@@ -86,12 +86,12 @@ class BigIntBase {
 //
 // TrimPolicy must implement CanTrim and CanTrimLastHalf.
 template <size_t max_words_template, typename TrimPolicy>
-class BigIntBaseOperations : public BigIntBase<max_words_template> {
+class BigIntBaseOperations : public BigIntBase<max_words_template, TrimPolicy> {
   template <size_t other_max_words, typename OtherTimePolicy>
   friend class BigIntBaseOperations;
 
  public:
-  using Parent = BigIntBase<max_words_template>;
+  using Parent = BigIntBase<max_words_template, TrimPolicy>;
   using Parent::max_words;
   using Parent::bits_per_word;
   using Parent::bits_per_byte;
