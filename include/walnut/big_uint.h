@@ -139,6 +139,7 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImplTrimPolicy>
       return BigUIntImpl<result_words>(words_[0].MultiplyAsHalfWord(other));
     }
     BigUIntImpl<result_words> result;
+    result.Allocate(std::min(used_words() + 1, result_words) * bytes_per_word);
     size_t k = 0;
     BigUIntWord add;
     for (size_t i = 0; i < used_words(); ++i, ++k) {
@@ -149,7 +150,7 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImplTrimPolicy>
       result.words_[k] = add;
       k++;
     }
-    result.used_ = k * BigUIntWord::bytes_per_word;
+    assert(result.used_bytes() == k * bytes_per_word);
     result.Trim();
     return result;
   }
