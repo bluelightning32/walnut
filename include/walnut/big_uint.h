@@ -587,11 +587,6 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImplTrimPolicy>
 
 };
 
-// `max_bits` is the maximum number of bits BigUInt can hold. For example
-// BigUInt<128> can hold 128 bit unsigned integers.
-template <size_t max_bits>
-using BigUInt = BigUIntImpl<(max_bits + BigUIntWord::bits_per_word - 1) / BigUIntWord::bits_per_word>;
-
 }  // walnut
 
 #endif // WALNUT_BIG_UINT_H__

@@ -43,21 +43,9 @@ class BigInt {
   template <size_t other_bits>
   constexpr BigInt(const BigInt<other_bits>& other) : rep_(other.rep_) { }
 
-  template <size_t other_words>
-  constexpr BigInt(const BigUIntImpl<other_words>& other) : rep_(other) { }
-
-  template <size_t other_bits>
-  constexpr BigInt(const BigUInt<other_bits>& other) : rep_(other) { }
-
   template <size_t other_bits>
   constexpr BigInt<bits>& operator = (const BigInt<other_bits>& other) {
     rep_ = other.rep_;
-    return *this;
-  }
-
-  template <size_t other_bits>
-  constexpr BigInt<bits>& operator = (const BigUInt<other_bits>& other) {
-    rep_ = other;
     return *this;
   }
 
@@ -287,10 +275,6 @@ class BigInt {
 
   constexpr BigInt<bits> abs() const {
     return rep_.abs();
-  }
-
-  constexpr BigUInt<bits> GetUIntAbs(bool* was_signed) const {
-    return rep_.GetUIntAbs(was_signed);
   }
 
   constexpr BigInt<bits+1> GetAbs(bool& was_signed) const {

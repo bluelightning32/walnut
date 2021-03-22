@@ -408,33 +408,6 @@ TEST(BigInt, NegateOverflowTrue) {
   EXPECT_TRUE(a.Negate());
 }
 
-TEST(BigInt, GetUIntAbs64Int32Min) {
-  const BigInt<64> a{std::numeric_limits<int32_t>::min()};
-  bool was_signed;
-  const BigUInt<64> result = a.GetUIntAbs(&was_signed);
-  const BigUInt<64> expected = BigUInt<64>{1} << 31;
-  EXPECT_EQ(result, expected);
-  EXPECT_TRUE(was_signed);
-}
-
-TEST(BigInt, GetUIntAbs128Int64Min) {
-  const BigInt<128> a{std::numeric_limits<int64_t>::min()};
-  bool was_signed;
-  const BigUInt<128> result = a.GetUIntAbs(&was_signed);
-  const BigUInt<128> expected = BigUInt<128>{1} << 63;
-  EXPECT_EQ(result, expected);
-  EXPECT_TRUE(was_signed);
-}
-
-TEST(BigInt, GetUIntAbs64Int64Min) {
-  const BigInt<64> a{std::numeric_limits<int64_t>::min()};
-  bool was_signed;
-  const BigUInt<64> result = a.GetUIntAbs(&was_signed);
-  const BigUInt<64> expected = BigUInt<64>{1} << 63;
-  EXPECT_EQ(result, expected);
-  EXPECT_TRUE(was_signed);
-}
-
 TEST(BigInt, GetAbs64Int64Min) {
   const BigInt<64> a{std::numeric_limits<int64_t>::min()};
   bool was_signed;
