@@ -107,6 +107,14 @@ class BigIntBase {
     }
   }
 
+  template <size_t other_max_words, typename OtherPolicy>
+  constexpr BigIntBase operator=(
+      const BigIntBase<other_max_words, OtherPolicy>& other) {
+    assert(other.used_ <= max_bytes);
+    AssignIgnoreOverflow(other);
+    return *this;
+  }
+
   // The number of bytes used in words_.
   //
   // Invariant:
@@ -144,6 +152,7 @@ class BigIntBaseOperations : public BigIntBase<max_words_template, TrimPolicy> {
   using Parent::used_;
   using Parent::words_;
   using Parent::AssignIgnoreOverflow;
+  using Parent::operator=;
 
   constexpr BigIntBaseOperations(const BigUIntWord* words, size_t used) :
       Parent(used) {
@@ -166,14 +175,6 @@ class BigIntBaseOperations : public BigIntBase<max_words_template, TrimPolicy> {
       words_[i] = other.words_[i];
     }
     this->Trim();
-  }
-
-  template <size_t other_max_words, typename OtherPolicy>
-  constexpr BigIntBaseOperations operator=(
-      const BigIntBaseOperations<other_max_words, OtherPolicy>& other) {
-    assert(other.used_ <= max_bytes);
-    AssignIgnoreOverflow(other);
-    return *this;
   }
 
   template <typename Result, typename Other>
