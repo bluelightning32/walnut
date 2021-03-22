@@ -65,7 +65,7 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
   template <size_t other_max_words>
   constexpr BigIntImpl(const BigUIntImpl<other_max_words>& other)
    : Parent(max_words < other_max_words ?
-             std::min(other.used_bytes(), int(max_words * bytes_per_word)) :
+             std::min(other.used_bytes(), max_words * bytes_per_word) :
              other.used_bytes()) {
     this->AssignWithoutTrim(other.words(), used_bytes());
     if (BigIntWord{this->words()[used_words() - 1]} < 0) {
@@ -90,7 +90,7 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
   constexpr BigIntImpl<max_words>& operator = (
       const BigUIntImpl<other_max_words>& other) {
     int copy_bytes = max_words < other_max_words ?
-                     std::min(other.used_bytes(), int(max_words * bytes_per_word)) :
+                     std::min(other.used_bytes(), max_words * bytes_per_word) :
                      other.used_bytes();
     this->AssignWithoutTrim(other.words(), copy_bytes);
     if (BigIntWord{words_[used_words() - 1]} < 0 && used_words() < max_words) {

@@ -35,7 +35,7 @@ class BigIntBase {
     return words_[0].ToInt();
   }
 
-  constexpr int used_bytes() const {
+  constexpr size_t used_bytes() const {
     return used_;
   }
 
