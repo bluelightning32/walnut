@@ -470,8 +470,7 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
       result.Trim();
       return result;
     }
-    BigIntImpl<result_words> result =
-      MultiplySlow<BigIntImpl<result_words> >(other);
+    BigIntImpl<result_words> result = MultiplySlow(other);
     result.SubtractLeftShiftedMasked(*this, other.used_words(), other.SignExtension());
     result.SubtractLeftShiftedMasked(other, used_words(), SignExtension());
     result.Trim();
@@ -828,13 +827,13 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
   using Parent::GetCommonWordCount;
   using Parent::Allocate;
 
-  template <typename Result, size_t other_max_words>
-  constexpr Result MultiplySlow(
-      const BigIntImpl<other_max_words>& other) const {
+  template <size_t other_words>
+  constexpr BigIntImpl<max_words + other_words> MultiplySlow(
+      const BigIntImpl<other_words>& other) const {
     if (used_bytes() < other.used_bytes()) {
-      return other.template MultiplySlow<Result>(*this);
+      return other.MultiplySlow(*this);
     }
-    Result result;
+    BigIntImpl<max_words + other_words> result;
     result.Allocate((used_words() + other.used_words()) * bytes_per_word);
     int k = 0;
     {
