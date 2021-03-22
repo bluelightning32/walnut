@@ -298,7 +298,7 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
       words_[0] += BigUIntWord{other};
       if ((BigIntWord)words_[0] < std::numeric_limits<BigIntHalfWord>::min() ||
           (BigIntWord)words_[0] > std::numeric_limits<BigIntHalfWord>::max()) {
-        used_ = bytes_per_word;
+        Allocate(bytes_per_word);
       }
       return *this;
     } else {
@@ -310,7 +310,7 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
     if (used_bytes() == sizeof(BigIntHalfWord)) {
       ++words_[0];
       if ((BigIntWord)words_[0] > std::numeric_limits<BigIntHalfWord>::max()) {
-        used_ = bytes_per_word;
+        Allocate(bytes_per_word);
       }
       return *this;
     }
@@ -340,7 +340,7 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
       words_[0] -= other.words_[0];
       if ((BigIntWord)words_[0] < std::numeric_limits<BigIntHalfWord>::min() ||
           (BigIntWord)words_[0] > std::numeric_limits<BigIntHalfWord>::max()) {
-        used_ = bytes_per_word;
+        Allocate(bytes_per_word);
       }
       return *this;
     }
@@ -350,10 +350,13 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
     BigUIntWord this_extension(SignExtension());
     BigUIntWord other_extension(other.SignExtension());
     assert(other.used_bytes() <= max_bytes);
+    size_t old_used = used_bytes();
+    Allocate(std::min(std::max(old_used, other.used_bytes()) + bytes_per_word,
+                      size_t(max_bytes)));
     for (; i < common_words && i < max_words; i++) {
       words_[i] = words_[i].Subtract(other.words_[i], carry, &carry);
     }
-    for (; i < std::min(used_bytes() / bytes_per_word, max_words); i++) {
+    for (; i < std::min(old_used / bytes_per_word, max_words); i++) {
       words_[i] = words_[i].Subtract(other_extension, carry, &carry);
     }
     for (; i < std::min(other.used_bytes() / bytes_per_word, max_words); i++) {
@@ -363,7 +366,7 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
       words_[i] = this_extension.Subtract(other_extension, carry, &carry);
       i++;
     }
-    used_ = i * bytes_per_word;
+    assert(used_bytes() == i * bytes_per_word);
     Trim();
     return *this;
   }
