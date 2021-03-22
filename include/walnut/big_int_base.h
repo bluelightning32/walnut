@@ -144,37 +144,6 @@ class BigIntBase {
     return *this;
   }
 
-  template <typename Result, size_t other_max_words, typename OtherPolicy>
-  constexpr Result MultiplySlow(
-      const BigIntBase<other_max_words, OtherPolicy>& other) const {
-    if (used_bytes() < other.used_bytes()) {
-      return other.template MultiplySlow<Result>(*this);
-    }
-    Result result;
-    result.Allocate((used_words() + other.used_words()) * bytes_per_word);
-    int k = 0;
-    {
-      BigUIntWord add;
-      for (size_t i = 0; i < this->used_words(); ++i, ++k) {
-        result.words_[k] = other.words_[0].MultiplyAdd(words_[i], add, /*carry_in=*/false, &add);
-      }
-      result.words_[k] = add;
-    }
-    for (size_t j = 1; j < other.used_words(); j++) {
-      k = j;
-      BigUIntWord add;
-      bool carry = false;
-      for (size_t i = 0; i < this->used_words(); ++i, ++k) {
-        add = add.Add(result.words_[k], carry, &carry);
-        result.words_[k] = other.words_[j].MultiplyAdd(words_[i], add, /*carry_in=*/false, &add);
-      }
-      result.words_[k] = add.Add(carry, &carry);
-    }
-    k++;
-    assert(result.used_bytes() == k * BigUIntWord::bytes_per_word);
-    return result;
-  }
-
   constexpr void AddHighWord(BigUIntWord word) {
     const size_t used = used_words();
     assert(used < max_words);

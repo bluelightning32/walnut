@@ -471,7 +471,7 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
       return result;
     }
     BigIntImpl<result_words> result =
-      Parent::template MultiplySlow<BigIntImpl<result_words> >(other);
+      MultiplySlow<BigIntImpl<result_words> >(other);
     result.SubtractLeftShiftedMasked(*this, other.used_words(), other.SignExtension());
     result.SubtractLeftShiftedMasked(other, used_words(), SignExtension());
     result.Trim();
@@ -827,6 +827,37 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
   using Parent::used_words;
   using Parent::GetCommonWordCount;
   using Parent::Allocate;
+
+  template <typename Result, size_t other_max_words>
+  constexpr Result MultiplySlow(
+      const BigIntImpl<other_max_words>& other) const {
+    if (used_bytes() < other.used_bytes()) {
+      return other.template MultiplySlow<Result>(*this);
+    }
+    Result result;
+    result.Allocate((used_words() + other.used_words()) * bytes_per_word);
+    int k = 0;
+    {
+      BigUIntWord add;
+      for (size_t i = 0; i < this->used_words(); ++i, ++k) {
+        result.words_[k] = other.words_[0].MultiplyAdd(words_[i], add, /*carry_in=*/false, &add);
+      }
+      result.words_[k] = add;
+    }
+    for (size_t j = 1; j < other.used_words(); j++) {
+      k = j;
+      BigUIntWord add;
+      bool carry = false;
+      for (size_t i = 0; i < this->used_words(); ++i, ++k) {
+        add = add.Add(result.words_[k], carry, &carry);
+        result.words_[k] = other.words_[j].MultiplyAdd(words_[i], add, /*carry_in=*/false, &add);
+      }
+      result.words_[k] = add.Add(carry, &carry);
+    }
+    k++;
+    assert(result.used_bytes() == k * BigUIntWord::bytes_per_word);
+    return result;
+  }
 
   // Mask everyone of `other` words with `mask`, then subtract other_masked *
   // 2^(shift_left_words * bits_per_word) from this.
