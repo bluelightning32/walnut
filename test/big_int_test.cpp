@@ -790,4 +790,11 @@ TEST(BigInt, LtFlippableSmallInts) {
   }
 }
 
+TEST(BigInt, DecrementInt64Min) {
+  BigInt<128> a = BigInt<64>::min_value();
+  --a;
+
+  EXPECT_LT(a, BigInt<128>(0));
+}
+
 }  // walnut

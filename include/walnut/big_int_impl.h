@@ -376,7 +376,7 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
       words_[0] -= BigUIntWord{other};
       if ((BigIntWord)words_[0] < std::numeric_limits<BigIntHalfWord>::min() ||
           (BigIntWord)words_[0] > std::numeric_limits<BigIntHalfWord>::max()) {
-        used_ = bytes_per_word;
+        Allocate(bytes_per_word);
       }
       return *this;
     } else {
@@ -389,14 +389,14 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
     if (used_bytes() == sizeof(BigIntHalfWord)) {
       --words_[0];
       if ((BigIntWord)words_[0] < std::numeric_limits<BigIntHalfWord>::min()) {
-        used_ = bytes_per_word;
+        Allocate(bytes_per_word);
       }
       return *this;
     }
     size_t i = 0;
     for (; i < used_bytes() / bytes_per_word - 1; i++) {
       --words_[i];
-      if (words_[i] != 0) {
+      if ((BigIntWord)words_[i] != -1) {
         return *this;
       }
     }
@@ -404,6 +404,7 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
     if ((BigIntWord)words_[i] == std::numeric_limits<BigIntWord>::max()) {
       assert(i+1 < max_words);
       if (i+1 < max_words) {
+        Allocate(used_bytes() + bytes_per_word);
         ++i;
         ++words_[i] = (BigIntWord)-1;
       }
