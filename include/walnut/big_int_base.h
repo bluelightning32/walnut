@@ -185,6 +185,11 @@ class BigIntBase {
     used_ = used;
   }
 
+  // words_[0] holds the lowest significant bits. Within each element of
+  // words_, the bit order is in the machine native order.
+  BigUIntWord words_[max_words];
+
+ private:
   // The number of bytes used in words_.
   //
   // Invariant:
@@ -194,10 +199,6 @@ class BigIntBase {
   // Even if used_ == sizeof(BigUIntHalfWord), the rest of the bits in
   // words_[0] are still initialized.
   size_t used_;
-
-  // words_[0] holds the lowest significant bits. Within each element of
-  // words_, the bit order is in the machine native order.
-  BigUIntWord words_[max_words];
 };
 
 }  // walnut
