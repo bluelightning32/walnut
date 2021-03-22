@@ -67,8 +67,8 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
    : Parent(max_words < other_max_words ?
              std::min(other.used_bytes(), max_words * bytes_per_word) :
              other.used_bytes()) {
-    this->AssignWithoutTrim(other.words(), used_bytes());
-    if (BigIntWord{this->words()[used_words() - 1]} < 0) {
+    this->AssignWithoutTrim(other, used_bytes());
+    if (BigIntWord{this->word(used_words() - 1)} < 0) {
       this->AddHighWord(BigUIntWord{0});
     }
     Trim();
@@ -92,7 +92,7 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
     int copy_bytes = max_words < other_max_words ?
                      std::min(other.used_bytes(), max_words * bytes_per_word) :
                      other.used_bytes();
-    this->AssignWithoutTrim(other.words(), copy_bytes);
+    this->AssignWithoutTrim(other, copy_bytes);
     if (BigIntWord{words_[used_words() - 1]} < 0 && used_words() < max_words) {
       this->AddHighWord(BigUIntWord{0});
     }
@@ -912,7 +912,7 @@ std::ostream& operator<<(std::ostream& out, const BigIntImpl<max_words>& bigint)
   BigIntImpl<1> digit;
   do {
     remaining = remaining.DivideRemainder(BigIntImpl<1>(10), &digit);
-    *digits_pos-- = digit.words()[0].SignedAbs().low_uint32() + '0';
+    *digits_pos-- = digit.word(0).SignedAbs().low_uint32() + '0';
   } while (remaining != 0);
 
   if (digit.GetSign() < 0) {

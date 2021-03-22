@@ -39,8 +39,8 @@ class BigIntBase {
     return used_;
   }
 
-  constexpr const BigUIntWord* words() const {
-    return words_;
+  constexpr BigUIntWord word(size_t i) const {
+    return words_[i];
   }
 
  protected:
@@ -62,7 +62,7 @@ class BigIntBase {
                            size_t(max_words * bytes_per_word)) :
                   other.used_bytes()) {
     assert(other.used_bytes() <= max_bytes);
-    AssignWithoutTrim(other.words(), used_bytes());
+    AssignWithoutTrim(other, used_bytes());
     this->Trim();
   }
 
@@ -109,18 +109,20 @@ class BigIntBase {
     }
   }
 
-  constexpr void AssignWithoutTrim(const BigUIntWord* words, size_t used) {
+  template <size_t other_max_words, typename OtherTrimPolicy>
+  constexpr void AssignWithoutTrim(
+      const BigIntBase<other_max_words, OtherTrimPolicy>& other, size_t used) {
     assert(used <= max_bytes);
     Allocate(used);
     for (size_t i = 0; i < (used + bytes_per_word - 1) / bytes_per_word; ++i) {
-      words_[i] = words[i];
+      words_[i] = other.words_[i];
     }
   }
 
   template <size_t other_max_words, typename OtherPolicy>
   constexpr void AssignIgnoreOverflow(
       const BigIntBase<other_max_words, OtherPolicy>& other) {
-    AssignWithoutTrim(other.words(),
+    AssignWithoutTrim(other,
         max_words < other_max_words ?
         std::min(other.used_bytes(), size_t(max_words * bytes_per_word)) :
         other.used_bytes());
