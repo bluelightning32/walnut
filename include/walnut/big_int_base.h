@@ -78,6 +78,10 @@ class BigIntBase {
     this->Trim();
   }
 
+  constexpr void set_word(size_t i, BigUIntWord v) {
+    words_[i] = v;
+  }
+
   constexpr size_t used_words() const {
     return (used_bytes() + bytes_per_word - 1) / bytes_per_word;
   }

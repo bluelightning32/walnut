@@ -44,18 +44,19 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
   using Parent::max_bits;
   using Parent::max_bytes;
   using Parent::used_bytes;
+  using Parent::word;
 
   constexpr BigIntImpl() : BigIntImpl(0) {
   }
 
   explicit constexpr BigIntImpl(BigIntHalfWord value) : Parent(sizeof(value)) {
-    words_[0] = value;
+    set_word(0, BigUIntWord{value});
   }
 
   explicit constexpr BigIntImpl(BigIntWord value) :
     Parent(static_cast<BigIntHalfWord>(value) == value ?
            sizeof(BigIntHalfWord) : bytes_per_word) {
-    words_[0] = value;
+    set_word(0, BigUIntWord{value});
   }
 
   template <size_t other_max_words>
@@ -88,7 +89,7 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
                      std::min(other.used_bytes(), max_words * bytes_per_word) :
                      other.used_bytes();
     this->AssignWithoutTrim(other, copy_bytes);
-    if (BigIntWord{words_[used_words() - 1]} < 0 && used_words() < max_words) {
+    if (BigIntWord{word(used_words() - 1)} < 0 && used_words() < max_words) {
       this->AddHighWord(BigUIntWord{0});
     }
     Trim();
@@ -99,11 +100,13 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
     BigIntImpl result;
     result.Allocate(max_bytes);
     for (size_t i = 0; i < max_words - 1; ++i) {
-      result.words_[i] = BigUIntWord::max_value();
+      result.set_word(i, BigUIntWord::max_value());
     }
+    BigUIntWord last_word;
     for (int i = 0; i < set_last_word_bits; ++i) {
-      result.words_[max_words - 1] |= BigUIntWord{1} << i;
+      last_word |= BigUIntWord{1} << i;
     }
+    result.set_word(max_words - 1, last_word);
     result.Trim();
     return result;
   }
@@ -817,6 +820,7 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
  protected:
   using Parent::Trim;
   using Parent::words_;
+  using Parent::set_word;
 
   using Parent::used_words;
   using Parent::GetCommonWordCount;
