@@ -23,6 +23,23 @@ class BigIntImplTrimMixin : public BigIntBase<max_words> {
   using Parent::used_;
   using Parent::words_;
 
+  static constexpr bool CanTrim(BigUIntWord low, BigUIntWord high) {
+    // The high word must be 0 or -1.
+    if (high.Add(BigUIntWord{1}) > BigUIntWord{1}) return false;
+    // The high word must have the same sign as the lower word.
+    if (BigIntWord(high ^ low) < 0) return false;
+    return true;
+  }
+
+  static constexpr bool CanTrimLastHalf(BigUIntWord last) {
+    const constexpr BigUIntWord unsigned_int_min{BigUIntHalfWord(
+      std::numeric_limits<BigIntHalfWord>::min())};
+    const constexpr BigUIntWord limit(
+        BigUIntWord{std::numeric_limits<BigIntHalfWord>::max()}.Add(
+            unsigned_int_min));
+    return last.Add(unsigned_int_min) <= limit;
+  }
+
   constexpr void Trim() {
     int i = used_ / bytes_per_word - 1;
     if (i > 0) {
@@ -32,20 +49,13 @@ class BigIntImplTrimMixin : public BigIntBase<max_words> {
         --i;
         next = words_[i];
 
-        if (check.Add(BigUIntWord{1}) > BigUIntWord{1} ||
-            BigIntWord(check ^ next) < 0) {
-          break;
-        }
+        if (!CanTrim(/*low=*/next, /*high=*/check)) break;
 
         check = next;
         used_-= bytes_per_word;
       } while (i > 0);
     }
-    const constexpr BigUIntWord unsigned_int_min{BigUIntHalfWord(
-      std::numeric_limits<BigIntHalfWord>::min())};
-    const constexpr BigUIntWord limit = BigUIntWord{std::numeric_limits<BigIntHalfWord>::max()}.Add(unsigned_int_min);
-    if (used_ == bytes_per_word &&
-        words_[0].Add(unsigned_int_min) <= limit) {
+    if (used_ == bytes_per_word && CanTrimLastHalf(words_[0])) {
       used_ = sizeof(BigUIntHalfWord);
     }
   }

@@ -133,6 +133,10 @@ class BigUIntWordBase {
     return (i_ < other.i_) ? -1 : 1;
   }
 
+  constexpr bool operator == (uint32_t other) const {
+    return i_ == other;
+  }
+
   constexpr bool operator != (uint32_t other) const {
     return i_ != other;
   }
