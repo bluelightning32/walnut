@@ -11,14 +11,6 @@ namespace walnut {
 
 class BigUIntImplTrimPolicy {
  public:
-
-  static constexpr bool CanTrim(BigUIntWord low, BigUIntWord high) {
-    return high == 0;
-  }
-
-  static constexpr bool CanTrimLastHalf(BigUIntWord last) {
-    return last <= std::numeric_limits<BigUIntHalfWord>::max();
-  }
 };
 
 template <size_t max_words>
@@ -263,6 +255,14 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImplTrimPolicy>
   using Parent::GetCommonWordCount;
   using Parent::Allocate;
 
+  static constexpr bool CanTrim(BigUIntWord low, BigUIntWord high) {
+    return high == 0;
+  }
+
+  static constexpr bool CanTrimLastHalf(BigUIntWord last) {
+    return last <= std::numeric_limits<BigUIntHalfWord>::max();
+  }
+
   constexpr void Trim() {
     int i = used_bytes() / bytes_per_word - 1;
     if (i > 0) {
@@ -272,14 +272,14 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImplTrimPolicy>
         --i;
         next = words_[i];
 
-        if (!TrimPolicy::CanTrim(/*low=*/next, /*high=*/check)) break;
+        if (!CanTrim(/*low=*/next, /*high=*/check)) break;
 
         check = next;
         Allocate(used_bytes() - bytes_per_word);
       } while (i > 0);
     }
     if (used_bytes() == bytes_per_word &&
-        TrimPolicy::CanTrimLastHalf(words_[0])) {
+        CanTrimLastHalf(words_[0])) {
       Allocate(sizeof(BigUIntHalfWord));
     }
   }

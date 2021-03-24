@@ -13,17 +13,6 @@ namespace walnut {
 
 class BigIntImplTrimPolicy {
  public:
-  static constexpr bool CanTrim(BigUIntWord low, BigUIntWord high) {
-    // The high word must be 0 or -1.
-    if (high.Add(BigUIntWord{1}) > BigUIntWord{1}) return false;
-    // The high word must have the same sign as the lower word.
-    if (BigIntWord(high ^ low) < 0) return false;
-    return true;
-  }
-
-  static constexpr bool CanTrimLastHalf(BigUIntWord last) {
-    return static_cast<BigIntHalfWord>(BigIntWord{last}) == BigIntWord{last};
-  }
 };
 
 template <size_t max_words>
@@ -90,7 +79,7 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
   }
 
   constexpr BigIntImpl& operator = (BigIntWord value) {
-    Allocate(this->CanTrimLastHalf(value) ?
+    Allocate(CanTrimLastHalf(BigUIntWord(value)) ?
              sizeof(BigUIntHalfWord) : bytes_per_word);
     set_word(0, value);
     return *this;
@@ -841,6 +830,18 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
   using Parent::GetCommonWordCount;
   using Parent::Allocate;
 
+  static constexpr bool CanTrim(BigUIntWord low, BigUIntWord high) {
+    // The high word must be 0 or -1.
+    if (high.Add(BigUIntWord{1}) > BigUIntWord{1}) return false;
+    // The high word must have the same sign as the lower word.
+    if (BigIntWord(high ^ low) < 0) return false;
+    return true;
+  }
+
+  static constexpr bool CanTrimLastHalf(BigUIntWord last) {
+    return static_cast<BigIntHalfWord>(BigIntWord{last}) == BigIntWord{last};
+  }
+
   constexpr void Trim() {
     int i = used_bytes() / bytes_per_word - 1;
     if (i > 0) {
@@ -850,14 +851,14 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
         --i;
         next = words_[i];
 
-        if (!TrimPolicy::CanTrim(/*low=*/next, /*high=*/check)) break;
+        if (!CanTrim(/*low=*/next, /*high=*/check)) break;
 
         check = next;
         Allocate(used_bytes() - bytes_per_word);
       } while (i > 0);
     }
     if (used_bytes() == bytes_per_word &&
-        TrimPolicy::CanTrimLastHalf(words_[0])) {
+        CanTrimLastHalf(words_[0])) {
       Allocate(sizeof(BigUIntHalfWord));
     }
   }
