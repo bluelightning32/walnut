@@ -57,10 +57,14 @@ class BigIntImpl : public BigIntBase<max_words>
      Trim();
   }
 
+  constexpr bool IsHalfWord() const {
+    return used_words() == 1 && CanTrimLastHalf(word(0));
+  }
+
   template <size_t other_max_words>
   constexpr BigIntImpl<max_words>& operator = (
       const BigIntImpl<other_max_words>& other) {
-    assert(other.used_bytes() <= max_bytes);
+    assert(other.used_words() <= max_words);
     this->AssignWithoutTrim(other, max_words < other_max_words ?
                                    std::min(other.used_bytes(),
                                             size_t(max_words *
@@ -152,7 +156,7 @@ class BigIntImpl : public BigIntBase<max_words>
         result.words_[out] = BigIntWord(prev) >> prev_right_shift;
         out++;
       }
-      assert(result.used_bytes() == out * bytes_per_word);
+      assert(result.used_words() == out);
     } else {
       size_t copy = std::min(used_words(), result_words - out);
       result.AllocateWords(copy + out);
@@ -169,9 +173,9 @@ class BigIntImpl : public BigIntBase<max_words>
   //          1 if *this > `other`.
   template <size_t other_max_words>
   constexpr int Compare(const BigIntImpl<other_max_words>& other) const {
-    if (used_bytes() < other.used_bytes()) {
+    if (used_words() < other.used_words()) {
       // `this` is closer to 0 than `other`.
-      // Since used_bytes() < other_used, other != 0.
+      // Since used_words() < other_used, other != 0.
       //
       // If other is positive, then *this < other, so return -1.
       // If other is negative, then *this > other, so return 1.
@@ -182,9 +186,9 @@ class BigIntImpl : public BigIntBase<max_words>
         BigIntWord{other.words_[other.used_words() - 1].SignExtension()};
       return ~other_sign_extension | 1;
     }
-    if (used_bytes() > other.used_bytes()) {
+    if (used_words() > other.used_words()) {
       // `other` is closer to 0 than `this`.
-      // Since used_bytes() > other_used, *this != 0.
+      // Since used_words() > other_used, *this != 0.
       //
       // If *this is positive, then *this > other, so return 1.
       // If *this is negative, then *this < other, so return -1.
@@ -212,7 +216,7 @@ class BigIntImpl : public BigIntBase<max_words>
             size_t rw = result_words == 0 ?
               std::max(max_words, other_words) : result_words>
   constexpr BigIntImpl<rw> Add(const BigIntImpl<other_words>& other) const {
-    if (used_bytes() == sizeof(BigIntHalfWord) && other.used_bytes() == sizeof(BigIntHalfWord)) {
+    if (IsHalfWord() && other.IsHalfWord()) {
       return BigIntImpl<rw>(BigIntWord{words_[0].Add(other.words_[0])});
     }
     BigIntImpl<rw> result;
@@ -227,17 +231,17 @@ class BigIntImpl : public BigIntBase<max_words>
     }
     BigUIntWord this_extension(SignExtension());
     BigUIntWord other_extension(other.SignExtension());
-    for (; i < std::min(used_bytes() / bytes_per_word, rw); i++) {
+    for (; i < std::min(used_words(), rw); i++) {
       result.words_[i] = words_[i].Add(other_extension, carry, &carry);
     }
-    for (; i < std::min(other.used_bytes() / bytes_per_word, rw); i++) {
+    for (; i < std::min(other.used_words(), rw); i++) {
       result.words_[i] = this_extension.Add(other.words_[i], carry, &carry);
     }
     if (i < rw) {
       result.words_[i] = this_extension.Add(other_extension, carry, &carry);
       i++;
     }
-    assert(result.used_bytes() == i * bytes_per_word);
+    assert(result.used_words() == i);
     result.Trim();
     return result;
   }

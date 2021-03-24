@@ -25,6 +25,7 @@ class BigUIntImpl : public BigIntBase<max_words>
   using Parent::max_bytes;
   using Parent::used_bytes;
   using Parent::used_words;
+  using Parent::word;
 
   constexpr BigUIntImpl() : BigUIntImpl(static_cast<BigUIntHalfWord>(0)) {
   }
@@ -50,6 +51,10 @@ class BigUIntImpl : public BigIntBase<max_words>
   constexpr BigUIntImpl(const BigUIntWord* words, size_t used) :
       Parent(words, used) {
     Trim();
+  }
+
+  constexpr bool IsHalfWord() const {
+    return used_words() == 1 && CanTrimLastHalf(word(0));
   }
 
   template <size_t result_words=max_words>
