@@ -118,10 +118,11 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
   static constexpr BigIntImpl min_value(int clear_last_word_bits) {
     BigIntImpl result;
     result.Allocate(max_bytes);
-    result.words_[max_words - 1] = BigUIntWord{-1};
+    BigUIntWord last_word = BigUIntWord{-1};
     for (int i = 0; i < clear_last_word_bits; ++i) {
-      result.words_[max_words - 1] &= ~(BigUIntWord{1} << i);
+      last_word &= ~(BigUIntWord{1} << i);
     }
+    result.words_[max_words - 1] = last_word;
     result.Trim();
     return result;
   }
