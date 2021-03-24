@@ -12,9 +12,6 @@ namespace walnut {
 template <size_t max_words>
 class BigUIntImpl : public BigIntBase<max_words>
 {
-  template <size_t other_max_words>
-  friend class BigIntBase;
-
   template <size_t other_words>
   friend class BigUIntImpl;
 
