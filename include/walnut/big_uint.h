@@ -257,11 +257,32 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImplTrimPolicy>
   }
 
  protected:
-  using Parent::Trim;
+  using typename Parent::TrimPolicy;
   using Parent::words_;
 
   using Parent::GetCommonWordCount;
   using Parent::Allocate;
+
+  constexpr void Trim() {
+    int i = used_bytes() / bytes_per_word - 1;
+    if (i > 0) {
+      BigUIntWord check = words_[i];
+      BigUIntWord next;
+      do {
+        --i;
+        next = words_[i];
+
+        if (!TrimPolicy::CanTrim(/*low=*/next, /*high=*/check)) break;
+
+        check = next;
+        Allocate(used_bytes() - bytes_per_word);
+      } while (i > 0);
+    }
+    if (used_bytes() == bytes_per_word &&
+        TrimPolicy::CanTrimLastHalf(words_[0])) {
+      Allocate(sizeof(BigUIntHalfWord));
+    }
+  }
 
   // Divide `this` by `other`. Return the quotient and store the remainder in `remainder_out`.
   //

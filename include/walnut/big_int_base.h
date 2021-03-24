@@ -101,27 +101,6 @@ class BigIntBase {
     return words_[word_index].ShiftRight(words_[word_index+1], word_offset);
   }
 
-  constexpr void Trim() {
-    int i = used_bytes() / bytes_per_word - 1;
-    if (i > 0) {
-      BigUIntWord check = words_[i];
-      BigUIntWord next;
-      do {
-        --i;
-        next = words_[i];
-
-        if (!TrimPolicy::CanTrim(/*low=*/next, /*high=*/check)) break;
-
-        check = next;
-        used_ -= bytes_per_word;
-      } while (i > 0);
-    }
-    if (used_bytes() == bytes_per_word &&
-        TrimPolicy::CanTrimLastHalf(words_[0])) {
-      used_ = sizeof(BigUIntHalfWord);
-    }
-  }
-
   template <size_t other_max_words, typename OtherTrimPolicy>
   constexpr void AssignWithoutTrim(
       const BigIntBase<other_max_words, OtherTrimPolicy>& other, size_t used) {

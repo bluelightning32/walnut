@@ -833,13 +833,34 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
   }
 
  protected:
-  using Parent::Trim;
+  using typename Parent::TrimPolicy;
   using Parent::words_;
   using Parent::set_word;
 
   using Parent::used_words;
   using Parent::GetCommonWordCount;
   using Parent::Allocate;
+
+  constexpr void Trim() {
+    int i = used_bytes() / bytes_per_word - 1;
+    if (i > 0) {
+      BigUIntWord check = words_[i];
+      BigUIntWord next;
+      do {
+        --i;
+        next = words_[i];
+
+        if (!TrimPolicy::CanTrim(/*low=*/next, /*high=*/check)) break;
+
+        check = next;
+        Allocate(used_bytes() - bytes_per_word);
+      } while (i > 0);
+    }
+    if (used_bytes() == bytes_per_word &&
+        TrimPolicy::CanTrimLastHalf(words_[0])) {
+      Allocate(sizeof(BigUIntHalfWord));
+    }
+  }
 
   template <size_t other_words>
   constexpr BigIntImpl<max_words + other_words> MultiplySlow(
