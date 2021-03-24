@@ -49,12 +49,13 @@ class BigIntImpl : public BigIntBase<max_words>
 
   template <size_t other_max_words>
   constexpr BigIntImpl(const BigUIntImpl<other_max_words>& other)
-   : Parent(/*used=*/other.used_bytes() + bytes_per_word *
-              (BigIntWord{other.word(other.used_words() - 1)} < 0),
-            /*copy=*/other.used_bytes(),
+   : Parent(/*used_words=*/other.used_words() +
+                           (BigIntWord{other.word(other.used_words() - 1)} <
+                            0),
+            /*copy_words=*/std::min(other.used_words(), max_words),
             /*from=*/other) {
      Trim();
-   }
+  }
 
   template <size_t other_max_words>
   constexpr BigIntImpl<max_words>& operator = (
