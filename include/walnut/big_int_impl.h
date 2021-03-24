@@ -61,24 +61,38 @@ class BigIntImpl : public BigIntBase<max_words, BigIntImplTrimPolicy>
 
   template <size_t other_max_words>
   constexpr BigIntImpl(const BigIntImpl<other_max_words>& other)
-   : Parent(other) { }
+   : Parent(other) {
+     Trim();
+  }
 
   template <size_t other_max_words>
   constexpr BigIntImpl(const BigUIntImpl<other_max_words>& other)
    : Parent(/*used=*/other.used_bytes() + bytes_per_word *
               (BigIntWord{other.word(other.used_words() - 1)} < 0),
             /*copy=*/other.used_bytes(),
-            /*from=*/other) { }
+            /*from=*/other) {
+     Trim();
+   }
 
   template <size_t other_max_words>
   constexpr BigIntImpl<max_words>& operator = (
       const BigIntImpl<other_max_words>& other) {
-    Parent::operator=(other);
+    assert(other.used_bytes() <= max_bytes);
+    this->AssignWithoutTrim(other, max_words < other_max_words ?
+                                   std::min(other.used_bytes(),
+                                            size_t(max_words *
+                                                   bytes_per_word)) :
+                                   other.used_bytes());
+    if (max_words < other_max_words) {
+      this->Trim();
+    }
     return *this;
   }
 
   constexpr BigIntImpl& operator = (BigIntWord value) {
-    Parent::operator=(BigUIntWord{value});
+    Allocate(this->CanTrimLastHalf(value) ?
+             sizeof(BigUIntHalfWord) : bytes_per_word);
+    set_word(0, value);
     return *this;
   }
 

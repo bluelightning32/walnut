@@ -57,11 +57,15 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImplTrimPolicy>
   explicit constexpr BigUIntImpl(uint64_t value) : BigUIntImpl(BigUIntWord(value)) { }
 
   template <size_t other_max_words>
-  constexpr BigUIntImpl(const BigUIntImpl<other_max_words>& other)
-   : Parent(other) { }
+  constexpr BigUIntImpl(const BigUIntImpl<other_max_words>& other) :
+      Parent(other) {
+    Trim();
+  }
 
   constexpr BigUIntImpl(const BigUIntWord* words, size_t used) :
-    Parent(words, used) { }
+      Parent(words, used) {
+    Trim();
+  }
 
   template <size_t result_words=max_words>
   constexpr BigUIntImpl<result_words> operator << (size_t shift) const {
