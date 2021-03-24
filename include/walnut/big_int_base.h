@@ -8,13 +8,12 @@
 namespace walnut {
 
 // Common base for BigIntImpl and BigUIntImpl
-template <size_t max_words_template, typename TrimPolicyTemplate>
+template <size_t max_words_template>
 class BigIntBase {
-  template <size_t other_max_words, typename OtherTrimPolicy>
+  template <size_t other_max_words>
   friend class BigIntBase;
 
  public:
-  using TrimPolicy = TrimPolicyTemplate;
   static constexpr size_t max_words = max_words_template;
   static constexpr size_t bits_per_word = BigUIntWord::bits_per_word;
   static constexpr size_t bits_per_byte = 8;
@@ -54,9 +53,9 @@ class BigIntBase {
     }
   }
 
-  template <size_t other_max_words, typename OtherPolicy>
+  template <size_t other_max_words>
   constexpr BigIntBase(size_t used, size_t copy,
-                       const BigIntBase<other_max_words, OtherPolicy>& from) :
+                       const BigIntBase<other_max_words>& from) :
       used_(std::min(size_t(max_bytes), used)) {
     size_t copy_words = std::min(size_t(max_words),
                                  (copy + bytes_per_word - 1) / bytes_per_word);
@@ -65,8 +64,8 @@ class BigIntBase {
     }
   }
 
-  template <size_t other_max_words, typename OtherPolicy>
-  constexpr BigIntBase(const BigIntBase<other_max_words, OtherPolicy>& other) :
+  template <size_t other_max_words>
+  constexpr BigIntBase(const BigIntBase<other_max_words>& other) :
       used_(max_words < other_max_words ?
                   std::min(other.used_bytes(),
                            size_t(max_words * bytes_per_word)) :
@@ -83,9 +82,9 @@ class BigIntBase {
     return (used_bytes() + bytes_per_word - 1) / bytes_per_word;
   }
 
-  template <size_t other_words, typename OtherTrimPolicy>
+  template <size_t other_words>
   constexpr size_t GetCommonWordCount(
-      const BigIntBase<other_words, OtherTrimPolicy>& other) const {
+      const BigIntBase<other_words>& other) const {
     return (std::min(used_bytes(), other.used_bytes()) +
             bytes_per_word - 1) / bytes_per_word;
   }
@@ -101,9 +100,9 @@ class BigIntBase {
     return words_[word_index].ShiftRight(words_[word_index+1], word_offset);
   }
 
-  template <size_t other_max_words, typename OtherTrimPolicy>
+  template <size_t other_max_words>
   constexpr void AssignWithoutTrim(
-      const BigIntBase<other_max_words, OtherTrimPolicy>& other, size_t used) {
+      const BigIntBase<other_max_words>& other, size_t used) {
     assert(used <= max_bytes);
     Allocate(used);
     for (size_t i = 0; i < (used + bytes_per_word - 1) / bytes_per_word; ++i) {

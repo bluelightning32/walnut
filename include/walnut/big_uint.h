@@ -9,20 +9,16 @@
 
 namespace walnut {
 
-class BigUIntImplTrimPolicy {
- public:
-};
-
 template <size_t max_words>
-class BigUIntImpl : public BigIntBase<max_words, BigUIntImplTrimPolicy>
+class BigUIntImpl : public BigIntBase<max_words>
 {
-  template <size_t other_max_words, typename OtherMixin>
+  template <size_t other_max_words>
   friend class BigIntBase;
 
   template <size_t other_words>
   friend class BigUIntImpl;
 
-  using Parent = BigIntBase<max_words, BigUIntImplTrimPolicy>;
+  using Parent = BigIntBase<max_words>;
 
  public:
   using Parent::bits_per_word;
@@ -249,7 +245,6 @@ class BigUIntImpl : public BigIntBase<max_words, BigUIntImplTrimPolicy>
   }
 
  protected:
-  using typename Parent::TrimPolicy;
   using Parent::words_;
 
   using Parent::GetCommonWordCount;
