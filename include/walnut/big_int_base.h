@@ -119,6 +119,10 @@ class BigIntBase {
     }
   }
 
+  constexpr void AllocateWords(size_t words) {
+    Allocate(words * bytes_per_word);
+  }
+
   constexpr void Allocate(size_t used) {
     used_ = used;
   }

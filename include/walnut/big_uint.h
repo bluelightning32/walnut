@@ -68,7 +68,7 @@ class BigUIntImpl : public BigIntBase<max_words>
     if (word_left_shift > 0) {
       size_t copy = std::min(used_words(), result_words - out);
       size_t allocate = std::min(copy + out + 1, result_words);
-      result.Allocate(allocate * bytes_per_word);
+      result.AllocateWords(allocate);
       BigUIntWord prev(0);
       const int prev_right_shift = bits_per_word - word_left_shift;
       for (; in < copy; in++, out++) {
@@ -82,7 +82,7 @@ class BigUIntImpl : public BigIntBase<max_words>
       }
     } else {
       size_t copy = std::min(used_words(), result_words - out);
-      result.Allocate((copy + out) * bytes_per_word);
+      result.AllocateWords(copy + out);
       for (; in < copy; in++, out++) {
         result.words_[out] = words_[in];
       }
@@ -101,9 +101,8 @@ class BigUIntImpl : public BigIntBase<max_words>
       return BigUIntImpl<rw>(words_[0].Subtract(other.words_[0]));
     }
     BigUIntImpl<rw> result;
-    result.Allocate(std::min(std::max(used_words(), other.used_words()),
-                             size_t(BigUIntImpl<rw>::max_words)) *
-                    bytes_per_word);
+    result.AllocateWords(std::min(std::max(used_words(), other.used_words()),
+                                  size_t(BigUIntImpl<rw>::max_words)));
     size_t i = 0;
     bool carry = false;
     size_t common_words = GetCommonWordCount(other);
@@ -129,7 +128,7 @@ class BigUIntImpl : public BigIntBase<max_words>
       return BigUIntImpl<result_words>(words_[0].MultiplyAsHalfWord(other));
     }
     BigUIntImpl<result_words> result;
-    result.Allocate(std::min(used_words() + 1, result_words) * bytes_per_word);
+    result.AllocateWords(std::min(used_words() + 1, result_words));
     size_t k = 0;
     BigUIntWord add;
     for (size_t i = 0; i < used_words(); ++i, ++k) {
@@ -175,9 +174,8 @@ class BigUIntImpl : public BigIntBase<max_words>
     size_t pos = shift / bits_per_word;
     unsigned shift_mod = shift % bits_per_word;
     size_t old_used = used_bytes();
-    Allocate(std::max(used_bytes(),
-                      (pos + 1 + (pos + 1< max_words && shift_mod)) *
-                        bytes_per_word));
+    AllocateWords(std::max(used_words(),
+                           (pos + 1 + (pos + 1 < max_words && shift_mod))));
     words_[pos] = words_[pos].Add(add << shift_mod, &carry);
     pos++;
     if (pos < max_words && shift_mod) {
@@ -186,7 +184,7 @@ class BigUIntImpl : public BigIntBase<max_words>
       pos++;
     }
     for (; pos < max_words && carry; pos++) {
-      Allocate(std::max(used_bytes(), (pos + 1) * bytes_per_word));
+      AllocateWords(std::max(used_words(), (pos + 1)));
       words_[pos] = words_[pos].Add(carry, &carry);
     }
     assert(used_bytes() == std::max(old_used, pos * bytes_per_word));
@@ -246,6 +244,7 @@ class BigUIntImpl : public BigIntBase<max_words>
 
   using Parent::GetCommonWordCount;
   using Parent::Allocate;
+  using Parent::AllocateWords;
 
   static constexpr bool CanTrim(BigUIntWord low, BigUIntWord high) {
     return high == 0;
@@ -267,7 +266,7 @@ class BigUIntImpl : public BigIntBase<max_words>
         if (!CanTrim(/*low=*/next, /*high=*/check)) break;
 
         check = next;
-        Allocate(used_bytes() - bytes_per_word);
+        AllocateWords(i + 1);
       } while (i > 0);
     }
     if (used_bytes() == bytes_per_word &&
