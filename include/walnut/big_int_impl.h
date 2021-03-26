@@ -21,7 +21,6 @@ class BigIntImpl : public BigIntBase<max_words>
 
  public:
   using Parent::bits_per_word;
-  using Parent::bits_per_byte;
   using Parent::bytes_per_word;
   using Parent::max_bits;
   using Parent::max_bytes;

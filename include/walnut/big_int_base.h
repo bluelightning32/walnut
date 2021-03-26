@@ -16,7 +16,6 @@ class BigIntBase {
  public:
   static constexpr size_t max_words = max_words_template;
   static constexpr size_t bits_per_word = BigUIntWord::bits_per_word;
-  static constexpr size_t bits_per_byte = 8;
   static constexpr size_t bytes_per_word = BigUIntWord::bytes_per_word;
   static constexpr size_t max_bits = max_words * bits_per_word;
   static constexpr size_t max_bytes = max_words * bytes_per_word;
