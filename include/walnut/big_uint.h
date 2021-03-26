@@ -224,7 +224,7 @@ class BigUIntImpl {
         words_[out] = words_[out].Subtract(prev >> prev_right_shift, carry, &carry);
         out++;
       } else {
-        assert(prev >> prev_right_shift == 0);
+        assert((prev >> prev_right_shift) == 0);
       }
     } else {
       for (; in < other.used_words() && out < max_words; in++, out++) {
