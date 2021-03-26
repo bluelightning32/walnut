@@ -34,8 +34,8 @@ class BigIntBase {
     return words_[0].ToInt();
   }
 
-  constexpr size_t used_bytes() const {
-    return used_;
+  constexpr size_t used_words() const {
+    return (used_bytes() + bytes_per_word - 1) / bytes_per_word;
   }
 
   constexpr BigUIntWord word(size_t i) const {
@@ -76,15 +76,14 @@ class BigIntBase {
     words_[i] = v;
   }
 
-  constexpr size_t used_words() const {
-    return (used_bytes() + bytes_per_word - 1) / bytes_per_word;
+  constexpr size_t used_bytes() const {
+    return used_;
   }
 
   template <size_t other_words>
   constexpr size_t GetCommonWordCount(
       const BigIntBase<other_words>& other) const {
-    return (std::min(used_bytes(), other.used_bytes()) +
-            bytes_per_word - 1) / bytes_per_word;
+    return std::min(used_words(), other.used_words());
   }
 
   // Gets the lowest word after shifting this to the right `shift` bits.

@@ -25,7 +25,7 @@ class BigIntImpl : public BigIntBase<max_words>
   using Parent::bytes_per_word;
   using Parent::max_bits;
   using Parent::max_bytes;
-  using Parent::used_bytes;
+  using Parent::used_words;
   using Parent::word;
 
   constexpr BigIntImpl() : BigIntImpl(0) {
@@ -817,7 +817,7 @@ class BigIntImpl : public BigIntBase<max_words>
   using Parent::words_;
   using Parent::set_word;
 
-  using Parent::used_words;
+  using Parent::used_bytes;
   using Parent::GetCommonWordCount;
   using Parent::Allocate;
   using Parent::AllocateWords;

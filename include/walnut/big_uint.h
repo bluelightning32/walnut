@@ -23,7 +23,6 @@ class BigUIntImpl : public BigIntBase<max_words>
   using Parent::bytes_per_word;
   using Parent::max_bits;
   using Parent::max_bytes;
-  using Parent::used_bytes;
   using Parent::used_words;
   using Parent::word;
 
@@ -250,6 +249,7 @@ class BigUIntImpl : public BigIntBase<max_words>
   using Parent::GetCommonWordCount;
   using Parent::Allocate;
   using Parent::AllocateWords;
+  using Parent::used_bytes;
 
   static constexpr bool CanTrim(BigUIntWord low, BigUIntWord high) {
     return high == 0;
