@@ -23,13 +23,20 @@ class BigIntWords {
     return size_;
   }
 
-  constexpr BigUIntWord word(size_t i) const {
+  constexpr const BigUIntWord& operator[](size_t i) const {
+    assert(i < size());
+    return words_[i];
+  }
+
+  constexpr BigUIntWord& operator[](size_t i) {
+    assert(i < size());
     return words_[i];
   }
 
   constexpr BigIntWords(int used_words) : size_(used_words) { }
 
-  constexpr BigIntWords(const BigUIntWord* words, size_t used_words) :
+  template <size_t other_words>
+  constexpr BigIntWords(const BigIntWords<other_words>& words, size_t used_words) :
       size_(used_words) {
     assert(used_words <= max_words);
     for (size_t i = 0; i < used_words; ++i) {

@@ -28,36 +28,36 @@ class BigIntImpl {
   constexpr BigIntImpl() : BigIntImpl(0) {
   }
 
-  explicit constexpr BigIntImpl(BigIntHalfWord value) : storage_(1) {
-    storage_.set_word(0, BigUIntWord{value});
+  explicit constexpr BigIntImpl(BigIntHalfWord value) : words_(1) {
+    words_.set_word(0, BigUIntWord{value});
   }
 
-  explicit constexpr BigIntImpl(BigIntWord value) : storage_(1) {
-    storage_.set_word(0, BigUIntWord{value});
+  explicit constexpr BigIntImpl(BigIntWord value) : words_(1) {
+    words_.set_word(0, BigUIntWord{value});
   }
 
   template <size_t other_max_words>
   constexpr BigIntImpl(const BigIntImpl<other_max_words>& other)
-   : storage_(other.storage_) {
+   : words_(other.words_) {
      Trim();
   }
 
   template <size_t other_max_words>
   constexpr BigIntImpl(const BigUIntImpl<other_max_words>& other)
-   : storage_(/*used_words=*/other.used_words() +
+   : words_(/*used_words=*/other.used_words() +
                              (BigIntWord{other.word(other.used_words() - 1)} <
                               0),
               /*copy_words=*/std::min(other.used_words(), size_t(max_words)),
-              /*from=*/other.storage()) {
+              /*from=*/other.words()) {
      Trim();
   }
 
   constexpr size_t used_words() const {
-    return storage_.size();
+    return words_.size();
   }
 
   constexpr BigUIntWord word(size_t i) const {
-    return storage_.word(i);
+    return words_[i];
   }
 
   constexpr uint32_t low_uint32() const {
@@ -81,7 +81,7 @@ class BigIntImpl {
   constexpr BigIntImpl<max_words>& operator = (
       const BigIntImpl<other_max_words>& other) {
     assert(other.used_words() <= max_words);
-    storage_.AssignWithoutTrim(other.storage_, max_words < other_max_words ?
+    words_.AssignWithoutTrim(other.words_, max_words < other_max_words ?
                                    std::min(other.used_words(),
                                             size_t(max_words)) :
                                    other.used_words());
@@ -92,8 +92,8 @@ class BigIntImpl {
   }
 
   constexpr BigIntImpl& operator = (BigIntWord value) {
-    storage_.AllocateWords(1);
-    storage_.set_word(0, value);
+    words_.AllocateWords(1);
+    words_.set_word(0, value);
     return *this;
   }
 
@@ -103,9 +103,9 @@ class BigIntImpl {
     int copy_words = max_words < other_max_words ?
                      std::min(other.used_words(), max_words) :
                      other.used_words();
-    storage_.AssignWithoutTrim(other.storage(), copy_words);
+    words_.AssignWithoutTrim(other.words(), copy_words);
     if (BigIntWord{word(used_words() - 1)} < 0 && used_words() < max_words) {
-      storage_.AddHighWord(BigUIntWord{0});
+      words_.AddHighWord(BigUIntWord{0});
     }
     Trim();
     return *this;
@@ -113,15 +113,15 @@ class BigIntImpl {
 
   static constexpr BigIntImpl max_value(int set_last_word_bits) {
     BigIntImpl result;
-    result.storage_.AllocateWords(max_words);
+    result.words_.AllocateWords(max_words);
     for (size_t i = 0; i < max_words - 1; ++i) {
-      result.storage_.set_word(i, BigUIntWord::max_value());
+      result.words_.set_word(i, BigUIntWord::max_value());
     }
     BigUIntWord last_word;
     for (int i = 0; i < set_last_word_bits; ++i) {
       last_word |= BigUIntWord{1} << i;
     }
-    result.storage_.set_word(max_words - 1, last_word);
+    result.words_.set_word(max_words - 1, last_word);
     result.Trim();
     return result;
   }
@@ -132,12 +132,12 @@ class BigIntImpl {
 
   static constexpr BigIntImpl min_value(int clear_last_word_bits) {
     BigIntImpl result;
-    result.storage_.AllocateWords(max_words);
+    result.words_.AllocateWords(max_words);
     BigUIntWord last_word = BigUIntWord{-1};
     for (int i = 0; i < clear_last_word_bits; ++i) {
       last_word &= ~(BigUIntWord{1} << i);
     }
-    result.storage_.words_[max_words - 1] = last_word;
+    result.words_[max_words - 1] = last_word;
     result.Trim();
     return result;
   }
@@ -158,24 +158,24 @@ class BigIntImpl {
     if (word_left_shift > 0) {
       size_t copy = std::min(used_words(), result_words - out);
       size_t allocate = std::min(copy + out + 1, result_words);
-      result.storage_.AllocateWords(allocate);
+      result.words_.AllocateWords(allocate);
       BigUIntWord prev(0);
       const int prev_right_shift = bits_per_word - word_left_shift;
       for (; in < copy; in++, out++) {
-        result.storage_.words_[out] = storage_.words_[in] << word_left_shift |
+        result.words_[out] = words_[in] << word_left_shift |
                                prev >> prev_right_shift;
-        prev = storage_.words_[in];
+        prev = words_[in];
       }
       if (out < result_words) {
-        result.storage_.words_[out] = BigIntWord(prev) >> prev_right_shift;
+        result.words_[out] = BigIntWord(prev) >> prev_right_shift;
         out++;
       }
       assert(result.used_words() == out);
     } else {
       size_t copy = std::min(used_words(), result_words - out);
-      result.storage_.AllocateWords(copy + out);
+      result.words_.AllocateWords(copy + out);
       for (; in < copy; in++, out++) {
-        result.storage_.words_[out] = storage_.words_[in];
+        result.words_[out] = words_[in];
       }
     }
     result.Trim();
@@ -197,7 +197,7 @@ class BigIntImpl {
       // So return -1 if the upper word of other >= 0, or return 1 if the upper
       // word of other < 0.
       int other_sign_extension =
-        BigIntWord{other.storage_.words_[other.used_words() - 1].SignExtension()};
+        BigIntWord{other.words_[other.used_words() - 1].SignExtension()};
       return ~other_sign_extension | 1;
     }
     if (used_words() > other.used_words()) {
@@ -210,18 +210,18 @@ class BigIntImpl {
       // So return 1 if the upper word of *this >= 0, or return -1 if the upper
       // word of *this < 0.
       int sign_extension =
-        BigIntWord{storage_.words_[used_words() - 1].SignExtension()};
+        BigIntWord{words_[used_words() - 1].SignExtension()};
       return sign_extension | 1;
     }
     size_t i = used_words() - 1;
     // Perform a signed comparison on the upper words (which contains the sign
     // bits) and an unsigned comparison on the following words.
-    if (storage_.words_[i] != other.storage_.words_[i]) {
-      return (BigIntWord{storage_.words_[i]} > BigIntWord{other.storage_.words_[i]}) ? 1 : -1;
+    if (words_[i] != other.words_[i]) {
+      return (BigIntWord{words_[i]} > BigIntWord{other.words_[i]}) ? 1 : -1;
     }
     for (i--; ssize_t(i) >= 0; i--) {
-      if (storage_.words_[i] > other.storage_.words_[i]) return 1;
-      if (storage_.words_[i] < other.storage_.words_[i]) return -1;
+      if (words_[i] > other.words_[i]) return 1;
+      if (words_[i] < other.words_[i]) return -1;
     }
     return 0;
   }
@@ -231,28 +231,28 @@ class BigIntImpl {
               std::max(max_words, other_words) : result_words>
   constexpr BigIntImpl<rw> Add(const BigIntImpl<other_words>& other) const {
     if (IsHalfWord() && other.IsHalfWord()) {
-      return BigIntImpl<rw>(BigIntWord{storage_.words_[0].Add(other.storage_.words_[0])});
+      return BigIntImpl<rw>(BigIntWord{words_[0].Add(other.words_[0])});
     }
     BigIntImpl<rw> result;
-    result.storage_.AllocateWords(std::min(std::max(used_words(), other.used_words()) +
+    result.words_.AllocateWords(std::min(std::max(used_words(), other.used_words()) +
                                   1,
                                   size_t(BigIntImpl<rw>::max_words)));
     size_t i = 0;
     bool carry = false;
-    size_t common_words = storage_.GetCommonWordCount(other.storage_);
+    size_t common_words = words_.GetCommonWordCount(other.words_);
     for (; i < common_words && i < rw; i++) {
-      result.storage_.words_[i] = storage_.words_[i].Add(other.storage_.words_[i], carry, &carry);
+      result.words_[i] = words_[i].Add(other.words_[i], carry, &carry);
     }
     BigUIntWord this_extension(SignExtension());
     BigUIntWord other_extension(other.SignExtension());
     for (; i < std::min(used_words(), rw); i++) {
-      result.storage_.words_[i] = storage_.words_[i].Add(other_extension, carry, &carry);
+      result.words_[i] = words_[i].Add(other_extension, carry, &carry);
     }
     for (; i < std::min(other.used_words(), rw); i++) {
-      result.storage_.words_[i] = this_extension.Add(other.storage_.words_[i], carry, &carry);
+      result.words_[i] = this_extension.Add(other.words_[i], carry, &carry);
     }
     if (i < rw) {
-      result.storage_.words_[i] = this_extension.Add(other_extension, carry, &carry);
+      result.words_[i] = this_extension.Add(other_extension, carry, &carry);
       i++;
     }
     assert(result.used_words() == i);
@@ -273,33 +273,33 @@ class BigIntImpl {
   template <size_t other_words>
   constexpr BigIntImpl& operator+=(const BigIntImpl<other_words>& other) {
     if (IsHalfWord() && other.IsHalfWord()) {
-      storage_.words_[0] += other.storage_.words_[0];
-      if ((BigIntWord)storage_.words_[0] < std::numeric_limits<BigIntHalfWord>::min() ||
-          (BigIntWord)storage_.words_[0] > std::numeric_limits<BigIntHalfWord>::max()) {
-        storage_.AllocateWords(1);
+      words_[0] += other.words_[0];
+      if ((BigIntWord)words_[0] < std::numeric_limits<BigIntHalfWord>::min() ||
+          (BigIntWord)words_[0] > std::numeric_limits<BigIntHalfWord>::max()) {
+        words_.AllocateWords(1);
       }
       return *this;
     }
     size_t i = 0;
     bool carry = false;
-    size_t common_words = storage_.GetCommonWordCount(other.storage_);
+    size_t common_words = words_.GetCommonWordCount(other.words_);
     BigUIntWord this_extension(SignExtension());
     BigUIntWord other_extension(other.SignExtension());
     assert(other.used_words() <= max_words);
     size_t old_used_words = used_words();
-    storage_.AllocateWords(std::min(std::max(old_used_words, other.used_words()) + 1,
+    words_.AllocateWords(std::min(std::max(old_used_words, other.used_words()) + 1,
                            size_t(max_words)));
     for (; i < common_words && i < max_words; i++) {
-      storage_.words_[i] = storage_.words_[i].Add(other.storage_.words_[i], carry, &carry);
+      words_[i] = words_[i].Add(other.words_[i], carry, &carry);
     }
     for (; i < std::min(old_used_words, size_t(max_words)); i++) {
-      storage_.words_[i] = storage_.words_[i].Add(other_extension, carry, &carry);
+      words_[i] = words_[i].Add(other_extension, carry, &carry);
     }
     for (; i < std::min(other.used_words(), size_t(max_words)); i++) {
-      storage_.words_[i] = this_extension.Add(other.storage_.words_[i], carry, &carry);
+      words_[i] = this_extension.Add(other.words_[i], carry, &carry);
     }
     if (i < max_words) {
-      storage_.words_[i] = this_extension.Add(other_extension, carry, &carry);
+      words_[i] = this_extension.Add(other_extension, carry, &carry);
       i++;
     }
     assert(used_words() == i);
@@ -309,10 +309,10 @@ class BigIntImpl {
 
   constexpr BigIntImpl& operator+=(BigIntHalfWord other) {
     if (IsHalfWord()) {
-      storage_.words_[0] += BigUIntWord{other};
-      if ((BigIntWord)storage_.words_[0] < std::numeric_limits<BigIntHalfWord>::min() ||
-          (BigIntWord)storage_.words_[0] > std::numeric_limits<BigIntHalfWord>::max()) {
-        storage_.AllocateWords(1);
+      words_[0] += BigUIntWord{other};
+      if ((BigIntWord)words_[0] < std::numeric_limits<BigIntHalfWord>::min() ||
+          (BigIntWord)words_[0] > std::numeric_limits<BigIntHalfWord>::max()) {
+        words_.AllocateWords(1);
       }
       return *this;
     } else {
@@ -322,25 +322,25 @@ class BigIntImpl {
 
   constexpr BigIntImpl& operator++() {
     if (IsHalfWord()) {
-      ++storage_.words_[0];
-      if ((BigIntWord)storage_.words_[0] > std::numeric_limits<BigIntHalfWord>::max()) {
-        storage_.AllocateWords(1);
+      ++words_[0];
+      if ((BigIntWord)words_[0] > std::numeric_limits<BigIntHalfWord>::max()) {
+        words_.AllocateWords(1);
       }
       return *this;
     }
     size_t i = 0;
     for (; i < used_words() - 1; i++) {
-      ++storage_.words_[i];
-      if (storage_.words_[i] != 0) {
+      ++words_[i];
+      if (words_[i] != 0) {
         return *this;
       }
     }
-    ++storage_.words_[i];
-    if ((BigIntWord)storage_.words_[i] == std::numeric_limits<BigIntWord>::min()) {
+    ++words_[i];
+    if ((BigIntWord)words_[i] == std::numeric_limits<BigIntWord>::min()) {
       assert(i+1 < max_words);
       if (i+1 < max_words) {
         ++i;
-        ++storage_.words_[i] = 0;
+        ++words_[i] = 0;
       }
     } else {
       Trim();
@@ -351,33 +351,33 @@ class BigIntImpl {
   template <size_t other_words>
   constexpr BigIntImpl& operator-=(const BigIntImpl<other_words>& other) {
     if (IsHalfWord() && other.IsHalfWord()) {
-      storage_.words_[0] -= other.storage_.words_[0];
-      if ((BigIntWord)storage_.words_[0] < std::numeric_limits<BigIntHalfWord>::min() ||
-          (BigIntWord)storage_.words_[0] > std::numeric_limits<BigIntHalfWord>::max()) {
-        storage_.AllocateWords(1);
+      words_[0] -= other.words_[0];
+      if ((BigIntWord)words_[0] < std::numeric_limits<BigIntHalfWord>::min() ||
+          (BigIntWord)words_[0] > std::numeric_limits<BigIntHalfWord>::max()) {
+        words_.AllocateWords(1);
       }
       return *this;
     }
     size_t i = 0;
     bool carry = false;
-    size_t common_words = storage_.GetCommonWordCount(other.storage_);
+    size_t common_words = words_.GetCommonWordCount(other.words_);
     BigUIntWord this_extension(SignExtension());
     BigUIntWord other_extension(other.SignExtension());
     assert(other.used_words() <= max_words);
     size_t old_used_words = used_words();
-    storage_.AllocateWords(std::min(std::max(old_used_words, other.used_words()) + 1,
+    words_.AllocateWords(std::min(std::max(old_used_words, other.used_words()) + 1,
                            size_t(max_words)));
     for (; i < common_words && i < max_words; i++) {
-      storage_.words_[i] = storage_.words_[i].Subtract(other.storage_.words_[i], carry, &carry);
+      words_[i] = words_[i].Subtract(other.words_[i], carry, &carry);
     }
     for (; i < std::min(old_used_words, size_t(max_words)); i++) {
-      storage_.words_[i] = storage_.words_[i].Subtract(other_extension, carry, &carry);
+      words_[i] = words_[i].Subtract(other_extension, carry, &carry);
     }
     for (; i < std::min(other.used_words(), size_t(max_words)); i++) {
-      storage_.words_[i] = this_extension.Subtract(other.storage_.words_[i], carry, &carry);
+      words_[i] = this_extension.Subtract(other.words_[i], carry, &carry);
     }
     if (i < max_words) {
-      storage_.words_[i] = this_extension.Subtract(other_extension, carry, &carry);
+      words_[i] = this_extension.Subtract(other_extension, carry, &carry);
       i++;
     }
     assert(used_words() == i);
@@ -387,10 +387,10 @@ class BigIntImpl {
 
   constexpr BigIntImpl& operator-=(BigIntHalfWord other) {
     if (IsHalfWord()) {
-      storage_.words_[0] -= BigUIntWord{other};
-      if ((BigIntWord)storage_.words_[0] < std::numeric_limits<BigIntHalfWord>::min() ||
-          (BigIntWord)storage_.words_[0] > std::numeric_limits<BigIntHalfWord>::max()) {
-        storage_.AllocateWords(1);
+      words_[0] -= BigUIntWord{other};
+      if ((BigIntWord)words_[0] < std::numeric_limits<BigIntHalfWord>::min() ||
+          (BigIntWord)words_[0] > std::numeric_limits<BigIntHalfWord>::max()) {
+        words_.AllocateWords(1);
       }
       return *this;
     } else {
@@ -401,26 +401,26 @@ class BigIntImpl {
 
   constexpr BigIntImpl& operator--() {
     if (IsHalfWord()) {
-      --storage_.words_[0];
-      if ((BigIntWord)storage_.words_[0] < std::numeric_limits<BigIntHalfWord>::min()) {
-        storage_.AllocateWords(1);
+      --words_[0];
+      if ((BigIntWord)words_[0] < std::numeric_limits<BigIntHalfWord>::min()) {
+        words_.AllocateWords(1);
       }
       return *this;
     }
     size_t i = 0;
     for (; i < used_words() - 1; i++) {
-      --storage_.words_[i];
-      if ((BigIntWord)storage_.words_[i] != -1) {
+      --words_[i];
+      if ((BigIntWord)words_[i] != -1) {
         return *this;
       }
     }
-    --storage_.words_[i];
-    if ((BigIntWord)storage_.words_[i] == std::numeric_limits<BigIntWord>::max()) {
+    --words_[i];
+    if ((BigIntWord)words_[i] == std::numeric_limits<BigIntWord>::max()) {
       assert(i+1 < max_words);
       if (i+1 < max_words) {
-        storage_.AllocateWords(used_words() + 1);
+        words_.AllocateWords(used_words() + 1);
         ++i;
-        ++storage_.words_[i] = (BigIntWord)-1;
+        ++words_[i] = (BigIntWord)-1;
       }
     } else {
       Trim();
@@ -433,28 +433,28 @@ class BigIntImpl {
               std::max(max_words, other_words) : result_words>
   constexpr BigIntImpl<rw> Subtract(const BigIntImpl<other_words>& other) const {
     if (IsHalfWord() && other.IsHalfWord()) {
-      return BigIntImpl<rw>(BigIntWord{storage_.words_[0].Subtract(other.storage_.words_[0])});
+      return BigIntImpl<rw>(BigIntWord{words_[0].Subtract(other.words_[0])});
     }
     BigIntImpl<rw> result;
-    result.storage_.AllocateWords(std::min(std::max(used_words(), other.used_words()) +
+    result.words_.AllocateWords(std::min(std::max(used_words(), other.used_words()) +
                                   1,
                                   size_t(BigIntImpl<rw>::max_words)));
     size_t i = 0;
     bool carry = false;
-    size_t common_words = storage_.GetCommonWordCount(other.storage_);
+    size_t common_words = words_.GetCommonWordCount(other.words_);
     for (; i < common_words && i < rw; i++) {
-      result.storage_.words_[i] = storage_.words_[i].Subtract(other.storage_.words_[i], carry, &carry);
+      result.words_[i] = words_[i].Subtract(other.words_[i], carry, &carry);
     }
     BigUIntWord this_extension(SignExtension());
     BigUIntWord other_extension(other.SignExtension());
     for (; i < std::min(used_words(), rw); i++) {
-      result.storage_.words_[i] = storage_.words_[i].Subtract(other_extension, carry, &carry);
+      result.words_[i] = words_[i].Subtract(other_extension, carry, &carry);
     }
     for (; i < std::min(other.used_words(), rw); i++) {
-      result.storage_.words_[i] = this_extension.Subtract(other.storage_.words_[i], carry, &carry);
+      result.words_[i] = this_extension.Subtract(other.words_[i], carry, &carry);
     }
     if (i < rw) {
-      result.storage_.words_[i] = this_extension.Subtract(other_extension, carry, &carry);
+      result.words_[i] = this_extension.Subtract(other_extension, carry, &carry);
       i++;
     }
     assert(result.used_words() == i);
@@ -473,14 +473,14 @@ class BigIntImpl {
   Multiply(const BigIntImpl<other_words>& other) const {
     constexpr int result_words = max_words + other_words;
     if (IsHalfWord() && other.IsHalfWord()) {
-      return BigIntImpl<result_words>(BigIntWord{storage_.words_[0]} * BigIntWord{other.storage_.words_[0]});
+      return BigIntImpl<result_words>(BigIntWord{words_[0]} * BigIntWord{other.words_[0]});
     }
     if (used_words() == 1 && other.used_words() == 1) {
       BigIntImpl<result_words> result;
-      result.storage_.AllocateWords(2);
-      result.storage_.words_[0] = storage_.words_[0].Multiply(other.storage_.words_[0], &result.storage_.words_[1]);
-      result.storage_.words_[1] -= other.storage_.words_[0].SignExtension() & storage_.words_[0];
-      result.storage_.words_[1] -= storage_.words_[0].SignExtension() & other.storage_.words_[0];
+      result.words_.AllocateWords(2);
+      result.words_[0] = words_[0].Multiply(other.words_[0], &result.words_[1]);
+      result.words_[1] -= other.words_[0].SignExtension() & words_[0];
+      result.words_[1] -= words_[0].SignExtension() & other.words_[0];
       result.Trim();
       return result;
     }
@@ -510,28 +510,28 @@ class BigIntImpl {
   template <size_t other_max_words>
   constexpr bool operator < (const BigIntImpl<other_max_words>& other) const {
     if (used_words() < other.used_words()) {
-      return 0 <= BigIntWord{other.storage_.words_[other.used_words() - 1]};
+      return 0 <= BigIntWord{other.words_[other.used_words() - 1]};
     }
     if (used_words() > other.used_words()) {
-      return BigIntWord{storage_.words_[used_words() - 1]} < 0;
+      return BigIntWord{words_[used_words() - 1]} < 0;
     }
     size_t i = used_words() - 1;
-    if (storage_.words_[i] != other.storage_.words_[i]) {
-      return BigIntWord{storage_.words_[i]} < BigIntWord{other.storage_.words_[i]};
+    if (words_[i] != other.words_[i]) {
+      return BigIntWord{words_[i]} < BigIntWord{other.words_[i]};
     }
     for (i--; ssize_t(i) > 0; i--) {
-      if (storage_.words_[i] < other.storage_.words_[i]) return true;
-      if (storage_.words_[i] > other.storage_.words_[i]) return false;
+      if (words_[i] < other.words_[i]) return true;
+      if (words_[i] > other.words_[i]) return false;
     }
-    return storage_.words_[0] < other.storage_.words_[0];
+    return words_[0] < other.words_[0];
   }
 
   constexpr bool operator < (int other) const {
     static_assert(bytes_per_word >= sizeof(other), "Word size is smaller than int size");
     if (used_words() > 1) {
-      return BigIntWord{storage_.words_[used_words() - 1]} < 0;
+      return BigIntWord{words_[used_words() - 1]} < 0;
     }
-    return BigIntWord{storage_.words_[0]} < other;
+    return BigIntWord{words_[0]} < other;
   }
 
   template <size_t other_max_words>
@@ -540,109 +540,109 @@ class BigIntImpl {
     BigIntWord signed_flip = BigIntWord{0} - flip;
     if (used_words() < other.used_words()) {
       return 0 <=
-        (BigIntWord{other.storage_.words_[other.used_words() - 1]} ^ signed_flip);
+        (BigIntWord{other.words_[other.used_words() - 1]} ^ signed_flip);
     }
     if (used_words() > other.used_words()) {
-      return (BigIntWord{storage_.words_[used_words() - 1]} ^ signed_flip) < 0;
+      return (BigIntWord{words_[used_words() - 1]} ^ signed_flip) < 0;
     }
     size_t i = used_words() - 1;
-    if (storage_.words_[i] != other.storage_.words_[i]) {
-      return (BigIntWord{storage_.words_[i]} ^ signed_flip) <
-             (BigIntWord{other.storage_.words_[i]} ^ signed_flip);
+    if (words_[i] != other.words_[i]) {
+      return (BigIntWord{words_[i]} ^ signed_flip) <
+             (BigIntWord{other.words_[i]} ^ signed_flip);
     }
     BigUIntWord unsigned_flip(signed_flip);
     for (i--; ssize_t(i) > 0; i--) {
-      if (storage_.words_[i] != other.storage_.words_[i]) {
-        return (storage_.words_[i] ^ unsigned_flip) < (other.storage_.words_[i] ^ unsigned_flip);
+      if (words_[i] != other.words_[i]) {
+        return (words_[i] ^ unsigned_flip) < (other.words_[i] ^ unsigned_flip);
       }
     }
-    return (storage_.words_[0] ^ unsigned_flip) < (other.storage_.words_[0] ^ unsigned_flip);
+    return (words_[0] ^ unsigned_flip) < (other.words_[0] ^ unsigned_flip);
   }
 
   template <size_t other_max_words>
   constexpr bool operator <= (const BigIntImpl<other_max_words>& other) const {
     if (used_words() < other.used_words()) {
-      return 0 <= BigIntWord{other.storage_.words_[other.used_words() - 1]};
+      return 0 <= BigIntWord{other.words_[other.used_words() - 1]};
     }
     if (used_words() > other.used_words()) {
-      return BigIntWord{storage_.words_[used_words() - 1]} < 0;
+      return BigIntWord{words_[used_words() - 1]} < 0;
     }
     size_t i = used_words() - 1;
-    if (storage_.words_[i] != other.storage_.words_[i]) {
-      return BigIntWord{storage_.words_[i]} < BigIntWord{other.storage_.words_[i]};
+    if (words_[i] != other.words_[i]) {
+      return BigIntWord{words_[i]} < BigIntWord{other.words_[i]};
     }
     for (i--; ssize_t(i) > 0; i--) {
-      if (storage_.words_[i] < other.storage_.words_[i]) return true;
-      if (storage_.words_[i] > other.storage_.words_[i]) return false;
+      if (words_[i] < other.words_[i]) return true;
+      if (words_[i] > other.words_[i]) return false;
     }
-    return storage_.words_[0] <= other.storage_.words_[0];
+    return words_[0] <= other.words_[0];
   }
 
   constexpr bool operator <= (int other) const {
     static_assert(bytes_per_word >= sizeof(other), "Word size is smaller than int size");
     if (used_words() > 1) {
-      return BigIntWord{storage_.words_[used_words() - 1]} < 0;
+      return BigIntWord{words_[used_words() - 1]} < 0;
     }
-    return BigIntWord{storage_.words_[0]} <= other;
+    return BigIntWord{words_[0]} <= other;
   }
 
   template <size_t other_max_words>
   constexpr bool operator > (const BigIntImpl<other_max_words>& other) const {
     if (used_words() < other.used_words()) {
-      return 0 > BigIntWord{other.storage_.words_[other.used_words() - 1]};
+      return 0 > BigIntWord{other.words_[other.used_words() - 1]};
     }
     if (used_words() > other.used_words()) {
-      return BigIntWord{storage_.words_[used_words() - 1]} >= 0;
+      return BigIntWord{words_[used_words() - 1]} >= 0;
     }
     size_t i = used_words() - 1;
-    if (storage_.words_[i] != other.storage_.words_[i]) {
-      return BigIntWord{storage_.words_[i]} > BigIntWord{other.storage_.words_[i]};
+    if (words_[i] != other.words_[i]) {
+      return BigIntWord{words_[i]} > BigIntWord{other.words_[i]};
     }
     for (i--; ssize_t(i) > 0; i--) {
-      if (storage_.words_[i] > other.storage_.words_[i]) return true;
-      if (storage_.words_[i] < other.storage_.words_[i]) return false;
+      if (words_[i] > other.words_[i]) return true;
+      if (words_[i] < other.words_[i]) return false;
     }
-    return storage_.words_[0] > other.storage_.words_[0];
+    return words_[0] > other.words_[0];
   }
 
   constexpr bool operator > (int other) const {
     static_assert(bytes_per_word >= sizeof(other), "Word size is smaller than int size");
     if (used_words() > 1) {
-      return BigIntWord{storage_.words_[used_words() - 1]} >= 0;
+      return BigIntWord{words_[used_words() - 1]} >= 0;
     }
-    return BigIntWord{storage_.words_[0]} > other;
+    return BigIntWord{words_[0]} > other;
   }
 
   template <size_t other_max_words>
   constexpr bool operator >= (const BigIntImpl<other_max_words>& other) const {
     if (used_words() < other.used_words()) {
-      return 0 > BigIntWord{other.storage_.words_[other.used_words() - 1]};
+      return 0 > BigIntWord{other.words_[other.used_words() - 1]};
     }
     if (used_words() > other.used_words()) {
-      return BigIntWord{storage_.words_[used_words() - 1]} >= 0;
+      return BigIntWord{words_[used_words() - 1]} >= 0;
     }
     size_t i = used_words() - 1;
-    if (storage_.words_[i] != other.storage_.words_[i]) {
-      return BigIntWord{storage_.words_[i]} > BigIntWord{other.storage_.words_[i]};
+    if (words_[i] != other.words_[i]) {
+      return BigIntWord{words_[i]} > BigIntWord{other.words_[i]};
     }
     for (i--; ssize_t(i) > 0; i--) {
-      if (storage_.words_[i] > other.storage_.words_[i]) return true;
-      if (storage_.words_[i] < other.storage_.words_[i]) return false;
+      if (words_[i] > other.words_[i]) return true;
+      if (words_[i] < other.words_[i]) return false;
     }
-    return storage_.words_[0] >= other.storage_.words_[0];
+    return words_[0] >= other.words_[0];
   }
 
   constexpr bool operator >= (int other) const {
     static_assert(bytes_per_word >= sizeof(other), "Word size is smaller than int size");
     if (used_words() > 1) {
-      return BigIntWord{storage_.words_[used_words() - 1]} >= 0;
+      return BigIntWord{words_[used_words() - 1]} >= 0;
     }
-    return BigIntWord{storage_.words_[0]} >= other;
+    return BigIntWord{words_[0]} >= other;
   }
 
   constexpr bool operator == (int other) const {
     assert(sizeof(int) <= bytes_per_word);
-    return used_words() == 1 && storage_.words_[0] == BigUIntWord{other};
+    return used_words() == 1 && words_[0] == BigUIntWord{other};
   }
 
   template <size_t other_max_words>
@@ -650,9 +650,9 @@ class BigIntImpl {
     if (used_words() != other.used_words()) return false;
 
     for (size_t i = used_words() - 1; i > 0; i--) {
-      if (storage_.words_[i] != other.storage_.words_[i]) return false;
+      if (words_[i] != other.words_[i]) return false;
     }
-    return storage_.words_[0] == other.storage_.words_[0];
+    return words_[0] == other.words_[0];
   }
 
   template <size_t other_max_words>
@@ -660,9 +660,9 @@ class BigIntImpl {
     if (used_words() != other.used_words()) return true;
 
     for (size_t i = used_words() - 1; i > 0; i--) {
-      if (storage_.words_[i] != other.storage_.words_[i]) return true;
+      if (words_[i] != other.words_[i]) return true;
     }
-    return storage_.words_[0] != other.storage_.words_[0];
+    return words_[0] != other.words_[0];
   }
 
   constexpr bool operator != (int other) const {
@@ -673,7 +673,7 @@ class BigIntImpl {
   template <size_t other_words>
   constexpr BigIntImpl<max_words> operator/(const BigIntImpl<other_words>& other) const {
     if (used_words() == 1 && other.used_words() == 1) {
-      return BigIntImpl<max_words>{BigIntWord{storage_.words_[0]} / BigIntWord{other.storage_.words_[0]}};
+      return BigIntImpl<max_words>{BigIntWord{words_[0]} / BigIntWord{other.words_[0]}};
     }
     BigIntImpl<std::min(max_words, other_words)> unused;
     return DivideRemainderSlow(other, &unused);
@@ -694,8 +694,8 @@ class BigIntImpl {
       BigIntImpl<std::min(max_words, other_words)>* remainder_out) const {
     if (used_words() == 1 && other.used_words() == 1) {
       *remainder_out = BigIntImpl<std::min(max_words, other_words)>{
-        BigIntWord{storage_.words_[0]} % BigIntWord{other.storage_.words_[0]}};
-      return BigIntImpl<max_words>{BigIntWord{storage_.words_[0]} / BigIntWord{other.storage_.words_[0]}};
+        BigIntWord{words_[0]} % BigIntWord{other.words_[0]}};
+      return BigIntImpl<max_words>{BigIntWord{words_[0]} / BigIntWord{other.words_[0]}};
     }
     return DivideRemainderSlow(other, remainder_out);
   }
@@ -706,7 +706,7 @@ class BigIntImpl {
       const BigIntImpl<other_words>& other) const {
     if (used_words() == 1 && other.used_words() == 1) {
       return BigIntImpl<std::min(max_words, other_words)>{
-        BigIntWord{storage_.words_[0]} % BigIntWord{other.storage_.words_[0]}};
+        BigIntWord{words_[0]} % BigIntWord{other.words_[0]}};
     }
     BigIntImpl<std::min(max_words, other_words)> remainder;
     DivideRemainderSlow(other, &remainder);
@@ -717,17 +717,17 @@ class BigIntImpl {
   //
   // A return value of false means it did not overflow.
   constexpr bool Negate() {
-    storage_.AllocateWords(used_words());
+    words_.AllocateWords(used_words());
     bool carry = true;
     size_t i = 0;
-    const BigUIntWord old_last_word(storage_.words_[used_words() - 1]);
+    const BigUIntWord old_last_word(words_[used_words() - 1]);
     for (i = 0; i < used_words(); ++i) {
-      storage_.words_[i] = (~storage_.words_[i]).Add(carry, &carry);
+      words_[i] = (~words_[i]).Add(carry, &carry);
     }
     // This will be 1 if the result switched signs, and 0 if the result kept
     // the same sign.
     const BigUIntWord sign_changed =
-      (old_last_word ^ storage_.words_[i - 1]) >> (bits_per_word - 1);
+      (old_last_word ^ words_[i - 1]) >> (bits_per_word - 1);
     bool overflowed = false;
     // carry is true if the result is 0.
     if (!(sign_changed.low_uint32() | carry)) {
@@ -737,7 +737,7 @@ class BigIntImpl {
       overflowed = i == max_words;
       if (!overflowed) {
         ++i;
-        storage_.AllocateWords(i);
+        words_.AllocateWords(i);
       }
     }
     assert(used_words() == i);
@@ -754,9 +754,9 @@ class BigIntImpl {
 
   constexpr BigIntImpl<max_words> abs() const {
     if (used_words() == 1) {
-      return BigIntImpl<max_words>(BigIntWord{storage_.words_[0].SignedAbs()});
+      return BigIntImpl<max_words>(BigIntWord{words_[0].SignedAbs()});
     }
-    if (BigIntWord{storage_.words_[used_words() - 1]} >= 0) {
+    if (BigIntWord{words_[used_words() - 1]} >= 0) {
       return *this;
     } else {
       return -*this;
@@ -774,14 +774,14 @@ class BigIntImpl {
   }
 
   constexpr BigUIntImpl<max_words> GetUIntAbs(bool* was_signed) const {
-    *was_signed = BigIntWord{storage_.words_[used_words() - 1]} < 0;
+    *was_signed = BigIntWord{words_[used_words() - 1]} < 0;
     if (*was_signed) {
       BigIntImpl<max_words> pos = *this;
       // Ignore overflow
       pos.Negate();
-      return BigUIntImpl<max_words>{pos.storage_.words_, pos.used_words()};
+      return BigUIntImpl<max_words>{pos.words_, pos.used_words()};
     } else {
-      return BigUIntImpl<max_words>{storage_.words_, used_words()};
+      return BigUIntImpl<max_words>{words_, used_words()};
     }
   }
 
@@ -790,14 +790,14 @@ class BigIntImpl {
   // Returns <0 if this is less than 0.
   constexpr BigIntWord GetSign() const {
     size_t i = used_words() - 1;
-    return BigIntWord{storage_.words_[i]} | i;
+    return BigIntWord{words_[i]} | i;
   }
 
   // Returns 1 if this is greater than or equal to 0.
   // Returns -1 if this is less than 0.
   constexpr int GetAbsMult() const {
     return static_cast<int>(
-        BigIntWord(storage_.words_[used_words() - 1].SignExtension())) | 1;
+        BigIntWord(words_[used_words() - 1].SignExtension())) | 1;
   }
 
   template <size_t other_words>
@@ -811,7 +811,7 @@ class BigIntImpl {
   }
 
   constexpr BigIntWord SignExtension() const {
-    return BigIntWord{storage_.words_[used_words() - 1].SignExtension()};
+    return BigIntWord{words_[used_words() - 1].SignExtension()};
   }
 
   explicit operator double() const {
@@ -819,12 +819,12 @@ class BigIntImpl {
                   "The cast function assumes that at most 2 words need to be "
                   "inspected to convert to a double.");
     if (max_words == 1 || used_words() == 1) {
-      return (double)BigIntWord{storage_.words_[0]};
+      return (double)BigIntWord{words_[0]};
     } else {
       size_t used = used_words();
-      return std::ldexp(BigIntWord{storage_.words_[used - 1]},
+      return std::ldexp(BigIntWord{words_[used - 1]},
                         bits_per_word * (used - 1)) +
-             storage_.words_[used - 2].ToDoubleWithShift(bits_per_word * (used - 2));
+             words_[used - 2].ToDoubleWithShift(bits_per_word * (used - 2));
     }
   }
 
@@ -853,7 +853,7 @@ class BigIntImpl {
         if (!CanTrim(/*low=*/next, /*high=*/check)) break;
 
         check = next;
-        storage_.AllocateWords(i + 1);
+        words_.AllocateWords(i + 1);
       } while (i > 0);
     }
   }
@@ -865,24 +865,24 @@ class BigIntImpl {
       return other.MultiplySlow(*this);
     }
     BigIntImpl<max_words + other_words> result;
-    result.storage_.AllocateWords(used_words() + other.used_words());
+    result.words_.AllocateWords(used_words() + other.used_words());
     size_t k = 0;
     {
       BigUIntWord add;
       for (size_t i = 0; i < this->used_words(); ++i, ++k) {
-        result.storage_.words_[k] = other.storage_.words_[0].MultiplyAdd(storage_.words_[i], add, /*carry_in=*/false, &add);
+        result.words_[k] = other.words_[0].MultiplyAdd(words_[i], add, /*carry_in=*/false, &add);
       }
-      result.storage_.words_[k] = add;
+      result.words_[k] = add;
     }
     for (size_t j = 1; j < other.used_words(); j++) {
       k = j;
       BigUIntWord add;
       bool carry = false;
       for (size_t i = 0; i < this->used_words(); ++i, ++k) {
-        add = add.Add(result.storage_.words_[k], carry, &carry);
-        result.storage_.words_[k] = other.storage_.words_[j].MultiplyAdd(storage_.words_[i], add, /*carry_in=*/false, &add);
+        add = add.Add(result.words_[k], carry, &carry);
+        result.words_[k] = other.words_[j].MultiplyAdd(words_[i], add, /*carry_in=*/false, &add);
       }
-      result.storage_.words_[k] = add.Add(carry, &carry);
+      result.words_[k] = add.Add(carry, &carry);
     }
     k++;
     assert(result.used_words() == k);
@@ -903,7 +903,7 @@ class BigIntImpl {
     bool carry = false;
     for (size_t i = 0, j = shift_left_words; i < other.used_words(); i++, j++) {
       assert(j < used_words());
-      storage_.words_[j] = storage_.words_[j].Subtract(other.storage_.words_[i] & BigUIntWord{mask},
+      words_[j] = words_[j].Subtract(other.words_[i] & BigUIntWord{mask},
                                      carry, &carry);
     }
   }
@@ -932,7 +932,7 @@ class BigIntImpl {
     return result;
   }
 
-  Storage storage_;
+  Storage words_;
 };
 
 template <size_t max_words>
