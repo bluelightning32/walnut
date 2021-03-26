@@ -59,17 +59,9 @@ class BigIntWords {
                   std::min(other.size(), size_t(max_words)) :
                   other.size()) {
     assert(other.size() <= max_words);
-    AssignWithoutTrim(other, size());
-  }
-
-  constexpr void set_word(size_t i, BigUIntWord v) {
-    words_[i] = v;
-  }
-
-  template <size_t other_words>
-  constexpr size_t GetCommonWordCount(
-      const BigIntWords<other_words>& other) const {
-    return std::min(size(), other.size());
+    for (size_t i = 0; i < size_; ++i) {
+      words_[i] = other.words_[i];
+    }
   }
 
   // Gets the lowest word after shifting this to the right `shift` bits.
@@ -77,45 +69,45 @@ class BigIntWords {
   // The caller must ensure:
   // a. `shift` is greater than or equal to 0.
   // b. shift / bits_per_word + 1 < max_words
-  BigUIntWord GetWordAtBitOffset(unsigned shift) const {
+  BigUIntWord GetAtBitOffset(unsigned shift) const {
     int word_index = shift / bits_per_word;
     int word_offset = shift % bits_per_word;
     return words_[word_index].ShiftRight(words_[word_index+1], word_offset);
   }
 
   template <size_t other_max_words>
-  constexpr void AssignWithoutTrim(
+  constexpr void Assign(
       const BigIntWords<other_max_words>& other, size_t used) {
     assert(used <= max_words);
-    AllocateWords(used);
+    resize(used);
     for (size_t i = 0; i < used; ++i) {
       words_[i] = other.words_[i];
     }
   }
 
-  constexpr void AddHighWord(BigUIntWord word) {
+  constexpr void push_back(BigUIntWord word) {
     const size_t used = size();
     assert(used < max_words);
     if (used < max_words) {
-      AllocateWords(size() + 1);
+      resize(size() + 1);
       words_[used] = word;
     }
   }
 
-  constexpr void AllocateWords(size_t used_words) {
+  constexpr void resize(size_t used_words) {
     size_ = used_words;
   }
-
-  // words_[0] holds the lowest significant bits. Within each element of
-  // words_, the bit order is in the machine native order.
-  BigUIntWord words_[max_words];
 
  private:
   // The number of words used in words_.
   //
   // Invariant:
   //   size_ >= 1
-  size_t size_;
+  size_t size_ = 0;
+
+  // words_[0] holds the lowest significant bits. Within each element of
+  // words_, the bit order is in the machine native order.
+  BigUIntWord words_[max_words];
 };
 
 }  // walnut

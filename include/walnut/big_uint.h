@@ -78,7 +78,7 @@ class BigUIntImpl {
     if (word_left_shift > 0) {
       size_t copy = std::min(used_words(), result_words - out);
       size_t allocate = std::min(copy + out + 1, result_words);
-      result.words_.AllocateWords(allocate);
+      result.words_.resize(allocate);
       BigUIntWord prev(0);
       const int prev_right_shift = bits_per_word - word_left_shift;
       for (; in < copy; in++, out++) {
@@ -92,7 +92,7 @@ class BigUIntImpl {
       }
     } else {
       size_t copy = std::min(used_words(), result_words - out);
-      result.words_.AllocateWords(copy + out);
+      result.words_.resize(copy + out);
       for (; in < copy; in++, out++) {
         result.words_[out] = words_[in];
       }
@@ -111,11 +111,11 @@ class BigUIntImpl {
       return BigUIntImpl<rw>(words_[0].Subtract(other.words_[0]));
     }
     BigUIntImpl<rw> result;
-    result.words_.AllocateWords(std::min(std::max(used_words(), other.used_words()),
+    result.words_.resize(std::min(std::max(used_words(), other.used_words()),
                                   size_t(BigUIntImpl<rw>::max_words)));
     size_t i = 0;
     bool carry = false;
-    size_t common_words = words_.GetCommonWordCount(other.words_);
+    size_t common_words = std::min(words_.size(), other.words_.size());
     for (; i < common_words && i < rw; i++) {
       result.words_[i] = words_[i].Subtract(other.words_[i], carry, &carry);
     }
@@ -138,7 +138,7 @@ class BigUIntImpl {
       return BigUIntImpl<result_words>(words_[0].MultiplyAsHalfWord(other));
     }
     BigUIntImpl<result_words> result;
-    result.words_.AllocateWords(std::min(used_words() + 1, result_words));
+    result.words_.resize(std::min(used_words() + 1, result_words));
     size_t k = 0;
     BigUIntWord add;
     for (size_t i = 0; i < used_words(); ++i, ++k) {
@@ -184,7 +184,7 @@ class BigUIntImpl {
     size_t pos = shift / bits_per_word;
     unsigned shift_mod = shift % bits_per_word;
     size_t old_used = used_words();
-    words_.AllocateWords(std::max(used_words(),
+    words_.resize(std::max(used_words(),
                            (pos + 1 + (pos + 1 < max_words && shift_mod))));
     words_[pos] = words_[pos].Add(add << shift_mod, &carry);
     pos++;
@@ -194,7 +194,7 @@ class BigUIntImpl {
       pos++;
     }
     for (; pos < max_words && carry; pos++) {
-      words_.AllocateWords(std::max(used_words(), (pos + 1)));
+      words_.resize(std::max(used_words(), (pos + 1)));
       words_[pos] = words_[pos].Add(carry, &carry);
     }
     assert(used_words() == std::max(old_used, pos));
@@ -270,7 +270,7 @@ class BigUIntImpl {
         if (!CanTrim(/*low=*/next, /*high=*/check)) break;
 
         check = next;
-        words_.AllocateWords(i + 1);
+        words_.resize(i + 1);
       } while (i > 0);
     }
   }
@@ -337,18 +337,18 @@ class BigUIntImpl {
     for (;
           this_shift_right_bits >= other_shift_right;
           this_shift_right_bits -= bits_per_word/2 - 2) {
-      BigUIntWord this_shifted = remainder.words_.GetWordAtBitOffset(this_shift_right_bits + bits_per_word);
+      BigUIntWord this_shifted = remainder.words_.GetAtBitOffset(this_shift_right_bits + bits_per_word);
 
       int shift_result_left = this_shift_right_bits - other_shift_right;
       BigUIntWord result = this_shifted / other_shifted;
       quotient.AddLeftShifted(result, shift_result_left);
       remainder.SubtractLeftShifted(other.Multiply(result), shift_result_left + bits_per_word);
-      assert(remainder.words_.GetWordAtBitOffset(this_shift_right_bits + bits_per_word) <= BigUIntWord{1}<<34);
+      assert(remainder.words_.GetAtBitOffset(this_shift_right_bits + bits_per_word) <= BigUIntWord{1}<<34);
     }
     for (;
           this_shift_right_bits + int(bits_per_word)/2 >= other_shift_right;
           this_shift_right_bits -= bits_per_word/2 - 2) {
-      BigUIntWord this_shifted = remainder.words_.GetWordAtBitOffset(this_shift_right_bits + bits_per_word);
+      BigUIntWord this_shifted = remainder.words_.GetAtBitOffset(this_shift_right_bits + bits_per_word);
 
       int shift_result_right = other_shift_right - this_shift_right_bits;
       BigUIntWord result = this_shifted / other_shifted;
