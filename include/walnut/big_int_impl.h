@@ -524,11 +524,11 @@ class BigIntImpl : public BigIntBase<max_words>
   constexpr bool LessThan(bool flip,
                           const BigIntImpl<other_max_words>& other) const {
     BigIntWord signed_flip = BigIntWord{0} - flip;
-    if (used_bytes() < other.used_bytes()) {
+    if (used_words() < other.used_words()) {
       return 0 <=
         (BigIntWord{other.words_[other.used_words() - 1]} ^ signed_flip);
     }
-    if (used_bytes() > other.used_bytes()) {
+    if (used_words() > other.used_words()) {
       return (BigIntWord{words_[used_words() - 1]} ^ signed_flip) < 0;
     }
     size_t i = used_words() - 1;
@@ -547,10 +547,10 @@ class BigIntImpl : public BigIntBase<max_words>
 
   template <size_t other_max_words>
   constexpr bool operator <= (const BigIntImpl<other_max_words>& other) const {
-    if (used_bytes() < other.used_bytes()) {
+    if (used_words() < other.used_words()) {
       return 0 <= BigIntWord{other.words_[other.used_words() - 1]};
     }
-    if (used_bytes() > other.used_bytes()) {
+    if (used_words() > other.used_words()) {
       return BigIntWord{words_[used_words() - 1]} < 0;
     }
     size_t i = used_words() - 1;
@@ -566,7 +566,7 @@ class BigIntImpl : public BigIntBase<max_words>
 
   constexpr bool operator <= (int other) const {
     static_assert(bytes_per_word >= sizeof(other), "Word size is smaller than int size");
-    if (used_bytes() > sizeof(other)) {
+    if (used_words() > 1) {
       return BigIntWord{words_[used_words() - 1]} < 0;
     }
     return BigIntWord{words_[0]} <= other;
@@ -574,10 +574,10 @@ class BigIntImpl : public BigIntBase<max_words>
 
   template <size_t other_max_words>
   constexpr bool operator > (const BigIntImpl<other_max_words>& other) const {
-    if (used_bytes() < other.used_bytes()) {
+    if (used_words() < other.used_words()) {
       return 0 > BigIntWord{other.words_[other.used_words() - 1]};
     }
-    if (used_bytes() > other.used_bytes()) {
+    if (used_words() > other.used_words()) {
       return BigIntWord{words_[used_words() - 1]} >= 0;
     }
     size_t i = used_words() - 1;
@@ -593,7 +593,7 @@ class BigIntImpl : public BigIntBase<max_words>
 
   constexpr bool operator > (int other) const {
     static_assert(bytes_per_word >= sizeof(other), "Word size is smaller than int size");
-    if (used_bytes() > sizeof(other)) {
+    if (used_words() > 1) {
       return BigIntWord{words_[used_words() - 1]} >= 0;
     }
     return BigIntWord{words_[0]} > other;
@@ -601,10 +601,10 @@ class BigIntImpl : public BigIntBase<max_words>
 
   template <size_t other_max_words>
   constexpr bool operator >= (const BigIntImpl<other_max_words>& other) const {
-    if (used_bytes() < other.used_bytes()) {
+    if (used_words() < other.used_words()) {
       return 0 > BigIntWord{other.words_[other.used_words() - 1]};
     }
-    if (used_bytes() > other.used_bytes()) {
+    if (used_words() > other.used_words()) {
       return BigIntWord{words_[used_words() - 1]} >= 0;
     }
     size_t i = used_words() - 1;
@@ -620,26 +620,22 @@ class BigIntImpl : public BigIntBase<max_words>
 
   constexpr bool operator >= (int other) const {
     static_assert(bytes_per_word >= sizeof(other), "Word size is smaller than int size");
-    if (used_bytes() > sizeof(other)) {
+    if (used_words() > 1) {
       return BigIntWord{words_[used_words() - 1]} >= 0;
     }
     return BigIntWord{words_[0]} >= other;
   }
 
   constexpr bool operator == (int other) const {
-    if (sizeof(int) <= bytes_per_word) {
-      return used_bytes() <= sizeof(other) && words_[0] == BigUIntWord{other};
-    } else {
-      return *this ==
-        BigIntImpl<(sizeof(int) + bytes_per_word - 1) / bytes_per_word>(other);
-    }
+    assert(sizeof(int) <= bytes_per_word);
+    return used_words() == 1 && words_[0] == BigUIntWord{other};
   }
 
   template <size_t other_max_words>
   constexpr bool operator == (const BigIntImpl<other_max_words>& other) const {
-    if (used_bytes() != other.used_bytes()) return false;
+    if (used_words() != other.used_words()) return false;
 
-    for (int i = used_bytes() / bytes_per_word - 1; i > 0; i--) {
+    for (size_t i = used_words() - 1; i > 0; i--) {
       if (words_[i] != other.words_[i]) return false;
     }
     return words_[0] == other.words_[0];
@@ -647,9 +643,9 @@ class BigIntImpl : public BigIntBase<max_words>
 
   template <size_t other_max_words>
   constexpr bool operator != (const BigIntImpl<other_max_words>& other) const {
-    if (used_bytes() != other.used_bytes()) return true;
+    if (used_words() != other.used_words()) return true;
 
-    for (int i = used_bytes() / bytes_per_word - 1; i > 0; i--) {
+    for (size_t i = used_words() - 1; i > 0; i--) {
       if (words_[i] != other.words_[i]) return true;
     }
     return words_[0] != other.words_[0];
