@@ -338,7 +338,7 @@ class BigUIntImpl : public BigIntBase<max_words>
     BigUIntImpl<max_words + 2> remainder = operator<< <max_words+2>(bits_per_word);
     // Number of bits to shift (*this) to the right, such that:
     // 0 < (*this >> this_shift_right_bits) < 2^bits_per_word
-    int this_shift_right_bits = (used_bytes() - bytes_per_word) * bits_per_byte;
+    int this_shift_right_bits = (used_words() - 1) * bits_per_word;
     for (;
           this_shift_right_bits >= other_shift_right;
           this_shift_right_bits -= bits_per_word/2 - 2) {
