@@ -50,7 +50,7 @@ class BigUIntImpl {
   }
 
   constexpr size_t used_words() const {
-    return storage_.used_words();
+    return storage_.size();
   }
 
   constexpr BigUIntWord word(size_t i) const {

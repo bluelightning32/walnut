@@ -19,18 +19,18 @@ class BigIntWords {
   static constexpr size_t bytes_per_word = BigUIntWord::bytes_per_word;
   static constexpr size_t max_bits = max_words * bits_per_word;
 
-  constexpr size_t used_words() const {
-    return used_words_;
+  constexpr size_t size() const {
+    return size_;
   }
 
   constexpr BigUIntWord word(size_t i) const {
     return words_[i];
   }
 
-  constexpr BigIntWords(int used_words) : used_words_(used_words) { }
+  constexpr BigIntWords(int used_words) : size_(used_words) { }
 
   constexpr BigIntWords(const BigUIntWord* words, size_t used_words) :
-      used_words_(used_words) {
+      size_(used_words) {
     assert(used_words <= max_words);
     for (size_t i = 0; i < used_words; ++i) {
       words_[i] = words[i];
@@ -40,7 +40,7 @@ class BigIntWords {
   template <size_t other_max_words>
   constexpr BigIntWords(size_t used_words, size_t copy_words,
                        const BigIntWords<other_max_words>& from) :
-      used_words_(std::min(size_t(max_words), used_words)) {
+      size_(std::min(size_t(max_words), used_words)) {
     for (size_t i = 0; i < copy_words; ++i) {
       words_[i] = from.words_[i];
     }
@@ -48,11 +48,11 @@ class BigIntWords {
 
   template <size_t other_max_words>
   constexpr BigIntWords(const BigIntWords<other_max_words>& other) :
-      used_words_(max_words < other_max_words ?
-                  std::min(other.used_words(), size_t(max_words)) :
-                  other.used_words()) {
-    assert(other.used_words() <= max_words);
-    AssignWithoutTrim(other, used_words());
+      size_(max_words < other_max_words ?
+                  std::min(other.size(), size_t(max_words)) :
+                  other.size()) {
+    assert(other.size() <= max_words);
+    AssignWithoutTrim(other, size());
   }
 
   constexpr void set_word(size_t i, BigUIntWord v) {
@@ -62,7 +62,7 @@ class BigIntWords {
   template <size_t other_words>
   constexpr size_t GetCommonWordCount(
       const BigIntWords<other_words>& other) const {
-    return std::min(used_words(), other.used_words());
+    return std::min(size(), other.size());
   }
 
   // Gets the lowest word after shifting this to the right `shift` bits.
@@ -87,16 +87,16 @@ class BigIntWords {
   }
 
   constexpr void AddHighWord(BigUIntWord word) {
-    const size_t used = used_words();
+    const size_t used = size();
     assert(used < max_words);
     if (used < max_words) {
-      AllocateWords(used_words() + 1);
+      AllocateWords(size() + 1);
       words_[used] = word;
     }
   }
 
   constexpr void AllocateWords(size_t used_words) {
-    used_words_ = used_words;
+    size_ = used_words;
   }
 
   // words_[0] holds the lowest significant bits. Within each element of
@@ -107,8 +107,8 @@ class BigIntWords {
   // The number of words used in words_.
   //
   // Invariant:
-  //   used_words_ >= 1
-  size_t used_words_;
+  //   size_ >= 1
+  size_t size_;
 };
 
 }  // walnut
