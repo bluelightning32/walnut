@@ -35,7 +35,7 @@ class BigIntBase {
   }
 
   constexpr size_t used_words() const {
-    return (used_bytes() + bytes_per_word - 1) / bytes_per_word;
+    return used_words_;
   }
 
   constexpr BigUIntWord word(size_t i) const {
@@ -43,12 +43,12 @@ class BigIntBase {
   }
 
  protected:
-  constexpr BigIntBase(int used_words) : used_(used_words * bytes_per_word) { }
+  constexpr BigIntBase(int used_words) : used_words_(used_words) { }
 
-  constexpr BigIntBase(const BigUIntWord* words, size_t used) :
-      used_(used * bytes_per_word) {
-    assert(used_words() <= max_words);
-    for (size_t i = 0; i < used; ++i) {
+  constexpr BigIntBase(const BigUIntWord* words, size_t used_words) :
+      used_words_(used_words) {
+    assert(used_words <= max_words);
+    for (size_t i = 0; i < used_words; ++i) {
       words_[i] = words[i];
     }
   }
@@ -56,7 +56,7 @@ class BigIntBase {
   template <size_t other_max_words>
   constexpr BigIntBase(size_t used_words, size_t copy_words,
                        const BigIntBase<other_max_words>& from) :
-      used_(std::min(size_t(max_bytes), used_words * bytes_per_word)) {
+      used_words_(std::min(size_t(max_words), used_words)) {
     for (size_t i = 0; i < copy_words; ++i) {
       words_[i] = from.words_[i];
     }
@@ -64,20 +64,15 @@ class BigIntBase {
 
   template <size_t other_max_words>
   constexpr BigIntBase(const BigIntBase<other_max_words>& other) :
-      used_(max_words < other_max_words ?
-                  std::min(other.used_bytes(),
-                           size_t(max_words * bytes_per_word)) :
-                  other.used_bytes()) {
+      used_words_(max_words < other_max_words ?
+                  std::min(other.used_words(), size_t(max_words)) :
+                  other.used_words()) {
     assert(other.used_words() <= max_words);
     AssignWithoutTrim(other, used_words());
   }
 
   constexpr void set_word(size_t i, BigUIntWord v) {
     words_[i] = v;
-  }
-
-  constexpr size_t used_bytes() const {
-    return used_;
   }
 
   template <size_t other_words>
@@ -116,8 +111,8 @@ class BigIntBase {
     }
   }
 
-  constexpr void AllocateWords(size_t words) {
-    used_ = words * bytes_per_word;
+  constexpr void AllocateWords(size_t used_words) {
+    used_words_ = used_words;
   }
 
   // words_[0] holds the lowest significant bits. Within each element of
@@ -125,15 +120,11 @@ class BigIntBase {
   BigUIntWord words_[max_words];
 
  private:
-  // The number of bytes used in words_.
+  // The number of words used in words_.
   //
   // Invariant:
-  //   Either used_ == sizeof(BigUIntHalfWord), or used_ is a multiple of
-  //   bytes_per_word.
-  //
-  // Even if used_ == sizeof(BigUIntHalfWord), the rest of the bits in
-  // words_[0] are still initialized.
-  size_t used_;
+  //   used_words_ >= 1
+  size_t used_words_;
 };
 
 }  // walnut
