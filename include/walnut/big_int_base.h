@@ -19,19 +19,6 @@ class BigIntBase {
   static constexpr size_t bytes_per_word = BigUIntWord::bytes_per_word;
   static constexpr size_t max_bits = max_words * bits_per_word;
 
-  constexpr uint32_t low_uint32() const {
-    return words_[0].low_uint32();
-  }
-
-  constexpr uint64_t low_uint64() const {
-    return words_[0].low_uint64();
-  }
-
-  constexpr int ToInt() const {
-    assert(used_words() == 1);
-    return words_[0].ToInt();
-  }
-
   constexpr size_t used_words() const {
     return used_words_;
   }
@@ -40,7 +27,6 @@ class BigIntBase {
     return words_[i];
   }
 
- protected:
   constexpr BigIntBase(int used_words) : used_words_(used_words) { }
 
   constexpr BigIntBase(const BigUIntWord* words, size_t used_words) :
