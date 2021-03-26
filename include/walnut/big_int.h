@@ -337,14 +337,6 @@ class BigInt {
     return rep_.ToInt();
   }
 
-  constexpr int used_bytes() const {
-    return rep_.used_bytes();
-  }
-
-  constexpr const BigUIntWord* words() const {
-    return rep_.words();
-  }
-
   // Verifies the value is in the supported range.
   //
   // BigInts can sometimes internally support a larger range than
