@@ -247,9 +247,7 @@ class BigUIntImpl : public BigIntBase<max_words>
   using Parent::words_;
 
   using Parent::GetCommonWordCount;
-  using Parent::Allocate;
   using Parent::AllocateWords;
-  using Parent::used_bytes;
 
   static constexpr bool CanTrim(BigUIntWord low, BigUIntWord high) {
     return high == 0;
@@ -273,10 +271,6 @@ class BigUIntImpl : public BigIntBase<max_words>
         check = next;
         AllocateWords(i + 1);
       } while (i > 0);
-    }
-    if (used_bytes() == bytes_per_word &&
-        CanTrimLastHalf(words_[0])) {
-      Allocate(sizeof(BigUIntHalfWord));
     }
   }
 

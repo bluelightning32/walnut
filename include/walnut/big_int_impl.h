@@ -76,8 +76,7 @@ class BigIntImpl : public BigIntBase<max_words>
   }
 
   constexpr BigIntImpl& operator = (BigIntWord value) {
-    Allocate(CanTrimLastHalf(BigUIntWord(value)) ?
-             sizeof(BigUIntHalfWord) : bytes_per_word);
+    AllocateWords(1);
     set_word(0, value);
     return *this;
   }
@@ -817,9 +816,7 @@ class BigIntImpl : public BigIntBase<max_words>
   using Parent::words_;
   using Parent::set_word;
 
-  using Parent::used_bytes;
   using Parent::GetCommonWordCount;
-  using Parent::Allocate;
   using Parent::AllocateWords;
 
   static constexpr bool CanTrim(BigUIntWord low, BigUIntWord high) {
@@ -848,10 +845,6 @@ class BigIntImpl : public BigIntBase<max_words>
         check = next;
         AllocateWords(i + 1);
       } while (i > 0);
-    }
-    if (used_bytes() == bytes_per_word &&
-        CanTrimLastHalf(words_[0])) {
-      Allocate(sizeof(BigUIntHalfWord));
     }
   }
 

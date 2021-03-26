@@ -111,17 +111,13 @@ class BigIntBase {
     const size_t used = used_words();
     assert(used < max_words);
     if (used < max_words) {
-      Allocate((used + 1) * bytes_per_word);
+      AllocateWords(used_words() + 1);
       words_[used] = word;
     }
   }
 
   constexpr void AllocateWords(size_t words) {
-    Allocate(words * bytes_per_word);
-  }
-
-  constexpr void Allocate(size_t used) {
-    used_ = used;
+    used_ = words * bytes_per_word;
   }
 
   // words_[0] holds the lowest significant bits. Within each element of
