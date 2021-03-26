@@ -19,23 +19,19 @@ class BigUIntImpl : public BigIntBase<max_words>
 
  public:
   using Parent::bits_per_word;
-  using Parent::bits_per_byte;
-  using Parent::bytes_per_word;
   using Parent::max_bits;
-  using Parent::max_bytes;
   using Parent::used_words;
   using Parent::word;
 
   constexpr BigUIntImpl() : BigUIntImpl(static_cast<BigUIntHalfWord>(0)) {
   }
 
-  explicit constexpr BigUIntImpl(BigUIntHalfWord value) : Parent(sizeof(BigUIntHalfWord)) {
+  explicit constexpr BigUIntImpl(BigUIntHalfWord value) : Parent(1) {
     words_[0] = value;
   }
 
   explicit constexpr BigUIntImpl(BigUIntWord value) :
-    Parent(value <= std::numeric_limits<BigUIntHalfWord>::max() ?
-          sizeof(BigUIntHalfWord) : BigUIntWord::bytes_per_word) {
+    Parent(1) {
     words_[0] = value;
   }
 

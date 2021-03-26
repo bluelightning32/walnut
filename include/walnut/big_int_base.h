@@ -43,7 +43,7 @@ class BigIntBase {
   }
 
  protected:
-  constexpr BigIntBase(int used) : used_(used) { }
+  constexpr BigIntBase(int used_words) : used_(used_words * bytes_per_word) { }
 
   constexpr BigIntBase(const BigUIntWord* words, size_t used) :
       used_(used * bytes_per_word) {

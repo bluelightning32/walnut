@@ -31,13 +31,12 @@ class BigIntImpl : public BigIntBase<max_words>
   constexpr BigIntImpl() : BigIntImpl(0) {
   }
 
-  explicit constexpr BigIntImpl(BigIntHalfWord value) : Parent(sizeof(value)) {
+  explicit constexpr BigIntImpl(BigIntHalfWord value) : Parent(1) {
     set_word(0, BigUIntWord{value});
   }
 
   explicit constexpr BigIntImpl(BigIntWord value) :
-    Parent(static_cast<BigIntHalfWord>(value) == value ?
-           sizeof(BigIntHalfWord) : bytes_per_word) {
+    Parent(1) {
     set_word(0, BigUIntWord{value});
   }
 
