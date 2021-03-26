@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cmath>
 #include <iostream>
+#include <vector>
 
 #include "walnut/big_int_base.h"
 #include "walnut/big_uint.h"
@@ -23,7 +24,6 @@ class BigIntImpl : public BigIntBase<max_words>
   using Parent::bits_per_word;
   using Parent::bytes_per_word;
   using Parent::max_bits;
-  using Parent::max_bytes;
   using Parent::used_words;
   using Parent::word;
 
@@ -924,8 +924,9 @@ class BigIntImpl : public BigIntBase<max_words>
 template <size_t max_words>
 std::ostream& operator<<(std::ostream& out, const BigIntImpl<max_words>& bigint) {
   BigIntImpl<max_words> remaining = bigint;
-  char digits[BigIntImpl<max_words>::max_bytes*3 + 2];
-  char* digits_pos = &digits[BigIntImpl<max_words>::max_bytes*3 + 1];
+  std::vector<char> digits(
+      bigint.used_words() * BigIntImpl<max_words>::bytes_per_word*3 + 2);
+  char* digits_pos = &digits.back();
   *digits_pos-- = '\0';
 
   BigIntImpl<1> digit;

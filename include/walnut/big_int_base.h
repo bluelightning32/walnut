@@ -18,7 +18,6 @@ class BigIntBase {
   static constexpr size_t bits_per_word = BigUIntWord::bits_per_word;
   static constexpr size_t bytes_per_word = BigUIntWord::bytes_per_word;
   static constexpr size_t max_bits = max_words * bits_per_word;
-  static constexpr size_t max_bytes = max_words * bytes_per_word;
 
   constexpr uint32_t low_uint32() const {
     return words_[0].low_uint32();
