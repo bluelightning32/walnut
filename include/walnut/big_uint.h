@@ -92,7 +92,7 @@ class BigUIntImpl : public BigIntBase<max_words>
         result.words_[out] = words_[in];
       }
     }
-    assert(result.used_bytes() == out * BigUIntWord::bytes_per_word);
+    assert(result.used_words() == out);
     result.Trim();
     return result;
   }
@@ -114,14 +114,14 @@ class BigUIntImpl : public BigIntBase<max_words>
     for (; i < common_words && i < rw; i++) {
       result.words_[i] = words_[i].Subtract(other.words_[i], carry, &carry);
     }
-    for (; i < std::min(used_bytes() / bytes_per_word, rw); i++) {
+    for (; i < std::min(used_words(), rw); i++) {
       result.words_[i] = words_[i].Subtract(carry, &carry);
     }
-    for (; i < std::min(other.used_bytes() / bytes_per_word, rw); i++) {
+    for (; i < std::min(other.used_words(), rw); i++) {
       result.words_[i] = BigUIntWord(0).Subtract(other.words_[i], carry, &carry);
     }
     assert(!carry);
-    assert(used_bytes() == i * bytes_per_word);
+    assert(used_words() == i);
     result.Trim();
     return result;
   }
@@ -144,7 +144,7 @@ class BigUIntImpl : public BigIntBase<max_words>
       result.words_[k] = add;
       k++;
     }
-    assert(result.used_bytes() == k * bytes_per_word);
+    assert(result.used_words() == k);
     result.Trim();
     return result;
   }
@@ -153,7 +153,7 @@ class BigUIntImpl : public BigIntBase<max_words>
   template <size_t other_words>
   constexpr BigUIntImpl<max_words> DivideRemainder(const BigUIntImpl<other_words>& other,
       BigUIntImpl<std::min(max_words, other_words)>* remainder_out) const {
-    if (used_bytes() <= bytes_per_word && other.used_bytes() <= bytes_per_word) {
+    if (used_words() == 1 && other.used_words() == 1) {
       *remainder_out = BigUIntImpl<std::min(max_words, other_words)>{words_[0] % other.words_[0]};
       return BigUIntImpl<max_words>{words_[0] / other.words_[0]};
     }
@@ -162,10 +162,10 @@ class BigUIntImpl : public BigIntBase<max_words>
 
   template <size_t other_max_words>
   constexpr bool operator >= (const BigUIntImpl<other_max_words>& other) const {
-    if (used_bytes() > other.used_bytes()) return true;
-    if (used_bytes() < other.used_bytes()) return false;
+    if (used_words() > other.used_words()) return true;
+    if (used_words() < other.used_words()) return false;
 
-    for (int i = used_bytes() / BigUIntWord::bytes_per_word - 1; i > 0; i--) {
+    for (size_t i = used_words() - 1; i > 0; i--) {
       if (words_[i] > other.words_[i]) return true;
       if (words_[i] < other.words_[i]) return false;
     }
@@ -178,7 +178,7 @@ class BigUIntImpl : public BigIntBase<max_words>
     bool carry = false;
     size_t pos = shift / bits_per_word;
     unsigned shift_mod = shift % bits_per_word;
-    size_t old_used = used_bytes();
+    size_t old_used = used_words();
     AllocateWords(std::max(used_words(),
                            (pos + 1 + (pos + 1 < max_words && shift_mod))));
     words_[pos] = words_[pos].Add(add << shift_mod, &carry);
@@ -192,7 +192,7 @@ class BigUIntImpl : public BigIntBase<max_words>
       AllocateWords(std::max(used_words(), (pos + 1)));
       words_[pos] = words_[pos].Add(carry, &carry);
     }
-    assert(used_bytes() == std::max(old_used, pos * bytes_per_word));
+    assert(used_words() == std::max(old_used, pos));
     Trim();
     return *this;
   }
@@ -260,7 +260,7 @@ class BigUIntImpl : public BigIntBase<max_words>
   }
 
   constexpr void Trim() {
-    int i = used_bytes() / bytes_per_word - 1;
+    int i = used_words() - 1;
     if (i > 0) {
       BigUIntWord check = words_[i];
       BigUIntWord next;

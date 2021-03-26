@@ -658,7 +658,7 @@ class BigIntImpl : public BigIntBase<max_words>
   // Divide `this` by `other`. Return the quotient.
   template <size_t other_words>
   constexpr BigIntImpl<max_words> operator/(const BigIntImpl<other_words>& other) const {
-    if (used_bytes() <= bytes_per_word && other.used_bytes() <= bytes_per_word) {
+    if (used_words() == 1 && other.used_words() == 1) {
       return BigIntImpl<max_words>{BigIntWord{words_[0]} / BigIntWord{other.words_[0]}};
     }
     BigIntImpl<std::min(max_words, other_words)> unused;
@@ -678,7 +678,7 @@ class BigIntImpl : public BigIntBase<max_words>
   template <size_t other_words>
   constexpr BigIntImpl<max_words> DivideRemainder(const BigIntImpl<other_words>& other,
       BigIntImpl<std::min(max_words, other_words)>* remainder_out) const {
-    if (used_bytes() <= bytes_per_word && other.used_bytes() <= bytes_per_word) {
+    if (used_words() == 1 && other.used_words() == 1) {
       *remainder_out = BigIntImpl<std::min(max_words, other_words)>{
         BigIntWord{words_[0]} % BigIntWord{other.words_[0]}};
       return BigIntImpl<max_words>{BigIntWord{words_[0]} / BigIntWord{other.words_[0]}};
@@ -690,7 +690,7 @@ class BigIntImpl : public BigIntBase<max_words>
   template <size_t other_words>
   constexpr BigIntImpl<std::min(max_words, other_words)> operator%(
       const BigIntImpl<other_words>& other) const {
-    if (used_bytes() <= bytes_per_word && other.used_bytes() <= bytes_per_word) {
+    if (used_words() == 1 && other.used_words() == 1) {
       return BigIntImpl<std::min(max_words, other_words)>{
         BigIntWord{words_[0]} % BigIntWord{other.words_[0]}};
     }
@@ -739,7 +739,7 @@ class BigIntImpl : public BigIntBase<max_words>
   }
 
   constexpr BigIntImpl<max_words> abs() const {
-    if (used_bytes() <= bytes_per_word) {
+    if (used_words() == 1) {
       return BigIntImpl<max_words>(BigIntWord{words_[0].SignedAbs()});
     }
     if (BigIntWord{words_[used_words() - 1]} >= 0) {
@@ -804,14 +804,13 @@ class BigIntImpl : public BigIntBase<max_words>
     static_assert(sizeof(BigIntWord) >= sizeof(double),
                   "The cast function assumes that at most 2 words need to be "
                   "inspected to convert to a double.");
-    if (max_words == 1 || used_bytes() <= bytes_per_word) {
+    if (max_words == 1 || used_words() == 1) {
       return (double)BigIntWord{words_[0]};
     } else {
-      size_t used_words = used_bytes() / bytes_per_word;
-      return std::ldexp(BigIntWord{words_[used_words - 1]},
-                        bits_per_word * (used_words - 1)) +
-             words_[used_words - 2].ToDoubleWithShift(bits_per_word *
-                                                      (used_words - 2));
+      size_t used = used_words();
+      return std::ldexp(BigIntWord{words_[used - 1]},
+                        bits_per_word * (used - 1)) +
+             words_[used - 2].ToDoubleWithShift(bits_per_word * (used - 2));
     }
   }
 
@@ -837,7 +836,7 @@ class BigIntImpl : public BigIntBase<max_words>
   }
 
   constexpr void Trim() {
-    int i = used_bytes() / bytes_per_word - 1;
+    int i = used_words() - 1;
     if (i > 0) {
       BigUIntWord check = words_[i];
       BigUIntWord next;
@@ -860,7 +859,7 @@ class BigIntImpl : public BigIntBase<max_words>
   template <size_t other_words>
   constexpr BigIntImpl<max_words + other_words> MultiplySlow(
       const BigIntImpl<other_words>& other) const {
-    if (used_bytes() < other.used_bytes()) {
+    if (used_words() < other.used_words()) {
       return other.MultiplySlow(*this);
     }
     BigIntImpl<max_words + other_words> result;
@@ -884,7 +883,7 @@ class BigIntImpl : public BigIntBase<max_words>
       result.words_[k] = add.Add(carry, &carry);
     }
     k++;
-    assert(result.used_bytes() == k * BigUIntWord::bytes_per_word);
+    assert(result.used_words() == k);
     return result;
   }
 
