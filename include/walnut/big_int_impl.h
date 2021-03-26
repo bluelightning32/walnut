@@ -865,7 +865,7 @@ class BigIntImpl : public BigIntBase<max_words>
     }
     BigIntImpl<max_words + other_words> result;
     result.AllocateWords(used_words() + other.used_words());
-    int k = 0;
+    size_t k = 0;
     {
       BigUIntWord add;
       for (size_t i = 0; i < this->used_words(); ++i, ++k) {
