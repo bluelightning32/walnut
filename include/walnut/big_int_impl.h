@@ -258,7 +258,7 @@ class BigIntImpl : public BigIntBase<max_words>
 
   template <size_t other_words>
   constexpr BigIntImpl& operator+=(const BigIntImpl<other_words>& other) {
-    if (used_bytes() == sizeof(BigIntHalfWord) && other.used_bytes() == sizeof(BigIntHalfWord)) {
+    if (IsHalfWord() && other.IsHalfWord()) {
       words_[0] += other.words_[0];
       if ((BigIntWord)words_[0] < std::numeric_limits<BigIntHalfWord>::min() ||
           (BigIntWord)words_[0] > std::numeric_limits<BigIntHalfWord>::max()) {
@@ -295,7 +295,7 @@ class BigIntImpl : public BigIntBase<max_words>
   }
 
   constexpr BigIntImpl& operator+=(BigIntHalfWord other) {
-    if (used_bytes() == sizeof(BigIntHalfWord)) {
+    if (IsHalfWord()) {
       words_[0] += BigUIntWord{other};
       if ((BigIntWord)words_[0] < std::numeric_limits<BigIntHalfWord>::min() ||
           (BigIntWord)words_[0] > std::numeric_limits<BigIntHalfWord>::max()) {
@@ -308,7 +308,7 @@ class BigIntImpl : public BigIntBase<max_words>
   }
 
   constexpr BigIntImpl& operator++() {
-    if (used_bytes() == sizeof(BigIntHalfWord)) {
+    if (IsHalfWord()) {
       ++words_[0];
       if ((BigIntWord)words_[0] > std::numeric_limits<BigIntHalfWord>::max()) {
         AllocateWords(1);
@@ -337,7 +337,7 @@ class BigIntImpl : public BigIntBase<max_words>
 
   template <size_t other_words>
   constexpr BigIntImpl& operator-=(const BigIntImpl<other_words>& other) {
-    if (used_bytes() == sizeof(BigIntHalfWord) && other.used_bytes() == sizeof(BigIntHalfWord)) {
+    if (IsHalfWord() && other.IsHalfWord()) {
       words_[0] -= other.words_[0];
       if ((BigIntWord)words_[0] < std::numeric_limits<BigIntHalfWord>::min() ||
           (BigIntWord)words_[0] > std::numeric_limits<BigIntHalfWord>::max()) {
@@ -374,7 +374,7 @@ class BigIntImpl : public BigIntBase<max_words>
   }
 
   constexpr BigIntImpl& operator-=(BigIntHalfWord other) {
-    if (used_bytes() == sizeof(BigIntHalfWord)) {
+    if (IsHalfWord()) {
       words_[0] -= BigUIntWord{other};
       if ((BigIntWord)words_[0] < std::numeric_limits<BigIntHalfWord>::min() ||
           (BigIntWord)words_[0] > std::numeric_limits<BigIntHalfWord>::max()) {
@@ -388,7 +388,7 @@ class BigIntImpl : public BigIntBase<max_words>
 
 
   constexpr BigIntImpl& operator--() {
-    if (used_bytes() == sizeof(BigIntHalfWord)) {
+    if (IsHalfWord()) {
       --words_[0];
       if ((BigIntWord)words_[0] < std::numeric_limits<BigIntHalfWord>::min()) {
         AllocateWords(1);
@@ -420,7 +420,7 @@ class BigIntImpl : public BigIntBase<max_words>
             size_t rw = result_words == 0 ?
               std::max(max_words, other_words) : result_words>
   constexpr BigIntImpl<rw> Subtract(const BigIntImpl<other_words>& other) const {
-    if (used_bytes() == sizeof(BigIntHalfWord) && other.used_bytes() == sizeof(BigIntHalfWord)) {
+    if (IsHalfWord() && other.IsHalfWord()) {
       return BigIntImpl<rw>(BigIntWord{words_[0].Subtract(other.words_[0])});
     }
     BigIntImpl<rw> result;
@@ -460,7 +460,7 @@ class BigIntImpl : public BigIntBase<max_words>
   constexpr BigIntImpl<max_words + other_words>
   Multiply(const BigIntImpl<other_words>& other) const {
     constexpr int result_words = max_words + other_words;
-    if (used_bytes() == sizeof(BigIntHalfWord) && other.used_bytes() == sizeof(BigIntHalfWord)) {
+    if (IsHalfWord() && other.IsHalfWord()) {
       return BigIntImpl<result_words>(BigIntWord{words_[0]} * BigIntWord{other.words_[0]});
     }
     if (used_bytes() <= bytes_per_word && other.used_bytes() <= bytes_per_word) {

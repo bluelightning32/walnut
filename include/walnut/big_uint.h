@@ -59,7 +59,7 @@ class BigUIntImpl : public BigIntBase<max_words>
 
   template <size_t result_words=max_words>
   constexpr BigUIntImpl<result_words> operator << (size_t shift) const {
-    if (used_bytes() == sizeof(BigUIntHalfWord) && shift <= 32) {
+    if (IsHalfWord() && shift <= 32) {
       return BigUIntImpl<result_words>(words_[0].low_uint64() << shift);
     }
 
@@ -101,7 +101,7 @@ class BigUIntImpl : public BigIntBase<max_words>
             size_t rw = result_words == 0 ?
               std::max(max_words, other_words) : result_words>
   constexpr BigUIntImpl<rw> Subtract(const BigUIntImpl<other_words>& other) const {
-    if (used_bytes() == sizeof(BigUIntHalfWord) && other.used_bytes() == sizeof(BigUIntHalfWord) &&
+    if (IsHalfWord() && other.IsHalfWord() &&
         words_[0].low_uint32() >= other.words_[0].low_uint32()) {
       return BigUIntImpl<rw>(words_[0].Subtract(other.words_[0]));
     }
@@ -128,7 +128,7 @@ class BigUIntImpl : public BigIntBase<max_words>
 
   template <size_t result_words = max_words + 1>
   constexpr BigUIntImpl<result_words> Multiply(BigUIntWord other) const {
-    if (used_bytes() == sizeof(BigUIntHalfWord) &&
+    if (IsHalfWord() &&
         other <= std::numeric_limits<BigUIntHalfWord>::max()) {
       return BigUIntImpl<result_words>(words_[0].MultiplyAsHalfWord(other));
     }
