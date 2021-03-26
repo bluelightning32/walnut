@@ -10,7 +10,7 @@ TEST(Point3, ConstructorAssertsOnOverflow) {
   BigInt<big_coord_bits> big_coord = BigInt<big_coord_bits>::max_value();
   Point3<big_coord_bits> big_vertex(big_coord, big_coord, big_coord);
 
-  ASSERT_DEBUG_DEATH(Point3<32> v(big_vertex), "max_bytes");
+  ASSERT_DEBUG_DEATH(Point3<32> v(big_vertex), "max_words");
 }
 
 TEST(Point3, XYZIntConstructor) {

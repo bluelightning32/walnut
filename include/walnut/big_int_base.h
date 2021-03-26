@@ -68,8 +68,8 @@ class BigIntBase {
                   std::min(other.used_bytes(),
                            size_t(max_words * bytes_per_word)) :
                   other.used_bytes()) {
-    assert(other.used_bytes() <= max_bytes);
-    AssignWithoutTrim(other, used_bytes());
+    assert(other.used_words() <= max_words);
+    AssignWithoutTrim(other, used_words());
   }
 
   constexpr void set_word(size_t i, BigUIntWord v) {
@@ -101,9 +101,9 @@ class BigIntBase {
   template <size_t other_max_words>
   constexpr void AssignWithoutTrim(
       const BigIntBase<other_max_words>& other, size_t used) {
-    assert(used <= max_bytes);
-    Allocate(used);
-    for (size_t i = 0; i < (used + bytes_per_word - 1) / bytes_per_word; ++i) {
+    assert(used <= max_words);
+    AllocateWords(used);
+    for (size_t i = 0; i < used; ++i) {
       words_[i] = other.words_[i];
     }
   }

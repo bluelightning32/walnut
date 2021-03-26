@@ -25,7 +25,7 @@ TEST(BigInt, Int64Construction) {
 TEST(BigInt, ConstructorAssertsOnOverflow) {
   static constexpr int big_bits = BigInt<32>::word_count*BigInt<32>::bits_per_word*2;
   BigInt<big_bits> big_value = BigInt<big_bits>::max_value();
-  ASSERT_DEBUG_DEATH(BigInt<32> constructed(big_value), "max_bytes");
+  ASSERT_DEBUG_DEATH(BigInt<32> constructed(big_value), "max_words");
 }
 
 TEST(BigInt, LeftShiftPos) {

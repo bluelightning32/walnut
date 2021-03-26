@@ -66,10 +66,9 @@ class BigIntImpl : public BigIntBase<max_words>
       const BigIntImpl<other_max_words>& other) {
     assert(other.used_words() <= max_words);
     this->AssignWithoutTrim(other, max_words < other_max_words ?
-                                   std::min(other.used_bytes(),
-                                            size_t(max_words *
-                                                   bytes_per_word)) :
-                                   other.used_bytes());
+                                   std::min(other.used_words(),
+                                            size_t(max_words)) :
+                                   other.used_words());
     if (max_words < other_max_words) {
       this->Trim();
     }
@@ -86,10 +85,10 @@ class BigIntImpl : public BigIntBase<max_words>
   template <size_t other_max_words>
   constexpr BigIntImpl<max_words>& operator = (
       const BigUIntImpl<other_max_words>& other) {
-    int copy_bytes = max_words < other_max_words ?
-                     std::min(other.used_bytes(), max_words * bytes_per_word) :
-                     other.used_bytes();
-    this->AssignWithoutTrim(other, copy_bytes);
+    int copy_words = max_words < other_max_words ?
+                     std::min(other.used_words(), max_words) :
+                     other.used_words();
+    this->AssignWithoutTrim(other, copy_words);
     if (BigIntWord{word(used_words() - 1)} < 0 && used_words() < max_words) {
       this->AddHighWord(BigUIntWord{0});
     }
