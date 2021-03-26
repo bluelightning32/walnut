@@ -764,9 +764,9 @@ class BigIntImpl : public BigIntBase<max_words>
       BigIntImpl<max_words> pos = *this;
       // Ignore overflow
       pos.Negate();
-      return BigUIntImpl<max_words>{pos.words_, pos.used_bytes()};
+      return BigUIntImpl<max_words>{pos.words_, pos.used_words()};
     } else {
-      return BigUIntImpl<max_words>{words_, used_bytes()};
+      return BigUIntImpl<max_words>{words_, used_words()};
     }
   }
 

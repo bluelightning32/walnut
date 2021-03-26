@@ -46,9 +46,9 @@ class BigIntBase {
   constexpr BigIntBase(int used) : used_(used) { }
 
   constexpr BigIntBase(const BigUIntWord* words, size_t used) :
-      used_(used) {
-    assert(used_bytes() <= max_bytes);
-    for (size_t i = 0; i < (used + bytes_per_word - 1) / bytes_per_word; ++i) {
+      used_(used * bytes_per_word) {
+    assert(used_words() <= max_words);
+    for (size_t i = 0; i < used; ++i) {
       words_[i] = words[i];
     }
   }
