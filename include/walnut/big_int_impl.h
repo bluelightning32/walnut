@@ -48,7 +48,7 @@ class BigIntImpl {
                              (BigIntWord{other.word(other.used_words() - 1)} <
                               0),
               /*copy_words=*/std::min(other.used_words(), size_t(max_words)),
-              /*from=*/other) {
+              /*from=*/other.storage()) {
      Trim();
   }
 
@@ -103,7 +103,7 @@ class BigIntImpl {
     int copy_words = max_words < other_max_words ?
                      std::min(other.used_words(), max_words) :
                      other.used_words();
-    storage_.AssignWithoutTrim(other, copy_words);
+    storage_.AssignWithoutTrim(other.storage(), copy_words);
     if (BigIntWord{word(used_words() - 1)} < 0 && used_words() < max_words) {
       storage_.AddHighWord(BigUIntWord{0});
     }
