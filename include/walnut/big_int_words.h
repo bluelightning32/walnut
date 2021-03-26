@@ -1,5 +1,5 @@
-#ifndef WALNUT_BIG_INT_BASE_H__
-#define WALNUT_BIG_INT_BASE_H__
+#ifndef WALNUT_BIG_INT_WORDS_H__
+#define WALNUT_BIG_INT_WORDS_H__
 
 #include <cassert>
 
@@ -9,9 +9,9 @@ namespace walnut {
 
 // Common base for BigIntImpl and BigUIntImpl
 template <size_t max_words_template>
-class BigIntBase {
+class BigIntWords {
   template <size_t other_max_words>
-  friend class BigIntBase;
+  friend class BigIntWords;
 
  public:
   static constexpr size_t max_words = max_words_template;
@@ -27,9 +27,9 @@ class BigIntBase {
     return words_[i];
   }
 
-  constexpr BigIntBase(int used_words) : used_words_(used_words) { }
+  constexpr BigIntWords(int used_words) : used_words_(used_words) { }
 
-  constexpr BigIntBase(const BigUIntWord* words, size_t used_words) :
+  constexpr BigIntWords(const BigUIntWord* words, size_t used_words) :
       used_words_(used_words) {
     assert(used_words <= max_words);
     for (size_t i = 0; i < used_words; ++i) {
@@ -38,8 +38,8 @@ class BigIntBase {
   }
 
   template <size_t other_max_words>
-  constexpr BigIntBase(size_t used_words, size_t copy_words,
-                       const BigIntBase<other_max_words>& from) :
+  constexpr BigIntWords(size_t used_words, size_t copy_words,
+                       const BigIntWords<other_max_words>& from) :
       used_words_(std::min(size_t(max_words), used_words)) {
     for (size_t i = 0; i < copy_words; ++i) {
       words_[i] = from.words_[i];
@@ -47,7 +47,7 @@ class BigIntBase {
   }
 
   template <size_t other_max_words>
-  constexpr BigIntBase(const BigIntBase<other_max_words>& other) :
+  constexpr BigIntWords(const BigIntWords<other_max_words>& other) :
       used_words_(max_words < other_max_words ?
                   std::min(other.used_words(), size_t(max_words)) :
                   other.used_words()) {
@@ -61,7 +61,7 @@ class BigIntBase {
 
   template <size_t other_words>
   constexpr size_t GetCommonWordCount(
-      const BigIntBase<other_words>& other) const {
+      const BigIntWords<other_words>& other) const {
     return std::min(used_words(), other.used_words());
   }
 
@@ -78,7 +78,7 @@ class BigIntBase {
 
   template <size_t other_max_words>
   constexpr void AssignWithoutTrim(
-      const BigIntBase<other_max_words>& other, size_t used) {
+      const BigIntWords<other_max_words>& other, size_t used) {
     assert(used <= max_words);
     AllocateWords(used);
     for (size_t i = 0; i < used; ++i) {
@@ -113,4 +113,4 @@ class BigIntBase {
 
 }  // walnut
 
-#endif // WALNUT_BIG_INT_BASE_H__
+#endif // WALNUT_BIG_INT_WORDS_H__

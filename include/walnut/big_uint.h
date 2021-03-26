@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cassert>
 
-#include "walnut/big_int_base.h"
+#include "walnut/big_int_words.h"
 #include "walnut/big_uint_word.h"
 
 namespace walnut {
@@ -14,7 +14,7 @@ class BigUIntImpl {
   template <size_t other_words>
   friend class BigUIntImpl;
 
-  using Storage = BigIntBase<max_words_template>;
+  using Storage = BigIntWords<max_words_template>;
 
  public:
   static constexpr size_t bits_per_word = Storage::bits_per_word;
