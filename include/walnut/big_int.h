@@ -8,7 +8,7 @@ namespace walnut {
 // `bits` is the minimum number of bits BigInt can hold. For example
 // BigInt<128> can hold 128 bit signed integers.
 template <size_t bits_template>
-class BigInt {
+class BigInt : public BigIntImpl {
   template <size_t other_bits>
   friend class BigInt;
  public:
@@ -25,28 +25,26 @@ class BigInt {
   };
 
   static constexpr size_t bits = bits_template;
-  static constexpr size_t bits_per_word = BigIntImpl::bits_per_word;
-  static constexpr size_t bytes_per_word = BigIntImpl::bytes_per_word;
+  using BigIntImpl::bits_per_word;
+  using BigIntImpl::bytes_per_word;
   static constexpr size_t word_count = (bits + bits_per_word - 1) /
                                        bits_per_word;
 
-  constexpr BigInt() { }
-
-  explicit constexpr BigInt(BigIntHalfWord value) : rep_(value) { }
-
-  explicit constexpr BigInt(BigIntWord value) : rep_(value) { }
+  using BigIntImpl::BigIntImpl;
 
   template <size_t other_bits>
-  constexpr BigInt(const BigInt<other_bits>& other) : rep_(other.rep_) { }
+  constexpr BigInt(const BigInt<other_bits>& other) : BigIntImpl(other) { }
+
+  constexpr BigInt(const BigIntImpl& other) : BigIntImpl(other) { }
 
   template <size_t other_bits>
   constexpr BigInt<bits>& operator = (const BigInt<other_bits>& other) {
-    rep_ = other.rep_;
+    BigIntImpl::operator=(other);
     return *this;
   }
 
   constexpr BigInt<bits>& operator = (BigIntWord other) {
-    rep_ = other;
+    BigIntImpl::operator=(other);
     return *this;
   }
 
@@ -60,14 +58,14 @@ class BigInt {
 
   template <size_t result_bits=bits>
   constexpr BigInt<result_bits> operator << (int shift) const {
-    return rep_ << shift;
+    return BigIntImpl::operator<<(shift);
   }
 
   template <size_t result_bits = 0, size_t other_bits,
             size_t rb = result_bits == 0 ?
               std::max(bits, other_bits) + 1 : result_bits>
   constexpr BigInt<rb> Add(const BigInt<other_bits>& other) const {
-    return rep_.Add(other.rep_);
+    return BigIntImpl::Add(other);
   }
 
   template <size_t other_bits>
@@ -77,38 +75,38 @@ class BigInt {
   }
 
   constexpr BigInt<bits + 1> operator+(int other) const {
-    return rep_.Add(BigIntImpl(other));
+    return BigIntImpl::Add(BigIntImpl(other));
   }
 
   template <size_t other_bits>
   constexpr BigInt& operator+=(const BigInt<other_bits>& other) {
-    rep_ += other.rep_;
+    BigIntImpl::operator+=(other);
     return *this;
   }
 
   constexpr BigInt& operator+=(BigIntHalfWord other) {
-    rep_ += other;
+    BigIntImpl::operator+=(other);
     return *this;
   }
 
   constexpr BigInt& operator++() {
-    ++rep_;
+    BigIntImpl::operator++();
     return *this;
   }
 
   template <size_t other_bits>
   constexpr BigInt& operator-=(const BigInt<other_bits>& other) {
-    rep_ -= other.rep_;
+    BigIntImpl::operator-=(other);
     return *this;
   }
 
   constexpr BigInt& operator-=(BigIntHalfWord other) {
-    rep_ -= other;
+    BigIntImpl::operator-=(other);
     return *this;
   }
 
   constexpr BigInt& operator--() {
-    --rep_;
+    BigIntImpl::operator--();
     return *this;
   }
 
@@ -116,7 +114,7 @@ class BigInt {
             size_t rb = result_bits == 0 ?
               std::max(bits, other_bits) + 1 : result_bits>
   constexpr BigInt<rb> Subtract(const BigInt<other_bits>& other) const {
-    return rep_.Subtract(other.rep_);
+    return BigIntImpl::Subtract(other);
   }
 
   template <size_t other_bits>
@@ -126,108 +124,46 @@ class BigInt {
   }
 
   constexpr BigInt<bits + 1> operator-(int other) const {
-    return rep_.Subtract(BigIntImpl(other));
+    return BigIntImpl::Subtract(BigIntImpl(other));
   }
 
   template <size_t other_bits>
   constexpr BigInt<bits + other_bits - 1>
   Multiply(const BigInt<other_bits>& other) const {
-    return rep_.Multiply(other.rep_);
+    return BigIntImpl::Multiply(other);
   }
 
   template <size_t other_bits>
   constexpr BigInt<bits + other_bits - 1>
   operator*(const BigInt<other_bits>& other) const {
-    return rep_ * other.rep_;
+    return BigIntImpl::operator*(other);
   }
 
   constexpr BigInt<bits + sizeof(int)*8 - 1>
   operator*(const int other) const {
-    return rep_ * other;
+    return BigIntImpl::operator*(other);
   }
 
   constexpr BigInt& operator*=(const int other) {
-    rep_ *= other;
+    BigIntImpl::operator*=(other);
     return *this;
-  }
-
-  template <size_t other_bits>
-  constexpr bool operator < (const BigInt<other_bits>& other) const {
-    return rep_ < other.rep_;
-  }
-
-  constexpr bool operator < (int other) const {
-    return rep_ < other;
-  }
-
-  // Returns -1 if *this < `other`,
-  //          0 if *this ==  `other`, or
-  //          1 if *this > `other`.
-  template <size_t other_bits>
-  constexpr int Compare(const BigInt<other_bits>& other) const {
-    return rep_.Compare(other.rep_);
-  }
-
-  template <size_t other_bits>
-  constexpr bool operator <= (const BigInt<other_bits>& other) const {
-    return rep_ <= other.rep_;
-  }
-
-  constexpr bool operator <= (int other) const {
-    return rep_ <= other;
-  }
-
-  template <size_t other_bits>
-  constexpr bool operator > (const BigInt<other_bits>& other) const {
-    return rep_ > other.rep_;
-  }
-
-  constexpr bool operator > (int other) const {
-    return rep_ > other;
-  }
-
-  template <size_t other_bits>
-  constexpr bool operator >= (const BigInt<other_bits>& other) const {
-    return rep_ >= other.rep_;
-  }
-
-  constexpr bool operator >= (int other) const {
-    return rep_ >= other;
-  }
-
-  template <size_t other_bits>
-  constexpr bool operator == (const BigInt<other_bits>& other) const {
-    return rep_ == other.rep_;
-  }
-
-  constexpr bool operator == (int other) const {
-    return rep_ == other;
-  }
-
-  template <size_t other_bits>
-  constexpr bool operator != (const BigInt<other_bits>& other) const {
-    return rep_ != other.rep_;
-  }
-
-  constexpr bool operator != (int other) const {
-    return rep_ != other;
   }
 
   // Divide `this` by `other`. Return the quotient.
   template <size_t other_bits>
   constexpr BigInt<bits> operator/(const BigInt<other_bits>& other) const {
-    return rep_ / other.rep_;
+    return BigIntImpl::operator/(other);
   }
 
   // Divide `this` by `other`. Return the quotient.
   constexpr BigInt<bits> operator/(int other) const {
-    return rep_ / other;
+    return BigIntImpl::operator/(other);
   }
 
   // Divide `this` by `other`. Return the quotient.
   template <size_t other_bits>
   constexpr BigInt<bits>& operator/=(const BigInt<other_bits>& other) {
-    *this = rep_ / other.rep_;
+    *this = BigIntImpl::operator/(other);
     return *this;
   }
 
@@ -235,7 +171,7 @@ class BigInt {
   template <size_t other_bits>
   constexpr BigInt<bits> DivideRemainder(const BigInt<other_bits>& other,
       BigInt<std::min(bits, other_bits)>* remainder_out) const {
-    return rep_.DivideRemainder(other.rep_, &remainder_out->rep_);
+    return BigIntImpl::DivideRemainder(other, remainder_out);
   }
 
   // Divide `this` by `other`. Return the remainder.
@@ -245,38 +181,38 @@ class BigInt {
   template <size_t other_bits>
   constexpr BigInt<std::min(bits, other_bits)> operator%(
       const BigInt<other_bits>& other) const {
-    return rep_ % other.rep_;
+    return BigIntImpl::operator%(other);
   }
 
   // Negates *this and returns whether the result overflowed.
   //
   // A return value of false means it did not overflow.
   constexpr bool Negate() {
-    return rep_.Negate();
+    return BigIntImpl::Negate();
   }
 
   constexpr BigInt<bits> operator-() const {
-    return -rep_;
+    return BigIntImpl::operator-();
   }
 
   constexpr BigInt<bits> abs() const {
-    return rep_.abs();
+    return BigIntImpl::abs();
   }
 
   constexpr BigInt<bits+1> GetAbs(bool& was_signed) const {
-    return rep_.GetAbs(was_signed);
+    return BigIntImpl::GetAbs(was_signed);
   }
 
   // Returns a negative integer if `*this` is negative, 0 if *`this` is 0, or a
   // positive integer if `*this` is positive.
   constexpr BigIntWord GetSign() const {
-    return rep_.GetSign();
+    return BigIntImpl::GetSign();
   }
 
   // Returns 1 if this is greater than or equal to 0.
   // Returns -1 if this is less than 0.
   constexpr int GetAbsMult() const {
-    return rep_.GetAbsMult();
+    return BigIntImpl::GetAbsMult();
   }
 
   // Returns 1 if this and other >= 0 or if both are negative.
@@ -288,13 +224,13 @@ class BigInt {
 
   template <size_t other_bits>
   constexpr bool LessThan(bool flip, const BigInt<other_bits>& other) const {
-    return rep_.LessThan(flip, other.rep_);
+    return BigIntImpl::LessThan(flip, other);
   }
 
   // Returns 0 if this is greater than or equal to 0.
   // Returns -1 if this is less than 0.
   constexpr BigIntWord SignExtension() const {
-    return BigIntWord{rep_.SignExtension()};
+    return BigIntWord{BigIntImpl::SignExtension()};
   }
 
   constexpr bool IsZero() const {
@@ -303,24 +239,24 @@ class BigInt {
 
   template <size_t other_bits>
   constexpr bool HasSameSign(const BigInt<other_bits>& other) const {
-    return rep_.HasSameSign(other.rep_);
+    return BigIntImpl::HasSameSign(other);
   }
 
   template <size_t other_bits>
   constexpr bool HasDifferentSign(const BigInt<other_bits>& other) const {
-    return rep_.HasDifferentSign(other.rep_);
+    return BigIntImpl::HasDifferentSign(other);
   }
 
   constexpr uint32_t low_uint32() const {
-    return rep_.low_uint32();
+    return BigIntImpl::low_uint32();
   }
 
   constexpr uint64_t low_uint64() const {
-    return rep_.low_uint64();
+    return BigIntImpl::low_uint64();
   }
 
   constexpr int ToInt() const {
-    return rep_.ToInt();
+    return BigIntImpl::ToInt();
   }
 
   // Verifies the value is in the supported range.
@@ -355,21 +291,13 @@ class BigInt {
   }
 
   explicit operator double() const {
-    return (double)rep_;
+    return BigIntImpl::operator double();
   }
-
-  template <size_t print_bits>
-  friend std::ostream& operator<<(std::ostream& out, const BigInt<print_bits>& bigint);
-
- private:
-  constexpr BigInt(const BigIntImpl& other) : rep_(other) { }
-
-  BigIntImpl rep_;
 };
 
 template <size_t print_bits>
 std::ostream& operator<<(std::ostream& out, const BigInt<print_bits>& bigint) {
-  return out << bigint.rep_;
+  return out << static_cast<const BigIntImpl&>(bigint);
 }
 
 }  // walnut
