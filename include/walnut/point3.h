@@ -105,9 +105,9 @@ class Point3 {
         vector_from_origin() - other);
   }
 
-  Point2<component_bits> DropDimension(int drop_dimension) const {
+  Point2 DropDimension(int drop_dimension) const {
     Vector2 v = vector_from_origin().DropDimension(drop_dimension);
-    return Point2<component_bits>(v.x(), v.y());
+    return Point2(v.x(), v.y());
   }
 
   // Returns 0 if (p1, `this`, p3) are collinear.

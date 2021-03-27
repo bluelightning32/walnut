@@ -993,7 +993,7 @@ TEST(ConvexPolygon, GetLastNegSideVertex) {
   };
 
   const ConvexPolygon<32> polygon = MakeConvexPolygon(p);
-  HalfSpace2<> half_space(Point2<>(0, 2), Point2<>(1, 2));
+  HalfSpace2<> half_space(Point2(0, 2), Point2(1, 2));
 
   for (size_t neg_side_index = 9; neg_side_index <= 9 + 4; neg_side_index++) {
     for (size_t pos_side_index = 5; pos_side_index <= 8; pos_side_index++) {

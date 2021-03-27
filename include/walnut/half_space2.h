@@ -60,21 +60,18 @@ class HalfSpace2 {
   HalfSpace2(const HalfSpace2<other_vector_bits, other_dist_bits>& other) :
     HalfSpace2(other.normal(), other.d()) { }
 
-  template <size_t point_bits>
-  HalfSpace2(const Point2<point_bits>& p1, const Point2<point_bits>& p2) :
+  HalfSpace2(const Point2& p1, const Point2& p2) :
     normal_((p2 - p1).GetPerpendicular()),
     dist_(normal_.Dot(p1.vector_from_origin())) { }
 
   // Returns >0 if `v` is in the half-space, 0 if `v` is coincident with the
   // line, or <0 if `v` is outside of the half-space.
-  template <size_t v_bits>
-  int Compare(const Point2<v_bits>& v) const {
+  int Compare(const Point2& v) const {
     return normal_.Dot(v.vector_from_origin()).Compare(dist_);
   }
 
   // Returns true if the point is on the line
-  template <size_t v_bits>
-  bool IsCoincident(const Point2<v_bits>& v) const {
+  bool IsCoincident(const Point2& v) const {
     return Compare(v) == 0;
   }
 
@@ -169,14 +166,13 @@ class HalfSpace2 {
 template <size_t point3_bits_template = 32>
 class HalfSpace2FromPoint2Builder {
  public:
-  using Point2Rep = Point2<point3_bits_template>;
   using HalfSpace2Rep = HalfSpace2<(point3_bits_template - 1)*1 + 2,
                                    (point3_bits_template - 1)*2 + 2>;
   using VectorInt = typename HalfSpace2Rep::VectorInt;
   using DistInt = typename HalfSpace2Rep::DistInt;
 
-  static HalfSpace2Rep Build(const Point2Rep& p1,
-                             const Point2Rep& p2) {
+  static HalfSpace2Rep Build(const Point2& p1,
+                             const Point2& p2) {
     return HalfSpace2Rep(p1, p2);
   }
 };

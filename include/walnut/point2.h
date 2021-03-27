@@ -5,21 +5,12 @@
 
 namespace walnut {
 
-template <size_t coord_bits_template = 32>
 class Point2 {
  public:
-  // The minimum number of bits to support for each coordinate.
-  //
-  // Note that the BigInt may round up the requested number of bits and end up
-  // supporting more bits. Also note that the BigInt is faster when not all of
-  // the requested bits are used.
-  static constexpr size_t coord_bits = coord_bits_template;
-
   // Leaves the coordinates in an undefined state
   Point2() = default;
 
-  template <size_t other_coord_bits>
-  Point2(const Point2<other_coord_bits>& other) :
+  Point2(const Point2& other) :
     Point2(other.coords()[0], other.coords()[1]) { }
 
   Point2(const BigIntImpl& x, const BigIntImpl& y) :
@@ -51,13 +42,11 @@ class Point2 {
     return vector_from_origin_.y();
   }
 
-  template <size_t other_coord_bits>
-  bool operator == (const Point2<other_coord_bits>& other) const {
+  bool operator == (const Point2& other) const {
     return vector_from_origin() == other.vector_from_origin();
   }
 
-  template <size_t other_coord_bits>
-  Vector2 operator-(const Point2<other_coord_bits>& other) const {
+  Vector2 operator-(const Point2& other) const {
     return vector_from_origin() - other.vector_from_origin();
   }
 
@@ -65,9 +54,8 @@ class Point2 {
   // Returns >0 if p3 is counter-clockwise from p1, with `this` as the center
   // point.
   // Returns <0 if p3 is clockwise from p1, with `this` as the center point.
-  template <size_t other_coord_bits>
-  BigIntWord GetTwistDir(const Point2<other_coord_bits>& p1,
-                         const Point2<other_coord_bits>& p3) {
+  BigIntWord GetTwistDir(const Point2& p1,
+                         const Point2& p3) {
     return (p1 - *this).Cross(p3 - *this).GetSign();
   }
 

@@ -76,8 +76,7 @@ class HomoPoint2 {
   HomoPoint2(int x, int y, int w) :
     vector_from_origin_(x, y), dist_denom_(w) { }
 
-  template <size_t other_num_bits>
-  HomoPoint2(const Point2<other_num_bits>& other) :
+  HomoPoint2(const Point2& other) :
     vector_from_origin_(other.vector_from_origin()), dist_denom_(1) { }
 
   template <size_t other_denom_bits>
@@ -105,8 +104,7 @@ class HomoPoint2 {
   }
 
   // Note that everything equals the 0 point with a 0 denominator.
-  template <size_t other_bits>
-  bool operator==(const Point2<other_bits>& other) const {
+  bool operator==(const Point2& other) const {
     return vector_from_origin() == other.vector_from_origin().Scale(w());
   }
 
@@ -118,8 +116,7 @@ class HomoPoint2 {
   }
 
   // Note that everything equals the 0 point with a 0 denominator.
-  template <size_t other_bits>
-  bool operator!=(const Point2<other_bits>& other) const {
+  bool operator!=(const Point2& other) const {
     return !(*this == other);
   }
 
@@ -128,8 +125,8 @@ class HomoPoint2 {
   DenomInt dist_denom_;
 };
 
-template <size_t a_bits, size_t b_num_bits, size_t b_denom_bits>
-bool operator==(const Point2<a_bits>& a,
+template <size_t b_num_bits, size_t b_denom_bits>
+bool operator==(const Point2& a,
                 const HomoPoint2<b_num_bits, b_denom_bits>& b) {
   return b == a;
 }
