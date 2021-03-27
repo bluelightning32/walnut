@@ -76,6 +76,11 @@ class BigIntWords {
     }
   }
 
+  constexpr BigIntWords& operator=(const BigIntWords& other) {
+    Assign(other, other.size());
+    return *this;
+  }
+
   constexpr void push_back(BigUIntWord word) {
     const size_t used = size();
     assert(used < max_words);

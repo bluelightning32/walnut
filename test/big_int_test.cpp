@@ -391,6 +391,14 @@ TEST(BigInt, NegateInt128Min) {
   EXPECT_EQ(result, expected);
 }
 
+TEST(BigInt, NegateInt128MinAfterAssign) {
+  BigInt<192> a = BigInt<192>{5} << 128;
+  a = BigInt<192>{std::numeric_limits<int64_t>::min()} << 64;
+  a.Negate();
+  const BigInt<192> expected = BigInt<192>{1} << 127;
+  EXPECT_EQ(a, expected);
+}
+
 TEST(BigInt, NegateInt128MaxExtraRoom) {
   const BigInt<192> a = BigInt<128>::max_value();
   const BigInt<192> result = -a;

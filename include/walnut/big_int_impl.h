@@ -736,7 +736,7 @@ class BigIntImpl {
       overflowed = i == max_words;
       if (!overflowed) {
         ++i;
-        words_.resize(i);
+        words_.push_back(BigUIntWord{0});
       }
     }
     assert(used_words() == i);
