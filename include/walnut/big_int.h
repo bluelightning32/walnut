@@ -12,9 +12,7 @@ class BigInt {
   template <size_t other_bits>
   friend class BigInt;
 
-  using BigIntRep = BigIntImpl<(bits_template +
-                                BigUIntWord::bits_per_word - 1) /
-                               BigUIntWord::bits_per_word>;
+  using BigIntRep = BigIntImpl;
  public:
 
   template <size_t other_bits = bits_template>
@@ -71,8 +69,7 @@ class BigInt {
             size_t rb = result_bits == 0 ?
               std::max(bits, other_bits) + 1 : result_bits>
   constexpr BigInt<rb> Add(const BigInt<other_bits>& other) const {
-    return rep_.template Add<(rb + BigUIntWord::bits_per_word - 1) /
-                             BigUIntWord::bits_per_word> (other.rep_);
+    return rep_.Add(other.rep_);
   }
 
   template <size_t other_bits>
@@ -82,9 +79,7 @@ class BigInt {
   }
 
   constexpr BigInt<bits + 1> operator+(int other) const {
-    constexpr size_t rb = std::max(bits, sizeof(int) * 8) + 1;
-    return rep_.template Add<(rb + BigUIntWord::bits_per_word - 1) /
-                             BigUIntWord::bits_per_word>(BigIntImpl<1>(other));
+    return rep_.Add(BigIntImpl(other));
   }
 
   template <size_t other_bits>
@@ -123,8 +118,7 @@ class BigInt {
             size_t rb = result_bits == 0 ?
               std::max(bits, other_bits) + 1 : result_bits>
   constexpr BigInt<rb> Subtract(const BigInt<other_bits>& other) const {
-    return rep_.template Subtract<(rb + BigUIntWord::bits_per_word - 1) /
-                                  BigUIntWord::bits_per_word> (other.rep_);
+    return rep_.Subtract(other.rep_);
   }
 
   template <size_t other_bits>
@@ -134,11 +128,7 @@ class BigInt {
   }
 
   constexpr BigInt<bits + 1> operator-(int other) const {
-    constexpr size_t rb = std::max(bits, sizeof(int) * 8) + 1;
-    return rep_.template Subtract<(
-                                   rb + BigUIntWord::bits_per_word - 1) /
-                                   BigUIntWord::bits_per_word>(
-      BigIntImpl<1>(other));
+    return rep_.Subtract(BigIntImpl(other));
   }
 
   template <size_t other_bits>
@@ -374,8 +364,7 @@ class BigInt {
   friend std::ostream& operator<<(std::ostream& out, const BigInt<print_bits>& bigint);
 
  private:
-  template <size_t other_words>
-  constexpr BigInt(const BigIntImpl<other_words>& other) : rep_(other) { }
+  constexpr BigInt(const BigIntImpl& other) : rep_(other) { }
 
   BigIntRep rep_;
 };

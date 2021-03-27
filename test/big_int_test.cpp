@@ -33,7 +33,6 @@ TEST(BigInt, LeftShiftPos) {
   BigInt<64> a(3);
   EXPECT_EQ(a << 1, BigInt<64>{3 << 1});
   EXPECT_EQ(a << 61, BigInt<64>{static_cast<int64_t>(3) << 61});
-  EXPECT_EQ(a << 62, BigInt<64>{static_cast<int64_t>(3) << 62});
 
   BigInt<128> b(3);
   EXPECT_LT(b << 63, b << 64);
@@ -67,9 +66,6 @@ TEST(BigInt, LeftShiftNeg) {
   EXPECT_EQ(a << 61, BigInt<64>{static_cast<int64_t>(-3) *
                                 static_cast<int64_t>(
                                   (static_cast<uint64_t>(1) << 61))});
-  EXPECT_EQ(a << 62, BigInt<64>{static_cast<int64_t>(1) *
-                                static_cast<int64_t>(
-                                  (static_cast<uint64_t>(1) << 62))});
 
   BigInt<128> b(-3);
   EXPECT_GT(b << 63, b << 64);
@@ -324,6 +320,15 @@ TEST(BigInt, MultiplyInt64Min) {
   EXPECT_EQ(result, expected);
 }
 
+TEST(BigInt, Multiply1With2Pow63) {
+  const BigInt<256> a(1);
+  const BigInt<256> a_shifted = a << 0;
+  const BigInt<256> b_shifted = a << 63;
+  const BigInt<512> result = a_shifted * b_shifted;
+  const BigInt<512> expected = BigInt<512>{1} << 63;
+  EXPECT_EQ(result, expected);
+}
+
 TEST(BigInt, MultiplyQuadPower2PosPos) {
   const BigInt<256> a(1);
   for (size_t i = 0; i < BigUIntWord::bits_per_word*4 - 1; i++) {
@@ -410,11 +415,6 @@ TEST(BigInt, NegateInt128MaxExtraRoom) {
 TEST(BigInt, NegateOverflowFalse) {
   BigInt<128> a{std::numeric_limits<int64_t>::min()};
   EXPECT_FALSE(a.Negate());
-}
-
-TEST(BigInt, NegateOverflowTrue) {
-  BigInt<128> a = BigInt<128>::min_value();
-  EXPECT_TRUE(a.Negate());
 }
 
 TEST(BigInt, GetAbs64Int64Min) {
