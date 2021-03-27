@@ -130,19 +130,7 @@ class HalfSpace2 {
   BigIntImpl dist_;
 };
 
-// This is a wrapper around the HalfSpace2 constructor that takes 2 Point2's.
-// The only reason to use this wrapper is that it figures out how many bits are
-// necessary in the worst case for the numerator and denominator, given the
-// number of bits in each Point2.
-class HalfSpace2FromPoint2Builder {
- public:
-  static HalfSpace2 Build(const Point2& p1,
-                             const Point2& p2) {
-    return HalfSpace2(p1, p2);
-  }
-};
-
-std::ostream& operator<<(std::ostream& out, const HalfSpace2& p) {
+inline std::ostream& operator<<(std::ostream& out, const HalfSpace2& p) {
   return out << "{ x*" << p.x()
              << " + y*" << p.y()
              << " = " << p.d()
