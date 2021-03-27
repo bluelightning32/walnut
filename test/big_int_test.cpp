@@ -584,6 +584,10 @@ TEST(BigInt, MinValue) {
   EXPECT_EQ(BigInt<98>::min_value(), BigInt<128>{-1} << 97);
 }
 
+TEST(BigInt, MinValue65) {
+  EXPECT_EQ(BigInt<65>::min_value(), BigInt<128>{-1} << 64);
+}
+
 TEST(BigInt, MinValueInt256) {
   EXPECT_EQ(BigInt<256>::min_value(), BigInt<256>{-1} << 255);
 }
