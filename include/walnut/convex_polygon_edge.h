@@ -47,7 +47,9 @@ struct ConvexPolygonEdge : public ParentTemplate {
   template <size_t num_bits, size_t denom_bits>
   ConvexPolygonEdge(const HomoPoint3<num_bits, denom_bits>& vertex,
                     const HomoPoint3<num_bits, denom_bits>& next_vertex) :
-    vertex_(vertex), line_(vertex, next_vertex) { }
+      vertex_(vertex), line_(vertex, next_vertex) {
+    assert(line_.IsValid());
+  }
 
   // Parent must be default-constructible to use this constructor.
   //

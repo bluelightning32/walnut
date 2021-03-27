@@ -100,6 +100,7 @@ class ConvexPolygon {
     const HomoPoint3<num_bits, denom_bits>* prev = &vertices.back();
     for (const HomoPoint3<num_bits, denom_bits>& vertex : vertices) {
       edges_.emplace_back(*prev, vertex);
+      assert(edges_.back().IsValidState());
       prev = &vertex;
     }
     assert(IsValidState());
