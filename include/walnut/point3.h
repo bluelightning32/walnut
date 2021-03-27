@@ -9,9 +9,6 @@ namespace walnut {
 template <size_t component_bits_template = 32>
 class Point3 {
  public:
-  using VectorRep = Vector3;
-  using BigIntRep = BigIntImpl;
-
   // The minimum number of bits to support for each component.
   //
   // Note that the BigInt may round up the requested number of bits and end up
@@ -35,39 +32,39 @@ class Point3 {
 
   Point3(int x, int y, int z) : vector_from_origin_(x, y, z) { }
 
-  std::array<BigIntRep, 3>& components() {
+  std::array<BigIntImpl, 3>& components() {
     return vector_from_origin_.components();
   }
 
-  const std::array<BigIntRep, 3>& components() const {
+  const std::array<BigIntImpl, 3>& components() const {
     return vector_from_origin_.components();
   }
 
-  const VectorRep& vector_from_origin() const {
+  const Vector3& vector_from_origin() const {
     return vector_from_origin_;
   }
 
-  BigIntRep& x() {
+  BigIntImpl& x() {
     return vector_from_origin_.x();
   }
 
-  const BigIntRep& x() const {
+  const BigIntImpl& x() const {
     return vector_from_origin_.x();
   }
 
-  BigIntRep& y() {
+  BigIntImpl& y() {
     return vector_from_origin_.y();
   }
 
-  const BigIntRep& y() const {
+  const BigIntImpl& y() const {
     return vector_from_origin_.y();
   }
 
-  BigIntRep& z() {
+  BigIntImpl& z() {
     return vector_from_origin_.z();
   }
 
-  const BigIntRep& z() const {
+  const BigIntImpl& z() const {
     return vector_from_origin_.z();
   }
 
@@ -140,7 +137,7 @@ class Point3 {
   }
 
  private:
-  VectorRep vector_from_origin_;
+  Vector3 vector_from_origin_;
 };
 
 template <size_t component_bits>
