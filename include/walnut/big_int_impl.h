@@ -17,13 +17,11 @@ class BigIntImpl {
   template <size_t other_max_words>
   friend class BigIntImpl;
 
-  using Storage = BigIntWords<max_words_template>;
-
  public:
-  static constexpr size_t bits_per_word = Storage::bits_per_word;
-  static constexpr size_t bytes_per_word = Storage::bytes_per_word;
-  static constexpr size_t max_bits = Storage::max_bits;
-  static constexpr size_t max_words = Storage::max_words;
+  static constexpr size_t bits_per_word = BigIntWords::bits_per_word;
+  static constexpr size_t bytes_per_word = BigIntWords::bytes_per_word;
+  static constexpr size_t max_words = max_words_template;
+  static constexpr size_t max_bits = max_words * bits_per_word;
 
   constexpr BigIntImpl() : BigIntImpl(0) {
   }
@@ -937,7 +935,7 @@ class BigIntImpl {
     return result;
   }
 
-  Storage words_;
+  BigIntWords words_;
 };
 
 template <size_t max_words>

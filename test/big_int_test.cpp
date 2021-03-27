@@ -29,13 +29,6 @@ TEST(BigInt, CopyConstructBig) {
   BigInt<big_bits> copy(big_value);
 }
 
-TEST(BigInt, ConstructorAssertsOnOverflow) {
-  static constexpr int big_bits =
-    BigInt<32>::word_count*BigInt<32>::bits_per_word*2;
-  BigInt<big_bits> big_value = BigInt<big_bits>::max_value();
-  ASSERT_DEBUG_DEATH(BigInt<32> constructed(big_value), "max_words");
-}
-
 TEST(BigInt, LeftShiftPos) {
   BigInt<64> a(3);
   EXPECT_EQ(a << 1, BigInt<64>{3 << 1});

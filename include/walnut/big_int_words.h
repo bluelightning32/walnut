@@ -14,16 +14,10 @@ namespace walnut {
 //
 // This container always has at least size 1. The first word is stored inline.
 // The remaining words are heap allocated.
-template <size_t max_words_template>
 class BigIntWords {
-  template <size_t other_max_words>
-  friend class BigIntWords;
-
  public:
-  static constexpr size_t max_words = max_words_template;
   static constexpr size_t bits_per_word = BigUIntWord::bits_per_word;
   static constexpr size_t bytes_per_word = BigUIntWord::bytes_per_word;
-  static constexpr size_t max_bits = max_words * bits_per_word;
 
   constexpr BigIntWords() = default;
 
@@ -32,37 +26,32 @@ class BigIntWords {
 
   constexpr BigIntWords(BigIntWords&& other) :
       first_(other.first_),
-      extra_size_(std::min(size_t(max_words) - 1, other.extra_size_)) {
+      extra_size_(other.extra_size_) {
     std::swap(extra_, other.extra_);
   }
 
   constexpr BigIntWords(const BigIntWords& other) :
       first_(other.first_),
-      extra_size_(std::min(size_t(max_words) - 1, other.extra_size_)),
+      extra_size_(other.extra_size_),
       extra_(AllocateExtra(extra_size_)) {
-    assert(other.size() <= max_words);
     for (size_t i = 0; i < other.extra_size_; ++i) {
       extra_[i] = other.extra_[i];
     }
   }
 
-  template <size_t other_words>
-  constexpr BigIntWords(const BigIntWords<other_words>& other,
-                        size_t used_words) :
+  constexpr BigIntWords(const BigIntWords& other, size_t used_words) :
       first_(other.first_),
       extra_size_(used_words - 1),
       extra_(AllocateExtra(extra_size_)) {
-    assert(used_words <= max_words);
     for (size_t i = 0; i < extra_size_; ++i) {
       extra_[i] = other.extra_[i];
     }
   }
 
-  template <size_t other_max_words>
   constexpr BigIntWords(size_t used_words, size_t copy_words,
-                        const BigIntWords<other_max_words>& from) :
+                        const BigIntWords& from) :
       first_(from.first_),
-      extra_size_(std::min(size_t(max_words), used_words) - 1),
+      extra_size_(used_words - 1),
       extra_(AllocateExtra(extra_size_)) {
     size_t i = 0;
     for (; i < copy_words - 1; ++i) {
@@ -70,17 +59,6 @@ class BigIntWords {
     }
     for (; i < extra_size_; ++i) {
       extra_[i] = 0;
-    }
-  }
-
-  template <size_t other_max_words>
-  constexpr BigIntWords(const BigIntWords<other_max_words>& other) :
-      first_(other.first_),
-      extra_size_(std::min(size_t(max_words) - 1, other.extra_size_)),
-      extra_(AllocateExtra(extra_size_)) {
-    assert(other.size() <= max_words);
-    for (size_t i = 0; i < other.extra_size_; ++i) {
-      extra_[i] = other.extra_[i];
     }
   }
 
@@ -110,10 +88,8 @@ class BigIntWords {
     }
   }
 
-  template <size_t other_max_words>
   constexpr void Assign(
-      const BigIntWords<other_max_words>& other, size_t used) {
-    assert(used <= max_words);
+      const BigIntWords& other, size_t used) {
     resize_without_copy(used);
     first_ = other.first_;
     for (size_t i = 0; i < used - 1; ++i) {
@@ -123,11 +99,8 @@ class BigIntWords {
 
   constexpr void push_back(BigUIntWord word) {
     const size_t used = size();
-    assert(used < max_words);
-    if (used < max_words) {
-      resize(size() + 1);
-      extra_[used - 1] = word;
-    }
+    resize(size() + 1);
+    extra_[used - 1] = word;
   }
 
   constexpr size_t extra_capacity() const {
@@ -184,29 +157,17 @@ class BigIntWords {
     }
   }
 
-  template <size_t other_max_words>
-  constexpr BigIntWords& operator=(const BigIntWords<other_max_words>& other) {
-    Assign(other, other.size());
-    return *this;
-  }
-
   constexpr BigIntWords& operator=(const BigIntWords& other) {
     Assign(other, other.size());
-    return *this;
-  }
-
-  template <size_t other_max_words>
-  constexpr BigIntWords& operator=(BigIntWords<other_max_words>&& other) {
-    first_ = other.first_;
-    extra_size_ = other.extra_size_;
-    std::swap(extra_, other.extra_);
     return *this;
   }
 
   constexpr BigIntWords& operator=(BigIntWords&& other) {
     first_ = other.first_;
     extra_size_ = other.extra_size_;
-    std::swap(extra_, other.extra_);
+    BigUIntWord* const extra = extra_;
+    extra_ = other.extra_;
+    other.extra_ = extra;
     return *this;
   }
 
@@ -231,7 +192,7 @@ class BigIntWords {
     return &storage->words_[0];
   }
 
-  static constexpr ExtraStorage* GetExtraFromFirst(BigUIntWord* extra) {
+  static ExtraStorage* GetExtraFromFirst(BigUIntWord* extra) {
     return reinterpret_cast<ExtraStorage*>(
         reinterpret_cast<char *>(extra) - offsetof(ExtraStorage, words_[0]));
   }

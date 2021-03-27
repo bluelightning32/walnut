@@ -5,7 +5,7 @@
 namespace walnut {
 
 TEST(BigIntWords, ConstructWithSize) {
-  BigIntWords<4> a(2);
+  BigIntWords a(2);
   EXPECT_EQ(a.size(), 2);
 
   a[0] = 1;
@@ -15,61 +15,61 @@ TEST(BigIntWords, ConstructWithSize) {
 }
 
 TEST(BigIntWords, CopyConstructSize1) {
-  BigIntWords<4> a(1);
+  BigIntWords a(1);
   a[0] = 1;
 
-  BigIntWords<4> b(a);
+  BigIntWords b(a);
   EXPECT_EQ(b.size(), 1);
   EXPECT_EQ(b[0], 1);
 }
 
 TEST(BigIntWords, CopyConstructSize2) {
-  BigIntWords<4> a(2);
+  BigIntWords a(2);
   a[0] = 1;
   a[1] = 2;
 
-  BigIntWords<4> b(a);
+  BigIntWords b(a);
   EXPECT_EQ(b.size(), 2);
   EXPECT_EQ(b[0], 1);
   EXPECT_EQ(b[1], 2);
 }
 
 TEST(BigIntWords, MoveConstructSize1) {
-  BigIntWords<4> a(1);
+  BigIntWords a(1);
   a[0] = 1;
 
-  BigIntWords<4> b(std::move(a));
+  BigIntWords b(std::move(a));
   EXPECT_EQ(b.size(), 1);
   EXPECT_EQ(b[0], 1);
 }
 
 TEST(BigIntWords, MoveConstructSize2) {
-  BigIntWords<4> a(2);
+  BigIntWords a(2);
   a[0] = 1;
   a[1] = 2;
 
-  BigIntWords<4> b(std::move(a));
+  BigIntWords b(std::move(a));
   EXPECT_EQ(b.size(), 2);
   EXPECT_EQ(b[0], 1);
   EXPECT_EQ(b[1], 2);
 }
 
 TEST(BigIntWords, AssignSize1) {
-  BigIntWords<4> a(1);
+  BigIntWords a(1);
   a[0] = 1;
 
-  BigIntWords<4> b(1);
+  BigIntWords b(1);
   b = a;
   EXPECT_EQ(b.size(), 1);
   EXPECT_EQ(b[0], 1);
 }
 
 TEST(BigIntWords, AssignSize2) {
-  BigIntWords<4> a(2);
+  BigIntWords a(2);
   a[0] = 1;
   a[1] = 2;
 
-  BigIntWords<4> b(1);
+  BigIntWords b(1);
   b = a;
   EXPECT_EQ(b.size(), 2);
   EXPECT_EQ(b[0], 1);
@@ -77,21 +77,21 @@ TEST(BigIntWords, AssignSize2) {
 }
 
 TEST(BigIntWords, MoveAssignSize1) {
-  BigIntWords<4> a(1);
+  BigIntWords a(1);
   a[0] = 1;
 
-  BigIntWords<4> b(1);
+  BigIntWords b(1);
   b = std::move(a);
   EXPECT_EQ(b.size(), 1);
   EXPECT_EQ(b[0], 1);
 }
 
 TEST(BigIntWords, MoveAssignSize2) {
-  BigIntWords<4> a(2);
+  BigIntWords a(2);
   a[0] = 1;
   a[1] = 2;
 
-  BigIntWords<4> b(1);
+  BigIntWords b(1);
   b = std::move(a);
   EXPECT_EQ(b.size(), 2);
   EXPECT_EQ(b[0], 1);
@@ -99,7 +99,7 @@ TEST(BigIntWords, MoveAssignSize2) {
 }
 
 TEST(BigIntWords, PushBack) {
-  BigIntWords<32> a(1);
+  BigIntWords a(1);
   a[0] = 1;
 
   size_t i = 1;
@@ -114,7 +114,7 @@ TEST(BigIntWords, PushBack) {
 }
 
 TEST(BigIntWords, Resize) {
-  BigIntWords<4> a(2);
+  BigIntWords a(2);
   a[0] = 1;
   a[1] = 2;
 

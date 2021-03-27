@@ -14,12 +14,10 @@ class BigUIntImpl {
   template <size_t other_words>
   friend class BigUIntImpl;
 
-  using Storage = BigIntWords<max_words_template>;
-
  public:
-  static constexpr size_t bits_per_word = Storage::bits_per_word;
-  static constexpr size_t max_bits = Storage::max_bits;
-  static constexpr size_t max_words = Storage::max_words;
+  static constexpr size_t bits_per_word = BigIntWords::bits_per_word;
+  static constexpr size_t max_words = max_words_template;
+  static constexpr size_t max_bits = max_words * bits_per_word;
 
   constexpr BigUIntImpl() : BigUIntImpl(static_cast<BigUIntHalfWord>(0)) {
   }
@@ -40,13 +38,12 @@ class BigUIntImpl {
     Trim();
   }
 
-  template <size_t other_max_words>
-  constexpr BigUIntImpl(const BigIntWords<other_max_words>& words, size_t used) :
+  constexpr BigUIntImpl(const BigIntWords& words, size_t used) :
       words_(words, used) {
     Trim();
   }
 
-  constexpr const Storage& words() const {
+  constexpr const BigIntWords& words() const {
     return words_;
   }
 
@@ -382,7 +379,7 @@ class BigUIntImpl {
     return quotient;
   }
 
-  Storage words_;
+  BigIntWords words_;
 };
 
 }  // walnut

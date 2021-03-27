@@ -4,15 +4,6 @@
 
 namespace walnut {
 
-TEST(Point3, ConstructorAssertsOnOverflow) {
-  static constexpr int big_coord_bits = Point3<32>::BigIntRep::word_count *
-                                        Point3<32>::BigIntRep::bits_per_word * 2;
-  BigInt<big_coord_bits> big_coord = BigInt<big_coord_bits>::max_value();
-  Point3<big_coord_bits> big_vertex(big_coord, big_coord, big_coord);
-
-  ASSERT_DEBUG_DEATH(Point3<32> v(big_vertex), "max_words");
-}
-
 TEST(Point3, XYZIntConstructor) {
   Point3<> vertex(1, 2, 3);
   EXPECT_EQ(vertex.x(), 1);
