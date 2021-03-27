@@ -275,6 +275,22 @@ class BigUIntImpl {
     }
   }
 
+  // Gets the lowest word after shifting this to the right `shift` bits.
+  //
+  // The caller must ensure:
+  // a. `shift` is greater than or equal to 0.
+  // b. shift / bits_per_word + 1 < max_words
+  BigUIntWord GetAtBitOffset(unsigned shift) const {
+    assert(shift / bits_per_word + 1 < max_words);
+    size_t word_index = shift / bits_per_word;
+    size_t word_offset = shift % bits_per_word;
+    BigUIntWord next{0};
+    if (word_index + 1 < words_.size()) {
+      next = words_[word_index+1];
+    }
+    return words_[word_index].ShiftRight(next, word_offset);
+  }
+
   // Divide `this` by `other`. Return the quotient and store the remainder in `remainder_out`.
   //
   // This function does not have any small word shortcuts.
@@ -337,18 +353,18 @@ class BigUIntImpl {
     for (;
           this_shift_right_bits >= other_shift_right;
           this_shift_right_bits -= bits_per_word/2 - 2) {
-      BigUIntWord this_shifted = remainder.words_.GetAtBitOffset(this_shift_right_bits + bits_per_word);
+      BigUIntWord this_shifted = remainder.GetAtBitOffset(this_shift_right_bits + bits_per_word);
 
       int shift_result_left = this_shift_right_bits - other_shift_right;
       BigUIntWord result = this_shifted / other_shifted;
       quotient.AddLeftShifted(result, shift_result_left);
       remainder.SubtractLeftShifted(other.Multiply(result), shift_result_left + bits_per_word);
-      assert(remainder.words_.GetAtBitOffset(this_shift_right_bits + bits_per_word) <= BigUIntWord{1}<<34);
+      assert(remainder.GetAtBitOffset(this_shift_right_bits + bits_per_word) <= BigUIntWord{1}<<34);
     }
     for (;
           this_shift_right_bits + int(bits_per_word)/2 >= other_shift_right;
           this_shift_right_bits -= bits_per_word/2 - 2) {
-      BigUIntWord this_shifted = remainder.words_.GetAtBitOffset(this_shift_right_bits + bits_per_word);
+      BigUIntWord this_shifted = remainder.GetAtBitOffset(this_shift_right_bits + bits_per_word);
 
       int shift_result_right = other_shift_right - this_shift_right_bits;
       BigUIntWord result = this_shifted / other_shifted;

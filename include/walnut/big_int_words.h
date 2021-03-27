@@ -66,17 +66,6 @@ class BigIntWords {
     }
   }
 
-  // Gets the lowest word after shifting this to the right `shift` bits.
-  //
-  // The caller must ensure:
-  // a. `shift` is greater than or equal to 0.
-  // b. shift / bits_per_word + 1 < max_words
-  BigUIntWord GetAtBitOffset(unsigned shift) const {
-    int word_index = shift / bits_per_word;
-    int word_offset = shift % bits_per_word;
-    return words_[word_index].ShiftRight(words_[word_index+1], word_offset);
-  }
-
   template <size_t other_max_words>
   constexpr void Assign(
       const BigIntWords<other_max_words>& other, size_t used) {
