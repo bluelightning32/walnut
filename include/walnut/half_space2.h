@@ -8,36 +8,25 @@
 namespace walnut {
 
 // Represents part of R^2 on one side of a line.
-template <size_t vector_bits_template = 31*2 + 3,
-          size_t dist_bits_template = 31*3 + 3>
 class HalfSpace2 {
  public:
-  using VectorRep = Vector2;
-  using VectorInt = BigIntImpl;
-  using DistInt = BigInt<dist_bits_template>;
-
-  // The minimum number of bits to support for each of the x and y coordinates.
-  static constexpr size_t vector_bits = vector_bits_template;
-  // The minimum number of bits to support for the d coordinate.
-  static constexpr size_t dist_bits = dist_bits_template;
-
-  const VectorInt& x() const {
+  const BigIntImpl& x() const {
     return normal_.x();
   }
 
-  const VectorInt& y() const {
+  const BigIntImpl& y() const {
     return normal_.y();
   }
 
-  const VectorRep& normal() const {
+  const Vector2& normal() const {
     return normal_;
   }
 
-  DistInt& d() {
+  BigIntImpl& d() {
     return dist_;
   }
 
-  const DistInt& d() const {
+  const BigIntImpl& d() const {
     return dist_;
   }
 
@@ -48,16 +37,15 @@ class HalfSpace2 {
   // Leaves the coordinates in an undefined state
   HalfSpace2() = default;
 
-  HalfSpace2(const Vector2& normal, const DistInt& dist) :
+  HalfSpace2(const Vector2& normal, const BigIntImpl& dist) :
     normal_(normal), dist_(dist) { }
 
-  HalfSpace2(const VectorInt& x, const VectorInt& y, const DistInt& dist) :
+  HalfSpace2(const BigIntImpl& x, const BigIntImpl& y, const BigIntImpl& dist) :
     normal_(x, y), dist_(dist) { }
 
   HalfSpace2(int x, int y, int dist) : normal_(x, y), dist_(dist) { }
 
-  template <size_t other_vector_bits, size_t other_dist_bits>
-  HalfSpace2(const HalfSpace2<other_vector_bits, other_dist_bits>& other) :
+  HalfSpace2(const HalfSpace2& other) :
     HalfSpace2(other.normal(), other.d()) { }
 
   HalfSpace2(const Point2& p1, const Point2& p2) :
@@ -92,18 +80,16 @@ class HalfSpace2 {
   // All vertices are coincident with the returned half-space. `IsValid` will
   // report false for the returned value.
   static HalfSpace2 Zero() {
-    return HalfSpace2(/*normal=*/VectorRep::Zero(), /*dist=*/DistInt(0));
+    return HalfSpace2(/*normal=*/Vector2::Zero(), /*dist=*/BigIntImpl(0));
   }
 
   // Note that everything equals the zero half-space.
   //
   // Two HalfSpace2s are not equal if they refer to different sides of the same
   // line.
-  template <size_t other_vector_bits, size_t other_dist_bits>
-  bool operator==(
-      const HalfSpace2<other_vector_bits, other_dist_bits>& other) const {
-    BigInt<std::max(vector_bits, dist_bits)> scale_other;
-    BigInt<std::max(other_vector_bits, other_dist_bits)> scale_mine;
+  bool operator==(const HalfSpace2& other) const {
+    BigIntImpl scale_other;
+    BigIntImpl scale_mine;
     if (d() != 0) {
       scale_other = d().abs();
       scale_mine = other.d().abs();
@@ -121,21 +107,8 @@ class HalfSpace2 {
   }
 
   // Note that everything equals the zero vector.
-  template <size_t other_vector_bits, size_t other_dist_bits>
-  bool operator!=(
-      const HalfSpace2<other_vector_bits, other_dist_bits>& other) const {
+  bool operator!=(const HalfSpace2& other) const {
     return !(*this == other);
-  }
-
-  // Verifies the fields are in their supported ranges.
-  //
-  // The BigInts can sometimes internally support a larger range than what is
-  // requested in the template parameters. This function returns true if all of
-  // the fields are in their supported range.
-  //
-  // This function exists for testing purposes. It should always return true.
-  bool IsValidState() const {
-    return dist_.IsValidState();
   }
 
   // This function could potentially overflow. The caller must ensure there is
@@ -153,31 +126,23 @@ class HalfSpace2 {
   }
 
  private:
-  VectorRep normal_;
-  DistInt dist_;
+  Vector2 normal_;
+  BigIntImpl dist_;
 };
 
 // This is a wrapper around the HalfSpace2 constructor that takes 2 Point2's.
 // The only reason to use this wrapper is that it figures out how many bits are
 // necessary in the worst case for the numerator and denominator, given the
 // number of bits in each Point2.
-template <size_t point3_bits_template = 32>
 class HalfSpace2FromPoint2Builder {
  public:
-  using HalfSpace2Rep = HalfSpace2<(point3_bits_template - 1)*1 + 2,
-                                   (point3_bits_template - 1)*2 + 2>;
-  using VectorInt = typename HalfSpace2Rep::VectorInt;
-  using DistInt = typename HalfSpace2Rep::DistInt;
-
-  static HalfSpace2Rep Build(const Point2& p1,
+  static HalfSpace2 Build(const Point2& p1,
                              const Point2& p2) {
-    return HalfSpace2Rep(p1, p2);
+    return HalfSpace2(p1, p2);
   }
 };
 
-template <size_t vector_bits, size_t dist_bits>
-std::ostream& operator<<(std::ostream& out,
-                         const HalfSpace2<vector_bits, dist_bits>& p) {
+std::ostream& operator<<(std::ostream& out, const HalfSpace2& p) {
   return out << "{ x*" << p.x()
              << " + y*" << p.y()
              << " = " << p.d()

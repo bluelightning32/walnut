@@ -338,9 +338,8 @@ class ConvexPolygon {
   // The vertex is found using a binary search. This algorithm is good for
   // ConvexPolgyons with many vertices, but a regular linear search is faster
   // for ConvexPolygons with fewer vertices (roughly 5 or fewer vertices).
-  template <size_t vector_bits, size_t dist_bits>
   std::pair<int, size_t> GetPosSideVertex(
-      const HalfSpace2<vector_bits, dist_bits>& half_space, int drop_dimension,
+      const HalfSpace2& half_space, int drop_dimension,
       size_t same_dir_index, size_t opp_dir_index) const;
 
   // Returns the index of the vertex that is outside the given HalfSpace2, if
@@ -377,9 +376,8 @@ class ConvexPolygon {
   // The vertex is found using a binary search. This algorithm is good for
   // ConvexPolgyons with many vertices, but a regular linear search is faster
   // for ConvexPolygons with fewer vertices (roughly 5 or fewer vertices).
-  template <size_t vector_bits, size_t dist_bits>
   std::pair<int, size_t> GetNegSideVertex(
-      const HalfSpace2<vector_bits, dist_bits>& half_space, int drop_dimension,
+      const HalfSpace2& half_space, int drop_dimension,
       size_t same_dir_index, size_t opp_dir_index) const;
 
   // Returns the greatest index of a vertex in the negative side of the
@@ -406,9 +404,8 @@ class ConvexPolygon {
   // The vertex is found using a binary search. This algorithm is good for
   // ConvexPolgyons with many vertices, but a regular linear search is faster
   // for ConvexPolygons with fewer vertices (roughly 5 or fewer vertices).
-  template <size_t vector_bits, size_t dist_bits>
   std::pair<int, size_t> GetLastNegSideVertex(
-      const HalfSpace2<vector_bits, dist_bits>& half_space, int drop_dimension,
+      const HalfSpace2& half_space, int drop_dimension,
       size_t neg_side_index, int neg_side_type, size_t pos_side_index) const;
 
   // Returns the greatest index of a vertex in the positive side of the
@@ -434,9 +431,8 @@ class ConvexPolygon {
   // The vertex is found using a binary search. This algorithm is good for
   // ConvexPolgyons with many vertices, but a regular linear search is faster
   // for ConvexPolygons with fewer vertices (roughly 5 or fewer vertices).
-  template <size_t vector_bits, size_t dist_bits>
   std::pair<int, size_t> GetLastPosSideVertex(
-      const HalfSpace2<vector_bits, dist_bits>& half_space, int drop_dimension,
+      const HalfSpace2& half_space, int drop_dimension,
       size_t neg_side_index, size_t pos_side_index, int pos_side_type) const {
     std::pair<int, size_t> flipped = GetLastNegSideVertex(
         -half_space, drop_dimension, pos_side_index,
@@ -477,9 +473,8 @@ class ConvexPolygon {
   // The ranges are found using a binary search. This algorithm is good for
   // ConvexPolgyons with many vertices, but a regular linear search is faster
   // for ConvexPolygons with fewer vertices (roughly 10 or fewer vertices).
-  template <size_t vector_bits, size_t dist_bits>
   ConvexPolygonSplitRanges FindSplitRangesBisect(
-      const HalfSpace2<vector_bits, dist_bits>& half_space2,
+      const HalfSpace2& half_space2,
       int drop_dimension) const;
 
   // Returns the vertex indices for the positive and negative sides of a
@@ -495,9 +490,8 @@ class ConvexPolygon {
   // The ranges are found using a linear search. This algorithm is good for
   // ConvexPolgyons with few vertices, but a bisect search is faster for
   // ConvexPolygons with more vertices (roughly 10 or more vertices).
-  template <size_t vector_bits, size_t dist_bits>
   ConvexPolygonSplitRanges FindSplitRangesLinear(
-      const HalfSpace2<vector_bits, dist_bits>& half_space2,
+      const HalfSpace2& half_space2,
       int drop_dimension) const;
 
   // Creates both split children.
@@ -755,10 +749,9 @@ size_t ConvexPolygon<point3_bits, EdgeParent>::GetExtremeIndexBisect(
 }
 
 template <size_t point3_bits, typename EdgeParent>
-template <size_t vector_bits, size_t dist_bits>
 std::pair<int, size_t>
 ConvexPolygon<point3_bits, EdgeParent>::GetPosSideVertex(
-    const HalfSpace2<vector_bits, dist_bits>& half_space, int drop_dimension,
+    const HalfSpace2& half_space, int drop_dimension,
     size_t same_dir_index, size_t opp_dir_index) const {
   // Current range being considered by the binary search. The range excludes
   // the begin side but includes the end side.
@@ -789,10 +782,9 @@ ConvexPolygon<point3_bits, EdgeParent>::GetPosSideVertex(
 }
 
 template <size_t point3_bits, typename EdgeParent>
-template <size_t vector_bits, size_t dist_bits>
 std::pair<int, size_t>
 ConvexPolygon<point3_bits, EdgeParent>::GetNegSideVertex(
-    const HalfSpace2<vector_bits, dist_bits>& half_space, int drop_dimension,
+    const HalfSpace2& half_space, int drop_dimension,
     size_t same_dir_index, size_t opp_dir_index) const {
   const auto opp_result = GetPosSideVertex(-half_space, drop_dimension,
                                            opp_dir_index, same_dir_index);
@@ -800,10 +792,9 @@ ConvexPolygon<point3_bits, EdgeParent>::GetNegSideVertex(
 }
 
 template <size_t point3_bits, typename EdgeParent>
-template <size_t vector_bits, size_t dist_bits>
 std::pair<int, size_t>
 ConvexPolygon<point3_bits, EdgeParent>::GetLastNegSideVertex(
-    const HalfSpace2<vector_bits, dist_bits>& half_space, int drop_dimension,
+    const HalfSpace2& half_space, int drop_dimension,
     size_t neg_side_index, int neg_side_type, size_t pos_side_index) const {
   // Current range being considered by the binary search. The range includes
   // the begin side but excludes the end side.
@@ -1011,10 +1002,9 @@ ConvexPolygon<point3_bits, EdgeParent>::GetSplitInfo(
 }
 
 template <size_t point3_bits, typename EdgeParent>
-template <size_t vector_bits, size_t dist_bits>
 ConvexPolygonSplitRanges
 ConvexPolygon<point3_bits, EdgeParent>::FindSplitRangesBisect(
-    const HalfSpace2<vector_bits, dist_bits>& half_space2,
+    const HalfSpace2& half_space2,
     int drop_dimension) const {
   assert(!normal().components()[drop_dimension].IsZero());
   assert(half_space2.IsValid());
@@ -1096,10 +1086,9 @@ ConvexPolygon<point3_bits, EdgeParent>::FindSplitRangesBisect(
 }
 
 template <size_t point3_bits, typename EdgeParent>
-template <size_t vector_bits, size_t dist_bits>
 ConvexPolygonSplitRanges
 ConvexPolygon<point3_bits, EdgeParent>::FindSplitRangesLinear(
-    const HalfSpace2<vector_bits, dist_bits>& half_space2,
+    const HalfSpace2& half_space2,
     int drop_dimension) const {
   assert(!normal().components()[drop_dimension].IsZero());
   assert(half_space2.IsValid());

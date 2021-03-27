@@ -668,11 +668,11 @@ TEST(ConvexPolygon, CounterClockwiseSquareGetPosSideVertex) {
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(p);
 
-  HalfSpace2<> only_corner[] = {
-    HalfSpace2<>(p[1].DropDimension(2), p[3].DropDimension(2)),
-    HalfSpace2<>(p[2].DropDimension(2), p[0].DropDimension(2)),
-    HalfSpace2<>(p[3].DropDimension(2), p[1].DropDimension(2)),
-    HalfSpace2<>(p[0].DropDimension(2), p[2].DropDimension(2)),
+  HalfSpace2 only_corner[] = {
+    HalfSpace2(p[1].DropDimension(2), p[3].DropDimension(2)),
+    HalfSpace2(p[2].DropDimension(2), p[0].DropDimension(2)),
+    HalfSpace2(p[3].DropDimension(2), p[1].DropDimension(2)),
+    HalfSpace2(p[0].DropDimension(2), p[2].DropDimension(2)),
   };
 
   for (int i = 0; i < 4; ++i) {
@@ -693,11 +693,11 @@ TEST(ConvexPolygon, CounterClockwiseSquareGetPosSideVertex) {
   //  |       ^
   //  v       |
   // p[0] -> p[1]
-  HalfSpace2<> on_plane[] = {
-    HalfSpace2<>(p[1].DropDimension(2), p[0].DropDimension(2)),
-    HalfSpace2<>(p[2].DropDimension(2), p[1].DropDimension(2)),
-    HalfSpace2<>(p[3].DropDimension(2), p[2].DropDimension(2)),
-    HalfSpace2<>(p[0].DropDimension(2), p[3].DropDimension(2)),
+  HalfSpace2 on_plane[] = {
+    HalfSpace2(p[1].DropDimension(2), p[0].DropDimension(2)),
+    HalfSpace2(p[2].DropDimension(2), p[1].DropDimension(2)),
+    HalfSpace2(p[3].DropDimension(2), p[2].DropDimension(2)),
+    HalfSpace2(p[0].DropDimension(2), p[3].DropDimension(2)),
   };
 
   for (int i = 0; i < 4; ++i) {
@@ -729,11 +729,11 @@ TEST(ConvexPolygon, CounterClockwiseSquareGetNegSideVertex) {
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(p);
 
-  HalfSpace2<> only_corner[] = {
-    HalfSpace2<>(p[3].DropDimension(2), p[1].DropDimension(2)),
-    HalfSpace2<>(p[0].DropDimension(2), p[2].DropDimension(2)),
-    HalfSpace2<>(p[1].DropDimension(2), p[3].DropDimension(2)),
-    HalfSpace2<>(p[2].DropDimension(2), p[0].DropDimension(2)),
+  HalfSpace2 only_corner[] = {
+    HalfSpace2(p[3].DropDimension(2), p[1].DropDimension(2)),
+    HalfSpace2(p[0].DropDimension(2), p[2].DropDimension(2)),
+    HalfSpace2(p[1].DropDimension(2), p[3].DropDimension(2)),
+    HalfSpace2(p[2].DropDimension(2), p[0].DropDimension(2)),
   };
 
   for (int i = 0; i < 4; ++i) {
@@ -754,11 +754,11 @@ TEST(ConvexPolygon, CounterClockwiseSquareGetNegSideVertex) {
   //  |       ^
   //  v       |
   // p[0] -> p[1]
-  HalfSpace2<> on_plane[] = {
-    HalfSpace2<>(p[0].DropDimension(2), p[1].DropDimension(2)),
-    HalfSpace2<>(p[1].DropDimension(2), p[2].DropDimension(2)),
-    HalfSpace2<>(p[2].DropDimension(2), p[3].DropDimension(2)),
-    HalfSpace2<>(p[3].DropDimension(2), p[0].DropDimension(2)),
+  HalfSpace2 on_plane[] = {
+    HalfSpace2(p[0].DropDimension(2), p[1].DropDimension(2)),
+    HalfSpace2(p[1].DropDimension(2), p[2].DropDimension(2)),
+    HalfSpace2(p[2].DropDimension(2), p[3].DropDimension(2)),
+    HalfSpace2(p[3].DropDimension(2), p[0].DropDimension(2)),
   };
 
   for (int i = 0; i < 4; ++i) {
@@ -943,7 +943,7 @@ TEST(ConvexPolygon, GetLastNegSideVertexOnPlane) {
   };
 
   const ConvexPolygon<32> polygon = MakeConvexPolygon(p);
-  HalfSpace2<> half_space(p[9].DropDimension(2), p[4].DropDimension(2));
+  HalfSpace2 half_space(p[9].DropDimension(2), p[4].DropDimension(2));
 
   for (size_t neg_side_index = 0; neg_side_index < 4; neg_side_index++) {
     for (size_t pos_side_index = 5; pos_side_index <= 9; pos_side_index++) {
@@ -993,7 +993,7 @@ TEST(ConvexPolygon, GetLastNegSideVertex) {
   };
 
   const ConvexPolygon<32> polygon = MakeConvexPolygon(p);
-  HalfSpace2<> half_space(Point2(0, 2), Point2(1, 2));
+  HalfSpace2 half_space(Point2(0, 2), Point2(1, 2));
 
   for (size_t neg_side_index = 9; neg_side_index <= 9 + 4; neg_side_index++) {
     for (size_t pos_side_index = 5; pos_side_index <= 8; pos_side_index++) {
@@ -1045,14 +1045,14 @@ TEST(ConvexPolygon, ConvertVertexData) {
 }
 
 using FindSplitRangesFunc = ConvexPolygonSplitRanges (ConvexPolygon<32>::*)(
-    const HalfSpace2<32, 32>&, int) const;
+    const HalfSpace2&, int) const;
 
 // Overload the << operator for FindSplitRangesFunc so that Google Test doesn't
 // pick very long test name.
 std::ostream& operator<<(std::ostream& out, FindSplitRangesFunc func) {
-  if (func == &ConvexPolygon<32>::FindSplitRangesBisect<32, 32>) {
+  if (func == &ConvexPolygon<32>::FindSplitRangesBisect) {
     out << "Bisect";
-  } else if (func == &ConvexPolygon<32>::FindSplitRangesLinear<32, 32>) {
+  } else if (func == &ConvexPolygon<32>::FindSplitRangesLinear) {
     out << "Linear";
   } else {
     out << "Unknown";
@@ -1240,8 +1240,8 @@ TEST_P(ConvexPolygonFindSplitRanges, AtNewVerticesXPlane) {
 }
 
 INSTANTIATE_TEST_SUITE_P(, ConvexPolygonFindSplitRanges,
-    testing::Values(&ConvexPolygon<32>::FindSplitRangesBisect<32, 32>,
-                    &ConvexPolygon<32>::FindSplitRangesLinear<32, 32>));
+    testing::Values(&ConvexPolygon<32>::FindSplitRangesBisect,
+                    &ConvexPolygon<32>::FindSplitRangesLinear));
 
 TEST(ConvexPolygon, SplitOnPlane) {
   Point3<32> input[] = {
