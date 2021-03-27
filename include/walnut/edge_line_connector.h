@@ -104,7 +104,6 @@ class EdgeLineConnector {
       while (edges_begin != edges_end &&
              edges_begin->get().GetBeginLocation(sorted_dimension) ==
                *current_location) {
-        assert(&edges_begin->get() != nullptr);
         auto add_info = active_edges.emplace(&edges_begin->get(), nullptr);
         assert(add_info.second);
         ++edges_begin;
