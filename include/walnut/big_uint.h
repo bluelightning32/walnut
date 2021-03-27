@@ -185,7 +185,8 @@ class BigUIntImpl {
     unsigned shift_mod = shift % bits_per_word;
     size_t old_used = used_words();
     words_.resize(std::max(used_words(),
-                           (pos + 1 + (pos + 1 < max_words && shift_mod))));
+                           (pos + 1 + (pos + 1 < max_words && shift_mod))),
+                  BigUIntWord{0});
     words_[pos] = words_[pos].Add(add << shift_mod, &carry);
     pos++;
     if (pos < max_words && shift_mod) {

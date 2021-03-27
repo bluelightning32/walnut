@@ -28,11 +28,11 @@ class BigIntImpl {
   constexpr BigIntImpl() : BigIntImpl(0) {
   }
 
-  explicit constexpr BigIntImpl(BigIntHalfWord value) : words_(1) {
+  explicit constexpr BigIntImpl(BigIntHalfWord value) {
     words_[0] = BigUIntWord{value};
   }
 
-  explicit constexpr BigIntImpl(BigIntWord value) : words_(1) {
+  explicit constexpr BigIntImpl(BigIntWord value) {
     words_[0] = BigUIntWord{value};
   }
 
@@ -132,7 +132,7 @@ class BigIntImpl {
 
   static constexpr BigIntImpl min_value(int clear_last_word_bits) {
     BigIntImpl result;
-    result.words_.resize(max_words);
+    result.words_.resize(max_words, BigUIntWord{0});
     BigUIntWord last_word = BigUIntWord{-1};
     for (int i = 0; i < clear_last_word_bits; ++i) {
       last_word &= ~(BigUIntWord{1} << i);
@@ -161,6 +161,9 @@ class BigIntImpl {
       result.words_.resize(allocate);
       BigUIntWord prev(0);
       const int prev_right_shift = bits_per_word - word_left_shift;
+      for (size_t i = 0; i < out; ++i) {
+        result.words_[i] = 0;
+      }
       for (; in < copy; in++, out++) {
         result.words_[out] = words_[in] << word_left_shift |
                                prev >> prev_right_shift;
@@ -174,6 +177,9 @@ class BigIntImpl {
     } else {
       size_t copy = std::min(used_words(), result_words - out);
       result.words_.resize(copy + out);
+      for (size_t i = 0; i < out; ++i) {
+        result.words_[i] = 0;
+      }
       for (; in < copy; in++, out++) {
         result.words_[out] = words_[in];
       }
@@ -717,9 +723,9 @@ class BigIntImpl {
   //
   // A return value of false means it did not overflow.
   constexpr bool Negate() {
+    const BigUIntWord old_last_word(words_[used_words() - 1]);
     bool carry = true;
     size_t i = 0;
-    const BigUIntWord old_last_word(words_[used_words() - 1]);
     for (i = 0; i < used_words(); ++i) {
       words_[i] = (~words_[i]).Add(carry, &carry);
     }

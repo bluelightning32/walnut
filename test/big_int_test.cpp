@@ -22,8 +22,16 @@ TEST(BigInt, Int64Construction) {
   EXPECT_EQ(a, b.low_uint64());
 }
 
+TEST(BigInt, CopyConstructBig) {
+  static constexpr int big_bits =
+    BigInt<32>::word_count*BigInt<32>::bits_per_word*2;
+  BigInt<big_bits> big_value = BigInt<big_bits>::max_value();
+  BigInt<big_bits> copy(big_value);
+}
+
 TEST(BigInt, ConstructorAssertsOnOverflow) {
-  static constexpr int big_bits = BigInt<32>::word_count*BigInt<32>::bits_per_word*2;
+  static constexpr int big_bits =
+    BigInt<32>::word_count*BigInt<32>::bits_per_word*2;
   BigInt<big_bits> big_value = BigInt<big_bits>::max_value();
   ASSERT_DEBUG_DEATH(BigInt<32> constructed(big_value), "max_words");
 }
@@ -593,27 +601,6 @@ TEST(BigInt, MaxValue) {
 
 template <int i>
 constexpr int force_constexpr_int = i;
-
-TEST(BigInt, ConstexprConstructor) {
-  constexpr BigInt<32> a(1);
-  constexpr BigInt<256> b(a);
-  constexpr BigInt<32> c(b);
-
-  EXPECT_EQ(1, force_constexpr_int<a.low_uint32()>);
-  EXPECT_EQ(1, force_constexpr_int<b.low_uint32()>);
-  EXPECT_EQ(1, force_constexpr_int<c.low_uint32()>);
-}
-
-TEST(BigInt, ConstexprMaxValue) {
-  EXPECT_EQ(force_constexpr_int<BigInt<32>::max_value().low_uint32()> & 0xFF,
-            0xFF);
-}
-
-TEST(BigInt, ConstexprMinValue) {
-  constexpr BigInt<32> min_value = BigInt<32>::min_value();
-  constexpr int min_value_int = static_cast<int>(min_value.low_uint32());
-  EXPECT_EQ(force_constexpr_int<min_value_int> & 0x00, 0x00);
-}
 
 TEST(BigInt, CastDoubleInt64Min) {
   const BigInt<128> a{std::numeric_limits<int64_t>::min()};

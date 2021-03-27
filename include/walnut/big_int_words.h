@@ -4,6 +4,7 @@
 // For std::min
 #include <algorithm>
 #include <cassert>
+#include <cstdlib>
 
 #include "walnut/big_uint_word.h"
 
@@ -21,48 +22,88 @@ class BigIntWords {
   static constexpr size_t bytes_per_word = BigUIntWord::bytes_per_word;
   static constexpr size_t max_bits = max_words * bits_per_word;
 
-  constexpr size_t size() const {
-    return size_;
+  constexpr BigIntWords() = default;
+
+  constexpr BigIntWords(int size) : extra_size_(size - 1),
+                                    extra_(AllocateExtra(extra_size_)) { }
+
+  constexpr BigIntWords(BigIntWords&& other) :
+      first_(other.first_),
+      extra_size_(std::min(size_t(max_words) - 1, other.extra_size_)) {
+    std::swap(extra_, other.extra_);
   }
 
-  constexpr const BigUIntWord& operator[](size_t i) const {
-    assert(i < size());
-    return words_[i];
+  constexpr BigIntWords(const BigIntWords& other) :
+      first_(other.first_),
+      extra_size_(std::min(size_t(max_words) - 1, other.extra_size_)),
+      extra_(AllocateExtra(extra_size_)) {
+    assert(other.size() <= max_words);
+    for (size_t i = 0; i < other.extra_size_; ++i) {
+      extra_[i] = other.extra_[i];
+    }
   }
-
-  constexpr BigUIntWord& operator[](size_t i) {
-    assert(i < size());
-    return words_[i];
-  }
-
-  constexpr BigIntWords(int used_words) : size_(used_words) { }
 
   template <size_t other_words>
-  constexpr BigIntWords(const BigIntWords<other_words>& words, size_t used_words) :
-      size_(used_words) {
+  constexpr BigIntWords(const BigIntWords<other_words>& other,
+                        size_t used_words) :
+      first_(other.first_),
+      extra_size_(used_words - 1),
+      extra_(AllocateExtra(extra_size_)) {
     assert(used_words <= max_words);
-    for (size_t i = 0; i < used_words; ++i) {
-      words_[i] = words[i];
+    for (size_t i = 0; i < extra_size_; ++i) {
+      extra_[i] = other.extra_[i];
     }
   }
 
   template <size_t other_max_words>
   constexpr BigIntWords(size_t used_words, size_t copy_words,
-                       const BigIntWords<other_max_words>& from) :
-      size_(std::min(size_t(max_words), used_words)) {
-    for (size_t i = 0; i < copy_words; ++i) {
-      words_[i] = from.words_[i];
+                        const BigIntWords<other_max_words>& from) :
+      first_(from.first_),
+      extra_size_(std::min(size_t(max_words), used_words) - 1),
+      extra_(AllocateExtra(extra_size_)) {
+    size_t i = 0;
+    for (; i < copy_words - 1; ++i) {
+      extra_[i] = from.extra_[i];
+    }
+    for (; i < extra_size_; ++i) {
+      extra_[i] = 0;
     }
   }
 
   template <size_t other_max_words>
   constexpr BigIntWords(const BigIntWords<other_max_words>& other) :
-      size_(max_words < other_max_words ?
-                  std::min(other.size(), size_t(max_words)) :
-                  other.size()) {
+      first_(other.first_),
+      extra_size_(std::min(size_t(max_words) - 1, other.extra_size_)),
+      extra_(AllocateExtra(extra_size_)) {
     assert(other.size() <= max_words);
-    for (size_t i = 0; i < size_; ++i) {
-      words_[i] = other.words_[i];
+    for (size_t i = 0; i < other.extra_size_; ++i) {
+      extra_[i] = other.extra_[i];
+    }
+  }
+
+  ~BigIntWords() {
+    FreeExtra(extra_);
+  }
+
+  constexpr size_t size() const {
+    return extra_size_ + 1;
+  }
+
+  constexpr const BigUIntWord& operator[](size_t i) const {
+    assert(i < size());
+    if (i == 0) {
+      return first_;
+    } else {
+      return extra_[i - 1];
+    }
+  }
+
+  constexpr BigUIntWord& operator[](size_t i) {
+    assert(i < size());
+    if (i == 0) {
+      return first_;
+    } else {
+      return extra_[i - 1];
     }
   }
 
@@ -70,15 +111,11 @@ class BigIntWords {
   constexpr void Assign(
       const BigIntWords<other_max_words>& other, size_t used) {
     assert(used <= max_words);
-    resize(used);
-    for (size_t i = 0; i < used; ++i) {
-      words_[i] = other.words_[i];
+    resize_without_copy(used);
+    first_ = other.first_;
+    for (size_t i = 0; i < used - 1; ++i) {
+      extra_[i] = other.extra_[i];
     }
-  }
-
-  constexpr BigIntWords& operator=(const BigIntWords& other) {
-    Assign(other, other.size());
-    return *this;
   }
 
   constexpr void push_back(BigUIntWord word) {
@@ -86,24 +123,129 @@ class BigIntWords {
     assert(used < max_words);
     if (used < max_words) {
       resize(size() + 1);
-      words_[used] = word;
+      extra_[used - 1] = word;
     }
   }
 
+  constexpr size_t extra_capacity() const {
+    if (extra_ != nullptr) {
+      return GetExtraFromFirst(extra_)->capacity;
+    } else {
+      return 0;
+    }
+  }
+
+  // Sets the container size and leaves the contents undefined.
+  constexpr void resize_without_copy(size_t used_words) {
+    assert(used_words >= 1);
+    const size_t extra_size = used_words - 1;
+    if (extra_size > extra_capacity()) {
+      FreeExtra(extra_);
+      extra_ = AllocateExtra(extra_size);
+    }
+    extra_size_ = extra_size;
+  }
+
+  // If the resize causes the container to grow, the additional entries are
+  // undefined.
   constexpr void resize(size_t used_words) {
-    size_ = used_words;
+    assert(used_words >= 1);
+    const size_t extra_size = used_words - 1;
+    if (extra_size > extra_capacity()) {
+      BigUIntWord* new_extra = AllocateExtra(extra_size);
+      for (size_t i = 0; i < extra_size_; ++i) {
+        new_extra[i] = extra_[i];
+      }
+      FreeExtra(extra_);
+      extra_ = new_extra;
+    }
+    extra_size_ = extra_size;
+  }
+
+  // If the resize causes the container to grow, the additional entries are
+  // set to `init`.
+  constexpr void resize(size_t used_words, BigUIntWord init) {
+    assert(used_words >= 1);
+    const size_t extra_size = used_words - 1;
+    if (extra_size > extra_capacity()) {
+      BigUIntWord* new_extra = AllocateExtra(extra_size);
+      for (size_t i = 0; i < extra_size_; ++i) {
+        new_extra[i] = extra_[i];
+      }
+      FreeExtra(extra_);
+      extra_ = new_extra;
+    }
+    while (extra_size_ < extra_size) {
+      extra_[extra_size_] = init;
+      ++extra_size_;
+    }
+  }
+
+  template <size_t other_max_words>
+  constexpr BigIntWords& operator=(const BigIntWords<other_max_words>& other) {
+    Assign(other, other.size());
+    return *this;
+  }
+
+  constexpr BigIntWords& operator=(const BigIntWords& other) {
+    Assign(other, other.size());
+    return *this;
+  }
+
+  template <size_t other_max_words>
+  constexpr BigIntWords& operator=(BigIntWords<other_max_words>&& other) {
+    first_ = other.first_;
+    extra_size_ = other.extra_size_;
+    std::swap(extra_, other.extra_);
+    return *this;
+  }
+
+  constexpr BigIntWords& operator=(BigIntWords&& other) {
+    first_ = other.first_;
+    extra_size_ = other.extra_size_;
+    std::swap(extra_, other.extra_);
+    return *this;
   }
 
  private:
-  // The number of words used in words_.
-  //
-  // Invariant:
-  //   size_ >= 1
-  size_t size_ = 0;
+  // This is used when the inline storage is exceeded.
+  struct ExtraStorage {
+    // Number of items in `words_`.
+    size_t capacity;
+    // `capacity` length array of words.
+    BigUIntWord words_[1];
+  };
 
-  // words_[0] holds the lowest significant bits. Within each element of
-  // words_, the bit order is in the machine native order.
-  BigUIntWord words_[max_words];
+  constexpr static BigUIntWord* AllocateExtra(size_t capacity) {
+    if (capacity == 0) {
+      return nullptr;
+    }
+    const size_t alloc_size = sizeof(ExtraStorage) +
+                              (capacity - 1) * sizeof(BigUIntWord);
+    ExtraStorage* storage = reinterpret_cast<ExtraStorage*>(std::malloc(
+          alloc_size));
+    storage->capacity = capacity;
+    return &storage->words_[0];
+  }
+
+  static constexpr ExtraStorage* GetExtraFromFirst(BigUIntWord* extra) {
+    return reinterpret_cast<ExtraStorage*>(
+        reinterpret_cast<char *>(extra) - offsetof(ExtraStorage, words_[0]));
+  }
+
+  constexpr static void FreeExtra(BigUIntWord* extra) {
+    if (extra == nullptr) {
+      return;
+    }
+    std::free(GetExtraFromFirst(extra));
+  }
+
+  BigUIntWord first_{0};
+  // The number of words used in `extra_`.
+  size_t extra_size_ = 0;
+  // If any extra storage is allocated, this points to ExtraStorage::words_[0].
+  // If no extra storage is allocated, then this is nullptr.
+  BigUIntWord* extra_ = nullptr;
 };
 
 }  // walnut
