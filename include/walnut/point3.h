@@ -9,8 +9,8 @@ namespace walnut {
 template <size_t component_bits_template = 32>
 class Point3 {
  public:
-  using VectorRep = Vector3<component_bits_template>;
-  using BigIntRep = typename VectorRep::BigIntRep;
+  using VectorRep = Vector3;
+  using BigIntRep = BigIntImpl;
 
   // The minimum number of bits to support for each component.
   //
@@ -22,8 +22,7 @@ class Point3 {
   // Leaves the components in an undefined state
   Point3() = default;
 
-  template <size_t other_component_bits>
-  explicit Point3(const Vector3<other_component_bits>& other) :
+  explicit Point3(const Vector3& other) :
     Point3(other.components()[0], other.components()[1],
            other.components()[2]) { }
 
@@ -31,10 +30,7 @@ class Point3 {
   Point3(const Point3<other_component_bits>& other) :
     Point3(other.vector_from_origin()) { }
 
-  template <size_t other_component_bits>
-  Point3(const BigInt<other_component_bits>& x,
-          const BigInt<other_component_bits>& y,
-          const BigInt<other_component_bits>& z) :
+  Point3(const BigIntImpl& x, const BigIntImpl& y, const BigIntImpl& z) :
     vector_from_origin_(x, y, z) { }
 
   Point3(int x, int y, int z) : vector_from_origin_(x, y, z) { }
@@ -86,23 +82,16 @@ class Point3 {
   }
 
   template <size_t other_component_bits>
-  Vector3<std::max(other_component_bits, component_bits_template) + 1>
-  operator-(const Point3<other_component_bits>& other) const {
+  Vector3 operator-(const Point3<other_component_bits>& other) const {
     return vector_from_origin() - other.vector_from_origin();
   }
 
-  template <size_t other_component_bits>
-  Point3<std::max(other_component_bits, component_bits_template) + 1>
-  operator+(const Vector3<other_component_bits>& other) const {
-    return Point3<std::max(other_component_bits, component_bits_template) + 1>(
-        vector_from_origin() + other);
+  Point3 operator+(const Vector3& other) const {
+    return Point3(vector_from_origin() + other);
   }
 
-  template <size_t other_component_bits>
-  Point3<std::max(other_component_bits, component_bits_template) + 1>
-  operator-(const Vector3<other_component_bits>& other) const {
-    return Point3<std::max(other_component_bits, component_bits_template) + 1>(
-        vector_from_origin() - other);
+  Point3 operator-(const Vector3& other) const {
+    return Point3(vector_from_origin() - other);
   }
 
   Point2 DropDimension(int drop_dimension) const {

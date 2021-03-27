@@ -622,6 +622,11 @@ class BigIntImpl {
     return *this / BigIntImpl(other);
   }
 
+  BigIntImpl& operator/=(const BigIntImpl& other) {
+    *this = operator/(other);
+    return *this;
+  }
+
   // Divide `this` by `other`. Return the quotient and store the remainder in `remainder_out`.
   //
   // `remainder_out` may not equal `this`.
@@ -767,6 +772,20 @@ class BigIntImpl {
                         bits_per_word * (used - 1)) +
              words_[used - 2].ToDoubleWithShift(bits_per_word * (used - 2));
     }
+  }
+
+  static BigIntImpl Determinant(const BigIntImpl& r1_c1,
+                                const BigIntImpl& r1_c2,
+                                const BigIntImpl& r2_c1,
+                                const BigIntImpl& r2_c2) {
+    return r1_c1*r2_c2 - r2_c1*r1_c2;
+  }
+
+  BigIntImpl GetGreatestCommonDivisor(const BigIntImpl &other) const {
+    if (other.IsZero()) return *this;
+
+    BigIntImpl mod = *this % other;
+    return other.GetGreatestCommonDivisor(mod);
   }
 
  protected:

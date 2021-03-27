@@ -310,7 +310,7 @@ AABB<num_bits, denom_bits>::GetWalls() const {
     for (int i = 0; i < 4; ++i) {
       vertices.push_back(p[facet_info.vertex_indices[i]]);
     }
-    Vector3<num_bits> normal = Vector3<num_bits>::Zero();
+    Vector3 normal = Vector3::Zero();
     normal.components()[facet_info.normal_dimension] =
       side < 3 ? -denom_ : denom_;
     HalfSpace3Rep plane(normal, /*dist=*/side < 3 ?

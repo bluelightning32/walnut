@@ -49,9 +49,7 @@ HomoPoint3<num_bits, denom_bits> RTransform(
 // * Returns 1 if (v R) is counter-clockwise from (u R)
 //
 // If either vector is 0, then 0 is returned.
-template <size_t component_bits>
-int RXYCompareBivector(const Vector3<component_bits>& u,
-                       const Vector3<component_bits>& v) {
+int RXYCompareBivector(const Vector3& u, const Vector3& v) {
   int comparexy = (u.x()*v.y()).Compare(u.y()*v.x());
   if (comparexy != 0) {
     return comparexy;

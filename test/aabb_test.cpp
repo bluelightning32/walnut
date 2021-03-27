@@ -38,7 +38,7 @@ TEST(AABB, IsOnBorderHomoPoint3) {
 }
 
 TEST(AABB, IsOnBorderHomoPoint3Denom2) {
-  AABB<> prism(Vector3<>(-1, -1, -1), Vector3<>(2, 2, 2), 2);
+  AABB<> prism(Vector3(-1, -1, -1), Vector3(2, 2, 2), 2);
 
   EXPECT_TRUE(prism.IsOnBorder(HomoPoint3<>(2, 0, 0, 2)));
   EXPECT_TRUE(prism.IsOnBorder(HomoPoint3<>(1, 0, 0, 1)));

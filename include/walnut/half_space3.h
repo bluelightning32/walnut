@@ -14,8 +14,8 @@ template <size_t vector_bits_template = 31*2 + 3,
           size_t dist_bits_template = 31*3 + 3>
 class HalfSpace3 {
  public:
-  using VectorRep = Vector3<vector_bits_template>;
-  using VectorInt = typename VectorRep::BigIntRep;
+  using VectorRep = Vector3;
+  using VectorInt = BigIntImpl;
   using DistInt = BigInt<dist_bits_template>;
 
   // The minimum number of bits to support for each of the x, y, and z
@@ -62,8 +62,7 @@ class HalfSpace3 {
   // From that point, everything in the normal direction is considered in the
   // positive half-space and everything opposite to the normal direction is
   // considered in the negative half-space.
-  template <size_t other_vector_bits>
-  HalfSpace3(const Vector3<other_vector_bits>& normal, const DistInt& dist) :
+  HalfSpace3(const Vector3& normal, const DistInt& dist) :
     normal_(normal), dist_(dist) { }
 
   // Constructs a half-space from a normal in component form and distance from
@@ -206,7 +205,7 @@ class HalfSpace3 {
   //
   // This function exists for testing purposes. It should always return true.
   bool IsValidState() const {
-    return normal_.IsValidState() && dist_.IsValidState();
+    return dist_.IsValidState();
   }
 
   // This function could potentially overflow. The caller must ensure there is
@@ -248,22 +247,6 @@ class HalfSpace3FromPoint3Builder {
                          (point3_bits_template - 1)*3 + 3>;
   using VectorInt = typename HalfSpace3Rep::VectorInt;
   using DistInt = typename HalfSpace3Rep::DistInt;
-
-  static constexpr VectorInt normal_component_min() {
-    VectorInt n = Point3Rep::BigIntRep::max_value() + VectorInt(1);
-    VectorInt two_n_1 = n + n - BigInt<2>(1);
-    return -two_n_1 * two_n_1;
-  }
-  static constexpr VectorInt normal_component_max() {
-    return -normal_component_min();
-  }
-  static constexpr DistInt dist_min() {
-    DistInt n = Point3Rep::BigIntRep::max_value() + DistInt(1);
-    return normal_component_min() * (n + DistInt(1));
-  }
-  static constexpr DistInt dist_max() {
-    return -dist_min();
-  }
 
   static HalfSpace3Rep Build(const Point3Rep& p1,
                         const Point3Rep& p2,

@@ -6,10 +6,10 @@
 namespace walnut {
 
 TEST(Vector3, IsSameDir) {
-  Vector3<> v1a(0, 0, 1);
-  Vector3<> v1b(0, 0, 2);
-  Vector3<> v2a(1, 0, 0);
-  Vector3<> v2b(10, 0, 0);
+  Vector3 v1a(0, 0, 1);
+  Vector3 v1b(0, 0, 2);
+  Vector3 v2a(1, 0, 0);
+  Vector3 v2b(10, 0, 0);
 
   EXPECT_TRUE(v1a.IsSameDir(v1b));
   EXPECT_TRUE(v1b.IsSameDir(v1a));
@@ -21,9 +21,9 @@ TEST(Vector3, IsSameDir) {
 }
 
 TEST(Vector3, OppositeDirIsNotSame) {
-  Vector3<> v1(1, 1, 1);
-  Vector3<> v2(-1, -1, -1);
-  Vector3<> v3(-2, -2, -2);
+  Vector3 v1(1, 1, 1);
+  Vector3 v2(-1, -1, -1);
+  Vector3 v3(-2, -2, -2);
 
   EXPECT_FALSE(v1.IsSameDir(v2));
   EXPECT_FALSE(v1.IsSameDir(v3));
@@ -31,11 +31,11 @@ TEST(Vector3, OppositeDirIsNotSame) {
 }
 
 TEST(Vector3, IsSameOrOppositeDir) {
-  Vector3<> v1a(0, 0, -1);
-  Vector3<> v1b(0, 0, -2);
-  Vector3<> v1c(0, 0, 1);
-  Vector3<> v1d(0, 0, 2);
-  Vector3<> v2(1, 0, 0);
+  Vector3 v1a(0, 0, -1);
+  Vector3 v1b(0, 0, -2);
+  Vector3 v1c(0, 0, 1);
+  Vector3 v1d(0, 0, 2);
+  Vector3 v2(1, 0, 0);
 
   EXPECT_TRUE(v1a.IsSameOrOppositeDir(v1b));
   EXPECT_TRUE(v1b.IsSameOrOppositeDir(v1c));
@@ -47,51 +47,44 @@ TEST(Vector3, IsSameOrOppositeDir) {
 }
 
 TEST(Vector3, Minus) {
-  Vector3<> v1(1, 10, 100);
-  Vector3<> v2(2, 20, 200);
+  Vector3 v1(1, 10, 100);
+  Vector3 v2(2, 20, 200);
 
-  EXPECT_EQ(v1 - v2, Vector3<>(-1, -10, -100));
+  EXPECT_EQ(v1 - v2, Vector3(-1, -10, -100));
 }
 
 TEST(Vector3, MinusMax) {
-  static constexpr int coord_bits = Vector3<>::BigIntRep::word_count *
-                                    Vector3<>::BigIntRep::bits_per_word *
-                                    10;
+  static constexpr int coord_bits = 640;
   BigInt<coord_bits> min_value = BigInt<coord_bits>::min_value();
   BigInt<coord_bits> max_value = BigInt<coord_bits>::max_value();
-  Vector3<coord_bits> v1(min_value, min_value, min_value);
-  Vector3<coord_bits> v2(max_value, max_value, max_value);
+  Vector3 v1(min_value, min_value, min_value);
+  Vector3 v2(max_value, max_value, max_value);
 
   BigInt<coord_bits + 1> expected = BigInt<coord_bits + 1>(min_value) -
                                     BigInt<coord_bits + 1>(max_value);
 
-  EXPECT_EQ(v1 - v2, Vector3<coord_bits + 1>(expected, expected, expected));
+  EXPECT_EQ(v1 - v2, Vector3(expected, expected, expected));
 }
 
 TEST(Vector3, Dot) {
-  Vector3<> v1(5, 0, 0);
-  Vector3<> v2(10, 0, 0);
+  Vector3 v1(5, 0, 0);
+  Vector3 v2(10, 0, 0);
 
   EXPECT_EQ(v1.Dot(v2), 50);
 }
 
 TEST(Vector3, GetScaleSquared) {
-  Vector3<> v1(1, 2, 3);
+  Vector3 v1(1, 2, 3);
 
   EXPECT_EQ(v1.GetScaleSquared(), 1*1 + 2*2 + 3*3);
 }
 
 TEST(Vector3, GetScaleSquaredMax) {
-  static constexpr int coord_bits = Vector3<>::BigIntRep::word_count *
-                                    Vector3<>::BigIntRep::bits_per_word;
+  static constexpr int coord_bits = 640;
   BigInt<coord_bits> min_value = BigInt<coord_bits>::min_value();
   // abs(int_min) > abs(int_max), so a vector with all int_min coordinates will
   // have the biggest scale.
-  //
-  // Note that since min_value uses all coord_bits, coord_bits must be
-  // explicitly passed to Vector3, because coord_bits could be larger than
-  // Vector3<>::coord_bits.
-  Vector3<coord_bits> min_vector(min_value, min_value, min_value);
+  Vector3 min_vector(min_value, min_value, min_value);
 
   BigInt<coord_bits*2 + 5> expected_scale = min_value;
   expected_scale = expected_scale * min_value;
@@ -101,7 +94,7 @@ TEST(Vector3, GetScaleSquaredMax) {
 }
 
 TEST(Vector3, Scale) {
-  Vector3<> v1(0, 2, 1);
+  Vector3 v1(0, 2, 1);
   EXPECT_EQ(v1, v1.Scale(1));
 
   EXPECT_TRUE(v1.IsSameDir(v1.Scale(2)));
@@ -112,13 +105,9 @@ TEST(Vector3, Scale) {
 }
 
 TEST(Vector3, DotNegMax) {
-  static constexpr int coord_bits = Vector3<>::BigIntRep::word_count *
-                                    Vector3<>::BigIntRep::bits_per_word;
+  static constexpr int coord_bits = 640;
   BigInt<coord_bits> min_value = BigInt<coord_bits>::min_value();
-  // Note that since min_value uses all coord_bits, coord_bits must be
-  // explicitly passed to Vector3, because coord_bits could be larger than
-  // Vector3<>::coord_bits.
-  Vector3<coord_bits> min_vector(min_value, min_value, min_value);
+  Vector3 min_vector(min_value, min_value, min_value);
 
   BigInt<coord_bits*2 + 5> expected_scale = min_value;
   expected_scale = expected_scale * min_value;
@@ -128,32 +117,23 @@ TEST(Vector3, DotNegMax) {
 }
 
 TEST(Vector3, DotPosMax) {
-  static constexpr int coord_bits = Vector3<>::BigIntRep::word_count *
-                                    Vector3<>::BigIntRep::bits_per_word;
+  static constexpr int coord_bits = 640;
   BigInt<coord_bits> max_value = BigInt<coord_bits>::max_value();
-  // Note that since min_value uses all coord_bits, coord_bits must be
-  // explicitly passed to Vector3, because coord_bits could be larger than
-  // Vector3<>::coord_bits.
-  Vector3<coord_bits> max_vector(max_value, max_value, max_value);
+  Vector3 max_vector(max_value, max_value, max_value);
 
   BigInt<coord_bits*2 + 5> expected_scale = max_value;
   expected_scale = expected_scale * max_value;
   expected_scale = expected_scale * 3;
 
   EXPECT_EQ(max_vector.Dot(max_vector), expected_scale);
-
-  auto allowed_max = decltype(max_vector.Dot(max_vector))::max_value();
-  EXPECT_GE(allowed_max, expected_scale);
 }
 
 TEST(Vector3, CrossMax) {
-  static constexpr int coord_bits = Vector3<>::BigIntRep::word_count *
-                                    Vector3<>::BigIntRep::bits_per_word *
-                                    10;
+  static constexpr int coord_bits = 640;
   BigInt<coord_bits> min_value = BigInt<coord_bits>::min_value();
   BigInt<coord_bits> max_value = BigInt<coord_bits>::max_value();
-  Vector3<coord_bits> v1(min_value, min_value, BigInt<coord_bits>(0));
-  Vector3<coord_bits> v2(max_value, min_value, BigInt<coord_bits>(0));
+  Vector3 v1(min_value, min_value, BigInt<coord_bits>(0));
+  Vector3 v2(max_value, min_value, BigInt<coord_bits>(0));
 
   // Calculate the z coordinate of the cross product using an extra large
   // integer type, then verify it produces the same value.
@@ -164,16 +144,13 @@ TEST(Vector3, CrossMax) {
                                         casted_min_value*casted_max_value;
 
   EXPECT_EQ(v1.Cross(v2).z(), expected_z);
-
-  auto allowed_max = decltype(v1.Cross(v2))::BigIntRep::max_value();
-  EXPECT_GE(allowed_max, expected_z);
 }
 
 TEST(Vector3, DropDimensionSideness) {
-  Vector3<> a3(1, 2, 1);
-  Vector3<> b3(2, 1, 3);
+  Vector3 a3(1, 2, 1);
+  Vector3 b3(2, 1, 3);
 
-  Vector3<> c3 = a3.Cross(b3);
+  Vector3 c3 = a3.Cross(b3);
 
   for (int dimension = 0; dimension < 3; ++dimension) {
     Vector2 a2 = a3.DropDimension(dimension);

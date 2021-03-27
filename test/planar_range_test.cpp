@@ -72,7 +72,7 @@ TEST(PolygonGetNextPlanar, AllPlanar) {
   result.Build(remaining_begin, remaining_end);
   EXPECT_EQ(remaining_begin, remaining_end);
   EXPECT_EQ(result.size(), input.size());
-  EXPECT_TRUE(result.plane().normal().IsSameDir(Vector3<>(0, 0, 1)));
+  EXPECT_TRUE(result.plane().normal().IsSameDir(Vector3(0, 0, 1)));
   EXPECT_EQ(std::vector<Point3<32>>(result.begin(), result.end()),
             input);
 
@@ -84,7 +84,7 @@ TEST(PolygonGetNextPlanar, AllPlanar) {
   result.Build(remaining_begin, remaining_end);
   EXPECT_EQ(remaining_begin, remaining_end);
   EXPECT_EQ(result.size(), input.size());
-  EXPECT_TRUE(result.plane().normal().IsSameDir(Vector3<>(0, 0, 1)));
+  EXPECT_TRUE(result.plane().normal().IsSameDir(Vector3(0, 0, 1)));
   EXPECT_EQ(std::vector<Point3<32>>(result.begin(), result.end()),
             input);
 
@@ -96,7 +96,7 @@ TEST(PolygonGetNextPlanar, AllPlanar) {
   result.Build(remaining_begin, remaining_end);
   EXPECT_EQ(remaining_begin, remaining_end);
   EXPECT_EQ(result.size(), input.size());
-  EXPECT_TRUE(result.plane().normal().IsSameDir(Vector3<>(0, 0, 1)));
+  EXPECT_TRUE(result.plane().normal().IsSameDir(Vector3(0, 0, 1)));
   EXPECT_EQ(std::vector<Point3<32>>(result.begin(), result.end()),
             input);
 }
@@ -117,7 +117,7 @@ TEST(PlanarRange, StopsAtNonplanar) {
   EXPECT_EQ(remaining_begin, input.begin() + 1);
   EXPECT_EQ(remaining_end, input.end());
   EXPECT_EQ(result.size(), 3);
-  EXPECT_TRUE(result.plane().normal().IsSameDir(Vector3<>(0, 0, 1)));
+  EXPECT_TRUE(result.plane().normal().IsSameDir(Vector3(0, 0, 1)));
   EXPECT_THAT(std::vector<Point3<32>>(result.begin(), result.end()),
               ElementsAre(input[0], input[1], input[3]));
 
@@ -125,7 +125,7 @@ TEST(PlanarRange, StopsAtNonplanar) {
   result.Build(remaining_begin, remaining_end);
   EXPECT_EQ(remaining_begin, remaining_end);
   EXPECT_EQ(result.size(), 3);
-  EXPECT_TRUE(result.plane().normal().IsSameDir(Vector3<>(1, 0, 0)));
+  EXPECT_TRUE(result.plane().normal().IsSameDir(Vector3(1, 0, 0)));
   EXPECT_THAT(std::vector<Point3<32>>(result.begin(), result.end()),
               ElementsAre(input[1], input[2], input[3]));
 }

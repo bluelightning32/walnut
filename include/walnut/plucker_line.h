@@ -13,8 +13,8 @@ namespace walnut {
 template <size_t d_bits_template = 31*2 + 1, size_t m_bits_template = 31*2 + 3>
 class PluckerLine {
  public:
-  using DVector = Vector3<d_bits_template>;
-  using MVector = Vector3<m_bits_template>;
+  using DVector = Vector3;
+  using MVector = Vector3;
 
   // The minimum number of bits to support for each of the components of d.
   static constexpr size_t d_bits = d_bits_template;
@@ -29,11 +29,11 @@ class PluckerLine {
   // Some definitions use the p^ab or p_ab notation.
   // d = (p_01, p_02, p_03)
   // d = (p^23, p^31, p^12)
-  const DVector& d() const {
+  const Vector3& d() const {
     return d_;
   }
 
-  DVector& d() {
+  Vector3& d() {
     return d_;
   }
 
@@ -46,11 +46,11 @@ class PluckerLine {
   // Some definitions use the p^ab or p_ab notation.
   // m = (p_23, p_31, p_12)
   // m = (p^01, p^02, p^03)
-  const MVector& m() const {
+  const Vector3& m() const {
     return m_;
   }
 
-  MVector& m() {
+  Vector3& m() {
     return m_;
   }
 
@@ -63,8 +63,7 @@ class PluckerLine {
   // Leaves the vectors in an undefined state
   PluckerLine() = default;
 
-  template <size_t other_d_bits, size_t other_m_bits>
-  PluckerLine(const Vector3<other_d_bits>& d, const Vector3<other_m_bits>& m) :
+  PluckerLine(const Vector3& d, const Vector3& m) :
     d_(d), m_(m) { }
 
   template <size_t other_d_bits, size_t other_m_bits>
@@ -113,9 +112,9 @@ class PluckerLine {
     // p^03 = | a.d  a.z |
     //        | b.d  b.z |
     d_(a.normal().Cross(b.normal())),
-    m_(MVector::BigIntRep::Determinant(-a.d(), a.x(), -b.d(), b.x()),
-       MVector::BigIntRep::Determinant(-a.d(), a.y(), -b.d(), b.y()),
-       MVector::BigIntRep::Determinant(-a.d(), a.z(), -b.d(), b.z())) { }
+    m_(BigIntImpl::Determinant(-a.d(), a.x(), -b.d(), b.x()),
+       BigIntImpl::Determinant(-a.d(), a.y(), -b.d(), b.y()),
+       BigIntImpl::Determinant(-a.d(), a.z(), -b.d(), b.z())) { }
 
   // Returns true if `p` is on the line.
   template <size_t v_bits>
@@ -183,17 +182,6 @@ class PluckerLine {
     return !(*this == other);
   }
 
-  // Verifies the fields are in their supported ranges.
-  //
-  // The BigInts can sometimes internally support a larger range than what is
-  // requested in the template parameters. This function returns true if all of
-  // the fields are in their supported range.
-  //
-  // This function exists for testing purposes. It should always return true.
-  bool IsValidState() const {
-    return d().IsValidState() && m().IsValidState();
-  }
-
   // Calculate the intersection between this line and a plane.
   template <size_t vector_bits, size_t dist_bits>
   HomoPoint3<std::max(vector_bits + m_bits, d_bits + dist_bits) + 1,
@@ -201,8 +189,9 @@ class PluckerLine {
   Intersect(const HalfSpace3<vector_bits, dist_bits>& p) const {
     auto vector = p.normal().Cross(m()) + d().Scale(p.d());
     auto w = p.normal().Dot(d());
-    return HomoPoint3<decltype(vector)::component_bits, decltype(w)::bits>(
-                       vector, w);
+    using Result = HomoPoint3<std::max(vector_bits + m_bits, d_bits + dist_bits) + 1,
+          vector_bits + d_bits + 1>;
+    return Result(vector, w);
   }
 
   // Project the line into a HalfSpace2 by dropping one of the dimensions.
@@ -217,9 +206,6 @@ class PluckerLine {
   //
   // At least one of the remaining components of d() must be non-zero for the
   // resulting HalfSpace2 to be valid.
-  //
-  // Note that this may overflow if some of the components of d() equal
-  // DVector::BigIntRep::min_value().
   HalfSpace2 Project2D(int drop_dimension) const {
     return HalfSpace2(
         /*normal=*/d().DropDimension(drop_dimension).GetPerpendicular(),
@@ -240,8 +226,8 @@ class PluckerLine {
   void Reduce();
 
  private:
-  DVector d_;
-  MVector m_;
+  Vector3 d_;
+  Vector3 m_;
 };
 
 template <size_t d_bits, size_t m_bits>
@@ -277,8 +263,8 @@ class PluckerLineFromPoint3sBuilder {
   using Point3Rep = Point3<point3_bits_template>;
   using PluckerLineRep = PluckerLine<point3_bits_template + 1,
                                      (point3_bits_template - 1)*2 + 2>;
-  using DInt = typename PluckerLineRep::DVector::BigIntRep;
-  using MInt = typename PluckerLineRep::MVector::BigIntRep;
+  using DInt = BigIntImpl;
+  using MInt = BigIntImpl;
 
   static constexpr DInt d_component_min() {
     DInt n = Point3Rep::BigIntRep::max_value() + DInt(1);
@@ -316,8 +302,8 @@ class PluckerLineFromPlanesFromPoint3sBuilder {
   using HalfSpace3Rep = typename HalfSpace3Builder::HalfSpace3Rep;
   using PluckerLineRep = PluckerLine<(point3_bits_template - 1)*4 + 6,
                                      (point3_bits_template - 1)*5 + 6>;
-  using DInt = typename PluckerLineRep::DVector::BigIntRep;
-  using MInt = typename PluckerLineRep::MVector::BigIntRep;
+  using DInt = BigIntImpl;
+  using MInt = BigIntImpl;
 
   static constexpr DInt d_component_min() {
     DInt n = Point3Rep::BigIntRep::max_value() + DInt(1);

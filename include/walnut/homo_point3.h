@@ -15,8 +15,8 @@ template <size_t num_bits_template = 32*7 + 9,
           size_t denom_bits_template = 32*6 + 7>
 class HomoPoint3 {
  public:
-  using VectorRep = Vector3<num_bits_template>;
-  using NumInt = typename VectorRep::BigIntRep;
+  using VectorRep = Vector3;
+  using NumInt = BigIntImpl;
   using DenomInt = BigInt<denom_bits_template>;
 
   // The minimum number of bits to support for each of the x, y, and z
@@ -92,9 +92,7 @@ class HomoPoint3 {
   HomoPoint3(const Point3<other_num_bits>& other) :
     vector_from_origin_(other.vector_from_origin()), dist_denom_(1) { }
 
-  template <size_t other_num_bits, size_t other_denom_bits>
-  HomoPoint3(const Vector3<other_num_bits>& v,
-          const BigInt<other_denom_bits>& w) :
+  HomoPoint3(const Vector3& v, const BigIntImpl& w) :
     vector_from_origin_(v), dist_denom_(w) { }
 
   template <size_t other_num_bits=num_bits, size_t other_denom_bits=denom_bits>
@@ -120,8 +118,7 @@ class HomoPoint3 {
     // a.v * b.w <?> b.v * a.w (maybe flip sign)
     auto a_scaled = a.vector_from_origin() * b.dist_denom();
     auto b_scaled = b.vector_from_origin() * a.dist_denom();
-    constexpr size_t a_bits = decltype(a_scaled)::component_bits;
-    typename BigInt<a_bits>::FlippableCompare compare(
+    BigIntImpl::FlippableCompare compare(
         /*flip=*/b.dist_denom().HasDifferentSign(a.dist_denom()));
     return std::lexicographical_compare(a_scaled.components().rbegin(),
                                         a_scaled.components().rend(),
@@ -208,7 +205,7 @@ class HomoPoint3 {
                                         other_denom_bits>& other) const;
 
   bool IsValidState() const {
-    return vector_from_origin_.IsValidState() && dist_denom_.IsValidState();
+    return dist_denom_.IsValidState();
   }
 
   // Removes the common factor.

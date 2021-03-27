@@ -829,11 +829,11 @@ TEST(ConvexPolygon, CounterClockwiseSquareGetExtremeIndexBisect3D) {
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(p);
 
-  Vector3<> to_corner[] = {
-    Vector3<>(-1, -1, -1),
-    Vector3<>(1, -1, 1),
-    Vector3<>(1, 1, 1),
-    Vector3<>(-1, 1, -1),
+  Vector3 to_corner[] = {
+    Vector3(-1, -1, -1),
+    Vector3(1, -1, 1),
+    Vector3(1, 1, 1),
+    Vector3(-1, 1, -1),
   };
 
   for (int i = 0; i < 4; ++i) {
@@ -856,11 +856,11 @@ TEST(ConvexPolygon, ClockwiseSquareGetExtremeIndexBisect3D) {
   ConvexPolygon<32> polygon = MakeConvexPolygon(p);
   EXPECT_LT(polygon.plane().normal().z(), 0);
 
-  Vector3<> to_corner[] = {
-    Vector3<>(-1, -1, -1),
-    Vector3<>(-1, 1, 1),
-    Vector3<>(1, 1, 1),
-    Vector3<>(1, -1, -1),
+  Vector3 to_corner[] = {
+    Vector3(-1, -1, -1),
+    Vector3(-1, 1, 1),
+    Vector3(1, 1, 1),
+    Vector3(1, -1, -1),
   };
 
   for (int i = 0; i < 4; ++i) {

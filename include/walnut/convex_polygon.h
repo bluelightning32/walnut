@@ -290,8 +290,7 @@ class ConvexPolygon {
   //
   // If `v` is Zero or perpendicular to the polygon plane, this returns
   // static_cast<size_t>(-1).
-  template <size_t vector_bits>
-  size_t GetExtremeIndexBisect(const Vector3<vector_bits>& v) const {
+  size_t GetExtremeIndexBisect(const Vector3& v) const {
     auto v_projected = v.DropDimension(drop_dimension()).Scale(
         normal().components()[drop_dimension()]);
     auto normal_projected = normal().DropDimension(

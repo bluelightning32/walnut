@@ -106,8 +106,8 @@ struct ConvexPolygonEdge : public ParentTemplate {
   }
 
   bool IsValidState() const {
-    return vertex_.IsValidState() && line_.IsValidState() &&
-           line_.IsValid() && line_.IsCoincident(vertex_);
+    return vertex_.IsValidState() && line_.IsValid() &&
+           line_.IsCoincident(vertex_);
   }
 
   // Return a string representation of the edge that uses decimal points to

@@ -232,7 +232,7 @@ class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
   BSPNode<>* SplitNorthWest(BSPNode<>* parent, const Point3<>& edge_start,
                             const Point3<>& edge_dest, double edge_dist) {
     EXPECT_TRUE(parent->IsLeaf());
-    Vector3<> normal = Vector3<>(1, -1, 10);
+    Vector3 normal = Vector3(1, -1, 10);
 
     auto edge_vector = edge_dest - edge_start;
     double dist = double(normal.x()) * (double(edge_start.x()) +
@@ -850,7 +850,7 @@ TEST_P(BSPTreePWN, SplitAgainThroughMvalue) {
   EXPECT_EQ(inside_cube->GetPWNForId(r3_id), 0);
   EXPECT_EQ(inside_cube->GetPWNForId(r4_id), 0);
 
-  const Vector3<> down_one(0, 0, 1);
+  const Vector3 down_one(0, 0, 1);
   HalfSpace3<> fourth_split_plane(cube_top,
                                   Point3<>(cube_south_west - down_one),
                                   Point3<>(cube_south_east - down_one));

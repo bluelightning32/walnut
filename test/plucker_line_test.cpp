@@ -12,7 +12,7 @@ TEST(PluckerLine, FromPointsDirection) {
 
   EXPECT_GT((p2 - p1).Dot(line.d()), 0);
   EXPECT_LT((p1 - p2).Dot(line.d()), 0);
-  EXPECT_EQ((p2 - p1).Cross(line.d()), Vector3<>::Zero());
+  EXPECT_EQ((p2 - p1).Cross(line.d()), Vector3::Zero());
 }
 
 TEST(PluckerLine, IsCoincidentPoint3) {
@@ -67,7 +67,7 @@ TEST(PluckerLine, IsCoincidentHalfSpace3) {
 
 TEST(PluckerLine, EqualSameDir) {
   const Point3<> p1(1, 2, 3);
-  const Vector3<> d(5, 7, 11);
+  const Vector3 d(5, 7, 11);
   const PluckerLine<> line(p1, Point3<>(p1 + d.Scale(2)));
 
   EXPECT_EQ(line, line);
@@ -79,7 +79,7 @@ TEST(PluckerLine, EqualSameDir) {
 
 TEST(PluckerLine, NotEqualOppositeDir) {
   const Point3<> p1(1, 2, 3);
-  const Vector3<> d(5, 7, 11);
+  const Vector3 d(5, 7, 11);
   const PluckerLine<> line(p1, Point3<>(p1 + d.Scale(2)));
 
   const PluckerLine<> line2(p1 + d.Scale(5),
@@ -195,7 +195,7 @@ TEST(PluckerLine, FromPlanesDirection) {
 
   EXPECT_GT((p2 - p1).Dot(line.d()), 0);
   EXPECT_LT((p1 - p2).Dot(line.d()), 0);
-  EXPECT_EQ((p2 - p1).Cross(line.d()), Vector3<>::Zero());
+  EXPECT_EQ((p2 - p1).Cross(line.d()), Vector3::Zero());
 }
 
 TEST(PluckerLine, IntersectPlane) {
@@ -231,23 +231,10 @@ void TestIntersectPlanes() {
   using HalfSpace3Builder = HalfSpace3FromPoint3Builder<point3_bits>;
   using HalfSpace3Rep = typename HalfSpace3Builder::HalfSpace3Rep;
   HalfSpace3Rep plane1(plane1_points[0], plane1_points[1], plane1_points[2]);
-  for (int i = 0; i < 3; ++i) {
-    ASSERT_LT(HalfSpace3Builder::normal_component_min(), 0);
-    ASSERT_GE(plane1.normal().components()[i],
-              HalfSpace3Builder::normal_component_min());
-    ASSERT_LE(plane1.normal().components()[i],
-              HalfSpace3Builder::normal_component_max());
-  }
-  ASSERT_GE(plane1.d(), HalfSpace3Builder::dist_min());
-  ASSERT_LE(plane1.d(), HalfSpace3Builder::dist_max());
 
-  HalfSpace3Rep plane2(Vector3<>(0, 1, 0), max_int);
-  ASSERT_GE(plane2.d(), HalfSpace3Builder::dist_min());
-  ASSERT_LE(plane2.d(), HalfSpace3Builder::dist_max());
+  HalfSpace3Rep plane2(Vector3(0, 1, 0), max_int);
 
-  HalfSpace3Rep plane3(Vector3<>(0, 0, 1), max_int);
-  ASSERT_GE(plane3.d(), HalfSpace3Builder::dist_min());
-  ASSERT_LE(plane3.d(), HalfSpace3Builder::dist_max());
+  HalfSpace3Rep plane3(Vector3(0, 0, 1), max_int);
 
   using PluckerLineBuilder =
     PluckerLineFromPlanesFromPoint3sBuilder<point3_bits>;
@@ -339,221 +326,17 @@ TEST(PluckerLine, Project2DDropZSideness) {
 
 TEST(PluckerLine, ReduceAllIntMin) {
   PluckerLine<256, 256> original(
-      /*d=*/Vector3<256>(/*x=*/BigInt<256>::min_value(),
-                         /*y=*/BigInt<256>::min_value(),
-                         /*z=*/BigInt<256>::min_value()),
-      /*m=*/Vector3<256>(/*x=*/BigInt<256>::min_value(),
-                         /*y=*/BigInt<256>::min_value(),
-                         /*z=*/BigInt<256>::min_value()));
+      /*d=*/Vector3(/*x=*/BigInt<256>::min_value(),
+                    /*y=*/BigInt<256>::min_value(),
+                    /*z=*/BigInt<256>::min_value()),
+      /*m=*/Vector3(/*x=*/BigInt<256>::min_value(),
+                    /*y=*/BigInt<256>::min_value(),
+                    /*z=*/BigInt<256>::min_value()));
 
   PluckerLine<256, 256> reduced = original;
   reduced.Reduce();
   EXPECT_EQ(reduced, original);
   EXPECT_EQ(reduced.d().x(), -1);
-}
-
-template <int point3_bits>
-void TestCorrectOutputBitsFromVertices() {
-  using Builder = PluckerLineFromPoint3sBuilder<point3_bits>;
-  using PluckerLineRep = typename Builder::PluckerLineRep;
-  using Point3Rep = typename Builder::Point3Rep;
-  using DInt = typename PluckerLineRep::DVector::BigIntRep;
-  using MInt = typename PluckerLineRep::MVector::BigIntRep;
-  using BigIntRep = typename Point3Rep::BigIntRep;
-  int up_to = 1;
-  for (int i = 0; i < 6; ++i) {
-    up_to *= 2;
-  }
-  EXPECT_GT(up_to, 1);
-  DInt smallest_d_coord[3] = {DInt(0),
-                              DInt(0),
-                              DInt(0)};
-  DInt largest_d_coord[3] = {DInt(0),
-                             DInt(0),
-                             DInt(0)};
-  MInt smallest_m_coord[3] = {MInt(0),
-                              MInt(0),
-                              MInt(0)};
-  MInt largest_m_coord[3] = {MInt(0),
-                             MInt(0),
-                             MInt(0)};
-  for (int i = 0; i < up_to; ++i) {
-    int remaining = i;
-    Point3Rep p[2];
-    for (int j = 0; j < 2; ++j) {
-      BigIntRep components[3];
-      for (int k = 0; k < 3; ++k) {
-        switch (remaining % 2) {
-          case 0:
-            components[k] = BigIntRep::min_value();
-            break;
-          case 1:
-            components[k] = BigIntRep::max_value();
-            break;
-        }
-        remaining /= 2;
-      }
-      p[j] = Point3Rep(components[0], components[1], components[2]);
-    }
-    PluckerLineRep line = Builder::Build(p[0], p[1]);
-    // A PluckerLine type with double the required bits.
-    using PluckerLineExtraBits =
-      PluckerLine<PluckerLineRep::DVector::BigIntRep::bits*2,
-                  PluckerLineRep::MVector::BigIntRep::bits*2>;
-    PluckerLineExtraBits line_extra(p[0], p[1]);
-    EXPECT_EQ(line.IsValid(), line_extra.IsValid());
-    EXPECT_EQ(line, line_extra);
-    EXPECT_TRUE(line.IsValidState());
-    for (int j = 0; j < 3; ++j) {
-      smallest_d_coord[j] = std::min(smallest_d_coord[j],
-                                     line.d().components()[j]);
-      largest_d_coord[j] = std::max(largest_d_coord[j],
-                                    line.d().components()[j]);
-
-      smallest_m_coord[j] = std::min(smallest_m_coord[j],
-                                     line.m().components()[j]);
-      largest_m_coord[j] = std::max(largest_m_coord[j],
-                                    line.m().components()[j]);
-    }
-  }
-  for (int j = 0; j < 3; ++j) {
-    EXPECT_EQ(smallest_d_coord[j], Builder::d_component_min());
-    EXPECT_EQ(largest_d_coord[j], Builder::d_component_max());
-
-    EXPECT_EQ(smallest_m_coord[j], Builder::m_component_min());
-    EXPECT_EQ(largest_m_coord[j], Builder::m_component_max());
-  }
-  using NextSmallerDInt = BigInt<DInt::bits - 1>;
-  using NextSmallerMInt = BigInt<MInt::bits - 1>;
-  EXPECT_LT(Builder::d_component_min(), DInt(NextSmallerDInt::min_value()));
-  EXPECT_GT(Builder::d_component_max(), DInt(NextSmallerDInt::max_value()));
-  EXPECT_LT(Builder::m_component_min(), MInt(NextSmallerMInt::min_value()));
-  EXPECT_GT(Builder::m_component_max(), MInt(NextSmallerMInt::max_value()));
-}
-
-TEST(PluckerLineFromPoint3sBuilder, CorrectOutputBits2) {
-  TestCorrectOutputBitsFromVertices<2>();
-}
-
-TEST(PluckerLineFromPoint3sBuilder, CorrectOutputBits32) {
-  TestCorrectOutputBitsFromVertices<32>();
-}
-
-TEST(PluckerLineFromPoint3sBuilder, CorrectOutputBits64) {
-  TestCorrectOutputBitsFromVertices<64>();
-}
-
-template <int point3_bits>
-void TestCorrectOutputBitsFromPlanesFromPoint3s() {
-  using Builder = PluckerLineFromPlanesFromPoint3sBuilder<point3_bits>;
-  using HalfSpace3Builder = typename Builder::HalfSpace3Builder;
-  using HalfSpace3Rep = typename HalfSpace3Builder::HalfSpace3Rep;
-  using VectorInt = typename HalfSpace3Rep::VectorInt;
-  using DistInt = typename HalfSpace3Rep::DistInt;
-  using PluckerLineRep = typename Builder::PluckerLineRep;
-  using DInt = typename PluckerLineRep::DVector::BigIntRep;
-  using MInt = typename PluckerLineRep::MVector::BigIntRep;
-  int up_to = 1;
-  for (int i = 0; i < 8; ++i) {
-    up_to *= 2;
-  }
-  EXPECT_GT(up_to, 1);
-  DInt smallest_d_coord[3] = {DInt(0),
-                              DInt(0),
-                              DInt(0)};
-  DInt largest_d_coord[3] = {DInt(0),
-                             DInt(0),
-                             DInt(0)};
-  MInt smallest_m_coord[3] = {MInt(0),
-                              MInt(0),
-                              MInt(0)};
-  MInt largest_m_coord[3] = {MInt(0),
-                             MInt(0),
-                             MInt(0)};
-  for (int i = 0; i < up_to; ++i) {
-    int remaining = i;
-    HalfSpace3Rep plane[2];
-    for (int j = 0; j < 2; ++j) {
-      VectorInt normal_components[3];
-      for (int k = 0; k < 3; ++k) {
-        switch (remaining % 2) {
-          case 0:
-            normal_components[k] = HalfSpace3Builder::normal_component_min();
-            break;
-          case 1:
-            normal_components[k] = HalfSpace3Builder::normal_component_max();
-            break;
-        }
-        remaining /= 2;
-      }
-      DistInt dist;
-      switch (remaining % 2) {
-        case 0:
-          dist = HalfSpace3Builder::dist_min();
-          break;
-        case 1:
-          dist = HalfSpace3Builder::dist_max();
-          break;
-      }
-      remaining /= 2;
-      typename HalfSpace3Rep::VectorRep normal(normal_components[0],
-                                          normal_components[1],
-                                          normal_components[2]);
-      plane[j] = HalfSpace3Rep(normal, dist);
-    }
-    if (!plane[0].IsValid() || !plane[1].IsValid()) {
-      continue;
-    }
-    if (plane[0] == plane[1]) {
-      continue;
-    }
-    PluckerLineRep line = Builder::Build(plane[0], plane[1]);
-    // A PluckerLine type with double the required bits.
-    using PluckerLineExtraBits =
-      PluckerLine<PluckerLineRep::DVector::BigIntRep::bits*2,
-                  PluckerLineRep::MVector::BigIntRep::bits*2>;
-    PluckerLineExtraBits line_extra(const_cast<const HalfSpace3Rep&>(plane[0]),
-        const_cast<const HalfSpace3Rep&>(plane[1]));
-    EXPECT_EQ(line.IsValid(), line_extra.IsValid());
-    EXPECT_EQ(line, line_extra);
-    EXPECT_TRUE(line.IsValidState());
-    for (int j = 0; j < 3; ++j) {
-      smallest_d_coord[j] = std::min(smallest_d_coord[j],
-                                     line.d().components()[j]);
-      largest_d_coord[j] = std::max(largest_d_coord[j],
-                                    line.d().components()[j]);
-
-      smallest_m_coord[j] = std::min(smallest_m_coord[j],
-                                     line.m().components()[j]);
-      largest_m_coord[j] = std::max(largest_m_coord[j],
-                                    line.m().components()[j]);
-    }
-  }
-  for (int j = 0; j < 3; ++j) {
-    EXPECT_EQ(smallest_d_coord[j], Builder::d_component_min());
-    EXPECT_EQ(largest_d_coord[j], Builder::d_component_max());
-
-    EXPECT_EQ(smallest_m_coord[j], Builder::m_component_min());
-    EXPECT_EQ(largest_m_coord[j], Builder::m_component_max());
-  }
-  using NextSmallerDInt = BigInt<DInt::bits - 1>;
-  using NextSmallerMInt = BigInt<MInt::bits - 1>;
-  EXPECT_LT(Builder::d_component_min(), DInt(NextSmallerDInt::min_value()));
-  EXPECT_GT(Builder::d_component_max(), DInt(NextSmallerDInt::max_value()));
-  EXPECT_LT(Builder::m_component_min(), MInt(NextSmallerMInt::min_value()));
-  EXPECT_GT(Builder::m_component_max(), MInt(NextSmallerMInt::max_value()));
-}
-
-TEST(PluckerLineFromPlanesFromPoint3sBuilder, CorrectOutputBits3) {
-  TestCorrectOutputBitsFromPlanesFromPoint3s<3>();
-}
-
-TEST(PluckerLineFromPlanesFromPoint3sBuilder, CorrectOutputBits32) {
-  TestCorrectOutputBitsFromPlanesFromPoint3s<32>();
-}
-
-TEST(PluckerLineFromPlanesFromPoint3sBuilder, CorrectOutputBits64) {
-  TestCorrectOutputBitsFromPlanesFromPoint3s<64>();
 }
 
 }  // walnut

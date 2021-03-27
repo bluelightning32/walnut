@@ -152,9 +152,8 @@ class BigInt : public BigIntImpl {
   }
 
   // Divide `this` by `other`. Return the quotient.
-  template <size_t other_bits>
-  constexpr BigInt<bits>& operator/=(const BigInt<other_bits>& other) {
-    *this = BigIntImpl::operator/(other);
+  constexpr BigInt<bits>& operator/=(const BigIntImpl& other) {
+    BigIntImpl::operator/=(other);
     return *this;
   }
 
@@ -206,17 +205,16 @@ class BigInt : public BigIntImpl {
                             const BigInt<r1_c2_bits>& r1_c2,
                             const BigInt<r2_c1_bits>& r2_c1,
                             const BigInt<r2_c2_bits>& r2_c2) {
-    return r1_c1*r2_c2 - r2_c1*r1_c2;
+    return BigIntImpl::Determinant(r1_c1, r1_c2, r2_c1, r2_c2);
   }
 
   template <size_t other_bits>
   constexpr BigInt<std::max(bits, other_bits)>
   GetGreatestCommonDivisor(const BigInt<other_bits> &other) const {
-    if (other.IsZero()) return *this;
-
-    BigInt<std::max(bits, other_bits)> mod = *this % other;
-    return other.GetGreatestCommonDivisor(mod);
+    return BigIntImpl::GetGreatestCommonDivisor(other);
   }
+
+  using BigIntImpl::GetGreatestCommonDivisor;
 };
 
 template <size_t print_bits>
