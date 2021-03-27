@@ -10,7 +10,10 @@
 
 namespace walnut {
 
-// Common base for BigIntImpl and BigUIntImpl
+// Variable length container of BigUIntWords
+//
+// This container always has at least size 1. The first word is stored inline.
+// The remaining words are heap allocated.
 template <size_t max_words_template>
 class BigIntWords {
   template <size_t other_max_words>
