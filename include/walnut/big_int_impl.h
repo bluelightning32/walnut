@@ -40,8 +40,7 @@ class BigIntImpl {
      Trim();
   }
 
-  template <size_t other_max_words>
-  constexpr BigIntImpl(const BigUIntImpl<other_max_words>& other)
+  constexpr BigIntImpl(const BigUIntImpl& other)
    : words_(/*used_words=*/other.used_words() +
                              (BigIntWord{other.word(other.used_words() - 1)} <
                               0),
@@ -95,12 +94,8 @@ class BigIntImpl {
     return *this;
   }
 
-  template <size_t other_max_words>
-  constexpr BigIntImpl<max_words>& operator = (
-      const BigUIntImpl<other_max_words>& other) {
-    int copy_words = max_words < other_max_words ?
-                     std::min(other.used_words(), max_words) :
-                     other.used_words();
+  constexpr BigIntImpl<max_words>& operator = (const BigUIntImpl& other) {
+    int copy_words = std::min(other.used_words(), size_t(max_words));
     words_.Assign(other.words(), copy_words);
     if (BigIntWord{word(used_words() - 1)} < 0 && used_words() < max_words) {
       words_.push_back(BigUIntWord{0});
@@ -776,15 +771,15 @@ class BigIntImpl {
     return result;
   }
 
-  constexpr BigUIntImpl<max_words> GetUIntAbs(bool* was_signed) const {
+  BigUIntImpl GetUIntAbs(bool* was_signed) const {
     *was_signed = BigIntWord{words_[used_words() - 1]} < 0;
     if (*was_signed) {
       BigIntImpl<max_words> pos = *this;
       // Ignore overflow
       pos.Negate();
-      return BigUIntImpl<max_words>{pos.words_, pos.used_words()};
+      return BigUIntImpl{pos.words_, pos.used_words()};
     } else {
-      return BigUIntImpl<max_words>{words_, used_words()};
+      return BigUIntImpl{words_, used_words()};
     }
   }
 
@@ -912,15 +907,15 @@ class BigIntImpl {
   }
 
   template <size_t other_words>
-  constexpr BigIntImpl<max_words> DivideRemainderSlow(const BigIntImpl<other_words>& other,
+  BigIntImpl<max_words> DivideRemainderSlow(const BigIntImpl<other_words>& other,
       BigIntImpl<std::min(max_words, other_words)>* remainder_out) const {
     bool this_signed = false;
-    BigUIntImpl<max_words> this_uint = GetUIntAbs(&this_signed);
+    BigUIntImpl this_uint = GetUIntAbs(&this_signed);
     bool other_signed = false;
-    BigUIntImpl<other_words> other_uint = other.GetUIntAbs(&other_signed);
+    BigUIntImpl other_uint = other.GetUIntAbs(&other_signed);
 
-    BigUIntImpl<std::min(max_words, other_words)> remainder;
-    BigUIntImpl<max_words> quotient = this_uint.DivideRemainder(other_uint,
+    BigUIntImpl remainder;
+    BigUIntImpl quotient = this_uint.DivideRemainder(other_uint,
                                                                 &remainder);
     *remainder_out = remainder;
     if (this_signed) {
