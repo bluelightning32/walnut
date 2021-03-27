@@ -231,9 +231,9 @@ template <size_t num_bits, size_t denom_bits>
 void HomoPoint3<num_bits, denom_bits>::Reduce() {
   auto common_factor = dist_denom_.GetGreatestCommonDivisor(
       vector_from_origin_.x());
-  common_factor = dist_denom_.GetGreatestCommonDivisor(
+  common_factor = common_factor.GetGreatestCommonDivisor(
       vector_from_origin_.y());
-  common_factor = dist_denom_.GetGreatestCommonDivisor(
+  common_factor = common_factor.GetGreatestCommonDivisor(
       vector_from_origin_.z());
 
   // Prioritize making the dist positive.

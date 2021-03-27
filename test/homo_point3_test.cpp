@@ -81,4 +81,13 @@ TEST(HomoPoint3, ReduceAllIntMin) {
   EXPECT_EQ(reduced.w(), 1);
 }
 
+TEST(HomoPoint3, ReduceDifferentFactors) {
+  HomoPoint3<> original(11 * 2 * 3, 13 * 2 * 5, 17 * 2 * 7, 2 * 3 * 5 * 7);
+
+  HomoPoint3<> reduced = original;
+  reduced.Reduce();
+  EXPECT_EQ(reduced, original);
+  EXPECT_EQ(reduced.w(), 3 * 5 * 7);
+}
+
 }  // walnut
