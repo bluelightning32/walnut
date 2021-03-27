@@ -12,13 +12,11 @@ namespace rational {
 // Takes an input rational in the form: numerator/old_denominator and finds the
 // closest rational that is greater than or equal to the old one and in the
 // form: new_num/new_denominator. new_num is returned.
-template <size_t num_bits, size_t old_denom_bits, size_t new_denom_bits>
-BigInt<num_bits + new_denom_bits> RoundUp(
-    const BigInt<num_bits>& numerator,
-    const BigInt<old_denom_bits>& old_denominator,
-    const BigInt<new_denom_bits>& new_denominator) {
-  BigInt<std::min(num_bits + new_denom_bits, old_denom_bits)> remainder;
-  BigInt<num_bits + new_denom_bits> new_num =
+inline BigIntImpl RoundUp(const BigIntImpl& numerator,
+                          const BigIntImpl& old_denominator,
+                          const BigIntImpl& new_denominator) {
+  BigIntImpl remainder;
+  BigIntImpl new_num =
     (numerator * new_denominator).DivideRemainder(old_denominator, &remainder);
   // The exact result is:
   //   new_num/new_denominator + (remainder/old_denominator)/new_denominator
@@ -36,13 +34,11 @@ BigInt<num_bits + new_denom_bits> RoundUp(
 // Takes an input rational in the form: numerator/old_denominator and finds the
 // closest rational that is less than or equal to the old one and in the
 // form: new_num/new_denominator. new_num is returned.
-template <size_t num_bits, size_t old_denom_bits, size_t new_denom_bits>
-BigInt<num_bits + new_denom_bits> RoundDown(
-    const BigInt<num_bits>& numerator,
-    const BigInt<old_denom_bits>& old_denominator,
-    const BigInt<new_denom_bits>& new_denominator) {
-  BigInt<std::min(num_bits + new_denom_bits, old_denom_bits)> remainder;
-  BigInt<num_bits + new_denom_bits> new_num =
+inline BigIntImpl RoundDown(const BigIntImpl& numerator,
+                            const BigIntImpl& old_denominator,
+                            const BigIntImpl& new_denominator) {
+  BigIntImpl remainder;
+  BigIntImpl new_num =
     (numerator * new_denominator).DivideRemainder(old_denominator, &remainder);
   // The exact result is:
   //   new_num/new_denominator + (remainder/old_denominator)/new_denominator
