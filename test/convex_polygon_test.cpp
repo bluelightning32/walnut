@@ -400,7 +400,7 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesBisectStartPerp) {
   };
   ConvexPolygon<32> polygon = MakeConvexPolygon(p);
 
-  Vector2<> vector(0, 1);
+  Vector2 vector(0, 1);
   std::pair<size_t, size_t> opp_edges = polygon.GetOppositeEdgeIndicesBisect(
       vector, /*drop_dimension=*/2);
 
@@ -434,7 +434,7 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesBisect) {
     p[i] = Point3<32>(99 - i, 1, 10);
   }
 
-  const Vector2<> vector(-1, 0);
+  const Vector2 vector(-1, 0);
   for (size_t offset = 0; offset < sizeof(p)/sizeof(p[0]); ++offset) {
     ConvexPolygon<32> polygon = MakeConvexPolygon(p);
 
@@ -472,7 +472,7 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesCWMidSameDir) {
   };
   ConvexPolygon<32> polygon = MakeConvexPolygon(p);
 
-  Vector2<> vector(0, -1);
+  Vector2 vector(0, -1);
   std::pair<size_t, size_t> opp_edges = polygon.GetOppositeEdgeIndicesBisect(
       vector, /*drop_dimension=*/2);
   const auto& edge1_dir = polygon.const_edge(opp_edges.first).line().d();
@@ -499,7 +499,7 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesCCWMidSameDir) {
   };
   ConvexPolygon<32> polygon = MakeConvexPolygon(p);
 
-  Vector2<> vector(1, 0);
+  Vector2 vector(1, 0);
   std::pair<size_t, size_t> opp_edges = polygon.GetOppositeEdgeIndicesBisect(
       vector, /*drop_dimension=*/2);
 
@@ -525,7 +525,7 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesLargeInts) {
   {
     ConvexPolygon<32> polygon(plane, 2, p);
 
-    Vector2<> vector(-92360000, -2450000);
+    Vector2 vector(-92360000, -2450000);
     std::pair<size_t, size_t> opp_edges = polygon.GetOppositeEdgeIndicesBisect(
         vector, /*drop_dimension=*/2);
     EXPECT_EQ(opp_edges.first, 4);
@@ -542,7 +542,7 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesLargeInts) {
   {
     ConvexPolygon<32> polygon(plane, 2, p);
 
-    Vector2<> vector(-9236, -245);
+    Vector2 vector(-9236, -245);
     std::pair<size_t, size_t> opp_edges = polygon.GetOppositeEdgeIndicesBisect(
         vector, /*drop_dimension=*/2);
     EXPECT_EQ(opp_edges.first, 4);
@@ -583,7 +583,7 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesDenom) {
 
       ConvexPolygon<32> polygon(plane, /*drop_dimension=*/2, p_copy);
 
-      Vector2<> vector(1, 0);
+      Vector2 vector(1, 0);
       std::pair<size_t, size_t> opp_edges =
         polygon.GetOppositeEdgeIndicesBisect(
             vector, /*drop_dimension=*/2);
@@ -629,11 +629,11 @@ TEST(ConvexPolygon, CounterClockwiseSquareGetExtremeIndexBisect) {
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(p);
 
-  Vector2<> to_corner[] = {
-    Vector2<>(-1, -1),
-    Vector2<>(1, -1),
-    Vector2<>(1, 1),
-    Vector2<>(-1, 1),
+  Vector2 to_corner[] = {
+    Vector2(-1, -1),
+    Vector2(1, -1),
+    Vector2(1, 1),
+    Vector2(-1, 1),
   };
 
   for (int i = 0; i < 4; ++i) {
@@ -641,11 +641,11 @@ TEST(ConvexPolygon, CounterClockwiseSquareGetExtremeIndexBisect) {
                                             /*drop_dimension=*/2), i);
   }
 
-  Vector2<> along_edges[] = {
-    Vector2<>(0, -1),
-    Vector2<>(1, 0),
-    Vector2<>(0, 1),
-    Vector2<>(-1, 0),
+  Vector2 along_edges[] = {
+    Vector2(0, -1),
+    Vector2(1, 0),
+    Vector2(0, 1),
+    Vector2(-1, 0),
   };
 
   for (int i = 0; i < 4; ++i) {
@@ -790,11 +790,11 @@ TEST(ConvexPolygon, ClockwiseSquareGetExtremeIndexBisect) {
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(p);
 
-  Vector2<> to_corner[] = {
-    Vector2<>(-1, -1),
-    Vector2<>(-1, 1),
-    Vector2<>(1, 1),
-    Vector2<>(1, -1),
+  Vector2 to_corner[] = {
+    Vector2(-1, -1),
+    Vector2(-1, 1),
+    Vector2(1, 1),
+    Vector2(1, -1),
   };
 
   for (int i = 0; i < 4; ++i) {
@@ -802,11 +802,11 @@ TEST(ConvexPolygon, ClockwiseSquareGetExtremeIndexBisect) {
                                             /*drop_dimension=*/2), i);
   }
 
-  Vector2<> along_edges[] = {
-    Vector2<>(-1, 0),
-    Vector2<>(0, 1),
-    Vector2<>(1, 0),
-    Vector2<>(0, -1),
+  Vector2 along_edges[] = {
+    Vector2(-1, 0),
+    Vector2(0, 1),
+    Vector2(1, 0),
+    Vector2(0, -1),
   };
 
   for (int i = 0; i < 4; ++i) {

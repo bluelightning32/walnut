@@ -8,8 +8,6 @@ namespace walnut {
 template <size_t coord_bits_template = 32>
 class Point2 {
  public:
-  using VectorRep = Vector2<coord_bits_template>;
-
   // The minimum number of bits to support for each coordinate.
   //
   // Note that the BigInt may round up the requested number of bits and end up
@@ -33,7 +31,7 @@ class Point2 {
 
   const std::array<BigIntImpl, 2>& coords() const { return vector_from_origin_.coords(); }
 
-  const VectorRep& vector_from_origin() const {
+  const Vector2& vector_from_origin() const {
     return vector_from_origin_;
   }
 
@@ -59,8 +57,7 @@ class Point2 {
   }
 
   template <size_t other_coord_bits>
-  Vector2<std::max(other_coord_bits, coord_bits_template) + 1> operator-(
-      const Point2<other_coord_bits>& other) const {
+  Vector2 operator-(const Point2<other_coord_bits>& other) const {
     return vector_from_origin() - other.vector_from_origin();
   }
 
@@ -75,7 +72,7 @@ class Point2 {
   }
 
  private:
-  VectorRep vector_from_origin_;
+  Vector2 vector_from_origin_;
 };
 
 }  // walnut

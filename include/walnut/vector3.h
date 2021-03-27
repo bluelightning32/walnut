@@ -177,9 +177,9 @@ class Vector3 {
     return -1;
   }
 
-  Vector2<component_bits> DropDimension(int drop_dimension) const {
-    return Vector2<component_bits>(components()[(drop_dimension + 1) % 3],
-                                   components()[(drop_dimension + 2) % 3]);
+  Vector2 DropDimension(int drop_dimension) const {
+    return Vector2(components()[(drop_dimension + 1) % 3],
+                   components()[(drop_dimension + 2) % 3]);
   }
 
   // Verifies the fields are in their supported ranges.

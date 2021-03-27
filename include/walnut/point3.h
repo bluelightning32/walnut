@@ -106,8 +106,7 @@ class Point3 {
   }
 
   Point2<component_bits> DropDimension(int drop_dimension) const {
-    Vector2<component_bits> v =
-      vector_from_origin().DropDimension(drop_dimension);
+    Vector2 v = vector_from_origin().DropDimension(drop_dimension);
     return Point2<component_bits>(v.x(), v.y());
   }
 

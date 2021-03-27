@@ -40,7 +40,6 @@ class EdgeLineConnector {
   using NumInt = typename HomoPoint3Rep::NumInt;
   using DenomInt = typename HomoPoint3Rep::DenomInt;
   using NormalRep = typename PolygonRep::NormalRep;
-  using ProjectedNormalRep = Vector2<NormalRep::component_bits>;
   using LineRep = typename EdgeRep::LineRep;
 
   // Connects the adjacent edges in the range of ConnectedEdges.
@@ -199,9 +198,9 @@ class EdgeLineConnector {
     RotationCompare(int sorted_dimension) :
       sorted_dimension(sorted_dimension) { }
 
-    ProjectedNormalRep GetProjectedNormal(const EdgeRep& edge) const {
+    Vector2 GetProjectedNormal(const EdgeRep& edge) const {
       const NormalRep& polygon_normal = edge.polygon().normal();
-      ProjectedNormalRep result =
+      Vector2 result =
         polygon_normal.DropDimension(sorted_dimension);
       if (!edge.IsPositive(sorted_dimension)) {
         // This is a negative edge.
@@ -211,8 +210,8 @@ class EdgeLineConnector {
     }
 
     bool operator()(const EdgeRep* e1, const EdgeRep* e2) const {
-      ProjectedNormalRep e1_normal = GetProjectedNormal(*e1);
-      ProjectedNormalRep e2_normal = GetProjectedNormal(*e2);
+      Vector2 e1_normal = GetProjectedNormal(*e1);
+      Vector2 e2_normal = GetProjectedNormal(*e2);
       if (!e1_normal.IsSameDir(e2_normal)) {
         return e1_normal.IsRotationLessThan(e2_normal);
       }

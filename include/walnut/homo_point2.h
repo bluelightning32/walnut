@@ -11,7 +11,7 @@ namespace walnut {
 template <size_t num_bits_template = 32, size_t denom_bits_template = 32>
 class HomoPoint2 {
  public:
-  using VectorRep = Vector2<num_bits_template>;
+  using VectorRep = Vector2;
   using NumInt = BigIntImpl;
   using DenomInt = BigInt<denom_bits_template>;
 
@@ -80,8 +80,8 @@ class HomoPoint2 {
   HomoPoint2(const Point2<other_num_bits>& other) :
     vector_from_origin_(other.vector_from_origin()), dist_denom_(1) { }
 
-  template <size_t other_num_bits, size_t other_denom_bits>
-  HomoPoint2(const Vector2<other_num_bits>& v,
+  template <size_t other_denom_bits>
+  HomoPoint2(const Vector2& v,
              const BigInt<other_denom_bits>& w) :
     vector_from_origin_(v), dist_denom_(w) { }
 

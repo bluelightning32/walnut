@@ -152,20 +152,20 @@ class HomoPoint3 {
     // The vectors (p1 - *this) and (p3 - *this) will have different scales,
     // but that's okay since we're only looking at the sign of the cross
     // product.
-    Vector2<other_num_bits + denom_bits - 1> p1_from_origin =
+    Vector2 p1_from_origin =
       p1.vector_from_origin().DropDimension(drop_dimension) * dist_denom();
-    Vector2<num_bits + other_denom_bits - 1> p2_from_origin1 =
+    Vector2 p2_from_origin1 =
       vector_from_origin().DropDimension(drop_dimension) * p1.dist_denom();
-    Vector2<num_bits + other_denom_bits - 1> p2_from_origin3 =
+    Vector2 p2_from_origin3 =
       vector_from_origin().DropDimension(drop_dimension) * p3.dist_denom();
-    Vector2<other_num_bits + denom_bits - 1> p3_from_origin =
+    Vector2 p3_from_origin =
       p3.vector_from_origin().DropDimension(drop_dimension) * dist_denom();
     return (p1_from_origin - p2_from_origin1).Cross(
         p3_from_origin - p2_from_origin3).GetSign();
   }
 
   HomoPoint2<num_bits, denom_bits> DropDimension(int drop_dimension) const {
-    Vector2<num_bits> v = vector_from_origin().DropDimension(drop_dimension);
+    Vector2 v = vector_from_origin().DropDimension(drop_dimension);
     return HomoPoint2<num_bits, denom_bits>(v, w());
   }
 

@@ -236,9 +236,8 @@ class ConvexPolygon {
   // pointing in roughly the same direction as `v`. The second element in the
   // pair is the edge source index for an edge pointing in roughly the opposite
   // direction.
-  template <size_t vector_bits>
   std::pair<size_t, size_t> GetOppositeEdgeIndicesBisect(
-      const Vector2<vector_bits>& v, int drop_dimension) const;
+      const Vector2& v, int drop_dimension) const;
 
   // Returns an index into vertices() such that:
   //   a <= ret < a + vertices.size()
@@ -271,8 +270,7 @@ class ConvexPolygon {
   // ConvexPolygons with fewer vertices (roughly 10 or fewer vertices).
   //
   // If `v` is Zero, this returns static_cast<size_t>(-1).
-  template <size_t vector_bits>
-  size_t GetExtremeIndexBisect(const Vector2<vector_bits>& v,
+  size_t GetExtremeIndexBisect(const Vector2& v,
                                int drop_dimension) const;
 
   // Returns the index of the vertex that is farthest in the `v` direction
@@ -654,10 +652,9 @@ bool ConvexPolygon<point3_bits, EdgeParent>::operator==(
 }
 
 template <size_t point3_bits, typename EdgeParent>
-template <size_t vector_bits>
 std::pair<size_t, size_t>
 ConvexPolygon<point3_bits, EdgeParent>::GetOppositeEdgeIndicesBisect(
-    const Vector2<vector_bits>& v, int drop_dimension) const {
+    const Vector2& v, int drop_dimension) const {
   BigIntWord initial_dir_sign =
     edge(0).line().d().DropDimension(drop_dimension).Dot(v).GetSign();
   if (initial_dir_sign == 0) {
@@ -691,7 +688,7 @@ ConvexPolygon<point3_bits, EdgeParent>::GetOppositeEdgeIndicesBisect(
   // Copy `v` into `v_flipped` and negate `v_flipped` as necessary such that it
   // roughly points in the same direction as the 0th edge.
   bool flipped = initial_dir_sign < 0;
-  Vector2<vector_bits> v_flipped = v;
+  Vector2 v_flipped = v;
   if (flipped) v_flipped.Negate();
   auto initial_dist = edge(0).vertex().vector_from_origin()
                              .DropDimension(drop_dimension).Dot(v_flipped);
@@ -728,9 +725,8 @@ ConvexPolygon<point3_bits, EdgeParent>::GetOppositeEdgeIndicesBisect(
 }
 
 template <size_t point3_bits, typename EdgeParent>
-template <size_t vector_bits>
 size_t ConvexPolygon<point3_bits, EdgeParent>::GetExtremeIndexBisect(
-    const Vector2<vector_bits>& v, int drop_dimension) const {
+    const Vector2& v, int drop_dimension) const {
   if (v.IsZero()) return -1;
 
   std::pair<size_t, size_t> dir_indices =

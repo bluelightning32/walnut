@@ -12,7 +12,7 @@ template <size_t vector_bits_template = 31*2 + 3,
           size_t dist_bits_template = 31*3 + 3>
 class HalfSpace2 {
  public:
-  using VectorRep = Vector2<vector_bits_template>;
+  using VectorRep = Vector2;
   using VectorInt = BigIntImpl;
   using DistInt = BigInt<dist_bits_template>;
 
@@ -48,8 +48,7 @@ class HalfSpace2 {
   // Leaves the coordinates in an undefined state
   HalfSpace2() = default;
 
-  template <size_t other_vector_bits>
-  HalfSpace2(const Vector2<other_vector_bits>& normal, const DistInt& dist) :
+  HalfSpace2(const Vector2& normal, const DistInt& dist) :
     normal_(normal), dist_(dist) { }
 
   HalfSpace2(const VectorInt& x, const VectorInt& y, const DistInt& dist) :
@@ -141,7 +140,7 @@ class HalfSpace2 {
   //
   // This function exists for testing purposes. It should always return true.
   bool IsValidState() const {
-    return normal_.IsValidState() && dist_.IsValidState();
+    return dist_.IsValidState();
   }
 
   // This function could potentially overflow. The caller must ensure there is

@@ -8,11 +8,7 @@
 
 namespace walnut {
 
-template <size_t coord_bits_template = 33>
 class Vector2 {
-  template <size_t other_coord_bits>
-  friend class Vector2;
-
  public:
   // Compares two Vector2 by their rotation from the x axis through the y axis
   // and up to (but not including) the negative axis.
@@ -52,19 +48,10 @@ class Vector2 {
     }
   };
 
-  // The minimum number of bits to support for each coordinate.
-  //
-  // Note that the BigInt may round up the requested number of bits and end up
-  // supporting more bits. Also note that BigInts are faster when fewer bits
-  // are requested, and of BigInts that have the same requested bits, instances
-  // with fewer used bits are faster.
-  static constexpr size_t coord_bits = coord_bits_template;
-
   // Leaves the coordinates in an undefined state
   Vector2() = default;
 
-  template <size_t other_coord_bits>
-  Vector2(const Vector2<other_coord_bits>& other) :
+  Vector2(const Vector2& other) :
     coords_{other.coords()[0], other.coords()[1]} { }
 
   Vector2(const BigIntImpl& x, const BigIntImpl& y) :
@@ -97,18 +84,13 @@ class Vector2 {
     return coords_;
   }
 
-  template <size_t other_coord_bits>
-  bool operator ==(const Vector2<other_coord_bits>& other) const {
+  bool operator ==(const Vector2& other) const {
     return x() == other.x() &&
            y() == other.y();
   }
 
-  template <size_t other_coord_bits>
-  Vector2<std::max(other_coord_bits, coord_bits) + 1> operator-(
-      const Vector2<other_coord_bits>& other) const {
-    return Vector2<std::max(other_coord_bits, coord_bits) + 1>(
-        /*x=*/x() - other.x(),
-        /*y=*/y() - other.y());
+  Vector2 operator-(const Vector2& other) const {
+    return Vector2(/*x=*/x() - other.x(), /*y=*/y() - other.y());
   }
 
   static Vector2 Zero() {
@@ -120,50 +102,42 @@ class Vector2 {
   //
   // Vectors with opposite magnitude are considered to have opposite
   // directions, and this function returns false for such vectors.
-  template <size_t other_coord_bits>
-  bool IsSameDir(const Vector2<other_coord_bits>& other) const;
+  bool IsSameDir(const Vector2& other) const;
 
   // Return true if the vectors have the same direction or opposite directions
   // and only differ in magnitude.
-  template <size_t other_coord_bits>
-  bool IsSameOrOppositeDir(const Vector2<other_coord_bits>& other) const;
+  bool IsSameOrOppositeDir(const Vector2& other) const;
 
   // Get the square of the scale of this vector
-  BigInt<coord_bits*2 + 2> GetScaleSquared() const {
+  BigIntImpl GetScaleSquared() const {
     return Dot(*this);
   }
 
   // Compute the dot product
-  template <size_t other_coord_bits>
-  BigInt<coord_bits + other_coord_bits + 1> Dot(const Vector2<other_coord_bits>& other) const {
+  BigIntImpl Dot(const Vector2& other) const {
     BigIntImpl result = x() * other.x();
     result += y() * other.y();
     return result;
   }
 
   // Compute the cross product
-  template <size_t other_coord_bits>
-  BigInt<coord_bits + other_coord_bits> Cross(const Vector2<other_coord_bits>& other) const {
+  BigIntImpl Cross(const Vector2& other) const {
     return x()*other.y() - y()*other.x();
   }
 
-  template <size_t other_bits>
-  Vector2<coord_bits + other_bits> Scale(const BigInt<other_bits>& scale) const {
-    return Vector2<coord_bits + other_bits>(x() * scale,
-                                            y() * scale);
+  Vector2 Scale(const BigIntImpl& scale) const {
+    return Vector2(x() * scale, y() * scale);
   }
 
-  Vector2<coord_bits + sizeof(int)*8> Scale(int scale) const {
-    return Scale<sizeof(int)*8>(BigInt<sizeof(int)*8>(scale));
+  Vector2 Scale(int scale) const {
+    return Scale(BigIntImpl(scale));
   }
 
-  template <size_t other_bits>
-  Vector2<coord_bits + other_bits> operator*(
-      const BigInt<other_bits>& scale) const {
+  Vector2 operator*(const BigIntImpl& scale) const {
     return Scale(scale);
   }
 
-  Vector2<coord_bits + sizeof(int)*8> operator*(int scale) const {
+  Vector2 operator*(int scale) const {
     return Scale(scale);
   }
 
@@ -210,8 +184,7 @@ class Vector2 {
   // vector is negated.
   //
   // Note that this comparison has the transitive property.
-  template <size_t other_coord_bits>
-  bool IsHalfRotationLessThan(const Vector2<other_coord_bits>& other) const {
+  bool IsHalfRotationLessThan(const Vector2& other) const {
     return rational::IsHalfRotationLessThan(x(), y(), other.x(), other.y(),
                                             y() * other.x(), other.y() * x());
   }
@@ -220,19 +193,15 @@ class Vector2 {
   // less than the angle from the x-axis to `other`.
   //
   // Note that this comparison has the transitive property.
-  template <size_t other_coord_bits>
-  bool IsRotationLessThan(const Vector2<other_coord_bits>& other) const;
+  bool IsRotationLessThan(const Vector2& other) const;
 
  private:
   std::array<BigIntImpl, 2> coords_;
 };
 
-template <size_t coord_bits>
-template <size_t other_coord_bits>
-inline bool Vector2<coord_bits>::IsSameDir(
-    const Vector2<other_coord_bits>& other) const {
-  BigInt<coord_bits> scale_other;
-  BigInt<other_coord_bits> scale_mine;
+inline bool Vector2::IsSameDir(const Vector2& other) const {
+  BigIntImpl scale_other;
+  BigIntImpl scale_mine;
   if (x() != 0) {
     scale_other = x().abs();
     scale_mine = other.x().abs();
@@ -245,12 +214,9 @@ inline bool Vector2<coord_bits>::IsSameDir(
          y().Multiply(scale_mine) == other.y().Multiply(scale_other);
 }
 
-template <size_t coord_bits>
-template <size_t other_coord_bits>
-inline bool Vector2<coord_bits>::IsSameOrOppositeDir(
-    const Vector2<other_coord_bits>& other) const {
-  BigInt<coord_bits> scale_other;
-  BigInt<other_coord_bits> scale_mine;
+inline bool Vector2::IsSameOrOppositeDir(const Vector2& other) const {
+  BigIntImpl scale_other;
+  BigIntImpl scale_mine;
   if (x() != 0) {
     scale_other = x();
     scale_mine = other.x();
@@ -263,10 +229,7 @@ inline bool Vector2<coord_bits>::IsSameOrOppositeDir(
          y().Multiply(scale_mine) == other.y().Multiply(scale_other);
 }
 
-template <size_t coord_bits>
-template <size_t other_coord_bits>
-inline bool Vector2<coord_bits>::IsRotationLessThan(
-    const Vector2<other_coord_bits>& other) const {
+inline bool Vector2::IsRotationLessThan(const Vector2& other) const {
   bool y_sign = y().GetSign() < 0;
   bool other_y_sign = other.y().GetSign() < 0;
   // packed_sign is the quadrant that `this` is in, although the quadrant
@@ -285,8 +248,7 @@ inline bool Vector2<coord_bits>::IsRotationLessThan(
   return y() * other.x() < other.y() * x();
 }
 
-template <size_t coord_bits>
-std::ostream& operator<<(std::ostream& out, const Vector2<coord_bits>& v) {
+inline std::ostream& operator<<(std::ostream& out, const Vector2& v) {
   return out << "{ "
              << v.coords()[0] << ", "
              << v.coords()[1]
