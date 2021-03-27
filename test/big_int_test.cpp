@@ -778,4 +778,22 @@ TEST(BigInt, DecrementInt64Min) {
   EXPECT_LT(a, BigInt<128>(0));
 }
 
+TEST(BigInt, GetGreatestCommonDivisorInt64Min) {
+  BigInt<64> a = BigInt<64>::min_value();
+  BigInt<64> b = BigInt<64>::min_value();
+  EXPECT_EQ(a.GetGreatestCommonDivisor(b), a);
+}
+
+TEST(BigInt, GetGreatestCommonDivisorInt128Min) {
+  BigInt<128> a = BigInt<128>::min_value();
+  BigInt<128> b = BigInt<128>::min_value();
+  EXPECT_EQ(a.GetGreatestCommonDivisor(b), a);
+}
+
+TEST(BigInt, GetGreatestCommonDivisorInt256Min) {
+  BigInt<256> a = BigInt<256>::min_value();
+  BigInt<256> b = BigInt<256>::min_value();
+  EXPECT_EQ(a.GetGreatestCommonDivisor(b), a);
+}
+
 }  // walnut
