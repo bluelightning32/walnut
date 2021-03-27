@@ -164,9 +164,9 @@ class HomoPoint3 {
         p3_from_origin - p2_from_origin3).GetSign();
   }
 
-  HomoPoint2<num_bits, denom_bits> DropDimension(int drop_dimension) const {
+  HomoPoint2 DropDimension(int drop_dimension) const {
     Vector2 v = vector_from_origin().DropDimension(drop_dimension);
-    return HomoPoint2<num_bits, denom_bits>(v, w());
+    return HomoPoint2(v, w());
   }
 
   // Note that everything equals the 0 point with a 0 denominator.

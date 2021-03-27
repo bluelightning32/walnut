@@ -45,8 +45,7 @@ ConnectedPolygon<> MakeTriangle(int start, int end, int extra, double angle) {
 //
 // A 0 z component is added to p1 and p2. A non-zero z component is given to
 // p3.
-ConnectedPolygon<> MakeTriangle(const HomoPoint2<>& p1,
-                                const HomoPoint2<>& p2) {
+ConnectedPolygon<> MakeTriangle(const HomoPoint2& p1, const HomoPoint2& p2) {
   using HomoPoint3Rep = ConnectedPolygon<>::HomoPoint3Rep;
   std::vector<HomoPoint3Rep> p = {
     // The ConvexPolygon constructor shifts the edges by one as part of
@@ -442,9 +441,9 @@ void ShuffleAndSortEdges(std::vector<ConnectedPolygon<>>& triangles) {
 
 TEST(EdgeLineConnector, DifferentDistInMiddle) {
   std::vector<ConnectedPolygon<>> triangles{
-    MakeTriangle(HomoPoint2<>(0, 0, 1), HomoPoint2<>(-1, 0, 1)),
-    MakeTriangle(HomoPoint2<>(1, 1, 1), HomoPoint2<>(0, 1, 1)),
-    MakeTriangle(HomoPoint2<>(0, 0, 1), HomoPoint2<>(1, 0, 1)),
+    MakeTriangle(HomoPoint2(0, 0, 1), HomoPoint2(-1, 0, 1)),
+    MakeTriangle(HomoPoint2(1, 1, 1), HomoPoint2(0, 1, 1)),
+    MakeTriangle(HomoPoint2(0, 0, 1), HomoPoint2(1, 0, 1)),
   };
 
   using EdgeRef = std::reference_wrapper<ConnectedPolygon<>::EdgeRep>;
@@ -458,9 +457,9 @@ TEST(EdgeLineConnector, DifferentDistInMiddle) {
 
 TEST(EdgeLineConnector, DifferentDirectionInMiddle) {
   std::vector<ConnectedPolygon<>> triangles{
-    MakeTriangle(HomoPoint2<>(0, 0, 1), HomoPoint2<>(-1, 0, 1)),
-    MakeTriangle(HomoPoint2<>(0, 0, 1), HomoPoint2<>(1, 1, 1)),
-    MakeTriangle(HomoPoint2<>(0, 0, 1), HomoPoint2<>(1, 0, 1)),
+    MakeTriangle(HomoPoint2(0, 0, 1), HomoPoint2(-1, 0, 1)),
+    MakeTriangle(HomoPoint2(0, 0, 1), HomoPoint2(1, 1, 1)),
+    MakeTriangle(HomoPoint2(0, 0, 1), HomoPoint2(1, 0, 1)),
   };
 
   using EdgeRef = std::reference_wrapper<ConnectedPolygon<>::EdgeRep>;
@@ -476,13 +475,13 @@ TEST(EdgeLineConnector, SortEdgesInPlaneSameDenom) {
   std::vector<ConnectedPolygon<>> triangles;
   for (int p1_x = -1; p1_x <= 1; ++p1_x) {
     for (int p1_y = -1; p1_y <= 1; ++p1_y) {
-      HomoPoint2<> p1(p1_x, p1_y, 1);
+      HomoPoint2 p1(p1_x, p1_y, 1);
       for (int p2_x = -1; p2_x <= 1; ++p2_x) {
         for (int p2_y = -1; p2_y <= 1; ++p2_y) {
           if (p1_x == p2_x && p1_y == p2_y) {
             continue;
           }
-          HomoPoint2<> p2(p2_x, p2_y, 1);
+          HomoPoint2 p2(p2_x, p2_y, 1);
           ConnectedPolygon<> triangle = MakeTriangle(p1, p2);
           ASSERT_TRUE(triangle.IsValidState());
           triangles.push_back(std::move(triangle));
@@ -499,7 +498,7 @@ TEST(EdgeLineConnector, SortEdgesInPlaneDifferentDenoms) {
     if (p1_d == 0) continue;
     for (int p1_x = -1; p1_x <= 1; ++p1_x) {
       for (int p1_y = -1; p1_y <= 1; ++p1_y) {
-        HomoPoint2<> p1(p1_x, p1_y, p1_d);
+        HomoPoint2 p1(p1_x, p1_y, p1_d);
         for (int p2_d = -2; p2_d <= 2; ++p2_d) {
           if (p2_d == 0) continue;
           for (int p2_x = -1; p2_x <= 1; ++p2_x) {
@@ -508,7 +507,7 @@ TEST(EdgeLineConnector, SortEdgesInPlaneDifferentDenoms) {
                   p1_y * p2_d == p2_y * p1_d) {
                 continue;
               }
-              HomoPoint2<> p2(p2_x, p2_y, p2_d);
+              HomoPoint2 p2(p2_x, p2_y, p2_d);
               ConnectedPolygon<> triangle = MakeTriangle(p1, p2);
               ASSERT_TRUE(triangle.IsValidState());
               triangles.push_back(std::move(triangle));
