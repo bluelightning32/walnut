@@ -11,8 +11,6 @@ namespace walnut {
 template <size_t num_bits_template = 32, size_t denom_bits_template = 32>
 class HomoPoint2 {
  public:
-  using VectorRep = Vector2;
-  using NumInt = BigIntImpl;
   using DenomInt = BigInt<denom_bits_template>;
 
   // The minimum number of bits to support for each of the x and y coordinates.
@@ -20,19 +18,19 @@ class HomoPoint2 {
   // The minimum number of bits to support for the w coordinate.
   static constexpr size_t denom_bits = denom_bits_template;
 
-  NumInt& x() {
+  BigIntImpl& x() {
     return vector_from_origin_.x();
   }
 
-  const NumInt& x() const {
+  const BigIntImpl& x() const {
     return vector_from_origin_.x();
   }
 
-  NumInt& y() {
+  BigIntImpl& y() {
     return vector_from_origin_.y();
   }
 
-  const NumInt& y() const {
+  const BigIntImpl& y() const {
     return vector_from_origin_.y();
   }
 
@@ -44,11 +42,11 @@ class HomoPoint2 {
     return dist_denom_;
   }
 
-  VectorRep& vector_from_origin() {
+  Vector2& vector_from_origin() {
     return vector_from_origin_;
   }
 
-  const VectorRep& vector_from_origin() const {
+  const Vector2& vector_from_origin() const {
     return vector_from_origin_;
   }
 
@@ -121,7 +119,7 @@ class HomoPoint2 {
   }
 
  private:
-  VectorRep vector_from_origin_;
+  Vector2 vector_from_origin_;
   DenomInt dist_denom_;
 };
 
