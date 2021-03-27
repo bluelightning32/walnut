@@ -596,6 +596,10 @@ TEST(BigInt, MaxValue) {
   EXPECT_EQ(BigInt<98>::max_value(), (BigInt<128>{1} << 97) - BigInt<128>{1});
 }
 
+TEST(BigInt, MaxValue65) {
+  EXPECT_EQ(BigInt<65>::max_value(), (BigInt<128>{1} << 64) - BigInt<128>{1});
+}
+
 template <int i>
 constexpr int force_constexpr_int = i;
 

@@ -104,39 +104,46 @@ class BigIntImpl {
     return *this;
   }
 
-  static constexpr BigIntImpl max_value(int set_last_word_bits) {
+  static constexpr BigIntImpl max_value(size_t set_bits) {
     BigIntImpl result;
-    result.words_.resize(max_words);
-    for (size_t i = 0; i < max_words - 1; ++i) {
+    result.words_.resize((set_bits + bits_per_word) / bits_per_word);
+    for (size_t i = 0; i < result.words_.size() - 1; ++i) {
       result.words_[i] = BigUIntWord::max_value();
     }
     BigUIntWord last_word;
-    for (int i = 0; i < set_last_word_bits; ++i) {
+    const size_t set_last_word_bits =
+      set_bits - (result.words_.size() - 1) * bits_per_word;
+    for (size_t i = 0; i < set_last_word_bits; ++i) {
       last_word |= BigUIntWord{1} << i;
     }
-    result.words_[max_words - 1] = last_word;
+    result.words_[result.words_.size() - 1] = last_word;
     result.Trim();
     return result;
   }
 
   static constexpr BigIntImpl max_value() {
-    return max_value(/*set_last_word_bits=*/bits_per_word - 1);
+    return max_value(max_bits);
   }
 
-  static constexpr BigIntImpl min_value(int clear_last_word_bits) {
+  static constexpr BigIntImpl min_value(size_t clear_bits) {
     BigIntImpl result;
-    result.words_.resize(max_words, BigUIntWord{0});
+    result.words_.resize((clear_bits + bits_per_word) / bits_per_word);
+    for (size_t i = 0; i < result.words_.size() - 1; ++i) {
+      result.words_[i] = BigUIntWord{0};
+    }
+    const size_t clear_last_word_bits =
+      clear_bits - (result.words_.size() - 1) * bits_per_word;
     BigUIntWord last_word = BigUIntWord{-1};
-    for (int i = 0; i < clear_last_word_bits; ++i) {
+    for (size_t i = 0; i < clear_last_word_bits; ++i) {
       last_word &= ~(BigUIntWord{1} << i);
     }
-    result.words_[max_words - 1] = last_word;
+    result.words_[result.words_.size() - 1] = last_word;
     result.Trim();
     return result;
   }
 
   static constexpr BigIntImpl min_value() {
-    return max_value(/*clear_last_word_bits=*/bits_per_word - 1);
+    return min_value(max_bits - 1);
   }
 
   template <size_t result_words=max_words>

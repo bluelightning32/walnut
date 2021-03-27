@@ -55,13 +55,11 @@ class BigInt {
   }
 
   static constexpr BigInt max_value() {
-    return BigIntRep::max_value(
-        /*set_last_word_bits=*/(bits - 1) % BigUIntWord::bits_per_word);
+    return BigIntRep::max_value(/*set_bits=*/bits - 1);
   }
 
   static constexpr BigInt min_value() {
-    return BigIntRep::min_value(
-        /*clear_last_word_bits=*/(bits - 1) % BigUIntWord::bits_per_word);
+    return BigIntRep::min_value(/*clear_bits=*/bits - 1);
   }
 
   template <size_t result_bits=bits>
@@ -345,7 +343,9 @@ class BigInt {
   // max_value()]. For invalid values, it is possible for this function to
   // return false, because some BigInts can internally a larger range.
   bool IsValidState() const {
-    return min_value() <= *this && *this <= max_value();
+    BigInt minv = min_value();
+    BigInt maxv = max_value();
+    return minv <= *this && *this <= maxv;
   }
 
   template <size_t r1_c1_bits, size_t r1_c2_bits, size_t r2_c1_bits,
