@@ -717,7 +717,6 @@ class BigIntImpl {
   //
   // A return value of false means it did not overflow.
   constexpr bool Negate() {
-    words_.resize(used_words());
     bool carry = true;
     size_t i = 0;
     const BigUIntWord old_last_word(words_[used_words() - 1]);
