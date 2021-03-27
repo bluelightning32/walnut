@@ -57,9 +57,7 @@ TEST(Vector2, Minus) {
 }
 
 TEST(Vector3, MinusMax) {
-  static constexpr int coord_bits = Vector2<>::BigIntRep::word_count *
-                                    Vector2<>::BigIntRep::bits_per_word *
-                                    10;
+  static constexpr int coord_bits = 640;
   BigInt<coord_bits> min_value = BigInt<coord_bits>::min_value();
   BigInt<coord_bits> max_value = BigInt<coord_bits>::max_value();
   Vector2<coord_bits> v1(min_value, min_value);
@@ -96,8 +94,7 @@ TEST(Vector2, Scale) {
 }
 
 TEST(Vector2, DotNegMax) {
-  static constexpr int coord_bits = Vector2<>::BigIntRep::word_count *
-                                    Vector2<>::BigIntRep::bits_per_word;
+  static constexpr int coord_bits = 64;
   BigInt<coord_bits> min_value = BigInt<coord_bits>::min_value();
   // Note that since min_value uses all coord_bits, coord_bits must be
   // explicitly passed to Vector2, because coord_bits could be larger than
@@ -112,9 +109,7 @@ TEST(Vector2, DotNegMax) {
 }
 
 TEST(Vector2, CrossMax) {
-  static constexpr int coord_bits = Vector2<>::BigIntRep::word_count *
-                                    Vector2<>::BigIntRep::bits_per_word *
-                                    10;
+  static constexpr int coord_bits = 640;
   BigInt<coord_bits> min_value = BigInt<coord_bits>::min_value();
   BigInt<coord_bits> max_value = BigInt<coord_bits>::max_value();
   Vector2<coord_bits> v1(min_value, min_value);

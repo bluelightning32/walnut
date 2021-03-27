@@ -13,7 +13,7 @@ template <size_t vector_bits_template = 31*2 + 3,
 class HalfSpace2 {
  public:
   using VectorRep = Vector2<vector_bits_template>;
-  using VectorInt = typename VectorRep::BigIntRep;
+  using VectorInt = BigIntImpl;
   using DistInt = BigInt<dist_bits_template>;
 
   // The minimum number of bits to support for each of the x and y coordinates.
@@ -175,22 +175,6 @@ class HalfSpace2FromPoint2Builder {
                                    (point3_bits_template - 1)*2 + 2>;
   using VectorInt = typename HalfSpace2Rep::VectorInt;
   using DistInt = typename HalfSpace2Rep::DistInt;
-
-  static constexpr VectorInt normal_component_min() {
-    VectorInt n = Point2Rep::BigIntRep::max_value() + VectorInt(1);
-    VectorInt two_n_1 = n + n - BigInt<2>(1);
-    return -two_n_1;
-  }
-  static constexpr VectorInt normal_component_max() {
-    return -normal_component_min();
-  }
-  static constexpr DistInt dist_min() {
-    DistInt n = Point2Rep::BigIntRep::max_value() + DistInt(1);
-    return normal_component_min() * n;
-  }
-  static constexpr DistInt dist_max() {
-    return -dist_min();
-  }
 
   static HalfSpace2Rep Build(const Point2Rep& p1,
                              const Point2Rep& p2) {

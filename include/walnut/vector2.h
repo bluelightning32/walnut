@@ -14,8 +14,6 @@ class Vector2 {
   friend class Vector2;
 
  public:
-  using BigIntRep = BigInt<coord_bits_template>;
-
   // Compares two Vector2 by their rotation from the x axis through the y axis
   // and up to (but not including) the negative axis.
   //
@@ -69,33 +67,33 @@ class Vector2 {
   Vector2(const Vector2<other_coord_bits>& other) :
     coords_{other.coords()[0], other.coords()[1]} { }
 
-  Vector2(const BigIntRep& x, const BigIntRep& y) :
+  Vector2(const BigIntImpl& x, const BigIntImpl& y) :
     coords_{x, y} { }
 
   Vector2(int x, int y) :
-    coords_{BigIntRep(x), BigIntRep(y)} { }
+    coords_{BigIntImpl(x), BigIntImpl(y)} { }
 
-  BigIntRep& x() {
+  BigIntImpl& x() {
     return coords_[0];
   }
 
-  const BigIntRep& x() const {
+  const BigIntImpl& x() const {
     return coords_[0];
   }
 
-  BigIntRep& y() {
+  BigIntImpl& y() {
     return coords_[1];
   }
 
-  const BigIntRep& y() const {
+  const BigIntImpl& y() const {
     return coords_[1];
   }
 
-  std::array<BigIntRep, 2>& coords() {
+  std::array<BigIntImpl, 2>& coords() {
     return coords_;
   }
 
-  const std::array<BigIntRep, 2>& coords() const {
+  const std::array<BigIntImpl, 2>& coords() const {
     return coords_;
   }
 
@@ -138,7 +136,7 @@ class Vector2 {
   // Compute the dot product
   template <size_t other_coord_bits>
   BigInt<coord_bits + other_coord_bits + 1> Dot(const Vector2<other_coord_bits>& other) const {
-    BigInt<coord_bits + other_coord_bits + 1> result = x() * other.x();
+    BigIntImpl result = x() * other.x();
     result += y() * other.y();
     return result;
   }
@@ -192,7 +190,7 @@ class Vector2 {
   // This function could potentially overflow. The caller must ensure there is
   // sufficient bitspace.
   void Negate() {
-    for (BigIntRep& coord : coords_) {
+    for (BigIntImpl& coord : coords_) {
       bool overflowed = coord.Negate();
       assert(!overflowed);
     }
@@ -202,18 +200,6 @@ class Vector2 {
   // sufficient bitspace.
   Vector2 operator-() const {
     return Vector2(-x(), -y());
-  }
-
-  // Verifies the fields are in their supported ranges.
-  //
-  // The BigInts can sometimes internally support a larger range than what is
-  // requested in the template parameters. This function returns true if all of
-  // the fields are in their supported range.
-  //
-  // This function exists for testing purposes. It should always return true.
-  bool IsValidState() const {
-    return coords_[0].IsValidState() &&
-           coords_[1].IsValidState();
   }
 
   // Returns true if the counter-clockwise angle from the x-axis to normalized
@@ -238,7 +224,7 @@ class Vector2 {
   bool IsRotationLessThan(const Vector2<other_coord_bits>& other) const;
 
  private:
-  std::array<BigIntRep, 2> coords_;
+  std::array<BigIntImpl, 2> coords_;
 };
 
 template <size_t coord_bits>

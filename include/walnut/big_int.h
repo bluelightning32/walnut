@@ -133,6 +133,8 @@ class BigInt : public BigIntImpl {
     return BigIntImpl::operator*(other);
   }
 
+  using BigIntImpl::operator*;
+
   constexpr BigInt& operator*=(const int other) {
     BigIntImpl::operator*=(other);
     return *this;

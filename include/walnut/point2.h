@@ -9,7 +9,6 @@ template <size_t coord_bits_template = 32>
 class Point2 {
  public:
   using VectorRep = Vector2<coord_bits_template>;
-  using BigIntRep = typename VectorRep::BigIntRep;
 
   // The minimum number of bits to support for each coordinate.
   //
@@ -25,34 +24,32 @@ class Point2 {
   Point2(const Point2<other_coord_bits>& other) :
     Point2(other.coords()[0], other.coords()[1]) { }
 
-  template <size_t other_coord_bits>
-  Point2(const BigInt<other_coord_bits>& x,
-          const BigInt<other_coord_bits>& y) :
+  Point2(const BigIntImpl& x, const BigIntImpl& y) :
     vector_from_origin_(x, y) { }
 
   Point2(int x, int y) : vector_from_origin_(x, y) { }
 
-  std::array<BigIntRep, 2>& coords() { return vector_from_origin_.coords(); }
+  std::array<BigIntImpl, 2>& coords() { return vector_from_origin_.coords(); }
 
-  const std::array<BigIntRep, 2>& coords() const { return vector_from_origin_.coords(); }
+  const std::array<BigIntImpl, 2>& coords() const { return vector_from_origin_.coords(); }
 
   const VectorRep& vector_from_origin() const {
     return vector_from_origin_;
   }
 
-  BigIntRep& x() {
+  BigIntImpl& x() {
     return vector_from_origin_.x();
   }
 
-  const BigIntRep& x() const {
+  const BigIntImpl& x() const {
     return vector_from_origin_.x();
   }
 
-  BigIntRep& y() {
+  BigIntImpl& y() {
     return vector_from_origin_.y();
   }
 
-  const BigIntRep& y() const {
+  const BigIntImpl& y() const {
     return vector_from_origin_.y();
   }
 

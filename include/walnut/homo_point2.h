@@ -12,7 +12,7 @@ template <size_t num_bits_template = 32, size_t denom_bits_template = 32>
 class HomoPoint2 {
  public:
   using VectorRep = Vector2<num_bits_template>;
-  using NumInt = typename VectorRep::BigIntRep;
+  using NumInt = BigIntImpl;
   using DenomInt = BigInt<denom_bits_template>;
 
   // The minimum number of bits to support for each of the x and y coordinates.
