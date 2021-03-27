@@ -40,7 +40,7 @@ class BigIntImpl {
      Trim();
   }
 
-  constexpr BigIntImpl(const BigUIntImpl& other)
+  constexpr BigIntImpl(const BigUInt& other)
    : words_(/*used_words=*/other.used_words() +
                              (BigIntWord{other.word(other.used_words() - 1)} <
                               0),
@@ -94,7 +94,7 @@ class BigIntImpl {
     return *this;
   }
 
-  constexpr BigIntImpl<max_words>& operator = (const BigUIntImpl& other) {
+  constexpr BigIntImpl<max_words>& operator = (const BigUInt& other) {
     int copy_words = std::min(other.used_words(), size_t(max_words));
     words_.Assign(other.words(), copy_words);
     if (BigIntWord{word(used_words() - 1)} < 0 && used_words() < max_words) {
@@ -771,15 +771,15 @@ class BigIntImpl {
     return result;
   }
 
-  BigUIntImpl GetUIntAbs(bool* was_signed) const {
+  BigUInt GetUIntAbs(bool* was_signed) const {
     *was_signed = BigIntWord{words_[used_words() - 1]} < 0;
     if (*was_signed) {
       BigIntImpl<max_words> pos = *this;
       // Ignore overflow
       pos.Negate();
-      return BigUIntImpl{pos.words_, pos.used_words()};
+      return BigUInt{pos.words_, pos.used_words()};
     } else {
-      return BigUIntImpl{words_, used_words()};
+      return BigUInt{words_, used_words()};
     }
   }
 
@@ -910,13 +910,12 @@ class BigIntImpl {
   BigIntImpl<max_words> DivideRemainderSlow(const BigIntImpl<other_words>& other,
       BigIntImpl<std::min(max_words, other_words)>* remainder_out) const {
     bool this_signed = false;
-    BigUIntImpl this_uint = GetUIntAbs(&this_signed);
+    BigUInt this_uint = GetUIntAbs(&this_signed);
     bool other_signed = false;
-    BigUIntImpl other_uint = other.GetUIntAbs(&other_signed);
+    BigUInt other_uint = other.GetUIntAbs(&other_signed);
 
-    BigUIntImpl remainder;
-    BigUIntImpl quotient = this_uint.DivideRemainder(other_uint,
-                                                                &remainder);
+    BigUInt remainder;
+    BigUInt quotient = this_uint.DivideRemainder(other_uint, &remainder);
     *remainder_out = remainder;
     if (this_signed) {
       bool overflowed = remainder_out->Negate();

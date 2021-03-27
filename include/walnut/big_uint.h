@@ -9,29 +9,29 @@
 
 namespace walnut {
 
-class BigUIntImpl {
+class BigUInt {
  public:
   static constexpr size_t bits_per_word = BigIntWords::bits_per_word;
 
-  constexpr BigUIntImpl() : BigUIntImpl(static_cast<BigUIntHalfWord>(0)) {
+  constexpr BigUInt() : BigUInt(static_cast<BigUIntHalfWord>(0)) {
   }
 
-  explicit constexpr BigUIntImpl(BigUIntHalfWord value) : words_(1) {
+  explicit constexpr BigUInt(BigUIntHalfWord value) : words_(1) {
     words_[0] = value;
   }
 
-  explicit constexpr BigUIntImpl(BigUIntWord value) : words_(1) {
+  explicit constexpr BigUInt(BigUIntWord value) : words_(1) {
     words_[0] = value;
   }
 
-  explicit constexpr BigUIntImpl(uint64_t value) : BigUIntImpl(BigUIntWord(value)) { }
+  explicit constexpr BigUInt(uint64_t value) : BigUInt(BigUIntWord(value)) { }
 
-  constexpr BigUIntImpl(const BigUIntImpl& other) :
+  constexpr BigUInt(const BigUInt& other) :
       words_(other.words_) {
     Trim();
   }
 
-  constexpr BigUIntImpl(const BigIntWords& words, size_t used) :
+  constexpr BigUInt(const BigIntWords& words, size_t used) :
       words_(words, used) {
     Trim();
   }
@@ -52,12 +52,12 @@ class BigUIntImpl {
     return used_words() == 1 && CanTrimLastHalf(word(0));
   }
 
-  BigUIntImpl operator << (size_t shift) const {
+  BigUInt operator << (size_t shift) const {
     if (IsHalfWord() && shift <= 32) {
-      return BigUIntImpl(words_[0].low_uint64() << shift);
+      return BigUInt(words_[0].low_uint64() << shift);
     }
 
-    BigUIntImpl result;
+    BigUInt result;
     size_t in = 0;
     size_t out = shift / bits_per_word;
     const int word_left_shift = shift % bits_per_word;
@@ -87,12 +87,12 @@ class BigUIntImpl {
     return result;
   }
 
-  BigUIntImpl Subtract(const BigUIntImpl& other) const {
+  BigUInt Subtract(const BigUInt& other) const {
     if (IsHalfWord() && other.IsHalfWord() &&
         words_[0].low_uint32() >= other.words_[0].low_uint32()) {
-      return BigUIntImpl(words_[0].Subtract(other.words_[0]));
+      return BigUInt(words_[0].Subtract(other.words_[0]));
     }
-    BigUIntImpl result;
+    BigUInt result;
     result.words_.resize(std::max(used_words(), other.used_words()));
     size_t i = 0;
     bool carry = false;
@@ -112,12 +112,12 @@ class BigUIntImpl {
     return result;
   }
 
-  BigUIntImpl Multiply(BigUIntWord other) const {
+  BigUInt Multiply(BigUIntWord other) const {
     if (IsHalfWord() &&
         other <= std::numeric_limits<BigUIntHalfWord>::max()) {
-      return BigUIntImpl(words_[0].MultiplyAsHalfWord(other));
+      return BigUInt(words_[0].MultiplyAsHalfWord(other));
     }
-    BigUIntImpl result;
+    BigUInt result;
     result.words_.resize(used_words() + 1);
     size_t k = 0;
     BigUIntWord add;
@@ -133,16 +133,15 @@ class BigUIntImpl {
   }
 
   // Divide `this` by `other`. Return the quotient and store the remainder in `remainder_out`.
-  BigUIntImpl DivideRemainder(const BigUIntImpl& other,
-                              BigUIntImpl* remainder_out) const {
+  BigUInt DivideRemainder(const BigUInt& other, BigUInt* remainder_out) const {
     if (used_words() == 1 && other.used_words() == 1) {
-      *remainder_out = BigUIntImpl{words_[0] % other.words_[0]};
-      return BigUIntImpl{words_[0] / other.words_[0]};
+      *remainder_out = BigUInt{words_[0] % other.words_[0]};
+      return BigUInt{words_[0] / other.words_[0]};
     }
     return DivideRemainderSlow(other, remainder_out);
   }
 
-  constexpr bool operator >= (const BigUIntImpl& other) const {
+  constexpr bool operator >= (const BigUInt& other) const {
     if (used_words() > other.used_words()) return true;
     if (used_words() < other.used_words()) return false;
 
@@ -154,7 +153,7 @@ class BigUIntImpl {
   }
 
   // Adds (add << shift) to this.
-  constexpr BigUIntImpl& AddLeftShifted(BigUIntWord add, unsigned shift) {
+  constexpr BigUInt& AddLeftShifted(BigUIntWord add, unsigned shift) {
     bool carry = false;
     size_t pos = shift / bits_per_word;
     unsigned shift_mod = shift % bits_per_word;
@@ -179,7 +178,7 @@ class BigUIntImpl {
   }
 
   // Subtracts (other << shift) from this.
-  constexpr BigUIntImpl& SubtractLeftShifted(const BigUIntImpl& other, unsigned shift) {
+  constexpr BigUInt& SubtractLeftShifted(const BigUInt& other, unsigned shift) {
     size_t in = 0;
     size_t out = shift / bits_per_word;
     const int word_left_shift = shift % bits_per_word;
@@ -214,7 +213,7 @@ class BigUIntImpl {
     return *this;
   }
 
-  constexpr BigUIntImpl& ShiftRightWord() {
+  constexpr BigUInt& ShiftRightWord() {
     BigUIntWord prev_word{0};
     for (int i = used_words() - 1; i >= 0; i--) {
       std::swap(words_[i], prev_word);
@@ -266,8 +265,8 @@ class BigUIntImpl {
   // Divide `this` by `other`. Return the quotient and store the remainder in `remainder_out`.
   //
   // This function does not have any small word shortcuts.
-  BigUIntImpl DivideRemainderSlow(const BigUIntImpl& other,
-                                  BigUIntImpl* remainder_out) const {
+  BigUInt DivideRemainderSlow(const BigUInt& other,
+                              BigUInt* remainder_out) const {
     // Dividing a 64 bit number by a 32 bit number (with the top bit set)
     // creates a remainder with at most 34 integer bits, with trailing fraction
     // bits.
@@ -316,8 +315,8 @@ class BigUIntImpl {
     }
     // other_shift_right may be negative, 0, or positive.
 
-    BigUIntImpl quotient;
-    BigUIntImpl remainder = operator<< (bits_per_word);
+    BigUInt quotient;
+    BigUInt remainder = operator<< (bits_per_word);
     // Number of bits to shift (*this) to the right, such that:
     // 0 < (*this >> this_shift_right_bits) < 2^bits_per_word
     int this_shift_right_bits = (used_words() - 1) * bits_per_word;
