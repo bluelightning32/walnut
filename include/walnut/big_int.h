@@ -113,7 +113,7 @@ class BigInt : public BigIntImpl {
   }
 
   constexpr BigInt<bits + 1> operator-(int other) const {
-    return BigIntImpl::Subtract(BigIntImpl(other));
+    return BigIntImpl::operator-(other);
   }
 
   template <size_t other_bits>

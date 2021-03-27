@@ -417,6 +417,10 @@ class BigIntImpl {
     return Subtract(other);
   }
 
+  BigIntImpl operator-(int other) const {
+    return Subtract(BigIntImpl(other));
+  }
+
   BigIntImpl Multiply(const BigIntImpl& other) const {
     if (IsHalfWord() && other.IsHalfWord()) {
       return BigIntImpl(BigIntWord{words_[0]} * BigIntWord{other.words_[0]});

@@ -59,13 +59,8 @@ BigInt<num_bits + new_denom_bits> RoundDown(
   return new_num;
 }
 
-template <size_t num1_bits, size_t denom1_bits, size_t num2_bits,
-          size_t denom2_bits>
-bool IsLessThan(
-    const BigInt<num1_bits>& num1,
-    const BigInt<denom1_bits>& denom1,
-    const BigInt<num2_bits>& num2,
-    const BigInt<denom2_bits>& denom2) {
+inline bool IsLessThan(const BigIntImpl& num1, const BigIntImpl& denom1,
+                       const BigIntImpl& num2, const BigIntImpl& denom2) {
   // num1 / denom1 <? num2 / denom2
   // num1 * denom2 <? num2 * denom1 (flip if (denom1 * denom2) is negative)
   return (num1 * denom2).LessThan(
@@ -74,10 +69,8 @@ bool IsLessThan(
 }
 
 // Returns true if num1/denom1 == num2/denom2.
-template <size_t num_bits1, size_t denom_bits1,
-          size_t num_bits2, size_t denom_bits2>
-bool Equals(const BigInt<num_bits1>& num1, const BigInt<denom_bits1>& denom1,
-            const BigInt<num_bits2>& num2, const BigInt<denom_bits2>& denom2) {
+inline bool Equals(const BigIntImpl& num1, const BigIntImpl& denom1,
+                   const BigIntImpl& num2, const BigIntImpl& denom2) {
   return num1 * denom2 == num2 * denom1;
 }
 
@@ -91,12 +84,10 @@ bool Equals(const BigInt<num_bits1>& num1, const BigInt<denom_bits1>& denom1,
 // `y1_x2` must be set to y1*x2, and `y2_x1` must be set to y2*x1.
 //
 // Note that this comparison has the transitive property.
-template <size_t x_bits, size_t y_bits, size_t mult_bits>
-inline bool IsHalfRotationLessThan(
-    const BigInt<x_bits>& x1, const BigInt<y_bits>& y1,
-    const BigInt<x_bits>& x2, const BigInt<y_bits>& y2,
-    const BigInt<mult_bits>& y1_x2,
-    const BigInt<mult_bits>& y2_x1) {
+inline bool IsHalfRotationLessThan(const BigIntImpl& x1, const BigIntImpl& y1,
+                                   const BigIntImpl& x2, const BigIntImpl& y2,
+                                   const BigIntImpl& y1_x2,
+                                   const BigIntImpl& y2_x1) {
   // For determining whether to negate `this`, look at the sign of y1, when
   // y1 != 0. If y1 == 0, use the sign of x1 instead.
   //
