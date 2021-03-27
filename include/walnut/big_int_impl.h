@@ -17,6 +17,16 @@ class BigIntImpl {
   static constexpr size_t bits_per_word = BigIntWords::bits_per_word;
   static constexpr size_t bytes_per_word = BigIntWords::bytes_per_word;
 
+  struct FlippableCompare {
+    FlippableCompare(bool flip) : flip(flip) { }
+
+    bool operator()(const BigIntImpl& a, const BigIntImpl& b) {
+      return a.LessThan(flip, b);
+    }
+
+    bool flip;
+  };
+
   constexpr BigIntImpl() : BigIntImpl(0) {
   }
 
@@ -710,11 +720,21 @@ class BigIntImpl {
     return BigIntWord{words_[i]} | i;
   }
 
+  constexpr bool IsZero() const {
+    return GetSign() == 0;
+  }
+
   // Returns 1 if this is greater than or equal to 0.
   // Returns -1 if this is less than 0.
   constexpr int GetAbsMult() const {
     return static_cast<int>(
         BigIntWord(words_[used_words() - 1].SignExtension())) | 1;
+  }
+
+  // Returns 1 if this and other >= 0 or if both are negative.
+  // Else, returns -1 if only one of this or other is negative.
+  constexpr int GetAbsMult(const BigIntImpl& other) const {
+    return (SignExtension() ^ other.SignExtension()) | 1;
   }
 
   constexpr bool HasSameSign(const BigIntImpl& other) const {
@@ -725,6 +745,8 @@ class BigIntImpl {
     return (GetSign() ^ other.GetSign()) < 0;
   }
 
+  // Returns 0 if this is greater than or equal to 0.
+  // Returns -1 if this is less than 0.
   constexpr BigIntWord SignExtension() const {
     return BigIntWord{words_[used_words() - 1].SignExtension()};
   }

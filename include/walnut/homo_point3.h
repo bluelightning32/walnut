@@ -124,8 +124,7 @@ class HomoPoint3 {
     auto a_scaled = a.vector_from_origin() * b.dist_denom();
     auto b_scaled = b.vector_from_origin() * a.dist_denom();
     constexpr size_t a_bits = decltype(a_scaled)::component_bits;
-    constexpr size_t b_bits = decltype(b_scaled)::component_bits;
-    typename BigInt<a_bits>::template FlippableCompare<b_bits> compare(
+    typename BigInt<a_bits>::FlippableCompare compare(
         /*flip=*/b.dist_denom().HasDifferentSign(a.dist_denom()));
     return std::lexicographical_compare(a_scaled.components().rbegin(),
                                         a_scaled.components().rend(),

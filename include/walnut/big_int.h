@@ -13,17 +13,6 @@ class BigInt : public BigIntImpl {
   friend class BigInt;
  public:
 
-  template <size_t other_bits = bits_template>
-  struct FlippableCompare {
-    FlippableCompare(bool flip) : flip(flip) { }
-
-    bool operator()(const BigInt& a, const BigInt<other_bits>& b) {
-      return a.LessThan(flip, b);
-    }
-
-    bool flip;
-  };
-
   static constexpr size_t bits = bits_template;
   using BigIntImpl::bits_per_word;
   using BigIntImpl::bytes_per_word;
@@ -184,13 +173,6 @@ class BigInt : public BigIntImpl {
     return BigIntImpl::operator%(other);
   }
 
-  // Negates *this and returns whether the result overflowed.
-  //
-  // A return value of false means it did not overflow.
-  constexpr bool Negate() {
-    return BigIntImpl::Negate();
-  }
-
   constexpr BigInt<bits> operator-() const {
     return BigIntImpl::operator-();
   }
@@ -201,62 +183,6 @@ class BigInt : public BigIntImpl {
 
   constexpr BigInt<bits+1> GetAbs(bool& was_signed) const {
     return BigIntImpl::GetAbs(was_signed);
-  }
-
-  // Returns a negative integer if `*this` is negative, 0 if *`this` is 0, or a
-  // positive integer if `*this` is positive.
-  constexpr BigIntWord GetSign() const {
-    return BigIntImpl::GetSign();
-  }
-
-  // Returns 1 if this is greater than or equal to 0.
-  // Returns -1 if this is less than 0.
-  constexpr int GetAbsMult() const {
-    return BigIntImpl::GetAbsMult();
-  }
-
-  // Returns 1 if this and other >= 0 or if both are negative.
-  // Else, returns -1 if only one of this or other is negative.
-  template <size_t other_bits>
-  constexpr int GetAbsMult(const BigInt<other_bits>& other) const {
-    return (SignExtension() ^ other.SignExtension()) | 1;
-  }
-
-  template <size_t other_bits>
-  constexpr bool LessThan(bool flip, const BigInt<other_bits>& other) const {
-    return BigIntImpl::LessThan(flip, other);
-  }
-
-  // Returns 0 if this is greater than or equal to 0.
-  // Returns -1 if this is less than 0.
-  constexpr BigIntWord SignExtension() const {
-    return BigIntWord{BigIntImpl::SignExtension()};
-  }
-
-  constexpr bool IsZero() const {
-    return GetSign() == 0;
-  }
-
-  template <size_t other_bits>
-  constexpr bool HasSameSign(const BigInt<other_bits>& other) const {
-    return BigIntImpl::HasSameSign(other);
-  }
-
-  template <size_t other_bits>
-  constexpr bool HasDifferentSign(const BigInt<other_bits>& other) const {
-    return BigIntImpl::HasDifferentSign(other);
-  }
-
-  constexpr uint32_t low_uint32() const {
-    return BigIntImpl::low_uint32();
-  }
-
-  constexpr uint64_t low_uint64() const {
-    return BigIntImpl::low_uint64();
-  }
-
-  constexpr int ToInt() const {
-    return BigIntImpl::ToInt();
   }
 
   // Verifies the value is in the supported range.
@@ -288,10 +214,6 @@ class BigInt : public BigIntImpl {
 
     BigInt<std::max(bits, other_bits)> mod = *this % other;
     return other.GetGreatestCommonDivisor(mod);
-  }
-
-  explicit operator double() const {
-    return BigIntImpl::operator double();
   }
 };
 
