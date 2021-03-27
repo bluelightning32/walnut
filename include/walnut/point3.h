@@ -6,16 +6,8 @@
 
 namespace walnut {
 
-template <size_t component_bits_template = 32>
 class Point3 {
  public:
-  // The minimum number of bits to support for each component.
-  //
-  // Note that the BigInt may round up the requested number of bits and end up
-  // supporting more bits. Also note that the BigInt is faster when not all of
-  // the requested bits are used.
-  static constexpr size_t component_bits = component_bits_template;
-
   // Leaves the components in an undefined state
   Point3() = default;
 
@@ -23,9 +15,7 @@ class Point3 {
     Point3(other.components()[0], other.components()[1],
            other.components()[2]) { }
 
-  template <size_t other_component_bits>
-  Point3(const Point3<other_component_bits>& other) :
-    Point3(other.vector_from_origin()) { }
+  Point3(const Point3& other) : Point3(other.vector_from_origin()) { }
 
   Point3(const BigIntImpl& x, const BigIntImpl& y, const BigIntImpl& z) :
     vector_from_origin_(x, y, z) { }
@@ -68,18 +58,15 @@ class Point3 {
     return vector_from_origin_.z();
   }
 
-  template <size_t other_component_bits>
-  bool operator == (const Point3<other_component_bits>& other) const {
+  bool operator == (const Point3& other) const {
     return vector_from_origin() == other.vector_from_origin();
   }
 
-  template <size_t other_component_bits>
-  bool operator != (const Point3<other_component_bits>& other) const {
+  bool operator != (const Point3& other) const {
     return vector_from_origin() != other.vector_from_origin();
   }
 
-  template <size_t other_component_bits>
-  Vector3 operator-(const Point3<other_component_bits>& other) const {
+  Vector3 operator-(const Point3& other) const {
     return vector_from_origin() - other.vector_from_origin();
   }
 
@@ -103,10 +90,8 @@ class Point3 {
   //
   // The calculations are done in 2D by removing (treating it as 0)
   // `drop_dimension` from the point.
-  template <size_t other_component_bits>
-  BigIntWord Get2DTwistDir(int drop_dimension,
-                           const Point3<other_component_bits>& p1,
-                           const Point3<other_component_bits>& p3) const {
+  BigIntWord Get2DTwistDir(int drop_dimension, const Point3& p1,
+                           const Point3& p3) const {
     return DropDimension(drop_dimension).GetTwistDir(
         p1.DropDimension(drop_dimension), p3.DropDimension(drop_dimension));
   }
@@ -118,10 +103,8 @@ class Point3 {
   //
   // The calculations are done in 2D by removing (treating it as 0)
   // `drop_dimension` from the point.
-  template <size_t other_component_bits>
-  int Get2DTwistDirReduced(int drop_dimension,
-                           const Point3<other_component_bits>& p1,
-                           const Point3<other_component_bits>& p3) const {
+  int Get2DTwistDirReduced(int drop_dimension, const Point3& p1,
+                           const Point3& p3) const {
     const BigIntWord twist = Get2DTwistDir(drop_dimension, p1, p3);
     if (twist > 0) {
       return 1;
@@ -140,8 +123,7 @@ class Point3 {
   Vector3 vector_from_origin_;
 };
 
-template <size_t component_bits>
-std::ostream& operator<<(std::ostream& out, const Point3<component_bits>& v) {
+inline std::ostream& operator<<(std::ostream& out, const Point3& v) {
   return out << v.vector_from_origin();
 }
 

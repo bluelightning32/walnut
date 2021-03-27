@@ -12,10 +12,7 @@ using testing::AnyOf;
 using testing::Eq;
 
 template<typename Container>
-auto
-MakeUnsortedConvexPolygon(const Container& vertices) ->
-MutableConvexPolygon<std::iterator_traits<
-    decltype(std::begin(vertices))>::value_type::component_bits> {
+MutableConvexPolygon<32> MakeUnsortedConvexPolygon(const Container& vertices) {
   using Iterator = decltype(std::begin(vertices));
   using Point3Rep = typename std::iterator_traits<Iterator>::value_type;
   using Factory = ConvexPolygonFactory<Point3Rep>;
@@ -49,20 +46,17 @@ MutableConvexPolygon<std::iterator_traits<
 
 
 template<typename Container>
-auto
-MakeConvexPolygon(const Container& vertices) ->
-MutableConvexPolygon<std::iterator_traits<
-    decltype(std::begin(vertices))>::value_type::component_bits> {
+MutableConvexPolygon<32> MakeConvexPolygon(const Container& vertices) {
   auto result = MakeUnsortedConvexPolygon(vertices);
   result.SortVertices();
   return result;
 }
 
 TEST(ConvexPolygon, TrianglePlane) {
-  Point3<32> input[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 0, 10),
-    Point3<32>(1, 1, 10),
+  Point3 input[] = {
+    Point3(0, 0, 10),
+    Point3(1, 0, 10),
+    Point3(1, 1, 10),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
@@ -73,16 +67,16 @@ TEST(ConvexPolygon, TrianglePlane) {
   EXPECT_GT(polygon.plane().normal().z(), 0);
   EXPECT_EQ(polygon.drop_dimension(), 2);
 
-  for (const Point3<32>& v : input) {
+  for (const Point3& v : input) {
     EXPECT_TRUE(polygon.plane().IsCoincident(v));
   }
 }
 
 TEST(ConvexPolygon, Triangle0DistPlane) {
-  Point3<32> input[] = {
-    Point3<32>(0, 0, 0),
-    Point3<32>(10, 0, 0),
-    Point3<32>(10, 10, 0),
+  Point3 input[] = {
+    Point3(0, 0, 0),
+    Point3(10, 0, 0),
+    Point3(10, 10, 0),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
@@ -91,32 +85,32 @@ TEST(ConvexPolygon, Triangle0DistPlane) {
 
   EXPECT_EQ(polygon.drop_dimension(), 2);
 
-  for (const Point3<32>& v : input) {
+  for (const Point3& v : input) {
     EXPECT_TRUE(polygon.plane().IsCoincident(v));
   }
 }
 
 TEST(ConvexPolygon, TriangleXZPlane) {
-  Point3<32> input[] = {
-    Point3<32>(0 - 5, 0, 0 + 5),
-    Point3<32>(10 - 5, 0, 10 + 5),
-    Point3<32>(10 - 5, 10, 10 + 5),
+  Point3 input[] = {
+    Point3(0 - 5, 0, 0 + 5),
+    Point3(10 - 5, 0, 10 + 5),
+    Point3(10 - 5, 10, 10 + 5),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
   EXPECT_EQ(polygon.plane(),
             HalfSpace3<>(/*x=*/-1, /*y=*/0, /*z=*/1, /*dist=*/10));
 
-  for (const Point3<32>& v : input) {
+  for (const Point3& v : input) {
     EXPECT_TRUE(polygon.plane().IsCoincident(v));
   }
 }
 
 TEST(ConvexPolygon, ClockwiseTrianglePlane) {
-  Point3<32> input[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 1, 10),
-    Point3<32>(1, 0, 10),
+  Point3 input[] = {
+    Point3(0, 0, 10),
+    Point3(1, 1, 10),
+    Point3(1, 0, 10),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
@@ -127,16 +121,16 @@ TEST(ConvexPolygon, ClockwiseTrianglePlane) {
   EXPECT_LT(polygon.plane().normal().z(), 0);
   EXPECT_EQ(polygon.drop_dimension(), 2);
 
-  for (const Point3<32>& v : input) {
+  for (const Point3& v : input) {
     EXPECT_TRUE(polygon.plane().IsCoincident(v));
   }
 }
 
 TEST(ConvexPolygon, ClockwiseTriangleXZPlane) {
-  Point3<32> input[] = {
-    Point3<32>(0 - 5, 0, 0 + 5),
-    Point3<32>(10 - 5, 10, 10 + 5),
-    Point3<32>(10 - 5, 0, 10 + 5),
+  Point3 input[] = {
+    Point3(0 - 5, 0, 0 + 5),
+    Point3(10 - 5, 10, 10 + 5),
+    Point3(10 - 5, 0, 10 + 5),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
@@ -146,17 +140,17 @@ TEST(ConvexPolygon, ClockwiseTriangleXZPlane) {
   EXPECT_FALSE(polygon.plane().normal().IsZero());
   EXPECT_LT(polygon.plane().normal().z(), 0);
 
-  for (const Point3<32>& v : input) {
+  for (const Point3& v : input) {
     EXPECT_TRUE(polygon.plane().IsCoincident(v));
   }
 }
 
 TEST(ConvexPolygon, ClockwiseSquareYZPlane) {
-  Point3<32> input[] = {
-    Point3<32>(0, 0, 0),
-    Point3<32>(0, 10, 1),
-    Point3<32>(10, 10, 1),
-    Point3<32>(10, 0, 0),
+  Point3 input[] = {
+    Point3(0, 0, 0),
+    Point3(0, 10, 1),
+    Point3(10, 10, 1),
+    Point3(10, 0, 0),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
@@ -165,16 +159,16 @@ TEST(ConvexPolygon, ClockwiseSquareYZPlane) {
 
   EXPECT_FALSE(polygon.plane().normal().IsZero());
 
-  for (const Point3<32>& v : input) {
+  for (const Point3& v : input) {
     EXPECT_TRUE(polygon.plane().IsCoincident(v));
   }
 }
 
 TEST(ConvexPolygon, CopyConstructor) {
-  Point3<32> input[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 0, 10),
-    Point3<32>(1, 1, 10),
+  Point3 input[] = {
+    Point3(0, 0, 10),
+    Point3(1, 0, 10),
+    Point3(1, 1, 10),
   };
 
   ConvexPolygon<32> polygon1 = MakeConvexPolygon(input);
@@ -183,20 +177,20 @@ TEST(ConvexPolygon, CopyConstructor) {
 }
 
 TEST(ConvexPolygon, EqualityOperator) {
-  Point3<32> input1[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 0, 10),
-    Point3<32>(1, 1, 10),
+  Point3 input1[] = {
+    Point3(0, 0, 10),
+    Point3(1, 0, 10),
+    Point3(1, 1, 10),
   };
   ConvexPolygon<32> polygon1 = MakeUnsortedConvexPolygon(input1);
   EXPECT_EQ(polygon1, polygon1);
 
   // different plane
   {
-    Point3<32> input2[] = {
-      Point3<32>(0, 0, 11),
-      Point3<32>(1, 0, 11),
-      Point3<32>(1, 1, 11),
+    Point3 input2[] = {
+      Point3(0, 0, 11),
+      Point3(1, 0, 11),
+      Point3(1, 1, 11),
     };
     ConvexPolygon<32> polygon2 = MakeUnsortedConvexPolygon(input2);
     EXPECT_NE(polygon1, polygon2);
@@ -205,10 +199,10 @@ TEST(ConvexPolygon, EqualityOperator) {
 
   // Same plane as input1, but translated
   {
-    Point3<32> input3[] = {
-      Point3<32>(1, 0, 10),
-      Point3<32>(2, 0, 10),
-      Point3<32>(2, 1, 10),
+    Point3 input3[] = {
+      Point3(1, 0, 10),
+      Point3(2, 0, 10),
+      Point3(2, 1, 10),
     };
     ConvexPolygon<32> polygon3 = MakeUnsortedConvexPolygon(input3);
     EXPECT_NE(polygon1, polygon3);
@@ -217,10 +211,10 @@ TEST(ConvexPolygon, EqualityOperator) {
 
   // First 2 points the same as input1, but different 3rd point
   {
-    Point3<32> input4[] = {
+    Point3 input4[] = {
       input1[0],
       input1[1],
-      Point3<32>(2, 1, 10),
+      Point3(2, 1, 10),
     };
     ConvexPolygon<32> polygon4 = MakeUnsortedConvexPolygon(input4);
     EXPECT_NE(polygon1, polygon4);
@@ -229,7 +223,7 @@ TEST(ConvexPolygon, EqualityOperator) {
 
   // Flipped version of input1
   {
-    Point3<32> input5[] = {
+    Point3 input5[] = {
       input1[2],
       input1[1],
       input1[0],
@@ -241,7 +235,7 @@ TEST(ConvexPolygon, EqualityOperator) {
 
   // Same as input1, but with vertex indices rotated
   {
-    Point3<32> compare_input[] = {
+    Point3 compare_input[] = {
       input1[1],
       input1[2],
       input1[0],
@@ -258,10 +252,10 @@ TEST(ConvexPolygon, EqualityOperator) {
 }
 
 TEST(ConvexPolygon, CounterClockwiseTriangleEdges) {
-  Point3<32> input[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 0, 10),
-    Point3<32>(1, 1, 10),
+  Point3 input[] = {
+    Point3(0, 0, 10),
+    Point3(1, 0, 10),
+    Point3(1, 1, 10),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
@@ -272,8 +266,8 @@ TEST(ConvexPolygon, CounterClockwiseTriangleEdges) {
     const ConvexPolygon<32>::HomoPoint3Rep& vertex = polygon.vertex(i);
     const ConvexPolygon<32>::HomoPoint3Rep& next_vertex = polygon.vertex(
         (i + 1) % polygon.vertex_count());
-    const Point3<32>& input_vertex = input[i];
-    const Point3<32>& next_input_vertex = input[
+    const Point3& input_vertex = input[i];
+    const Point3& next_input_vertex = input[
         (i + 1) % polygon.vertex_count()];
     EXPECT_TRUE(polygon.const_edge(i).line().IsCoincident(vertex));
     EXPECT_TRUE(polygon.const_edge(i).line().IsCoincident(next_vertex));
@@ -286,11 +280,11 @@ TEST(ConvexPolygon, CounterClockwiseTriangleEdges) {
 }
 
 TEST(ConvexPolygon, CounterClockwiseSquareEdges) {
-  Point3<32> input[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 0, 10),
-    Point3<32>(1, 1, 10),
-    Point3<32>(0, 1, 10),
+  Point3 input[] = {
+    Point3(0, 0, 10),
+    Point3(1, 0, 10),
+    Point3(1, 1, 10),
+    Point3(0, 1, 10),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
@@ -301,8 +295,8 @@ TEST(ConvexPolygon, CounterClockwiseSquareEdges) {
     const ConvexPolygon<32>::HomoPoint3Rep& vertex = polygon.vertex(i);
     const ConvexPolygon<32>::HomoPoint3Rep& next_vertex = polygon.vertex(
         (i + 1) % polygon.vertex_count());
-    const Point3<32>& input_vertex = input[i];
-    const Point3<32>& next_input_vertex = input[
+    const Point3& input_vertex = input[i];
+    const Point3& next_input_vertex = input[
         (i + 1) % polygon.vertex_count()];
     EXPECT_TRUE(polygon.const_edge(i).line().IsCoincident(vertex));
     EXPECT_TRUE(polygon.const_edge(i).line().IsCoincident(next_vertex));
@@ -315,11 +309,11 @@ TEST(ConvexPolygon, CounterClockwiseSquareEdges) {
 }
 
 TEST(ConvexPolygon, ClockwiseSquareEdges) {
-  Point3<32> input[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(0, 1, 10),
-    Point3<32>(1, 1, 10),
-    Point3<32>(1, 0, 10),
+  Point3 input[] = {
+    Point3(0, 0, 10),
+    Point3(0, 1, 10),
+    Point3(1, 1, 10),
+    Point3(1, 0, 10),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
@@ -330,8 +324,8 @@ TEST(ConvexPolygon, ClockwiseSquareEdges) {
     const ConvexPolygon<32>::HomoPoint3Rep& vertex = polygon.vertex(i);
     const ConvexPolygon<32>::HomoPoint3Rep& next_vertex = polygon.vertex(
         (i + 1) % polygon.vertex_count());
-    const Point3<32>& input_vertex = input[i];
-    const Point3<32>& next_input_vertex = input[
+    const Point3& input_vertex = input[i];
+    const Point3& next_input_vertex = input[
         (i + 1) % polygon.vertex_count()];
     EXPECT_TRUE(polygon.const_edge(i).line().IsCoincident(vertex));
     EXPECT_TRUE(polygon.const_edge(i).line().IsCoincident(next_vertex));
@@ -344,15 +338,15 @@ TEST(ConvexPolygon, ClockwiseSquareEdges) {
 }
 
 TEST(ConvexPolygon, RedundantEdges) {
-  Point3<32> input[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 0, 10), // collinear
-    Point3<32>(2, 0, 10), // collinear
-    Point3<32>(3, 0, 10),
-    Point3<32>(3, 1, 10),
-    Point3<32>(2, 1, 10), // collinear
-    Point3<32>(1, 1, 10), // collinear
-    Point3<32>(0, 1, 10),
+  Point3 input[] = {
+    Point3(0, 0, 10),
+    Point3(1, 0, 10), // collinear
+    Point3(2, 0, 10), // collinear
+    Point3(3, 0, 10),
+    Point3(3, 1, 10),
+    Point3(2, 1, 10), // collinear
+    Point3(1, 1, 10), // collinear
+    Point3(0, 1, 10),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
@@ -363,8 +357,8 @@ TEST(ConvexPolygon, RedundantEdges) {
     const ConvexPolygon<32>::HomoPoint3Rep& vertex = polygon.vertex(i);
     const ConvexPolygon<32>::HomoPoint3Rep& next_vertex = polygon.vertex(
         (i + 1) % polygon.vertex_count());
-    const Point3<32>& input_vertex = input[i];
-    const Point3<32>& next_input_vertex = input[
+    const Point3& input_vertex = input[i];
+    const Point3& next_input_vertex = input[
         (i + 1) % polygon.vertex_count()];
     EXPECT_TRUE(polygon.const_edge(i).line().IsCoincident(vertex));
     EXPECT_TRUE(polygon.const_edge(i).line().IsCoincident(next_vertex));
@@ -388,15 +382,15 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesBisectStartPerp) {
   //  v                       |     |
   //
   // p[2] -> p[3] -> p[4] -> p[5]
-  Point3<32> p[] = {
-    /*p[0]=*/Point3<32>(1, 1, 10),
-    /*p[1]=*/Point3<32>(0, 1, 10),
-    /*p[2]=*/Point3<32>(0, 0, 10),
-    /*p[3]=*/Point3<32>(1, 0, 10),
-    /*p[4]=*/Point3<32>(2, 0, 10),
-    /*p[5]=*/Point3<32>(3, 0, 10),
-    /*p[6]=*/Point3<32>(3, 1, 10),
-    /*p[7]=*/Point3<32>(2, 1, 10),
+  Point3 p[] = {
+    /*p[0]=*/Point3(1, 1, 10),
+    /*p[1]=*/Point3(0, 1, 10),
+    /*p[2]=*/Point3(0, 0, 10),
+    /*p[3]=*/Point3(1, 0, 10),
+    /*p[4]=*/Point3(2, 0, 10),
+    /*p[5]=*/Point3(3, 0, 10),
+    /*p[6]=*/Point3(3, 1, 10),
+    /*p[7]=*/Point3(2, 1, 10),
   };
   ConvexPolygon<32> polygon = MakeConvexPolygon(p);
 
@@ -426,12 +420,12 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesBisect) {
   //   ----       ----------
   //       \     /
   //         p[0]
-  Point3<32> p[100] = {
-    /*p[0]=*/Point3<32>(1, 0, 10),
+  Point3 p[100] = {
+    /*p[0]=*/Point3(1, 0, 10),
   };
 
   for (int i = 1; i < 100; ++i) {
-    p[i] = Point3<32>(99 - i, 1, 10);
+    p[i] = Point3(99 - i, 1, 10);
   }
 
   const Vector2 vector(-1, 0);
@@ -464,11 +458,11 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesCWMidSameDir) {
   //   \  /       |
   //    p[3]      |
   //
-  std::vector<Point3<32>> p{
-    Point3<32>(0, 0, 0),
-    Point3<32>(1, -1, 0),
-    Point3<32>(2, -3, 0),
-    Point3<32>(1, -4, 0),
+  std::vector<Point3> p{
+    Point3(0, 0, 0),
+    Point3(1, -1, 0),
+    Point3(2, -3, 0),
+    Point3(1, -4, 0),
   };
   ConvexPolygon<32> polygon = MakeConvexPolygon(p);
 
@@ -491,11 +485,11 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesCCWMidSameDir) {
   //     \        /        |
   //      --> p[2]         |
   //
-  std::vector<Point3<32>> p{
-    Point3<32>(0, 0, 0),
-    Point3<32>(1, -1, 0),
-    Point3<32>(3, -2, 0),
-    Point3<32>(4, -1, 0),
+  std::vector<Point3> p{
+    Point3(0, 0, 0),
+    Point3(1, -1, 0),
+    Point3(3, -2, 0),
+    Point3(4, -1, 0),
   };
   ConvexPolygon<32> polygon = MakeConvexPolygon(p);
 
@@ -596,11 +590,11 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesDenom) {
 }
 
 TEST(ConvexPolygon, GetGreaterCycleIndex) {
-  Point3<32> input[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(0, 1, 10),
-    Point3<32>(1, 1, 10),
-    Point3<32>(1, 0, 10),
+  Point3 input[] = {
+    Point3(0, 0, 10),
+    Point3(0, 1, 10),
+    Point3(1, 1, 10),
+    Point3(1, 0, 10),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
@@ -620,11 +614,11 @@ TEST(ConvexPolygon, CounterClockwiseSquareGetExtremeIndexBisect) {
   //  |       ^
   //  v       |
   // p[0] -> p[1]
-  Point3<32> p[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 0, 10),
-    Point3<32>(1, 1, 10),
-    Point3<32>(0, 1, 10),
+  Point3 p[] = {
+    Point3(0, 0, 10),
+    Point3(1, 0, 10),
+    Point3(1, 1, 10),
+    Point3(0, 1, 10),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(p);
@@ -659,11 +653,11 @@ TEST(ConvexPolygon, CounterClockwiseSquareGetPosSideVertex) {
   //  |       ^
   //  v       |
   // p[0] -> p[1]
-  Point3<32> p[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 0, 10),
-    Point3<32>(1, 1, 10),
-    Point3<32>(0, 1, 10),
+  Point3 p[] = {
+    Point3(0, 0, 10),
+    Point3(1, 0, 10),
+    Point3(1, 1, 10),
+    Point3(0, 1, 10),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(p);
@@ -720,11 +714,11 @@ TEST(ConvexPolygon, CounterClockwiseSquareGetNegSideVertex) {
   //  |       ^
   //  v       |
   // p[0] -> p[1]
-  Point3<32> p[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 0, 10),
-    Point3<32>(1, 1, 10),
-    Point3<32>(0, 1, 10),
+  Point3 p[] = {
+    Point3(0, 0, 10),
+    Point3(1, 0, 10),
+    Point3(1, 1, 10),
+    Point3(0, 1, 10),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(p);
@@ -781,11 +775,11 @@ TEST(ConvexPolygon, ClockwiseSquareGetExtremeIndexBisect) {
   //  ^       |
   //  |       v
   // p[0] <- p[3]
-  Point3<32> p[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(0, 1, 10),
-    Point3<32>(1, 1, 10),
-    Point3<32>(1, 0, 10),
+  Point3 p[] = {
+    Point3(0, 0, 10),
+    Point3(0, 1, 10),
+    Point3(1, 1, 10),
+    Point3(1, 0, 10),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(p);
@@ -820,11 +814,11 @@ TEST(ConvexPolygon, CounterClockwiseSquareGetExtremeIndexBisect3D) {
   //  |       ^
   //  v       |
   // p[0] -> p[1]
-  Point3<32> p[] = {
-    Point3<32>(0, 0, 0),
-    Point3<32>(1, 0, 10),
-    Point3<32>(1, 1, 10),
-    Point3<32>(0, 1, 0),
+  Point3 p[] = {
+    Point3(0, 0, 0),
+    Point3(1, 0, 10),
+    Point3(1, 1, 10),
+    Point3(0, 1, 0),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(p);
@@ -846,11 +840,11 @@ TEST(ConvexPolygon, ClockwiseSquareGetExtremeIndexBisect3D) {
   //  ^       |
   //  |       v
   // p[0] <- p[3]
-  Point3<32> p[] = {
-    Point3<32>(0, 0, 0),
-    Point3<32>(0, 1, 10),
-    Point3<32>(1, 1, 10),
-    Point3<32>(1, 0, 0),
+  Point3 p[] = {
+    Point3(0, 0, 0),
+    Point3(0, 1, 10),
+    Point3(1, 1, 10),
+    Point3(1, 0, 0),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(p);
@@ -906,12 +900,12 @@ TEST(ConvexPolygon, GetExtremeIndexBisect3DIsNot2DProjection) {
   // So whether the 90 degree angle is taken before or after the non-uniform
   // scaling affects the result.
 
-  Point3<32> p[] = {
-    Point3<32>(0, 0, 0),
-    Point3<32>(40, 0, 4),
-    Point3<32>(40, 40, 4),
-    Point3<32>(20, 45, 2),
-    Point3<32>(0, 40, 0),
+  Point3 p[] = {
+    Point3(0, 0, 0),
+    Point3(40, 0, 4),
+    Point3(40, 40, 4),
+    Point3(20, 45, 2),
+    Point3(0, 40, 0),
   };
   ConvexPolygon<32> polygon = MakeConvexPolygon(p);
 
@@ -929,17 +923,17 @@ TEST(ConvexPolygon, GetLastNegSideVertexOnPlane) {
   //  |                       ^
   //  v                       |
   // p[0] -> p[1] -> p[2] -> p[3]
-  Point3<32> p[] = {
-    /*p[0]=*/Point3<32>(0, 0, 10),
-    /*p[1]=*/Point3<32>(1, 0, 10),
-    /*p[2]=*/Point3<32>(2, 0, 10),
-    /*p[3]=*/Point3<32>(3, 0, 10),
-    /*p[4]=*/Point3<32>(3, 1, 10),
-    /*p[5]=*/Point3<32>(3, 2, 10),
-    /*p[6]=*/Point3<32>(2, 2, 10),
-    /*p[7]=*/Point3<32>(1, 2, 10),
-    /*p[8]=*/Point3<32>(0, 2, 10),
-    /*p[9]=*/Point3<32>(0, 1, 10),
+  Point3 p[] = {
+    /*p[0]=*/Point3(0, 0, 10),
+    /*p[1]=*/Point3(1, 0, 10),
+    /*p[2]=*/Point3(2, 0, 10),
+    /*p[3]=*/Point3(3, 0, 10),
+    /*p[4]=*/Point3(3, 1, 10),
+    /*p[5]=*/Point3(3, 2, 10),
+    /*p[6]=*/Point3(2, 2, 10),
+    /*p[7]=*/Point3(1, 2, 10),
+    /*p[8]=*/Point3(0, 2, 10),
+    /*p[9]=*/Point3(0, 1, 10),
   };
 
   const ConvexPolygon<32> polygon = MakeConvexPolygon(p);
@@ -979,17 +973,17 @@ TEST(ConvexPolygon, GetLastNegSideVertex) {
   //  |                       ^
   //  v                       |
   // p[0] -> p[1] -> p[2] -> p[3]
-  Point3<32> p[] = {
-    /*p[0]=*/Point3<32>(0, 0, 10),
-    /*p[1]=*/Point3<32>(1, 0, 10),
-    /*p[2]=*/Point3<32>(2, 0, 10),
-    /*p[3]=*/Point3<32>(3, 0, 10),
-    /*p[4]=*/Point3<32>(3, 1, 10),
-    /*p[5]=*/Point3<32>(3, 3, 10),
-    /*p[6]=*/Point3<32>(2, 3, 10),
-    /*p[7]=*/Point3<32>(1, 3, 10),
-    /*p[8]=*/Point3<32>(0, 3, 10),
-    /*p[9]=*/Point3<32>(0, 1, 10),
+  Point3 p[] = {
+    /*p[0]=*/Point3(0, 0, 10),
+    /*p[1]=*/Point3(1, 0, 10),
+    /*p[2]=*/Point3(2, 0, 10),
+    /*p[3]=*/Point3(3, 0, 10),
+    /*p[4]=*/Point3(3, 1, 10),
+    /*p[5]=*/Point3(3, 3, 10),
+    /*p[6]=*/Point3(2, 3, 10),
+    /*p[7]=*/Point3(1, 3, 10),
+    /*p[8]=*/Point3(0, 3, 10),
+    /*p[9]=*/Point3(0, 1, 10),
   };
 
   const ConvexPolygon<32> polygon = MakeConvexPolygon(p);
@@ -1027,10 +1021,10 @@ std::ostream& operator<<(std::ostream& out, const TestEdgeInfo& data) {
 }
 
 TEST(ConvexPolygon, ConvertVertexData) {
-  Point3<32> input[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 0, 10),
-    Point3<32>(1, 1, 10),
+  Point3 input[] = {
+    Point3(0, 0, 10),
+    Point3(1, 0, 10),
+    Point3(1, 1, 10),
   };
 
   ConvexPolygon<32> polygon_raw = MakeConvexPolygon(input);
@@ -1065,18 +1059,18 @@ class ConvexPolygonFindSplitRanges :
 };
 
 TEST_P(ConvexPolygonFindSplitRanges, OnPosSide) {
-  Point3<32> input[2][3] = {
+  Point3 input[2][3] = {
     // counter-clockwise
     {
-      Point3<32>(0, 0, 10),
-      Point3<32>(1, 0, 10),
-      Point3<32>(1, 1, 10),
+      Point3(0, 0, 10),
+      Point3(1, 0, 10),
+      Point3(1, 1, 10),
     },
     // clockwise
     {
-      Point3<32>(0, 0, 10),
-      Point3<32>(1, 1, 10),
-      Point3<32>(1, 0, 10),
+      Point3(0, 0, 10),
+      Point3(1, 1, 10),
+      Point3(1, 0, 10),
     }
   };
 
@@ -1087,8 +1081,8 @@ TEST_P(ConvexPolygonFindSplitRanges, OnPosSide) {
     {
       // All points with x>-1 are on the positive side of the half-space from
       // projecting this line to 2D by dropping the Z coordinate.
-      Point3<32> p1(-1, 1, 0);
-      Point3<32> p2(-1, 0, 0);
+      Point3 p1(-1, 1, 0);
+      Point3 p2(-1, 0, 0);
       PluckerLine<> line(p1, p2);
 
       ConvexPolygonSplitRanges indices =
@@ -1106,8 +1100,8 @@ TEST_P(ConvexPolygonFindSplitRanges, OnPosSide) {
     {
       // All points with x>0 are on the positive side of the half-space from
       // projecting this line to 2D by dropping the Z coordinate.
-      Point3<32> p1(0, 1, 0);
-      Point3<32> p2(0, 0, 0);
+      Point3 p1(0, 1, 0);
+      Point3 p2(0, 0, 0);
       PluckerLine<> line(p1, p2);
 
       ConvexPolygonSplitRanges indices =
@@ -1133,11 +1127,11 @@ TEST_P(ConvexPolygonFindSplitRanges, AtExistingVertices) {
   //  v  /       |
   // p[0] ---> p[1]
   //
-  Point3<32> p[] = {
-    /*p[0]=*/Point3<32>(0, 0, 10),
-    /*p[1]=*/Point3<32>(1, 0, 10),
-    /*p[2]=*/Point3<32>(1, 1, 10),
-    /*p[3]=*/Point3<32>(0, 1, 10),
+  Point3 p[] = {
+    /*p[0]=*/Point3(0, 0, 10),
+    /*p[1]=*/Point3(1, 0, 10),
+    /*p[2]=*/Point3(1, 1, 10),
+    /*p[3]=*/Point3(0, 1, 10),
   };
 
   PluckerLine<> line(p[0], p[2]);
@@ -1170,16 +1164,16 @@ TEST_P(ConvexPolygonFindSplitRanges, AtNewVertices) {
   //  v          |
   // p[0] ---> p[1]
   //
-  Point3<32> p[] = {
-    /*p[0]=*/Point3<32>(0, 0, 0),
-    /*p[1]=*/Point3<32>(1, 0, 1),
-    /*p[2]=*/Point3<32>(1, 2, 3),
-    /*p[3]=*/Point3<32>(0, 2, 2),
+  Point3 p[] = {
+    /*p[0]=*/Point3(0, 0, 0),
+    /*p[1]=*/Point3(1, 0, 1),
+    /*p[2]=*/Point3(1, 2, 3),
+    /*p[3]=*/Point3(0, 2, 2),
   };
 
-  Point3<32> n[] = {
-    /*n[0]=*/Point3<32>(0, 1, 1),
-    /*n[1]=*/Point3<32>(1, 1, 2),
+  Point3 n[] = {
+    /*n[0]=*/Point3(0, 1, 1),
+    /*n[1]=*/Point3(1, 1, 2),
   };
 
   ConvexPolygon<32> polygon(MakeConvexPolygon(p));
@@ -1214,11 +1208,11 @@ TEST_P(ConvexPolygonFindSplitRanges, AtNewVerticesXPlane) {
   //  v       |       |
   // p[0] ---------> p[1]
   //
-  Point3<32> p[4] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(2, 0, 10),
-    Point3<32>(2, 1, 10),
-    Point3<32>(0, 1, 10),
+  Point3 p[4] = {
+    Point3(0, 0, 10),
+    Point3(2, 0, 10),
+    Point3(2, 1, 10),
+    Point3(0, 1, 10),
   };
 
   ConvexPolygon<> polygon = MakeConvexPolygon(p);
@@ -1244,10 +1238,10 @@ INSTANTIATE_TEST_SUITE_P(, ConvexPolygonFindSplitRanges,
                     &ConvexPolygon<32>::FindSplitRangesLinear));
 
 TEST(ConvexPolygon, SplitOnPlane) {
-  Point3<32> input[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 0, 11),
-    Point3<32>(1, 1, 12),
+  Point3 input[] = {
+    Point3(0, 0, 10),
+    Point3(1, 0, 11),
+    Point3(1, 1, 12),
   };
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
@@ -1318,17 +1312,17 @@ TEST(ConvexPolygon, SplitAtExistingVertices) {
   //  v  /       |
   // p[0] ---> p[1]
   //
-  Point3<32> p[] = {
-    /*p[0]=*/Point3<32>(0, 0, 10),
-    /*p[1]=*/Point3<32>(1, 0, 10),
-    /*p[2]=*/Point3<32>(1, 1, 10),
-    /*p[3]=*/Point3<32>(0, 1, 10),
+  Point3 p[] = {
+    /*p[0]=*/Point3(0, 0, 10),
+    /*p[1]=*/Point3(1, 0, 10),
+    /*p[2]=*/Point3(1, 1, 10),
+    /*p[3]=*/Point3(0, 1, 10),
   };
 
-  Point3<32> neg_side_p[] = { p[0], p[1], p[2] };
-  Point3<32> pos_side_p[] = { p[0], p[2], p[3] };
+  Point3 neg_side_p[] = { p[0], p[1], p[2] };
+  Point3 pos_side_p[] = { p[0], p[2], p[3] };
 
-  Point3<32> above(0, 0, 11);
+  Point3 above(0, 0, 11);
   HalfSpace3<> half_space(p[0], above, p[2]);
 
   MutableConvexPolygon<> polygon(MakeConvexPolygon(p));
@@ -1363,17 +1357,17 @@ TEST(ConvexPolygon, SplitAtExistingVerticesCW) {
   //  |  /       v
   // p[0] <--- p[3]
   //
-  Point3<32> p[] = {
-    /*p[0]=*/Point3<32>(0, 0, 10),
-    /*p[1]=*/Point3<32>(0, 1, 10),
-    /*p[2]=*/Point3<32>(1, 1, 10),
-    /*p[3]=*/Point3<32>(1, 0, 10),
+  Point3 p[] = {
+    /*p[0]=*/Point3(0, 0, 10),
+    /*p[1]=*/Point3(0, 1, 10),
+    /*p[2]=*/Point3(1, 1, 10),
+    /*p[3]=*/Point3(1, 0, 10),
   };
 
-  Point3<32> neg_side_p[] = { p[0], p[2], p[3] };
-  Point3<32> pos_side_p[] = { p[0], p[1], p[2] };
+  Point3 neg_side_p[] = { p[0], p[2], p[3] };
+  Point3 pos_side_p[] = { p[0], p[1], p[2] };
 
-  Point3<32> above(0, 0, 11);
+  Point3 above(0, 0, 11);
   HalfSpace3<> half_space(p[0], above, p[2]);
 
   ConvexPolygon<> polygon(MakeConvexPolygon(p));
@@ -1399,24 +1393,24 @@ TEST(ConvexPolygon, SplitAtNewVertices) {
   //  v       |       |
   // p[0] ---------> p[1]
   //
-  Point3<32> p[4] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(2, 0, 10),
-    Point3<32>(2, 1, 10),
-    Point3<32>(0, 1, 10),
+  Point3 p[4] = {
+    Point3(0, 0, 10),
+    Point3(2, 0, 10),
+    Point3(2, 1, 10),
+    Point3(0, 1, 10),
   };
 
-  Point3<32> neg_side_p[] = {
+  Point3 neg_side_p[] = {
     p[0],
-    Point3<32>(1, 0, 10), 
-    Point3<32>(1, 1, 10), 
+    Point3(1, 0, 10), 
+    Point3(1, 1, 10), 
     p[3],
   };
-  Point3<32> pos_side_p[] = {
-    Point3<32>(1, 0, 10), 
+  Point3 pos_side_p[] = {
+    Point3(1, 0, 10), 
     p[1],
     p[2],
-    Point3<32>(1, 1, 10), 
+    Point3(1, 1, 10), 
   };
 
   HalfSpace3<> half_space(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
@@ -1437,13 +1431,13 @@ TEST(ConvexPolygon, SplitAtNewVertices) {
 }
 
 TEST(ConvexPolygon, SplitOnParallelPlane) {
-  Point3<32> ccw_input[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 0, 10),
-    Point3<32>(1, 1, 10),
+  Point3 ccw_input[] = {
+    Point3(0, 0, 10),
+    Point3(1, 0, 10),
+    Point3(1, 1, 10),
   };
 
-  std::vector<Point3<32>> cw_input(std::begin(ccw_input), std::end(ccw_input));
+  std::vector<Point3> cw_input(std::begin(ccw_input), std::end(ccw_input));
   std::reverse(cw_input.begin(), cw_input.end());
 
   ConvexPolygon<32> ccw_polygon = MakeConvexPolygon(ccw_input);
@@ -1508,10 +1502,10 @@ TEST(ConvexPolygon, SplitOnParallelPlane) {
 }
 
 TEST(ConvexPolygon, SplitOnFractionalParallelPlane) {
-  Point3<32> ccw_input[] = {
-    Point3<32>(0, 0, 1),
-    Point3<32>(1, 0, 1),
-    Point3<32>(1, 1, 1),
+  Point3 ccw_input[] = {
+    Point3(0, 0, 1),
+    Point3(1, 0, 1),
+    Point3(1, 1, 1),
   };
 
   ConvexPolygon<32> triangle = MakeConvexPolygon(ccw_input);
@@ -1528,10 +1522,10 @@ TEST(ConvexPolygon, SplitOnFractionalParallelPlane) {
 }
 
 TEST(ConvexPolygon, VerticesIterator) {
-  Point3<32> input[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 0, 11),
-    Point3<32>(1, 1, 12),
+  Point3 input[] = {
+    Point3(0, 0, 10),
+    Point3(1, 0, 11),
+    Point3(1, 1, 12),
   };
 
   ConvexPolygon<32> triangle = MakeConvexPolygon(input);

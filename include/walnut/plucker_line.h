@@ -70,9 +70,7 @@ class PluckerLine {
   PluckerLine(const PluckerLine<other_d_bits, other_m_bits>& other) :
     PluckerLine(other.d(), other.m()) { }
 
-  template <size_t point_bits>
-  PluckerLine(const Point3<point_bits>& p1,
-              const Point3<point_bits>& p2) :
+  PluckerLine(const Point3& p1, const Point3& p2) :
     d_(p2 - p1), m_(p1.vector_from_origin().Cross(p2.vector_from_origin())) { }
 
   template <size_t num_bits, size_t denom_bits>
@@ -117,8 +115,7 @@ class PluckerLine {
        BigIntImpl::Determinant(-a.d(), a.z(), -b.d(), b.z())) { }
 
   // Returns true if `p` is on the line.
-  template <size_t v_bits>
-  bool IsCoincident(const Point3<v_bits>& p) const {
+  bool IsCoincident(const Point3& p) const {
     /*
      * p x (p + d) == m
      * p x p + p x d == m
@@ -260,29 +257,12 @@ void PluckerLine<d_bits, m_bits>::Reduce() {
 template <size_t point3_bits_template = 32>
 class PluckerLineFromPoint3sBuilder {
  public:
-  using Point3Rep = Point3<point3_bits_template>;
   using PluckerLineRep = PluckerLine<point3_bits_template + 1,
                                      (point3_bits_template - 1)*2 + 2>;
   using DInt = BigIntImpl;
   using MInt = BigIntImpl;
 
-  static constexpr DInt d_component_min() {
-    DInt n = Point3Rep::BigIntRep::max_value() + DInt(1);
-    DInt two_n_1 = n + n - BigInt<2>(1);
-    return -two_n_1;
-  }
-  static constexpr DInt d_component_max() {
-    return -d_component_min();
-  }
-  static constexpr MInt m_component_min() {
-    MInt n = Point3Rep::BigIntRep::max_value() + MInt(1);
-    return d_component_min() * n;
-  }
-  static constexpr MInt m_component_max() {
-    return -m_component_min();
-  }
-
-  static PluckerLineRep Build(const Point3Rep& p1, const Point3Rep& p2) {
+  static PluckerLineRep Build(const Point3& p1, const Point3& p2) {
     return PluckerLineRep(p1, p2);
   }
 };
@@ -297,29 +277,12 @@ class PluckerLineFromPlanesFromPoint3sBuilder {
  public:
   static_assert(point3_bits_template >= 3,
       "The bit formulas are only correct for point3_bits_template >= 3");
-  using Point3Rep = Point3<point3_bits_template>;
   using HalfSpace3Builder = HalfSpace3FromPoint3Builder<point3_bits_template>;
   using HalfSpace3Rep = typename HalfSpace3Builder::HalfSpace3Rep;
   using PluckerLineRep = PluckerLine<(point3_bits_template - 1)*4 + 6,
                                      (point3_bits_template - 1)*5 + 6>;
   using DInt = BigIntImpl;
   using MInt = BigIntImpl;
-
-  static constexpr DInt d_component_min() {
-    DInt n = Point3Rep::BigIntRep::max_value() + DInt(1);
-    DInt two_n_1 = n + n - BigInt<2>(1);
-    return -two_n_1*two_n_1*two_n_1*two_n_1*DInt(2);
-  }
-  static constexpr DInt d_component_max() {
-    return -d_component_min();
-  }
-  static constexpr MInt m_component_min() {
-    MInt n = Point3Rep::BigIntRep::max_value() + MInt(1);
-    return d_component_min() * (n + MInt(1));
-  }
-  static constexpr MInt m_component_max() {
-    return -m_component_min();
-  }
 
   static PluckerLineRep Build(const HalfSpace3Rep& p1, const HalfSpace3Rep& p2) {
     return PluckerLineRep(p1, p2);

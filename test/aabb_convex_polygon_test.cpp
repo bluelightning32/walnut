@@ -19,11 +19,11 @@ TEST(AABBConvexPolygon, SquareBounds) {
   //  v           |
   // p[0] -----> p[1]
 
-  std::vector<Point3<32>> p = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(2, 0, 10),
-    Point3<32>(2, 1, 10),
-    Point3<32>(0, 1, 10),
+  std::vector<Point3> p = {
+    Point3(0, 0, 10),
+    Point3(2, 0, 10),
+    Point3(2, 1, 10),
+    Point3(0, 1, 10),
   };
   AABBConvexPolygon<>::HalfSpace3Rep plane(/*x=*/0, /*y=*/0, /*z=*/1,
                                            /*dist=*/10);
@@ -40,11 +40,11 @@ TEST(AABBConvexPolygon, CopyConstruct) {
   //  v           |
   // p[0] -----> p[1]
 
-  std::vector<Point3<32>> p = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(2, 0, 10),
-    Point3<32>(2, 1, 10),
-    Point3<32>(0, 1, 10),
+  std::vector<Point3> p = {
+    Point3(0, 0, 10),
+    Point3(2, 0, 10),
+    Point3(2, 1, 10),
+    Point3(0, 1, 10),
   };
   AABBConvexPolygon<>::HalfSpace3Rep plane(/*x=*/0, /*y=*/0, /*z=*/1,
                                            /*dist=*/10);
@@ -61,11 +61,11 @@ TEST(AABBConvexPolygon, MoveConstruct) {
   //  v           |
   // p[0] -----> p[1]
 
-  std::vector<Point3<32>> p = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(2, 0, 10),
-    Point3<32>(2, 1, 10),
-    Point3<32>(0, 1, 10),
+  std::vector<Point3> p = {
+    Point3(0, 0, 10),
+    Point3(2, 0, 10),
+    Point3(2, 1, 10),
+    Point3(0, 1, 10),
   };
   AABBConvexPolygon<>::HalfSpace3Rep plane(/*x=*/0, /*y=*/0, /*z=*/1,
                                            /*dist=*/10);
@@ -84,11 +84,11 @@ TEST(AABBConvexPolygon, SplitOnNegativeSide) {
   // <-|       v           |
   //   |      p[0] -----> p[1]
 
-  std::vector<Point3<32>> p = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(2, 0, 10),
-    Point3<32>(2, 1, 10),
-    Point3<32>(0, 1, 10),
+  std::vector<Point3> p = {
+    Point3(0, 0, 10),
+    Point3(2, 0, 10),
+    Point3(2, 1, 10),
+    Point3(0, 1, 10),
   };
   AABBConvexPolygon<>::HalfSpace3Rep plane(/*x=*/0, /*y=*/0, /*z=*/1,
                                            /*dist=*/10);
@@ -107,11 +107,11 @@ TEST(AABBConvexPolygon, SplitOnPositiveSide) {
   //   |->     v           |
   //   |      p[0] -----> p[1]
 
-  std::vector<Point3<32>> p = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(2, 0, 10),
-    Point3<32>(2, 1, 10),
-    Point3<32>(0, 1, 10),
+  std::vector<Point3> p = {
+    Point3(0, 0, 10),
+    Point3(2, 0, 10),
+    Point3(2, 1, 10),
+    Point3(0, 1, 10),
   };
   AABBConvexPolygon<>::HalfSpace3Rep plane(/*x=*/0, /*y=*/0, /*z=*/1,
                                            /*dist=*/10);
@@ -134,11 +134,11 @@ TEST(AABBConvexPolygon, SplitInMiddle) {
   // p[0] -----> p[1]
   //         |
 
-  std::vector<Point3<32>> p = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(2, 0, 10),
-    Point3<32>(2, 1, 10),
-    Point3<32>(0, 1, 10),
+  std::vector<Point3> p = {
+    Point3(0, 0, 10),
+    Point3(2, 0, 10),
+    Point3(2, 1, 10),
+    Point3(0, 1, 10),
   };
   AABBConvexPolygon<>::HalfSpace3Rep plane(/*x=*/0, /*y=*/0, /*z=*/1,
                                            /*dist=*/10);

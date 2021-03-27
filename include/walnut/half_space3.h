@@ -82,10 +82,7 @@ class HalfSpace3 {
   HalfSpace3(const HalfSpace3<other_vector_bits, other_dist_bits>& other) :
     HalfSpace3(other.normal(), other.d()) { }
 
-  template <size_t point_bits>
-  HalfSpace3(const Point3<point_bits>& p1,
-        const Point3<point_bits>& p2,
-        const Point3<point_bits>& p3) :
+  HalfSpace3(const Point3& p1, const Point3& p2, const Point3& p3) :
     // Use p2 as the center point, because if p1, p2, and p3 are from a polygon
     // with more than 3 points, (p3 - p2) and (p1 - p2) are likely to be
     // shorter than (p2 - p1) and (p3 - p1).
@@ -110,14 +107,12 @@ class HalfSpace3 {
 
   // Returns >0 if `v` is in the positive half-space, 0 if `v` is coincident
   // with the plane, or <0 if `v` is in the negative half-space.
-  template <size_t v_bits>
-  int Compare(const Point3<v_bits>& v) const {
+  int Compare(const Point3& v) const {
     return normal_.Dot(v.vector_from_origin()).Compare(dist_);
   }
 
   // Returns true if the point is on the plane
-  template <size_t v_bits>
-  bool IsCoincident(const Point3<v_bits>& v) const {
+  bool IsCoincident(const Point3& v) const {
     return Compare(v) == 0;
   }
 
@@ -242,15 +237,13 @@ class HalfSpace3 {
 template <size_t point3_bits_template = 32>
 class HalfSpace3FromPoint3Builder {
  public:
-  using Point3Rep = Point3<point3_bits_template>;
   using HalfSpace3Rep = HalfSpace3<(point3_bits_template - 1)*2 + 3,
                          (point3_bits_template - 1)*3 + 3>;
   using VectorInt = typename HalfSpace3Rep::VectorInt;
   using DistInt = typename HalfSpace3Rep::DistInt;
 
-  static HalfSpace3Rep Build(const Point3Rep& p1,
-                        const Point3Rep& p2,
-                        const Point3Rep& p3) {
+  static HalfSpace3Rep Build(const Point3& p1, const Point3& p2,
+                             const Point3& p3) {
     return HalfSpace3Rep(p1, p2, p3);
   }
 };

@@ -21,11 +21,11 @@ ConvexPolygon<> MakeRectangle() {
   //  v           |
   // p[0] -----> p[1]
 
-  std::vector<Point3<32>> p = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(2, 0, 10),
-    Point3<32>(2, 1, 10),
-    Point3<32>(0, 1, 10),
+  std::vector<Point3> p = {
+    Point3(0, 0, 10),
+    Point3(2, 0, 10),
+    Point3(2, 1, 10),
+    Point3(0, 1, 10),
   };
   ConvexPolygon<>::HalfSpace3Rep plane(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10);
   return ConvexPolygon<>(plane, /*drop_dimension=*/2, p);

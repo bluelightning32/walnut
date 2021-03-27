@@ -34,7 +34,7 @@
 
 namespace walnut {
 
-template <typename Point3RepTemplate = Point3<32>>
+template <typename Point3RepTemplate = Point3>
 class MonotoneDecomposer : public MonotoneTriangulator<Point3RepTemplate> {
  public:
   using Parent = MonotoneTriangulator<Point3RepTemplate>;

@@ -24,11 +24,11 @@ class ResultCollector : public Factory {
     return result_;
   }
 
-  std::vector<std::vector<Point3<32>>> GetSortedPolygonVertices() {
+  std::vector<std::vector<Point3>> GetSortedPolygonVertices() {
     std::vector<ConvexPolygonRep> sorted = GetSortedPolygonResult();
-    std::vector<std::vector<Point3<32>>> result;
+    std::vector<std::vector<Point3>> result;
     for (const ConvexPolygonRep& polygon : sorted) {
-      std::vector<Point3<32>> vertices;
+      std::vector<Point3> vertices;
       for (size_t i = 0; i < polygon.vertex_count(); ++i) {
         const HomoPoint3Rep& vertex = polygon.vertex(i);
         EXPECT_EQ(vertex.dist_denom(), 1);
@@ -66,7 +66,7 @@ class ResultCollector : public Factory {
     }
   }
 
-  int CountVertexAppearances(const Point3<32>& v) {
+  int CountVertexAppearances(const Point3& v) {
     size_t matching = 0;
     for (const ConvexPolygonRep& polygon : result_) {
       for (size_t i = 0; i < polygon.vertex_count(); ++i) {
@@ -89,16 +89,16 @@ class ResultCollector : public Factory {
 };
 
 TEST(ConvexPolygonFactory, Triangle) {
-  Point3<32> input[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 0, 10),
-    Point3<32>(1, 1, 10),
+  Point3 input[] = {
+    Point3(0, 0, 10),
+    Point3(1, 0, 10),
+    Point3(1, 1, 10),
   };
 
   ResultCollector<> collector;
   collector.Build(std::begin(input), std::end(input));
   ASSERT_THAT(collector.GetSortedPolygonVertices(), ElementsAre(
-        std::vector<Point3<32>>{input[0], input[1], input[2]}
+        std::vector<Point3>{input[0], input[1], input[2]}
         ));
   EXPECT_EQ(collector.GetSortedPolygonResult()[0].plane(),
             ResultCollector<>::HalfSpace3Rep(/*x=*/0, /*y=*/0, /*z=*/1,
@@ -106,10 +106,10 @@ TEST(ConvexPolygonFactory, Triangle) {
 }
 
 TEST(ConvexPolygonFactory, Collinear3Points) {
-  Point3<32> input[] = {
-    Point3<32>(0, 0, 0),
-    Point3<32>(1, 1, 1),
-    Point3<32>(2, 2, 2),
+  Point3 input[] = {
+    Point3(0, 0, 0),
+    Point3(1, 1, 1),
+    Point3(2, 2, 2),
   };
 
   ResultCollector<> collector;
@@ -118,16 +118,16 @@ TEST(ConvexPolygonFactory, Collinear3Points) {
 }
 
 TEST(ConvexPolygonFactory, CWTriangle) {
-  Point3<32> input[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 1, 10),
-    Point3<32>(1, 0, 10),
+  Point3 input[] = {
+    Point3(0, 0, 10),
+    Point3(1, 1, 10),
+    Point3(1, 0, 10),
   };
 
   ResultCollector<> collector;
   collector.Build(std::begin(input), std::end(input));
   ASSERT_THAT(collector.GetSortedPolygonVertices(), ElementsAre(
-        std::vector<Point3<32>>{input[0], input[1], input[2]}
+        std::vector<Point3>{input[0], input[1], input[2]}
         ));
   EXPECT_EQ(collector.GetSortedPolygonResult()[0].plane(),
             ResultCollector<>::HalfSpace3Rep(/*x=*/0, /*y=*/0, /*z=*/-1,
@@ -135,17 +135,17 @@ TEST(ConvexPolygonFactory, CWTriangle) {
 }
 
 TEST(ConvexPolygonFactory, Square) {
-  Point3<32> input[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 0, 10),
-    Point3<32>(1, 1, 10),
-    Point3<32>(0, 1, 10),
+  Point3 input[] = {
+    Point3(0, 0, 10),
+    Point3(1, 0, 10),
+    Point3(1, 1, 10),
+    Point3(0, 1, 10),
   };
 
   ResultCollector<> collector;
   collector.Build(std::begin(input), std::end(input));
   ASSERT_THAT(collector.GetSortedPolygonVertices(), ElementsAre(
-        std::vector<Point3<32>>{input[0], input[1], input[2], input[3]}
+        std::vector<Point3>{input[0], input[1], input[2], input[3]}
         ));
   EXPECT_EQ(collector.GetSortedPolygonResult()[0].plane(),
             ResultCollector<>::HalfSpace3Rep(/*x=*/0, /*y=*/0, /*z=*/1,
@@ -153,11 +153,11 @@ TEST(ConvexPolygonFactory, Square) {
 }
 
 TEST(ConvexPolygonFactory, SplitSquareAtPlaneBreak) {
-  Point3<32> input[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 0, 10),
-    Point3<32>(1, 1, 10),
-    Point3<32>(0, 1, 20),
+  Point3 input[] = {
+    Point3(0, 0, 10),
+    Point3(1, 0, 10),
+    Point3(1, 1, 10),
+    Point3(0, 1, 20),
   };
 
   ResultCollector<> collector;
@@ -167,23 +167,23 @@ TEST(ConvexPolygonFactory, SplitSquareAtPlaneBreak) {
   // agnostic to that implementation detail.
   if (collector.CountVertexAppearances(input[0]) == 2) {
     ASSERT_THAT(collector.GetSortedPolygonVertices(), ElementsAre(
-          std::vector<Point3<32>>{input[0], input[1], input[2]},
-          std::vector<Point3<32>>{input[0], input[2], input[3]}
+          std::vector<Point3>{input[0], input[1], input[2]},
+          std::vector<Point3>{input[0], input[2], input[3]}
           ));
   } else {
     ASSERT_THAT(collector.GetSortedPolygonVertices(), ElementsAre(
-          std::vector<Point3<32>>{input[0], input[1], input[3]},
-          std::vector<Point3<32>>{input[3], input[1], input[2]}
+          std::vector<Point3>{input[0], input[1], input[3]},
+          std::vector<Point3>{input[3], input[1], input[2]}
           ));
   }
 }
 
 TEST(ConvexPolygonFactory, SplitSquareAtPlaneBreakCW) {
-  Point3<32> input[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(0, 1, 20),
-    Point3<32>(1, 1, 10),
-    Point3<32>(1, 0, 10),
+  Point3 input[] = {
+    Point3(0, 0, 10),
+    Point3(0, 1, 20),
+    Point3(1, 1, 10),
+    Point3(1, 0, 10),
   };
 
   ResultCollector<> collector;
@@ -193,13 +193,13 @@ TEST(ConvexPolygonFactory, SplitSquareAtPlaneBreakCW) {
   // agnostic to that implementation detail.
   if (collector.CountVertexAppearances(input[0]) == 2) {
     ASSERT_THAT(collector.GetSortedPolygonVertices(), ElementsAre(
-          std::vector<Point3<32>>{input[0], input[2], input[3]},
-          std::vector<Point3<32>>{input[0], input[1], input[2]}
+          std::vector<Point3>{input[0], input[2], input[3]},
+          std::vector<Point3>{input[0], input[1], input[2]}
           ));
   } else {
     ASSERT_THAT(collector.GetSortedPolygonVertices(), ElementsAre(
-          std::vector<Point3<32>>{input[0], input[1], input[3]},
-          std::vector<Point3<32>>{input[1], input[2], input[3]}
+          std::vector<Point3>{input[0], input[1], input[3]},
+          std::vector<Point3>{input[1], input[2], input[3]}
           ));
   }
 }
@@ -212,12 +212,12 @@ TEST(ConvexPolygonFactory, SelfIntersecting) {
   //       \  /              |
   //        p3               |
   //
-  Point3<32> input[] = {
-    /*p0=*/Point3<32>(0, 0, 10),
-    /*p1=*/Point3<32>(4, 0, 10),
-    /*p2=*/Point3<32>(3, 1, 10),
-    /*p3=*/Point3<32>(2, -1, 10),
-    /*p4=*/Point3<32>(1, 1, 10),
+  Point3 input[] = {
+    /*p0=*/Point3(0, 0, 10),
+    /*p1=*/Point3(4, 0, 10),
+    /*p2=*/Point3(3, 1, 10),
+    /*p3=*/Point3(2, -1, 10),
+    /*p4=*/Point3(1, 1, 10),
   };
 
   ResultCollector<> collector;
@@ -225,9 +225,9 @@ TEST(ConvexPolygonFactory, SelfIntersecting) {
   if (collector.GetSortedPolygonResult().size() == 3) {
     EXPECT_THAT(collector.GetSortedPolygonVertices(),
         ElementsAre(
-          std::vector<Point3<32>>{input[0], input[3], input[4]},
-          std::vector<Point3<32>>{input[0], input[1], input[3]},
-          std::vector<Point3<32>>{input[3], input[1], input[2]}
+          std::vector<Point3>{input[0], input[3], input[4]},
+          std::vector<Point3>{input[0], input[1], input[3]},
+          std::vector<Point3>{input[3], input[1], input[2]}
         ));
     EXPECT_EQ(collector.GetSortedPolygonResult()[0].plane(),
               ResultCollector<>::HalfSpace3Rep(/*x=*/0, /*y=*/0, /*z=*/1,
@@ -241,8 +241,8 @@ TEST(ConvexPolygonFactory, SelfIntersecting) {
   } else {
     ASSERT_THAT(collector.GetSortedPolygonVertices(),
         ElementsAre(
-          std::vector<Point3<32>>{input[0], input[1], input[2], input[4]},
-          std::vector<Point3<32>>{input[4], input[2], input[3]}
+          std::vector<Point3>{input[0], input[1], input[2], input[4]},
+          std::vector<Point3>{input[4], input[2], input[3]}
         ));
     EXPECT_EQ(collector.GetSortedPolygonResult()[0].plane(),
               ResultCollector<>::HalfSpace3Rep(/*x=*/0, /*y=*/0, /*z=*/1,
@@ -261,23 +261,23 @@ TEST(ConvexPolygonFactory, SelfIntersectingStartAtReflex) {
   //       \  /            |
   //        p0             |
   //
-  Point3<32> input[] = {
-    /*p0=*/Point3<32>(2, -1, 10),
-    /*p1=*/Point3<32>(1, 1, 10),
-    /*p2=*/Point3<32>(0, 0, 10),
-    /*p3=*/Point3<32>(4, 0, 10),
-    /*p4=*/Point3<32>(3, 1, 10),
+  Point3 input[] = {
+    /*p0=*/Point3(2, -1, 10),
+    /*p1=*/Point3(1, 1, 10),
+    /*p2=*/Point3(0, 0, 10),
+    /*p3=*/Point3(4, 0, 10),
+    /*p4=*/Point3(3, 1, 10),
   };
 
   ResultCollector<> collector;
   collector.Build(std::begin(input), std::end(input));
   if (collector.GetSortedPolygonResult().size() == 3) {
     EXPECT_THAT(collector.GetSortedPolygonVertices(), ElementsAre(
-          std::vector<Point3<32>>{input[(0 + 2)%5], input[(3 + 2)%5],
+          std::vector<Point3>{input[(0 + 2)%5], input[(3 + 2)%5],
                                   input[(4 + 2)%5]},
-          std::vector<Point3<32>>{input[(0 + 2)%5], input[(1 + 2)%5],
+          std::vector<Point3>{input[(0 + 2)%5], input[(1 + 2)%5],
                                   input[(3 + 2)%5]},
-          std::vector<Point3<32>>{input[(3 + 2)%5], input[(1 + 2)%5],
+          std::vector<Point3>{input[(3 + 2)%5], input[(1 + 2)%5],
                                   input[(2 + 2)%5]}
           ));
     EXPECT_EQ(collector.GetSortedPolygonResult()[0].plane(),
@@ -291,9 +291,9 @@ TEST(ConvexPolygonFactory, SelfIntersectingStartAtReflex) {
                                                /*dist=*/10));
   } else {
     ASSERT_THAT(collector.GetSortedPolygonVertices(), ElementsAre(
-          std::vector<Point3<32>>{input[(0 + 2)%5], input[(1 + 2)%5],
+          std::vector<Point3>{input[(0 + 2)%5], input[(1 + 2)%5],
                                   input[(2 + 2)%5], input[(4 + 2)%5]},
-          std::vector<Point3<32>>{input[(4 + 2)%5], input[(2 + 2)%5],
+          std::vector<Point3>{input[(4 + 2)%5], input[(2 + 2)%5],
                                   input[(3 + 2)%5]}
           ));
     EXPECT_EQ(collector.GetSortedPolygonResult()[0].plane(),
@@ -313,7 +313,7 @@ TEST(ConvexPolygonFactory, VertexData) {
     std::string str;
   };
   using ConvexPolygonRep = MutableConvexPolygon<32, NoDefaultConstructor>;
-  using Point3WithString = Point3WithVertexData<32, NoDefaultConstructor>;
+  using Point3WithString = Point3WithVertexData<NoDefaultConstructor>;
   Point3WithString input[] = {
     Point3WithString(0, 0, 10, "p0"),
     Point3WithString(1, 0, 10, "p1"),
@@ -323,7 +323,7 @@ TEST(ConvexPolygonFactory, VertexData) {
   ResultCollector<ConvexPolygonFactory<Point3WithString>> collector;
   collector.Build(std::begin(input), std::end(input));
   ASSERT_THAT(collector.GetSortedPolygonVertices(), ElementsAre(
-        std::vector<Point3<32>>{input[0], input[1], input[2]}
+        std::vector<Point3>{input[0], input[1], input[2]}
         ));
 
   ASSERT_EQ(collector.GetSortedPolygonResult().size(), 1);
@@ -339,10 +339,10 @@ TEST(ConvexPolygonFactory, VertexData) {
 }
 
 TEST(ConvexPolygonFactory, GetPlaneOrientationAfterProjection) {
-  Point3<32> p[] = {
-    Point3<32>(10, 0, 1),
-    Point3<32>(0, 0, 0),
-    Point3<32>(0, 10, 1),
+  Point3 p[] = {
+    Point3(10, 0, 1),
+    Point3(0, 0, 0),
+    Point3(0, 10, 1),
   };
 
   for (int drop_dimension = 0; drop_dimension < 3; ++drop_dimension) {
@@ -350,7 +350,7 @@ TEST(ConvexPolygonFactory, GetPlaneOrientationAfterProjection) {
 
     EXPECT_NE(cross.components()[drop_dimension], 0);
     int orientation =
-      ConvexPolygonFactory<Point3<32>>::GetPlaneOrientationAfterProjection(
+      ConvexPolygonFactory<Point3>::GetPlaneOrientationAfterProjection(
         cross, drop_dimension);
 
     auto cross2 = (p[0] - p[1]).DropDimension(drop_dimension).Cross(

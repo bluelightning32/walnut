@@ -10,10 +10,7 @@ using testing::IsEmpty;
 using testing::SizeIs;
 
 template<typename Container>
-auto
-MakeConvexPolygon(const Container& vertices) ->
-ConvexPolygon<std::iterator_traits<
-    decltype(std::begin(vertices))>::value_type::component_bits> {
+ConvexPolygon<32> MakeConvexPolygon(const Container& vertices) {
   using Iterator = decltype(std::begin(vertices));
   using Point3Rep = typename std::iterator_traits<Iterator>::value_type;
   using Factory = ConvexPolygonFactory<Point3Rep>;
@@ -66,16 +63,16 @@ ConvexPolygon<std::iterator_traits<
 //                    v                            |
 //                  south                          |
 //
-const Point3<> cube_top(0, 0, 11);
-const Point3<> cube_bottom(0, 0, -11);
-const Point3<> cube_north(0, 10, 3);
-const Point3<> cube_north_west(-9, 5, -4);
-const Point3<> cube_south_west(-9, -5, 4);
-const Point3<> cube_south(0, -10, -3);
-const Point3<> cube_south_east(9, -5, 4);
-const Point3<> cube_north_east(9, 5, -4);
+const Point3 cube_top(0, 0, 11);
+const Point3 cube_bottom(0, 0, -11);
+const Point3 cube_north(0, 10, 3);
+const Point3 cube_north_west(-9, 5, -4);
+const Point3 cube_south_west(-9, -5, 4);
+const Point3 cube_south(0, -10, -3);
+const Point3 cube_south_east(9, -5, 4);
+const Point3 cube_north_east(9, 5, -4);
 
-const Point3<>* cube_peripheral_points[6] = {
+const Point3* cube_peripheral_points[6] = {
   &cube_north,
   &cube_north_west,
   &cube_south_west,
@@ -152,14 +149,14 @@ class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
 
     std::vector<BSPNode<>::HalfSpace3Rep> split_planes;
     for (int i = 0; i < 6; i += 2) {
-      const Point3<>* this_point = cube_peripheral_points[i];
-      const Point3<>* next_point = cube_peripheral_points[(i + 2)%6];
+      const Point3* this_point = cube_peripheral_points[i];
+      const Point3* next_point = cube_peripheral_points[(i + 2)%6];
 
       split_planes.emplace_back(*this_point, *next_point, cube_top);
     }
     for (int i = 1; i < 6; i += 2) {
-      const Point3<>* this_point = cube_peripheral_points[i];
-      const Point3<>* next_point = cube_peripheral_points[(i + 2)%6];
+      const Point3* this_point = cube_peripheral_points[i];
+      const Point3* next_point = cube_peripheral_points[(i + 2)%6];
 
       split_planes.emplace_back(*next_point, *this_point, cube_bottom);
     }
@@ -229,8 +226,8 @@ class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
   //       --- ---                       |
   //          v                          |
   //
-  BSPNode<>* SplitNorthWest(BSPNode<>* parent, const Point3<>& edge_start,
-                            const Point3<>& edge_dest, double edge_dist) {
+  BSPNode<>* SplitNorthWest(BSPNode<>* parent, const Point3& edge_start,
+                            const Point3& edge_dest, double edge_dist) {
     EXPECT_TRUE(parent->IsLeaf());
     Vector3 normal = Vector3(1, -1, 10);
 
@@ -343,11 +340,11 @@ TEST_P(BSPTreePWN, SimpleCrossing) {
   // (cube_north_east.x(), polygon_y, cube_top.z()).
   //
   // The unflipped version's normal points towards (0, 0, 0).
-  Point3<> polygon_vertices[] = {
-    Point3<>(cube_north_east.x(), polygon_y, cube_top.z()),
-    Point3<>(cube_north_west.x(), polygon_y, cube_top.z()),
-    Point3<>(cube_north_west.x(), polygon_y, cube_bottom.z()),
-    Point3<>(cube_north_east.x(), polygon_y, cube_bottom.z())
+  Point3 polygon_vertices[] = {
+    Point3(cube_north_east.x(), polygon_y, cube_top.z()),
+    Point3(cube_north_west.x(), polygon_y, cube_top.z()),
+    Point3(cube_north_west.x(), polygon_y, cube_bottom.z()),
+    Point3(cube_north_east.x(), polygon_y, cube_bottom.z())
   };
 
   AddContent(id, MakeConvexPolygon(polygon_vertices));
@@ -511,7 +508,7 @@ TEST_P(BSPTreePWN, SkipEdgesAlongIPath) {
                       /*max_y=*/bounding_end_y,
                       /*max_z=*/cube_top.z());
   walnut::BSPTree<> slice_top_tree;
-  const Point3<> cube_north_west_down(cube_north_west.x(), cube_north_west.y(),
+  const Point3 cube_north_west_down(cube_north_west.x(), cube_north_west.y(),
       BigIntImpl(cube_north_west.z() - 1));
   walnut::HalfSpace3<> slice_top_plane(cube_top, cube_north,
                                        cube_north_west_down);
@@ -677,11 +674,11 @@ TEST_P(BSPTreePWN, SplitTwice) {
   // (cube_north_east.x(), polygon_y, cube_top.z()).
   //
   // The unflipped version's normal points towards (0, 0, 0).
-  Point3<> polygon_vertices[] = {
-    Point3<>(cube_north_east.x(), polygon_y, cube_top.z()),
-    Point3<>(cube_north_west.x(), polygon_y, cube_top.z()),
-    Point3<>(cube_north_west.x(), polygon_y, cube_bottom.z()),
-    Point3<>(cube_north_east.x(), polygon_y, cube_bottom.z())
+  Point3 polygon_vertices[] = {
+    Point3(cube_north_east.x(), polygon_y, cube_top.z()),
+    Point3(cube_north_west.x(), polygon_y, cube_top.z()),
+    Point3(cube_north_west.x(), polygon_y, cube_bottom.z()),
+    Point3(cube_north_east.x(), polygon_y, cube_bottom.z())
   };
 
   AddContent(id, MakeConvexPolygon(polygon_vertices));
@@ -852,8 +849,8 @@ TEST_P(BSPTreePWN, SplitAgainThroughMvalue) {
 
   const Vector3 down_one(0, 0, 1);
   HalfSpace3<> fourth_split_plane(cube_top,
-                                  Point3<>(cube_south_west - down_one),
-                                  Point3<>(cube_south_east - down_one));
+                                  Point3(cube_south_west - down_one),
+                                  Point3(cube_south_east - down_one));
   BSPNode<>* neg_fourth_split;
   BSPNode<>* pos_fourth_split;
   Split(inside_cube, fourth_split_plane, neg_fourth_split, pos_fourth_split);

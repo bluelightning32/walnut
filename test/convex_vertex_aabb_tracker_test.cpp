@@ -8,10 +8,7 @@
 namespace walnut {
 
 template<typename Container>
-auto
-MakeUnsortedConvexPolygon(const Container& vertices) ->
-MutableConvexPolygon<std::iterator_traits<
-    decltype(std::begin(vertices))>::value_type::component_bits> {
+MutableConvexPolygon<32> MakeUnsortedConvexPolygon(const Container& vertices) {
   using Iterator = decltype(std::begin(vertices));
   using Point3Rep = typename std::iterator_traits<Iterator>::value_type;
   using Factory = ConvexPolygonFactory<Point3Rep>;
@@ -44,10 +41,7 @@ MutableConvexPolygon<std::iterator_traits<
 }
 
 template<typename Container>
-auto
-MakeConvexPolygon(const Container& vertices) ->
-MutableConvexPolygon<std::iterator_traits<
-    decltype(std::begin(vertices))>::value_type::component_bits> {
+MutableConvexPolygon<32> MakeConvexPolygon(const Container& vertices) {
   auto result = MakeUnsortedConvexPolygon(vertices);
   result.SortVertices();
   return result;
@@ -123,11 +117,11 @@ TEST(ConvexVertexAABBTracker, SplitAtExistingVertices) {
   //     v  /       |
   //     p[1]       |
   //
-  Point3<32> p[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, -1, 9),
-    Point3<32>(2, 0, 12),
-    Point3<32>(1, 1, 13),
+  Point3 p[] = {
+    Point3(0, 0, 10),
+    Point3(1, -1, 9),
+    Point3(2, 0, 12),
+    Point3(1, 1, 13),
   };
 
   ConvexPolygon<32> square = MakeConvexPolygon(p);
@@ -140,7 +134,7 @@ TEST(ConvexVertexAABBTracker, SplitAtExistingVertices) {
 
   for (size_t i = 0; i < 4; ++i) {
     HalfSpace3<> split(p[i], p[(i + 2) % square.vertex_count()],
-                       Point3<32>(0, 0, 0));
+                       Point3(0, 0, 0));
 
     ConvexPolygon<>::SplitInfoRep split_info = square.GetSplitInfo(split);
     ASSERT_TRUE(split_info.ShouldEmitNegativeChild());
@@ -177,11 +171,11 @@ TEST(ConvexVertexAABBTracker, SplitBetweenVertices) {
   //     v  /       |
   //     p[1]       |
   //
-  Point3<32> p[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, -1, 9),
-    Point3<32>(2, 0, 12),
-    Point3<32>(1, 1, 13),
+  Point3 p[] = {
+    Point3(0, 0, 10),
+    Point3(1, -1, 9),
+    Point3(2, 0, 12),
+    Point3(1, 1, 13),
   };
 
   ConvexPolygon<32> square = MakeConvexPolygon(p);

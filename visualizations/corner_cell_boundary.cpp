@@ -9,17 +9,17 @@
 #include <vtkCleanPolyData.h>
 
 int main(int argc, char *argv[]) {
-  walnut::Point3<> p[] = {
-    walnut::Point3<>{1, 0, 0},
-    walnut::Point3<>{0, 1, 0},
-    walnut::Point3<>{0, 0, 1},
+  walnut::Point3 p[] = {
+    walnut::Point3{1, 0, 0},
+    walnut::Point3{0, 1, 0},
+    walnut::Point3{0, 0, 1},
   };
 
   walnut::BSPTree<> tree;
   walnut::HalfSpace3<> split(p[0], p[1], p[2]);
   tree.root.Split(split);
-  walnut::AABB<> bounding_box(walnut::Point3<>(0, 0, 0),
-                                          walnut::Point3<>(2, 2, 2));
+  walnut::AABB<> bounding_box(walnut::Point3(0, 0, 0),
+                              walnut::Point3(2, 2, 2));
   std::vector<bool> node_path = {false};
   walnut::BSPTree<>::MappedBSPNode node_border_root;
   walnut::BSPTree<>::MappedBSPNode* node_border_leaf = tree.GetNodeBorder(

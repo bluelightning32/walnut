@@ -7,16 +7,16 @@ namespace walnut {
 
 using testing::ElementsAre;
 
-class ResultCollector : public MonotoneDecomposer<Point3<32>> {
+class ResultCollector : public MonotoneDecomposer<Point3> {
  public:
-  std::vector<std::vector<Point3<32>>> GetSortedPolygonResult() {
-    for (std::pair<int, std::vector<Point3<32>>>& polygon : result_) {
+  std::vector<std::vector<Point3>> GetSortedPolygonResult() {
+    for (std::pair<int, std::vector<Point3>>& polygon : result_) {
       SortVertices(polygon.second);
     }
 
     std::sort(result_.begin(), result_.end(), PolygonLt);
 
-    std::vector<std::vector<Point3<32>>> result;
+    std::vector<std::vector<Point3>> result;
     for (const auto& polygon : result_) {
       result.push_back(polygon.second);
     }
@@ -24,7 +24,7 @@ class ResultCollector : public MonotoneDecomposer<Point3<32>> {
   }
 
   std::vector<int> GetSortedOrientationResult() {
-    for (std::pair<int, std::vector<Point3<32>>>& polygon : result_) {
+    for (std::pair<int, std::vector<Point3>>& polygon : result_) {
       SortVertices(polygon.second);
     }
 
@@ -37,8 +37,8 @@ class ResultCollector : public MonotoneDecomposer<Point3<32>> {
     return result;
   }
 
-  static void SortVertices(std::vector<Point3<32>>& polygon) {
-    std::vector<Point3<32>>::iterator min = polygon.begin();
+  static void SortVertices(std::vector<Point3>& polygon) {
+    std::vector<Point3>::iterator min = polygon.begin();
     for (auto it = polygon.begin(); it != polygon.end(); ++it) {
       if (PointLt(*it, *min)) {
         min = it;
@@ -47,15 +47,15 @@ class ResultCollector : public MonotoneDecomposer<Point3<32>> {
     std::rotate(polygon.begin(), min, polygon.end());
   }
 
-  static bool PointLt(const Point3<32>& a, const Point3<32>& b) {
+  static bool PointLt(const Point3& a, const Point3& b) {
     return std::lexicographical_compare(a.components().begin(),
                                         a.components().end(),
                                         b.components().begin(),
                                         b.components().end());
   }
 
-  static bool PolygonLt(const std::pair<int, std::vector<Point3<32>>>& a,
-                        const std::pair<int, std::vector<Point3<32>>>& b) {
+  static bool PolygonLt(const std::pair<int, std::vector<Point3>>& a,
+                        const std::pair<int, std::vector<Point3>>& b) {
     return std::lexicographical_compare(a.second.begin(), a.second.end(),
                                         b.second.begin(), b.second.end(),
                                         &PointLt);
@@ -66,7 +66,7 @@ class ResultCollector : public MonotoneDecomposer<Point3<32>> {
                  const_reverse_iterator range1_end,
                  const_iterator range2_begin,
                  const_iterator range2_end) override {
-    result_.emplace_back(orientation, std::vector<Point3<32>>());
+    result_.emplace_back(orientation, std::vector<Point3>());
     result_.back().second.reserve((range1_end - range1_begin) +
                            (range2_end - range2_begin));
     result_.back().second.insert(result_.back().second.end(), range1_begin,
@@ -76,19 +76,19 @@ class ResultCollector : public MonotoneDecomposer<Point3<32>> {
   }
 
  private:
-  std::vector<std::pair<int, std::vector<Point3<32>>>> result_;
+  std::vector<std::pair<int, std::vector<Point3>>> result_;
 };
 
 TEST(MonotoneDecomposer, AlreadyConvexAllTopChain) {
-  Point3<32> top_chain[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 3, 10),
-    Point3<32>(2, 5, 10),
-    Point3<32>(3, 5, 10),
-    Point3<32>(4, 3, 10),
+  Point3 top_chain[] = {
+    Point3(0, 0, 10),
+    Point3(1, 3, 10),
+    Point3(2, 5, 10),
+    Point3(3, 5, 10),
+    Point3(4, 3, 10),
   };
-  Point3<32> bottom_chain[] = {
-    Point3<32>(5, 0, 10),
+  Point3 bottom_chain[] = {
+    Point3(5, 0, 10),
   };
 
   ResultCollector collector;
@@ -96,22 +96,22 @@ TEST(MonotoneDecomposer, AlreadyConvexAllTopChain) {
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
   EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
-        std::vector<Point3<32>>{top_chain[0], bottom_chain[0], top_chain[4],
+        std::vector<Point3>{top_chain[0], bottom_chain[0], top_chain[4],
                                  top_chain[3], top_chain[2], top_chain[1]}));
   EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
         -1));
 }
 
 TEST(MonotoneDecomposer, AlreadyConvexAllBottomChain) {
-  Point3<32> top_chain[] = {
-    Point3<32>(0, 0, 10),
+  Point3 top_chain[] = {
+    Point3(0, 0, 10),
   };
-  Point3<32> bottom_chain[] = {
-    Point3<32>(1, -3, 10),
-    Point3<32>(2, -5, 10),
-    Point3<32>(3, -5, 10),
-    Point3<32>(4, -3, 10),
-    Point3<32>(5, 0, 10),
+  Point3 bottom_chain[] = {
+    Point3(1, -3, 10),
+    Point3(2, -5, 10),
+    Point3(3, -5, 10),
+    Point3(4, -3, 10),
+    Point3(5, 0, 10),
   };
 
   ResultCollector collector;
@@ -119,7 +119,7 @@ TEST(MonotoneDecomposer, AlreadyConvexAllBottomChain) {
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
   EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
-        std::vector<Point3<32>>{top_chain[0], bottom_chain[0], bottom_chain[1],
+        std::vector<Point3>{top_chain[0], bottom_chain[0], bottom_chain[1],
                                  bottom_chain[2], bottom_chain[3],
                                  bottom_chain[4]}));
   EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
@@ -127,19 +127,19 @@ TEST(MonotoneDecomposer, AlreadyConvexAllBottomChain) {
 }
 
 TEST(MonotoneDecomposer, AlreadyConvexAlternatingChains) {
-  Point3<32> top_chain[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(2, 3, 10),
-    Point3<32>(4, 5, 10),
-    Point3<32>(6, 5, 10),
-    Point3<32>(8, 3, 10),
+  Point3 top_chain[] = {
+    Point3(0, 0, 10),
+    Point3(2, 3, 10),
+    Point3(4, 5, 10),
+    Point3(6, 5, 10),
+    Point3(8, 3, 10),
   };
-  Point3<32> bottom_chain[] = {
-    Point3<32>(1, -3, 10),
-    Point3<32>(3, -5, 10),
-    Point3<32>(5, -5, 10),
-    Point3<32>(7, -3, 10),
-    Point3<32>(9, 0, 10),
+  Point3 bottom_chain[] = {
+    Point3(1, -3, 10),
+    Point3(3, -5, 10),
+    Point3(5, -5, 10),
+    Point3(7, -3, 10),
+    Point3(9, 0, 10),
   };
 
   ResultCollector collector;
@@ -147,7 +147,7 @@ TEST(MonotoneDecomposer, AlreadyConvexAlternatingChains) {
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
   EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
-        std::vector<Point3<32>>{top_chain[0], bottom_chain[0], bottom_chain[1],
+        std::vector<Point3>{top_chain[0], bottom_chain[0], bottom_chain[1],
                                  bottom_chain[2], bottom_chain[3],
                                  bottom_chain[4], top_chain[4], top_chain[3],
                                  top_chain[2], top_chain[1]}));
@@ -156,13 +156,13 @@ TEST(MonotoneDecomposer, AlreadyConvexAlternatingChains) {
 }
 
 TEST(MonotoneDecomposer, SingleReflexOnTop) {
-  Point3<32> top_chain[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 1, 10),
-    Point3<32>(2, 3, 10),
+  Point3 top_chain[] = {
+    Point3(0, 0, 10),
+    Point3(1, 1, 10),
+    Point3(2, 3, 10),
   };
-  Point3<32> bottom_chain[] = {
-    Point3<32>(3, 0, 10),
+  Point3 bottom_chain[] = {
+    Point3(3, 0, 10),
   };
 
   ResultCollector collector;
@@ -170,8 +170,8 @@ TEST(MonotoneDecomposer, SingleReflexOnTop) {
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
   EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
-        std::vector<Point3<32>>{top_chain[0], bottom_chain[0], top_chain[1]},
-        std::vector<Point3<32>>{top_chain[1], bottom_chain[0], top_chain[2]}
+        std::vector<Point3>{top_chain[0], bottom_chain[0], top_chain[1]},
+        std::vector<Point3>{top_chain[1], bottom_chain[0], top_chain[2]}
         ));
   EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
         -1, -1));
@@ -180,14 +180,14 @@ TEST(MonotoneDecomposer, SingleReflexOnTop) {
 TEST(MonotoneDecomposer, MergeCheckReflex1) {
   // MergeCheckConvex1 has roughly the same shape as this test, but the top
   // chain has convex polygons.
-  Point3<32> top_chain[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, -1, 10),
-    Point3<32>(3, -1, 10),
+  Point3 top_chain[] = {
+    Point3(0, 0, 10),
+    Point3(1, -1, 10),
+    Point3(3, -1, 10),
   };
-  Point3<32> bottom_chain[] = {
-    Point3<32>(2, -5, 10),
-    Point3<32>(4, 0, 10),
+  Point3 bottom_chain[] = {
+    Point3(2, -5, 10),
+    Point3(4, 0, 10),
   };
 
   ResultCollector collector;
@@ -195,9 +195,9 @@ TEST(MonotoneDecomposer, MergeCheckReflex1) {
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
   EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
-        std::vector<Point3<32>>{top_chain[0], bottom_chain[0], top_chain[1]},
-        std::vector<Point3<32>>{top_chain[1], bottom_chain[0], top_chain[2]},
-        std::vector<Point3<32>>{bottom_chain[0], bottom_chain[1], top_chain[2]}
+        std::vector<Point3>{top_chain[0], bottom_chain[0], top_chain[1]},
+        std::vector<Point3>{top_chain[1], bottom_chain[0], top_chain[2]},
+        std::vector<Point3>{bottom_chain[0], bottom_chain[1], top_chain[2]}
         ));
   EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
         -1, -1, -1));
@@ -206,14 +206,14 @@ TEST(MonotoneDecomposer, MergeCheckReflex1) {
 TEST(MonotoneDecomposer, MergeCheckConvex1) {
   // MergeCheckConvex has roughly the same shape as this test, but the top
   // chain has convex polygons.
-  Point3<32> top_chain[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 1, 10),
-    Point3<32>(1, 1, 10),
+  Point3 top_chain[] = {
+    Point3(0, 0, 10),
+    Point3(1, 1, 10),
+    Point3(1, 1, 10),
   };
-  Point3<32> bottom_chain[] = {
-    Point3<32>(2, -5, 10),
-    Point3<32>(4, 0, 10),
+  Point3 bottom_chain[] = {
+    Point3(2, -5, 10),
+    Point3(4, 0, 10),
   };
 
   ResultCollector collector;
@@ -221,7 +221,7 @@ TEST(MonotoneDecomposer, MergeCheckConvex1) {
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
   EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
-        std::vector<Point3<32>>{top_chain[0], bottom_chain[0], bottom_chain[1],
+        std::vector<Point3>{top_chain[0], bottom_chain[0], bottom_chain[1],
                                  top_chain[2], top_chain[1]}
         ));
   EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
@@ -229,16 +229,16 @@ TEST(MonotoneDecomposer, MergeCheckConvex1) {
 }
 
 TEST(MonotoneDecomposer, MergeCheckReflex2) {
-  Point3<32> top_chain[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(4, -7, 10),
-    Point3<32>(14, -7, 10),
+  Point3 top_chain[] = {
+    Point3(0, 0, 10),
+    Point3(4, -7, 10),
+    Point3(14, -7, 10),
   };
-  Point3<32> bottom_chain[] = {
-    Point3<32>(1, -8, 10),
-    Point3<32>(9, -10, 10),
-    Point3<32>(17, -8, 10),
-    Point3<32>(18, 0, 10),
+  Point3 bottom_chain[] = {
+    Point3(1, -8, 10),
+    Point3(9, -10, 10),
+    Point3(17, -8, 10),
+    Point3(18, 0, 10),
   };
 
   ResultCollector collector;
@@ -246,26 +246,26 @@ TEST(MonotoneDecomposer, MergeCheckReflex2) {
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
   EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
-        std::vector<Point3<32>>{top_chain[0], bottom_chain[0], top_chain[1]},
-        std::vector<Point3<32>>{bottom_chain[0], bottom_chain[1],
+        std::vector<Point3>{top_chain[0], bottom_chain[0], top_chain[1]},
+        std::vector<Point3>{bottom_chain[0], bottom_chain[1],
                                  bottom_chain[2], top_chain[2], top_chain[1]},
-        std::vector<Point3<32>>{top_chain[2], bottom_chain[2], bottom_chain[3]}
+        std::vector<Point3>{top_chain[2], bottom_chain[2], bottom_chain[3]}
         ));
   EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
         -1, -1, -1));
 }
 
 TEST(MonotoneDecomposer, MergeCheckReflex3) {
-  Point3<32> top_chain[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(4, -3, 10),
-    Point3<32>(10, -3, 10),
+  Point3 top_chain[] = {
+    Point3(0, 0, 10),
+    Point3(4, -3, 10),
+    Point3(10, -3, 10),
   };
-  Point3<32> bottom_chain[] = {
-    Point3<32>(1, -2, 10),
-    Point3<32>(7, -7, 10),
-    Point3<32>(13, -2, 10),
-    Point3<32>(14, 0, 10),
+  Point3 bottom_chain[] = {
+    Point3(1, -2, 10),
+    Point3(7, -7, 10),
+    Point3(13, -2, 10),
+    Point3(14, 0, 10),
   };
 
   ResultCollector collector;
@@ -273,11 +273,11 @@ TEST(MonotoneDecomposer, MergeCheckReflex3) {
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
   EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
-        std::vector<Point3<32>>{top_chain[0], bottom_chain[0],
+        std::vector<Point3>{top_chain[0], bottom_chain[0],
                                  bottom_chain[1], top_chain[1]},
-        std::vector<Point3<32>>{top_chain[1], bottom_chain[1],
+        std::vector<Point3>{top_chain[1], bottom_chain[1],
                                  top_chain[2]},
-        std::vector<Point3<32>>{bottom_chain[1], bottom_chain[2],
+        std::vector<Point3>{bottom_chain[1], bottom_chain[2],
                                  bottom_chain[3], top_chain[2]}
         ));
   EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
@@ -285,14 +285,14 @@ TEST(MonotoneDecomposer, MergeCheckReflex3) {
 }
 
 TEST(MonotoneDecomposer, MergeAfterReflex) {
-  Point3<32> top_chain[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(4, 2, 10),
-    Point3<32>(6, 6, 10),
+  Point3 top_chain[] = {
+    Point3(0, 0, 10),
+    Point3(4, 2, 10),
+    Point3(6, 6, 10),
   };
-  Point3<32> bottom_chain[] = {
-    Point3<32>(9, -3, 10),
-    Point3<32>(14, 0, 10)
+  Point3 bottom_chain[] = {
+    Point3(9, -3, 10),
+    Point3(14, 0, 10)
   };
 
   ResultCollector collector;
@@ -300,8 +300,8 @@ TEST(MonotoneDecomposer, MergeAfterReflex) {
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
   EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
-        std::vector<Point3<32>>{top_chain[0], bottom_chain[0], top_chain[1]},
-        std::vector<Point3<32>>{top_chain[1], bottom_chain[0], bottom_chain[1],
+        std::vector<Point3>{top_chain[0], bottom_chain[0], top_chain[1]},
+        std::vector<Point3>{top_chain[1], bottom_chain[0], bottom_chain[1],
                                  top_chain[2]}
         ));
   EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
@@ -309,17 +309,17 @@ TEST(MonotoneDecomposer, MergeAfterReflex) {
 }
 
 TEST(MonotoneDecomposer, SelfIntersecting1) {
-  Point3<32> top_chain[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(2, 4, 10),
-    Point3<32>(7, 4, 10),
-    Point3<32>(15, -4, 10),
+  Point3 top_chain[] = {
+    Point3(0, 0, 10),
+    Point3(2, 4, 10),
+    Point3(7, 4, 10),
+    Point3(15, -4, 10),
   };
-  Point3<32> bottom_chain[] = {
-    Point3<32>(4, -4, 10),
-    Point3<32>(12, 4, 10),
-    Point3<32>(17, 4, 10),
-    Point3<32>(19, 0, 10),
+  Point3 bottom_chain[] = {
+    Point3(4, -4, 10),
+    Point3(12, 4, 10),
+    Point3(17, 4, 10),
+    Point3(19, 0, 10),
   };
 
   ResultCollector collector;
@@ -327,9 +327,9 @@ TEST(MonotoneDecomposer, SelfIntersecting1) {
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
   EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
-        std::vector<Point3<32>>{top_chain[0], bottom_chain[0], bottom_chain[1],
+        std::vector<Point3>{top_chain[0], bottom_chain[0], bottom_chain[1],
                                  top_chain[2], top_chain[1]},
-        std::vector<Point3<32>>{top_chain[2], bottom_chain[1], bottom_chain[2],
+        std::vector<Point3>{top_chain[2], bottom_chain[1], bottom_chain[2],
                                  bottom_chain[3], top_chain[3]}
         ));
   EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
@@ -337,17 +337,17 @@ TEST(MonotoneDecomposer, SelfIntersecting1) {
 }
 
 TEST(MonotoneDecomposer, SelfIntersecting2) {
-  Point3<32> top_chain[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(4, -2, 10),
-    Point3<32>(9, -2, 10),
-    Point3<32>(17, -8, 10),
+  Point3 top_chain[] = {
+    Point3(0, 0, 10),
+    Point3(4, -2, 10),
+    Point3(9, -2, 10),
+    Point3(17, -8, 10),
   };
-  Point3<32> bottom_chain[] = {
-    Point3<32>(5, -8, 10),
-    Point3<32>(14, -2, 10),
-    Point3<32>(19, -2, 10),
-    Point3<32>(23, 0, 10),
+  Point3 bottom_chain[] = {
+    Point3(5, -8, 10),
+    Point3(14, -2, 10),
+    Point3(19, -2, 10),
+    Point3(23, 0, 10),
   };
 
   ResultCollector collector;
@@ -355,29 +355,29 @@ TEST(MonotoneDecomposer, SelfIntersecting2) {
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
   EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
-        std::vector<Point3<32>>{top_chain[0], bottom_chain[0], top_chain[1]},
-        std::vector<Point3<32>>{top_chain[1], bottom_chain[0], bottom_chain[1],
+        std::vector<Point3>{top_chain[0], bottom_chain[0], top_chain[1]},
+        std::vector<Point3>{top_chain[1], bottom_chain[0], bottom_chain[1],
                                  top_chain[2]},
-        std::vector<Point3<32>>{top_chain[2], bottom_chain[1], bottom_chain[2],
+        std::vector<Point3>{top_chain[2], bottom_chain[1], bottom_chain[2],
                                  top_chain[3]},
-        std::vector<Point3<32>>{top_chain[3], bottom_chain[2], bottom_chain[3]}
+        std::vector<Point3>{top_chain[3], bottom_chain[2], bottom_chain[3]}
         ));
   EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
         -1, -1, 1, 1));
 }
 
 TEST(MonotoneDecomposer, SelfIntersecting3) {
-  Point3<32> top_chain[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(4, 2, 10),
-    Point3<32>(6, 6, 10),
-    Point3<32>(14, -3, 10),
+  Point3 top_chain[] = {
+    Point3(0, 0, 10),
+    Point3(4, 2, 10),
+    Point3(6, 6, 10),
+    Point3(14, -3, 10),
   };
-  Point3<32> bottom_chain[] = {
-    Point3<32>(9, -3, 10),
-    Point3<32>(17, 6, 10),
-    Point3<32>(19, 2, 10),
-    Point3<32>(23, 0, 10),
+  Point3 bottom_chain[] = {
+    Point3(9, -3, 10),
+    Point3(17, 6, 10),
+    Point3(19, 2, 10),
+    Point3(23, 0, 10),
   };
 
   ResultCollector collector;
@@ -385,12 +385,12 @@ TEST(MonotoneDecomposer, SelfIntersecting3) {
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
   EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
-        std::vector<Point3<32>>{top_chain[0], bottom_chain[0], top_chain[1]},
-        std::vector<Point3<32>>{top_chain[1], bottom_chain[0], top_chain[3],
+        std::vector<Point3>{top_chain[0], bottom_chain[0], top_chain[1]},
+        std::vector<Point3>{top_chain[1], bottom_chain[0], top_chain[3],
                                  top_chain[2]},
-        std::vector<Point3<32>>{bottom_chain[0], bottom_chain[1],
+        std::vector<Point3>{bottom_chain[0], bottom_chain[1],
                                  bottom_chain[3], top_chain[3]},
-        std::vector<Point3<32>>{bottom_chain[1], bottom_chain[2],
+        std::vector<Point3>{bottom_chain[1], bottom_chain[2],
                                  bottom_chain[3]}
         ));
   EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
@@ -398,19 +398,19 @@ TEST(MonotoneDecomposer, SelfIntersecting3) {
 }
 
 TEST(MonotoneDecomposer, SelfIntersecting4) {
-  Point3<32> top_chain[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(3, 1, 10),
-    Point3<32>(5, 3, 10),
-    Point3<32>(6, 6, 10),
-    Point3<32>(10, -3, 10),
+  Point3 top_chain[] = {
+    Point3(0, 0, 10),
+    Point3(3, 1, 10),
+    Point3(5, 3, 10),
+    Point3(6, 6, 10),
+    Point3(10, -3, 10),
   };
-  Point3<32> bottom_chain[] = {
-    Point3<32>(7, -3, 10),
-    Point3<32>(11, 6, 10),
-    Point3<32>(12, 3, 10),
-    Point3<32>(14, 1, 10),
-    Point3<32>(17, 0, 10),
+  Point3 bottom_chain[] = {
+    Point3(7, -3, 10),
+    Point3(11, 6, 10),
+    Point3(12, 3, 10),
+    Point3(14, 1, 10),
+    Point3(17, 0, 10),
   };
 
   ResultCollector collector;
@@ -418,17 +418,17 @@ TEST(MonotoneDecomposer, SelfIntersecting4) {
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
   EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
-        std::vector<Point3<32>>{top_chain[0], bottom_chain[0], top_chain[1]},
-        std::vector<Point3<32>>{top_chain[1], bottom_chain[0], top_chain[2]},
-        std::vector<Point3<32>>{top_chain[2], bottom_chain[0], top_chain[4],
+        std::vector<Point3>{top_chain[0], bottom_chain[0], top_chain[1]},
+        std::vector<Point3>{top_chain[1], bottom_chain[0], top_chain[2]},
+        std::vector<Point3>{top_chain[2], bottom_chain[0], top_chain[4],
                                  top_chain[3]},
-        std::vector<Point3<32>>{bottom_chain[0], bottom_chain[1],
+        std::vector<Point3>{bottom_chain[0], bottom_chain[1],
                                  top_chain[4]},
-        std::vector<Point3<32>>{top_chain[4], bottom_chain[1],
+        std::vector<Point3>{top_chain[4], bottom_chain[1],
                                  bottom_chain[4]},
-        std::vector<Point3<32>>{bottom_chain[1], bottom_chain[2],
+        std::vector<Point3>{bottom_chain[1], bottom_chain[2],
                                  bottom_chain[3]},
-        std::vector<Point3<32>>{bottom_chain[1], bottom_chain[3],
+        std::vector<Point3>{bottom_chain[1], bottom_chain[3],
                                  bottom_chain[4]}
         ));
   EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
@@ -439,17 +439,17 @@ TEST(MonotoneDecomposer, AllCollinear) {
   //
   // t0 -> t1 -> t2 -> b0 -> t3 -> b1 -> b2 -> b3
   //
-  Point3<32> top_chain[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 0, 10),
-    Point3<32>(2, 0, 10),
-    Point3<32>(4, 0, 10),
+  Point3 top_chain[] = {
+    Point3(0, 0, 10),
+    Point3(1, 0, 10),
+    Point3(2, 0, 10),
+    Point3(4, 0, 10),
   };
-  Point3<32> bottom_chain[] = {
-    Point3<32>(3, 0, 10),
-    Point3<32>(5, 0, 10),
-    Point3<32>(6, 0, 10),
-    Point3<32>(7, 0, 10),
+  Point3 bottom_chain[] = {
+    Point3(3, 0, 10),
+    Point3(5, 0, 10),
+    Point3(6, 0, 10),
+    Point3(7, 0, 10),
   };
 
   ResultCollector collector;
@@ -457,7 +457,7 @@ TEST(MonotoneDecomposer, AllCollinear) {
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
   EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
-        std::vector<Point3<32>>{top_chain[0], bottom_chain[0], bottom_chain[1],
+        std::vector<Point3>{top_chain[0], bottom_chain[0], bottom_chain[1],
                                  bottom_chain[2], bottom_chain[3], top_chain[3],
                                  top_chain[2], top_chain[1]}
         ));
@@ -466,14 +466,14 @@ TEST(MonotoneDecomposer, AllCollinear) {
 }
 
 TEST(MonotoneDecomposer, DuplicateReflex) {
-  Point3<32> top_chain[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(2, -2, 10),
-    Point3<32>(2, -2, 10),
+  Point3 top_chain[] = {
+    Point3(0, 0, 10),
+    Point3(2, -2, 10),
+    Point3(2, -2, 10),
   };
-  Point3<32> bottom_chain[] = {
-    Point3<32>(1, -4, 10),
-    Point3<32>(5, -1, 10),
+  Point3 bottom_chain[] = {
+    Point3(1, -4, 10),
+    Point3(5, -1, 10),
   };
 
   ResultCollector collector;
@@ -481,8 +481,8 @@ TEST(MonotoneDecomposer, DuplicateReflex) {
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
   EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
-        std::vector<Point3<32>>{top_chain[0], bottom_chain[0], top_chain[1]},
-        std::vector<Point3<32>>{bottom_chain[0], bottom_chain[1],
+        std::vector<Point3>{top_chain[0], bottom_chain[0], top_chain[1]},
+        std::vector<Point3>{bottom_chain[0], bottom_chain[1],
                                  top_chain[2]}
         ));
   EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
@@ -490,14 +490,14 @@ TEST(MonotoneDecomposer, DuplicateReflex) {
 }
 
 TEST(MonotoneDecomposer, TopChainDegenerateTriangle) {
-  Point3<32> top_chain[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(2, -2, 10),
-    Point3<32>(3, 0, 10),
+  Point3 top_chain[] = {
+    Point3(0, 0, 10),
+    Point3(2, -2, 10),
+    Point3(3, 0, 10),
   };
-  Point3<32> bottom_chain[] = {
-    Point3<32>(1, -4, 10),
-    Point3<32>(4, -1, 10),
+  Point3 bottom_chain[] = {
+    Point3(1, -4, 10),
+    Point3(4, -1, 10),
   };
 
   ResultCollector collector;
@@ -505,8 +505,8 @@ TEST(MonotoneDecomposer, TopChainDegenerateTriangle) {
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
   EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
-        std::vector<Point3<32>>{top_chain[0], bottom_chain[0], top_chain[1]},
-        std::vector<Point3<32>>{bottom_chain[0], bottom_chain[1],
+        std::vector<Point3>{top_chain[0], bottom_chain[0], top_chain[1]},
+        std::vector<Point3>{bottom_chain[0], bottom_chain[1],
                                  top_chain[2], top_chain[1]}
         ));
   EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
@@ -514,17 +514,17 @@ TEST(MonotoneDecomposer, TopChainDegenerateTriangle) {
 }
 
 TEST(MonotoneDecomposer, NonstrictlyMonotone) {
-  Point3<32> top_chain[] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 0, 10),
-    Point3<32>(1, -2, 10),
-    Point3<32>(1, -1, 10),
-    Point3<32>(2, -1, 10),
+  Point3 top_chain[] = {
+    Point3(0, 0, 10),
+    Point3(1, 0, 10),
+    Point3(1, -2, 10),
+    Point3(1, -1, 10),
+    Point3(2, -1, 10),
   };
-  Point3<32> bottom_chain[] = {
-    Point3<32>(0, -3, 10),
-    Point3<32>(1, -3, 10),
-    Point3<32>(2, -3, 10),
+  Point3 bottom_chain[] = {
+    Point3(0, -3, 10),
+    Point3(1, -3, 10),
+    Point3(2, -3, 10),
   };
 
   ResultCollector collector;
@@ -532,9 +532,9 @@ TEST(MonotoneDecomposer, NonstrictlyMonotone) {
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
   EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
-        std::vector<Point3<32>>{bottom_chain[0], bottom_chain[1], top_chain[2],
+        std::vector<Point3>{bottom_chain[0], bottom_chain[1], top_chain[2],
                                  top_chain[1], top_chain[0]},
-        std::vector<Point3<32>>{bottom_chain[1], bottom_chain[2],
+        std::vector<Point3>{bottom_chain[1], bottom_chain[2],
                                  top_chain[4], top_chain[3], top_chain[2]}
         ));
   EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(

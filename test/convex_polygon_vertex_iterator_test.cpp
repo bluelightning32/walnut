@@ -48,8 +48,8 @@ TEST(ConvexPolygonVertexIterator, AssignConstFromNonConst) {
 
 TEST(ConvexPolygonVertexIterator, Swap) {
   std::vector<ConvexPolygonEdge<>> edges{
-    {Point3<>(0, 0, 0), Point3<>(1, 1, 1)},
-    {Point3<>(1, 1, 1), Point3<>(0, 0, 0)},
+    {Point3(0, 0, 0), Point3(1, 1, 1)},
+    {Point3(1, 1, 1), Point3(0, 0, 0)},
   };
 
   using VectorIterator = std::vector<ConvexPolygonEdge<>>::iterator;
@@ -76,7 +76,7 @@ TEST(ConvexPolygonVertexIterator, IteratorCategory) {
 
 TEST(ConvexPolygonVertexIterator, Dereference) {
   std::vector<ConvexPolygonEdge<>> edges{
-    {Point3<>(0, 0, 0), Point3<>(1, 1, 1)},
+    {Point3(0, 0, 0), Point3(1, 1, 1)},
   };
 
   using VectorIterator = std::vector<ConvexPolygonEdge<>>::iterator;
@@ -88,8 +88,8 @@ TEST(ConvexPolygonVertexIterator, Dereference) {
 
 TEST(ConvexPolygonVertexIterator, PrefixIncrement) {
   std::vector<ConvexPolygonEdge<>> edges{
-    {Point3<>(0, 0, 0), Point3<>(1, 1, 1)},
-    {Point3<>(1, 1, 1), Point3<>(0, 0, 0)},
+    {Point3(0, 0, 0), Point3(1, 1, 1)},
+    {Point3(1, 1, 1), Point3(0, 0, 0)},
   };
 
   using VectorIterator = std::vector<ConvexPolygonEdge<>>::iterator;
@@ -103,8 +103,8 @@ TEST(ConvexPolygonVertexIterator, PrefixIncrement) {
 
 TEST(ConvexPolygonVertexIterator, PostfixIncrement) {
   std::vector<ConvexPolygonEdge<>> edges{
-    {Point3<>(0, 0, 0), Point3<>(1, 1, 1)},
-    {Point3<>(1, 1, 1), Point3<>(0, 0, 0)},
+    {Point3(0, 0, 0), Point3(1, 1, 1)},
+    {Point3(1, 1, 1), Point3(0, 0, 0)},
   };
 
   using VectorIterator = std::vector<ConvexPolygonEdge<>>::iterator;
@@ -119,8 +119,8 @@ TEST(ConvexPolygonVertexIterator, PostfixIncrement) {
 
 TEST(ConvexPolygonVertexIterator, PrefixDecrement) {
   std::vector<ConvexPolygonEdge<>> edges{
-    {Point3<>(0, 0, 0), Point3<>(1, 1, 1)},
-    {Point3<>(1, 1, 1), Point3<>(0, 0, 0)},
+    {Point3(0, 0, 0), Point3(1, 1, 1)},
+    {Point3(1, 1, 1), Point3(0, 0, 0)},
   };
 
   using VectorIterator = std::vector<ConvexPolygonEdge<>>::iterator;
@@ -134,8 +134,8 @@ TEST(ConvexPolygonVertexIterator, PrefixDecrement) {
 
 TEST(ConvexPolygonVertexIterator, PostfixDecrement) {
   std::vector<ConvexPolygonEdge<>> edges{
-    {Point3<>(0, 0, 0), Point3<>(1, 1, 1)},
-    {Point3<>(1, 1, 1), Point3<>(0, 0, 0)},
+    {Point3(0, 0, 0), Point3(1, 1, 1)},
+    {Point3(1, 1, 1), Point3(0, 0, 0)},
   };
 
   using VectorIterator = std::vector<ConvexPolygonEdge<>>::iterator;
@@ -150,8 +150,8 @@ TEST(ConvexPolygonVertexIterator, PostfixDecrement) {
 
 TEST(ConvexPolygonVertexIterator, Equality) {
   std::vector<ConvexPolygonEdge<>> edges{
-    {Point3<>(0, 0, 0), Point3<>(1, 1, 1)},
-    {Point3<>(1, 1, 1), Point3<>(0, 0, 0)},
+    {Point3(0, 0, 0), Point3(1, 1, 1)},
+    {Point3(1, 1, 1), Point3(0, 0, 0)},
   };
 
   using VectorIterator = std::vector<ConvexPolygonEdge<>>::iterator;
@@ -165,7 +165,7 @@ TEST(ConvexPolygonVertexIterator, Equality) {
 
 TEST(ConvexPolygonVertexIterator, PointsTo) {
   std::vector<ConvexPolygonEdge<>> edges{
-    {Point3<>(0, 0, 0), Point3<>(1, 1, 1)},
+    {Point3(0, 0, 0), Point3(1, 1, 1)},
   };
 
   using VectorIterator = std::vector<ConvexPolygonEdge<>>::iterator;
@@ -177,8 +177,8 @@ TEST(ConvexPolygonVertexIterator, PointsTo) {
 
 TEST(ConvexPolygonVertexIterator, AddOffset) {
   std::vector<ConvexPolygonEdge<>> edges{
-    {Point3<>(0, 0, 0), Point3<>(1, 1, 1)},
-    {Point3<>(1, 1, 1), Point3<>(0, 0, 0)},
+    {Point3(0, 0, 0), Point3(1, 1, 1)},
+    {Point3(1, 1, 1), Point3(0, 0, 0)},
   };
 
   using VectorIterator = std::vector<ConvexPolygonEdge<>>::iterator;
@@ -191,8 +191,8 @@ TEST(ConvexPolygonVertexIterator, AddOffset) {
 
 TEST(ConvexPolygonVertexIterator, SubtractOffset) {
   std::vector<ConvexPolygonEdge<>> edges{
-    {Point3<>(0, 0, 0), Point3<>(1, 1, 1)},
-    {Point3<>(1, 1, 1), Point3<>(0, 0, 0)},
+    {Point3(0, 0, 0), Point3(1, 1, 1)},
+    {Point3(1, 1, 1), Point3(0, 0, 0)},
   };
 
   using VectorIterator = std::vector<ConvexPolygonEdge<>>::iterator;
@@ -205,8 +205,8 @@ TEST(ConvexPolygonVertexIterator, SubtractOffset) {
 
 TEST(ConvexPolygonVertexIterator, SubtractIterator) {
   std::vector<ConvexPolygonEdge<>> edges{
-    {Point3<>(0, 0, 0), Point3<>(1, 1, 1)},
-    {Point3<>(1, 1, 1), Point3<>(0, 0, 0)},
+    {Point3(0, 0, 0), Point3(1, 1, 1)},
+    {Point3(1, 1, 1), Point3(0, 0, 0)},
   };
 
   using VectorIterator = std::vector<ConvexPolygonEdge<>>::iterator;
@@ -219,8 +219,8 @@ TEST(ConvexPolygonVertexIterator, SubtractIterator) {
 
 TEST(ConvexPolygonVertexIterator, PlusEqual) {
   std::vector<ConvexPolygonEdge<>> edges{
-    {Point3<>(0, 0, 0), Point3<>(1, 1, 1)},
-    {Point3<>(1, 1, 1), Point3<>(0, 0, 0)},
+    {Point3(0, 0, 0), Point3(1, 1, 1)},
+    {Point3(1, 1, 1), Point3(0, 0, 0)},
   };
 
   using VectorIterator = std::vector<ConvexPolygonEdge<>>::iterator;
@@ -235,8 +235,8 @@ TEST(ConvexPolygonVertexIterator, PlusEqual) {
 
 TEST(ConvexPolygonVertexIterator, MinusEqual) {
   std::vector<ConvexPolygonEdge<>> edges{
-    {Point3<>(0, 0, 0), Point3<>(1, 1, 1)},
-    {Point3<>(1, 1, 1), Point3<>(0, 0, 0)},
+    {Point3(0, 0, 0), Point3(1, 1, 1)},
+    {Point3(1, 1, 1), Point3(0, 0, 0)},
   };
 
   using VectorIterator = std::vector<ConvexPolygonEdge<>>::iterator;
@@ -251,8 +251,8 @@ TEST(ConvexPolygonVertexIterator, MinusEqual) {
 
 TEST(ConvexPolygonVertexIterator, IndexOffset) {
   std::vector<ConvexPolygonEdge<>> edges{
-    {Point3<>(0, 0, 0), Point3<>(1, 1, 1)},
-    {Point3<>(1, 1, 1), Point3<>(0, 0, 0)},
+    {Point3(0, 0, 0), Point3(1, 1, 1)},
+    {Point3(1, 1, 1), Point3(0, 0, 0)},
   };
 
   using VectorIterator = std::vector<ConvexPolygonEdge<>>::iterator;
@@ -265,8 +265,8 @@ TEST(ConvexPolygonVertexIterator, IndexOffset) {
 
 TEST(ConvexPolygonVertexIterator, LtGtCompare) {
   std::vector<ConvexPolygonEdge<>> edges{
-    {Point3<>(0, 0, 0), Point3<>(1, 1, 1)},
-    {Point3<>(1, 1, 1), Point3<>(0, 0, 0)},
+    {Point3(0, 0, 0), Point3(1, 1, 1)},
+    {Point3(1, 1, 1), Point3(0, 0, 0)},
   };
 
   using VectorIterator = std::vector<ConvexPolygonEdge<>>::iterator;

@@ -8,9 +8,9 @@
 
 namespace walnut {
 
-template <typename InputPoint3Template = Point3<32>,
+template <typename InputPoint3Template = Point3,
           typename ConvexPolygonTemplate = MutableConvexPolygon<
-            InputPoint3Template::component_bits,
+            32,
             typename GetVertexData<InputPoint3Template>::VertexData>
          >
 class ConvexPolygonFactory :

@@ -17,8 +17,7 @@ class PlanarRange {
  public:
   using Point3Rep = typename std::iterator_traits<Point3Iterator>::value_type;
   using ConcatRangeRep = ConcatRange<Point3Iterator>;
-  using HalfSpace3Rep = HalfSpace3<(Point3Rep::component_bits - 1)*2 + 4,
-                         (Point3Rep::component_bits - 1)*3 + 6>;
+  using HalfSpace3Rep = HalfSpace3<(32 - 1)*2 + 4, (32 - 1)*3 + 6>;
   using OutputIterator = typename ConcatRangeRep::const_iterator;
 
   // Find the next planar range from an iterator range of `Point3Rep`s.

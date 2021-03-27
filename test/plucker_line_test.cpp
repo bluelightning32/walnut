@@ -6,8 +6,8 @@
 namespace walnut {
 
 TEST(PluckerLine, FromPointsDirection) {
-  const Point3<> p1(1, 2, 3);
-  const Point3<> p2(5, 7, 11);
+  const Point3 p1(1, 2, 3);
+  const Point3 p2(5, 7, 11);
   PluckerLine<> line(p1, p2);
 
   EXPECT_GT((p2 - p1).Dot(line.d()), 0);
@@ -16,23 +16,23 @@ TEST(PluckerLine, FromPointsDirection) {
 }
 
 TEST(PluckerLine, IsCoincidentPoint3) {
-  const Point3<> p1(1, 2, 3);
-  const Point3<> p2(5, 7, 11);
+  const Point3 p1(1, 2, 3);
+  const Point3 p2(5, 7, 11);
   PluckerLine<> line(p1, p2);
 
   EXPECT_TRUE(line.IsCoincident(p1));
   EXPECT_TRUE(line.IsCoincident(p2));
 
-  const Point3<> p3(p2 + (p2 - p1));
+  const Point3 p3(p2 + (p2 - p1));
   EXPECT_TRUE(line.IsCoincident(p3));
 
   const HomoPoint3<> doubled_p3(p3.vector_from_origin().Scale(2), BigInt<8>(2));
   EXPECT_TRUE(line.IsCoincident(doubled_p3));
 
-  const Point3<> p4(p1 - (p2 - p1));
+  const Point3 p4(p1 - (p2 - p1));
   EXPECT_TRUE(line.IsCoincident(p4));
 
-  const Point3<> p5(17, 23, 31);
+  const Point3 p5(17, 23, 31);
   EXPECT_FALSE(line.IsCoincident(p5));
 
   const HomoPoint3<> doubled_p5(p5.vector_from_origin().Scale(2), BigInt<8>(2));
@@ -40,25 +40,25 @@ TEST(PluckerLine, IsCoincidentPoint3) {
 }
 
 TEST(PluckerLine, IsCoincidentThroughOrigin) {
-  const Point3<> p1(1, 2, 3);
-  const Point3<> p2(0, 0, 0);
+  const Point3 p1(1, 2, 3);
+  const Point3 p2(0, 0, 0);
   PluckerLine<> line(p1, p2);
 
   EXPECT_TRUE(line.IsCoincident(p1));
   EXPECT_TRUE(line.IsCoincident(p2));
 
-  const Point3<> p3(p2 + (p2 - p1));
+  const Point3 p3(p2 + (p2 - p1));
   EXPECT_TRUE(line.IsCoincident(p3));
 }
 
 TEST(PluckerLine, IsCoincidentHalfSpace3) {
-  const Point3<> p1(1, 2, 3);
-  const Point3<> p2(5, 7, 11);
+  const Point3 p1(1, 2, 3);
+  const Point3 p2(5, 7, 11);
   PluckerLine<> line(p1, p2);
 
-  const Point3<> p3(6, 8, 14);
+  const Point3 p3(6, 8, 14);
   HalfSpace3<> a(p1, p2, p3);
-  const Point3<> p4(7, 9, 15);
+  const Point3 p4(7, 9, 15);
   HalfSpace3<> b(p1, p3, p4);
 
   EXPECT_TRUE(line.IsCoincident(a));
@@ -66,9 +66,9 @@ TEST(PluckerLine, IsCoincidentHalfSpace3) {
 }
 
 TEST(PluckerLine, EqualSameDir) {
-  const Point3<> p1(1, 2, 3);
+  const Point3 p1(1, 2, 3);
   const Vector3 d(5, 7, 11);
-  const PluckerLine<> line(p1, Point3<>(p1 + d.Scale(2)));
+  const PluckerLine<> line(p1, Point3(p1 + d.Scale(2)));
 
   EXPECT_EQ(line, line);
 
@@ -78,27 +78,27 @@ TEST(PluckerLine, EqualSameDir) {
 }
 
 TEST(PluckerLine, NotEqualOppositeDir) {
-  const Point3<> p1(1, 2, 3);
+  const Point3 p1(1, 2, 3);
   const Vector3 d(5, 7, 11);
-  const PluckerLine<> line(p1, Point3<>(p1 + d.Scale(2)));
+  const PluckerLine<> line(p1, Point3(p1 + d.Scale(2)));
 
   const PluckerLine<> line2(p1 + d.Scale(5),
                             p1 + d.Scale(3));
   EXPECT_NE(line, line2);
 
   const PluckerLine<> line3(p1,
-                            Point3<>(p1 + d.Scale(-3)));
+                            Point3(p1 + d.Scale(-3)));
   EXPECT_NE(line, line3);
 
-  const PluckerLine<> line4(Point3<>(p1 + d.Scale(2)), p1);
+  const PluckerLine<> line4(Point3(p1 + d.Scale(2)), p1);
   EXPECT_NE(line, line4);
   EXPECT_NE(line4, line);
 }
 
 TEST(PluckerLine, NotEqualWithZeroMY) {
-  const Point3<> p1(0, 0, 0);
-  const Point3<> p2(-2, -2, 0);
-  const Point3<> p3(-2, 0, 0);
+  const Point3 p1(0, 0, 0);
+  const Point3 p2(-2, -2, 0);
+  const Point3 p3(-2, 0, 0);
 
   // { d={ -2, -2, 0 } m={ 0, 0, 0 } }
   const PluckerLine<> line(p1, p2);
@@ -109,12 +109,12 @@ TEST(PluckerLine, NotEqualWithZeroMY) {
 }
 
 TEST(PluckerLine, ConstructFromPlanes) {
-  const Point3<> p1(1, 2, 3);
-  const Point3<> p2(5, 7, 11);
+  const Point3 p1(1, 2, 3);
+  const Point3 p2(5, 7, 11);
   const PluckerLine<> line_from_points(p1, p2);
 
-  const Point3<> p3(5, 7, 12);
-  const Point3<> p4(6, 7, 11);
+  const Point3 p3(5, 7, 12);
+  const Point3 p4(6, 7, 11);
 
   HalfSpace3<> a(p1, p2, p3);
   HalfSpace3<> b(p1, p2, p4);
@@ -127,10 +127,10 @@ TEST(PluckerLine, ConstructFromPlanes) {
 }
 
 TEST(PluckerLine, ConstructFromPlanesOrientation) {
-  const Point3<> p1(1, 2, 3);
-  const Point3<> p2(5, 7, 11);
-  const Point3<> p3(5, 7, 12);
-  const Point3<> p4(6, 7, 11);
+  const Point3 p1(1, 2, 3);
+  const Point3 p2(5, 7, 11);
+  const Point3 p3(5, 7, 12);
+  const Point3 p4(6, 7, 11);
 
   HalfSpace3<> a(p1, p2, p3);
   HalfSpace3<> b(p1, p2, p4);
@@ -160,8 +160,8 @@ TEST(PluckerLine, ConstructFromPlanesOrientation) {
 }
 
 TEST(PluckerLine, ConstructFromHomoPoint3) {
-  const Point3<> p1(1, 2, 3);
-  const Point3<> p2(5, 7, 11);
+  const Point3 p1(1, 2, 3);
+  const Point3 p2(5, 7, 11);
   PluckerLine<> line(p1, p2);
 
   const HomoPoint3<> homo_p1(1 * 11, 2 * 11, 3 * 11, 11);
@@ -182,12 +182,12 @@ TEST(PluckerLine, ConstructFromHomoPoint3) {
 }
 
 TEST(PluckerLine, FromPlanesDirection) {
-  const Point3<> p1(1, 2, 3);
-  const Point3<> p2(5, 7, 11);
+  const Point3 p1(1, 2, 3);
+  const Point3 p2(5, 7, 11);
   const PluckerLine<> line_from_points(p1, p2);
 
-  const Point3<> p3(5, 7, 12);
-  const Point3<> p4(6, 7, 11);
+  const Point3 p3(5, 7, 12);
+  const Point3 p4(6, 7, 11);
 
   HalfSpace3<> a(p1, p2, p3);
   HalfSpace3<> b(p1, p2, p4);
@@ -199,12 +199,12 @@ TEST(PluckerLine, FromPlanesDirection) {
 }
 
 TEST(PluckerLine, IntersectPlane) {
-  const Point3<> p1(1, 2, 3);
-  const Point3<> p2(5, 7, 11);
+  const Point3 p1(1, 2, 3);
+  const Point3 p2(5, 7, 11);
   const PluckerLine<> line(p1, p2);
 
-  const Point3<> p3(6, 8, 12);
-  const Point3<> p4(6, 9, 11);
+  const Point3 p3(6, 8, 12);
+  const Point3 p4(6, 9, 11);
 
   EXPECT_FALSE(line.IsCoincident(p3));
   EXPECT_FALSE(line.IsCoincident(p4));
@@ -222,10 +222,10 @@ void TestIntersectPlanes() {
   const BigInt<point3_bits> min_plus_1 = min_int + BigInt<point3_bits>(1);
   const BigInt<point3_bits> max_int = BigInt<point3_bits>::max_value();
 
-  Point3<point3_bits> plane1_points[3] = {
-    Point3<point3_bits>{min_plus_1, min_int, min_int},
-    Point3<point3_bits>{min_int, max_int, min_int},
-    Point3<point3_bits>{min_int, min_int, max_int},
+  Point3 plane1_points[3] = {
+    Point3{min_plus_1, min_int, min_int},
+    Point3{min_int, max_int, min_int},
+    Point3{min_int, min_int, max_int},
   };
 
   using HalfSpace3Builder = HalfSpace3FromPoint3Builder<point3_bits>;
@@ -257,11 +257,11 @@ TEST(PluckerLine, IntersectPlanes128) {
 }
 
 TEST(PluckerLine, Project2D) {
-  const Point3<> p1(17, 23, 31);
-  const Point3<> p2(131, 163, 197);
+  const Point3 p1(17, 23, 31);
+  const Point3 p2(131, 163, 197);
   const PluckerLine<> line(p1, p2);
 
-  const Point3<> p3(41, 103, 73);
+  const Point3 p3(41, 103, 73);
 
   EXPECT_TRUE(line.IsCoincident(p1));
   EXPECT_TRUE(line.IsCoincident(p2));
@@ -279,10 +279,10 @@ TEST(PluckerLine, Project2D) {
 }
 
 TEST(PluckerLine, Project2DDropYSideness) {
-  const Point3<> p1(0, 1, 2);
-  const Point3<> p2(1, 1, 2);
+  const Point3 p1(0, 1, 2);
+  const Point3 p2(1, 1, 2);
 
-  const Point3<> origin(0, 0, 0);
+  const Point3 origin(0, 0, 0);
 
   {
     const PluckerLine<> line(p1, p2);
@@ -306,10 +306,10 @@ TEST(PluckerLine, Project2DDropYSideness) {
 }
 
 TEST(PluckerLine, Project2DDropZSideness) {
-  const Point3<> p1(0, 1, 1);
-  const Point3<> p2(1, 1, 1);
+  const Point3 p1(0, 1, 1);
+  const Point3 p2(1, 1, 1);
 
-  const Point3<> origin(0, 0, 0);
+  const Point3 origin(0, 0, 0);
 
   {
     const PluckerLine<> line(p1, p2);

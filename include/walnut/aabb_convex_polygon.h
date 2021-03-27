@@ -58,7 +58,7 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
       aabb_tracker_(Parent::vertices_begin(), Parent::vertices_end()) { }
 
   AABBConvexPolygon(const HalfSpace3Rep& plane, int drop_dimension,
-                    const std::vector<Point3<point3_bits>>& vertices) :
+                    const std::vector<Point3>& vertices) :
       Parent(plane, drop_dimension, vertices),
       aabb_tracker_(Parent::vertices_begin(), Parent::vertices_end()) { }
 

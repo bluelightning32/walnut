@@ -20,7 +20,7 @@
 
 namespace walnut {
 
-template <typename Point3RepTemplate = Point3<32>>
+template <typename Point3RepTemplate = Point3>
 class OrientingMonotoneDecomposer :
   public MonotoneDecomposer<Point3RepTemplate> {
  public:

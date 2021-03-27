@@ -11,12 +11,11 @@
 
 namespace walnut {
 
-template <typename Point3RepTemplate = Point3<32>>
+template <typename Point3RepTemplate = Point3>
 class MonotoneTriangulator {
  public:
   using Point3Rep = Point3RepTemplate;
-  static_assert(std::is_base_of<Point3<Point3Rep::component_bits>,
-                                Point3Rep>::value,
+  static_assert(std::is_base_of<Point3, Point3Rep>::value,
                 "Point3Rep must be derived from Point3.");
 
   // Given a monotone polygon in the form of an iterator range for its top

@@ -5,7 +5,7 @@
 namespace walnut {
 
 TEST(Point3, XYZIntConstructor) {
-  Point3<> vertex(1, 2, 3);
+  Point3 vertex(1, 2, 3);
   EXPECT_EQ(vertex.x(), 1);
   EXPECT_EQ(vertex.y(), 2);
   EXPECT_EQ(vertex.z(), 3);
@@ -20,9 +20,9 @@ TEST(Point3, Get2DTwistDirDropZ) {
     // |
     // c ---> a
     //
-    Point3<> a(1, 0, z);
-    Point3<> center(0, 0, z);
-    Point3<> b(0, 1, z);
+    Point3 a(1, 0, z);
+    Point3 center(0, 0, z);
+    Point3 b(0, 1, z);
 
     // a to b is counter-clockwise
     EXPECT_GT(center.Get2DTwistDir(/*drop_dimension=*/2, a, b), 0);
@@ -46,9 +46,9 @@ TEST(Point3, Get2DTwistDirReducedDropZ) {
     // |
     // c ---> a
     //
-    Point3<> a(1, 0, z);
-    Point3<> center(0, 0, z);
-    Point3<> b(0, 1, z);
+    Point3 a(1, 0, z);
+    Point3 center(0, 0, z);
+    Point3 b(0, 1, z);
 
     // a to b is counter-clockwise
     EXPECT_EQ(center.Get2DTwistDirReduced(/*drop_dimension=*/2, a, b), 1);

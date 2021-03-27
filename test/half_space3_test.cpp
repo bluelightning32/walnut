@@ -12,11 +12,11 @@ TEST(HalfSpace3, ComparePoint3) {
   EXPECT_TRUE(plane.normal().IsSameDir(Vector3(1, 0, 0)));
 
   // excluded
-  EXPECT_LT(plane.Compare(Point3<>(/*x=*/1, /*y=*/100, /*z=*/100)), 0);
+  EXPECT_LT(plane.Compare(Point3(/*x=*/1, /*y=*/100, /*z=*/100)), 0);
   // coincident
-  EXPECT_EQ(plane.Compare(Point3<>(/*x=*/5, /*y=*/100, /*z=*/100)), 0);
+  EXPECT_EQ(plane.Compare(Point3(/*x=*/5, /*y=*/100, /*z=*/100)), 0);
   // included
-  EXPECT_GT(plane.Compare(Point3<>(/*x=*/6, /*y=*/100, /*z=*/100)), 0);
+  EXPECT_GT(plane.Compare(Point3(/*x=*/6, /*y=*/100, /*z=*/100)), 0);
 }
 
 TEST(HalfSpace3, CompareHomoPoint3) {
@@ -146,25 +146,25 @@ TEST(HalfSpace3, BuildFromPoints) {
   // [0, 0, 5], [1, 0, 5], [0, 1, 5]
   //
   // Anything with z<5 is included in the half space.
-  HalfSpace3<> plane(/*p1=*/Point3<>(0, 0, 5),
-                /*p2=*/Point3<>(1, 0, 5),
-                /*p3=*/Point3<>(0, 1, 5));
+  HalfSpace3<> plane(/*p1=*/Point3(0, 0, 5),
+                /*p2=*/Point3(1, 0, 5),
+                /*p3=*/Point3(0, 1, 5));
 
   EXPECT_TRUE(plane.normal().IsSameDir(Vector3(0, 0, 1)));
 
   // excluded
-  EXPECT_LT(plane.Compare(Point3<>(/*x=*/100, /*y=*/100, /*z=*/1)), 0);
+  EXPECT_LT(plane.Compare(Point3(/*x=*/100, /*y=*/100, /*z=*/1)), 0);
   // coincident
-  EXPECT_EQ(plane.Compare(Point3<>(/*x=*/500, /*y=*/100, /*z=*/5)), 0);
+  EXPECT_EQ(plane.Compare(Point3(/*x=*/500, /*y=*/100, /*z=*/5)), 0);
   // included
-  EXPECT_GT(plane.Compare(Point3<>(/*x=*/600, /*y=*/100, /*z=*/6)), 0);
+  EXPECT_GT(plane.Compare(Point3(/*x=*/600, /*y=*/100, /*z=*/6)), 0);
 }
 
 TEST(HalfSpace3, BuildFromHomoPoints) {
-  Point3<> p[3] = {
-    Point3<>(1, 2, 3),
-    Point3<>(5, 7, 11),
-    Point3<>(13, 17, 19),
+  Point3 p[3] = {
+    Point3(1, 2, 3),
+    Point3(5, 7, 11),
+    Point3(13, 17, 19),
   };
   HalfSpace3<> from_point3(p[0], p[1], p[2]);
 

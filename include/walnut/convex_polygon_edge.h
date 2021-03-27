@@ -26,7 +26,7 @@ Approximate(const ConvexPolygonEdge<point3_bits, EdgeInfoRoot>& edge);
 template <size_t point3_bits_template = 32,
           typename ParentTemplate = EdgeInfoRoot>
 struct ConvexPolygonEdge : public ParentTemplate {
-  using Point3Rep = Point3<point3_bits_template>;
+  using Point3Rep = Point3;
   using HomoPoint3Rep = HomoPoint3<(point3_bits_template - 1)*7 + 10,
                                    (point3_bits_template - 1)*6 + 10>;
   using LineRep = typename PluckerLineFromPlanesFromPoint3sBuilder<
@@ -36,11 +36,7 @@ struct ConvexPolygonEdge : public ParentTemplate {
   ConvexPolygonEdge(const ConvexPolygonEdge&) = default;
 
   // Parent must be default-constructible to use this constructor.
-  template <size_t other_point3_bits>
-  ConvexPolygonEdge(const std::enable_if_t<
-                            std::is_default_constructible<Parent>::value,
-                            Point3<other_point3_bits>>& vertex,
-                    const Point3<other_point3_bits>& next_vertex) :
+  ConvexPolygonEdge(const Point3& vertex, const Point3& next_vertex) :
     vertex_(vertex), line_(vertex, next_vertex) { }
 
   // Parent must be default-constructible to use this constructor.
@@ -89,10 +85,8 @@ struct ConvexPolygonEdge : public ParentTemplate {
     Parent(parent_edge, vertex, line),
     vertex_(vertex), line_(line) { }
 
-  template <size_t input_point3_bits = point3_bits_template>
-  ConvexPolygonEdge(const Point3WithVertexData<input_point3_bits,
-                                               Parent>& vertex,
-                    const Point3<input_point3_bits>& next_vertex) :
+  ConvexPolygonEdge(const Point3WithVertexData<Parent>& vertex,
+                    const Point3& next_vertex) :
     Parent(vertex.data), vertex_(vertex), line_(vertex, next_vertex) { }
 
   template <size_t other_point3_bits, typename OtherParent>

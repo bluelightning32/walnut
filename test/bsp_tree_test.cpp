@@ -32,10 +32,7 @@ void SortPolygons(std::vector<Polygon>& polygons) {
 }
 
 template<typename Container>
-auto
-MakeUnsortedConvexPolygon(const Container& vertices) ->
-MutableConvexPolygon<std::iterator_traits<
-    decltype(std::begin(vertices))>::value_type::component_bits> {
+MutableConvexPolygon<32> MakeUnsortedConvexPolygon(const Container& vertices) {
   using Iterator = decltype(std::begin(vertices));
   using Point3Rep = typename std::iterator_traits<Iterator>::value_type;
   using Factory = ConvexPolygonFactory<Point3Rep>;
@@ -69,10 +66,7 @@ MutableConvexPolygon<std::iterator_traits<
 
 
 template<typename Container>
-auto
-MakeConvexPolygon(const Container& vertices) ->
-MutableConvexPolygon<std::iterator_traits<
-    decltype(std::begin(vertices))>::value_type::component_bits> {
+MutableConvexPolygon<32> MakeConvexPolygon(const Container& vertices) {
   auto result = MakeUnsortedConvexPolygon(vertices);
   result.SortVertices();
   return result;
@@ -86,16 +80,16 @@ std::vector<ConvexPolygon<InputConvexPolygon::point3_bits>> DropVertexData(
 }
 
 TEST(BSPTree, AddContentsToLeaf) {
-  Point3<32> triangles[][3] = {
+  Point3 triangles[][3] = {
     {
-      Point3<32>(0, 0, 10),
-      Point3<32>(1, 0, 10),
-      Point3<32>(1, 1, 10),
+      Point3(0, 0, 10),
+      Point3(1, 0, 10),
+      Point3(1, 1, 10),
     },
     {
-      Point3<32>(0, 0, 11),
-      Point3<32>(1, 0, 11),
-      Point3<32>(1, 1, 11),
+      Point3(0, 0, 11),
+      Point3(1, 0, 11),
+      Point3(1, 1, 11),
     },
   };
 
@@ -104,7 +98,7 @@ TEST(BSPTree, AddContentsToLeaf) {
     EXPECT_EQ(&leaf, &tree.root);
   };
   std::vector<ConvexPolygon<>> polygons;
-  for (Point3<32> (&triangle)[3] : triangles) {
+  for (Point3 (&triangle)[3] : triangles) {
     polygons.push_back(MakeConvexPolygon(triangle));
     tree.AddContent(MakeConvexPolygon(triangle), leaf_added);
   }
@@ -113,17 +107,17 @@ TEST(BSPTree, AddContentsToLeaf) {
 }
 
 TEST(BSPTree, SplitTo1Child) {
-  Point3<32> triangle[3] =
+  Point3 triangle[3] =
   {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 0, 10),
-    Point3<32>(1, 1, 10),
+    Point3(0, 0, 10),
+    Point3(1, 0, 10),
+    Point3(1, 1, 10),
   };
 
   ConvexPolygon<> polygon = MakeConvexPolygon(triangle);
 
-  std::vector<Point3<32>> above_points;
-  for (const Point3<32>& p : triangle) {
+  std::vector<Point3> above_points;
+  for (const Point3& p : triangle) {
     above_points.emplace_back(p.x(), p.y(), BigInt<32>(p.z() + BigInt<32>(1)));
   }
   HalfSpace3<> above_up(above_points[0], above_points[1], above_points[2]);
@@ -157,11 +151,11 @@ TEST(BSPTree, SplitTo1Child) {
 }
 
 TEST(BSPTree, SplitOnPlane) {
-  Point3<32> triangle[3] =
+  Point3 triangle[3] =
   {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 0, 10),
-    Point3<32>(1, 1, 10),
+    Point3(0, 0, 10),
+    Point3(1, 0, 10),
+    Point3(1, 1, 10),
   };
 
   ConvexPolygon<> polygon = MakeConvexPolygon(triangle);
@@ -217,28 +211,28 @@ TEST(BSPTree, SplitTo2Children) {
   //  v       |       |
   // p[0] ---------> p[1]
   //
-  Point3<32> p[4] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(2, 0, 10),
-    Point3<32>(2, 1, 10),
-    Point3<32>(0, 1, 10),
+  Point3 p[4] = {
+    Point3(0, 0, 10),
+    Point3(2, 0, 10),
+    Point3(2, 1, 10),
+    Point3(0, 1, 10),
   };
 
   ConvexPolygon<> polygon = MakeConvexPolygon(p);
   HalfSpace3<> half_space(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
 
-  Point3<32> expected_neg[4] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 0, 10),
-    Point3<32>(1, 1, 10),
-    Point3<32>(0, 1, 10),
+  Point3 expected_neg[4] = {
+    Point3(0, 0, 10),
+    Point3(1, 0, 10),
+    Point3(1, 1, 10),
+    Point3(0, 1, 10),
   };
 
-  Point3<32> expected_pos[4] = {
-    Point3<32>(1, 0, 10),
-    Point3<32>(2, 0, 10),
-    Point3<32>(2, 1, 10),
-    Point3<32>(1, 1, 10),
+  Point3 expected_pos[4] = {
+    Point3(1, 0, 10),
+    Point3(2, 0, 10),
+    Point3(2, 1, 10),
+    Point3(1, 1, 10),
   };
 
   BSPTree<> tree;
@@ -306,17 +300,17 @@ TEST(BSPTree, SplitTwiceVertexData) {
   // q1: -split2.normal()
   // q2: -split2.normal()
   // q3: -split1.normal()
-  Point3<32> p[4] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(2, 0, 10),
-    Point3<32>(2, 2, 10),
-    Point3<32>(0, 2, 10),
+  Point3 p[4] = {
+    Point3(0, 0, 10),
+    Point3(2, 0, 10),
+    Point3(2, 2, 10),
+    Point3(0, 2, 10),
   };
 
-  Point3<32> q1(2, 1, 10);
-  Point3<32> q2(1, 1, 10);
-  Point3<32> q3(1, 2, 10);
-  Point3<32> q4(1, 0, 10);
+  Point3 q1(2, 1, 10);
+  Point3 q2(1, 1, 10);
+  Point3 q3(1, 2, 10);
+  Point3 q4(1, 0, 10);
 
   ConvexPolygon<> polygon = MakeConvexPolygon(p);
   HalfSpace3<> split1(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
@@ -424,15 +418,15 @@ TEST(BSPTree, SplitVertThenDiagVertexData) {
   // p[2]: -split2.normal()
   // q2: -split2.normal()
   //
-  Point3<32> p[4] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(2, 0, 10),
-    Point3<32>(2, 1, 10),
-    Point3<32>(0, 1, 10),
+  Point3 p[4] = {
+    Point3(0, 0, 10),
+    Point3(2, 0, 10),
+    Point3(2, 1, 10),
+    Point3(0, 1, 10),
   };
 
-  Point3<32> q1(1, 1, 10);
-  Point3<32> q2(1, 0, 10);
+  Point3 q1(1, 1, 10);
+  Point3 q2(1, 0, 10);
 
   ConvexPolygon<> polygon = MakeConvexPolygon(p);
   HalfSpace3<> split1(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
@@ -510,28 +504,28 @@ TEST(BSPTree, SplitBorderTo2Children) {
   //  v       |       |
   // p[0] ---------> p[1]
   //
-  Point3<32> p[4] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(2, 0, 10),
-    Point3<32>(2, 1, 10),
-    Point3<32>(0, 1, 10),
+  Point3 p[4] = {
+    Point3(0, 0, 10),
+    Point3(2, 0, 10),
+    Point3(2, 1, 10),
+    Point3(0, 1, 10),
   };
 
   ConvexPolygon<> polygon = MakeConvexPolygon(p);
   HalfSpace3<> half_space(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
 
-  Point3<32> expected_neg[4] = {
-    Point3<32>(0, 0, 10),
-    Point3<32>(1, 0, 10),
-    Point3<32>(1, 1, 10),
-    Point3<32>(0, 1, 10),
+  Point3 expected_neg[4] = {
+    Point3(0, 0, 10),
+    Point3(1, 0, 10),
+    Point3(1, 1, 10),
+    Point3(0, 1, 10),
   };
 
-  Point3<32> expected_pos[4] = {
-    Point3<32>(1, 0, 10),
-    Point3<32>(2, 0, 10),
-    Point3<32>(2, 1, 10),
-    Point3<32>(1, 1, 10),
+  Point3 expected_pos[4] = {
+    Point3(1, 0, 10),
+    Point3(2, 0, 10),
+    Point3(2, 1, 10),
+    Point3(1, 1, 10),
   };
 
   BSPTree<> tree;
@@ -601,7 +595,7 @@ TEST(BSPTree, SplitBorderTo2Children) {
 TEST(BSPTree, GetNodeBorderEmptyTree) {
   BSPTree<> tree;
 
-  AABB<> bounding_box(Point3<>(-1, -1, -1), Point3<>(2, 2, 2));
+  AABB<> bounding_box(Point3(-1, -1, -1), Point3(2, 2, 2));
   std::vector<bool> node_path = { };
 
   BSPTree<>::MappedBSPNode node_border_root;
@@ -610,18 +604,18 @@ TEST(BSPTree, GetNodeBorderEmptyTree) {
                        node_border_root);
   std::vector<BSPTree<>::OutputPolygon> facets = node_border_leaf->contents();
 
-  Point3<> p[] = {
-    Point3<>{-1, -1, -1},
-    Point3<>{ 2, -1, -1},
-    Point3<>{ 2,  2, -1},
-    Point3<>{-1,  2, -1},
-    Point3<>{-1, -1,  2},
-    Point3<>{ 2, -1,  2},
-    Point3<>{ 2,  2,  2},
-    Point3<>{-1,  2,  2},
+  Point3 p[] = {
+    Point3{-1, -1, -1},
+    Point3{ 2, -1, -1},
+    Point3{ 2,  2, -1},
+    Point3{-1,  2, -1},
+    Point3{-1, -1,  2},
+    Point3{ 2, -1,  2},
+    Point3{ 2,  2,  2},
+    Point3{-1,  2,  2},
   };
 
-  std::vector<std::vector<Point3<>>> expected_facet_vertices = {
+  std::vector<std::vector<Point3>> expected_facet_vertices = {
     // bottom
     {p[0], p[3], p[2], p[1]},
     // min x side
@@ -636,7 +630,7 @@ TEST(BSPTree, GetNodeBorderEmptyTree) {
     {p[4], p[5], p[6], p[7]},
   };
   std::vector<MutableConvexPolygon<>> expected_facets;
-  for (const std::vector<Point3<>>& vertices : expected_facet_vertices) {
+  for (const std::vector<Point3>& vertices : expected_facet_vertices) {
     expected_facets.push_back(MakeConvexPolygon(vertices));
   }
   SortPolygons(expected_facets);
@@ -652,15 +646,15 @@ TEST(BSPTree, GetNodeBorderEmptyTree) {
 }
 
 TEST(BSPTree, GetNodeBorder1Split) {
-  Point3<> p[] = {
-    Point3<>{-1, -1, -1},
-    Point3<>{ 2, -1, -1},
-    Point3<>{ 2,  2, -1},
-    Point3<>{-1,  2, -1},
-    Point3<>{-1, -1,  2},
-    Point3<>{ 2, -1,  2},
-    Point3<>{ 2,  2,  2},
-    Point3<>{-1,  2,  2},
+  Point3 p[] = {
+    Point3{-1, -1, -1},
+    Point3{ 2, -1, -1},
+    Point3{ 2,  2, -1},
+    Point3{-1,  2, -1},
+    Point3{-1, -1,  2},
+    Point3{ 2, -1,  2},
+    Point3{ 2,  2,  2},
+    Point3{-1,  2,  2},
   };
 
   for (bool pos_side : {false, true}) {
@@ -668,7 +662,7 @@ TEST(BSPTree, GetNodeBorder1Split) {
     HalfSpace3<> split(p[1], p[3], p[4]);
     tree.root.Split(pos_side ? -split : split);
     std::vector<bool> node_path = {pos_side};
-    AABB<> bounding_box(Point3<>(-1, -1, -1), Point3<>(2, 2, 2));
+    AABB<> bounding_box(Point3(-1, -1, -1), Point3(2, 2, 2));
 
     BSPTree<>::MappedBSPNode node_border_root;
     BSPTree<>::MappedBSPNode* node_border_leaf =
@@ -678,7 +672,7 @@ TEST(BSPTree, GetNodeBorder1Split) {
     facets.insert(facets.end(), node_border_leaf->border_contents().begin(),
                   node_border_leaf->border_contents().end());
 
-    std::vector<std::vector<Point3<>>> expected_facet_vertices = {
+    std::vector<std::vector<Point3>> expected_facet_vertices = {
       // bottom
       {p[0], p[3], p[1]},
       // min x side
@@ -689,7 +683,7 @@ TEST(BSPTree, GetNodeBorder1Split) {
       {p[1], p[3], p[4]},
     };
     std::vector<MutableConvexPolygon<>> expected_facets;
-    for (const std::vector<Point3<>>& vertices : expected_facet_vertices) {
+    for (const std::vector<Point3>& vertices : expected_facet_vertices) {
       expected_facets.push_back(MakeConvexPolygon(vertices));
     }
     SortPolygons(expected_facets);

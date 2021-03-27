@@ -12,19 +12,19 @@ using testing::ElementsAre;
 TEST(AABB, IsOnBorder) {
   AABB<> prism(2);
 
-  EXPECT_TRUE(prism.IsOnBorder(Point3<>(2, 0, 0)));
-  EXPECT_TRUE(prism.IsOnBorder(Point3<>(0, 2, 0)));
-  EXPECT_TRUE(prism.IsOnBorder(Point3<>(0, 0, 2)));
-  EXPECT_TRUE(prism.IsOnBorder(Point3<>(-2, 0, 0)));
-  EXPECT_TRUE(prism.IsOnBorder(Point3<>(0, -2, 0)));
-  EXPECT_TRUE(prism.IsOnBorder(Point3<>(0, 0, -2)));
+  EXPECT_TRUE(prism.IsOnBorder(Point3(2, 0, 0)));
+  EXPECT_TRUE(prism.IsOnBorder(Point3(0, 2, 0)));
+  EXPECT_TRUE(prism.IsOnBorder(Point3(0, 0, 2)));
+  EXPECT_TRUE(prism.IsOnBorder(Point3(-2, 0, 0)));
+  EXPECT_TRUE(prism.IsOnBorder(Point3(0, -2, 0)));
+  EXPECT_TRUE(prism.IsOnBorder(Point3(0, 0, -2)));
 
-  EXPECT_FALSE(prism.IsOnBorder(Point3<>(0, 0, 0)));
-  EXPECT_FALSE(prism.IsOnBorder(Point3<>(1, 1, 1)));
+  EXPECT_FALSE(prism.IsOnBorder(Point3(0, 0, 0)));
+  EXPECT_FALSE(prism.IsOnBorder(Point3(1, 1, 1)));
 }
 
 TEST(AABB, IsOnBorderHomoPoint3) {
-  AABB<> prism(Point3<>(-1, -1, -1), Point3<>(2, 2, 2));
+  AABB<> prism(Point3(-1, -1, -1), Point3(2, 2, 2));
 
   EXPECT_TRUE(prism.IsOnBorder(HomoPoint3<>(2, 0, 0, 1)));
   EXPECT_TRUE(prism.IsOnBorder(HomoPoint3<>(-2, 0, 0, -1)));
@@ -56,12 +56,12 @@ TEST(AABB, IsOnBorderHomoPoint3Denom2) {
 TEST(AABB, IsInside) {
   AABB<> prism(2);
 
-  EXPECT_TRUE(prism.IsInside(Point3<>(-2, 0, 0)));
-  EXPECT_TRUE(prism.IsInside(Point3<>(2, 0, 0)));
-  EXPECT_TRUE(prism.IsInside(Point3<>(0, 0, 0)));
-  EXPECT_TRUE(prism.IsInside(Point3<>(1, 1, 1)));
+  EXPECT_TRUE(prism.IsInside(Point3(-2, 0, 0)));
+  EXPECT_TRUE(prism.IsInside(Point3(2, 0, 0)));
+  EXPECT_TRUE(prism.IsInside(Point3(0, 0, 0)));
+  EXPECT_TRUE(prism.IsInside(Point3(1, 1, 1)));
 
-  EXPECT_FALSE(prism.IsInside(Point3<>(3, 1, 1)));
+  EXPECT_FALSE(prism.IsInside(Point3(3, 1, 1)));
 }
 
 TEST(AABB, IntersectPlaneZUp) {
@@ -75,15 +75,15 @@ TEST(AABB, IntersectPlaneZUp) {
     vertices.push_back(result.vertex(i));
   }
   EXPECT_THAT(vertices, ElementsAre(
-          Point3<32>{-5, -5, 0},
-          Point3<32>{5, -5, 0},
-          Point3<32>{5, 5, 0},
-          Point3<32>{-5, 5, 0}
+          Point3{-5, -5, 0},
+          Point3{5, -5, 0},
+          Point3{5, 5, 0},
+          Point3{-5, 5, 0}
         ));
 }
 
 TEST(AABB, IntersectPlaneZUpFactional) {
-  AABB<> prism(Point3<>(-8, -8, 0), Point3<>(8, 8, 10));
+  AABB<> prism(Point3(-8, -8, 0), Point3(8, 8, 10));
   auto result = prism.IntersectPlane(HalfSpace3<>(/*x=*/0, /*y=*/0, /*z=*/20,
                                                   /*d=*/19));
   result.SortVertices();
@@ -91,10 +91,10 @@ TEST(AABB, IntersectPlaneZUpFactional) {
   for (size_t i = 0; i < result.vertex_count(); ++i) {
     vertices.push_back(result.vertex(i));
   }
-  EXPECT_THAT(vertices, ElementsAre(HomoPoint3<32>{-8*20, -8*20, 19, 20},
-                                    HomoPoint3<32>{ 8*20, -8*20, 19, 20},
-                                    HomoPoint3<32>{ 8*20,  8*20, 19, 20},
-                                    HomoPoint3<32>{-8*20,  8*20, 19, 20}));
+  EXPECT_THAT(vertices, ElementsAre(HomoPoint3<>{-8*20, -8*20, 19, 20},
+                                    HomoPoint3<>{ 8*20, -8*20, 19, 20},
+                                    HomoPoint3<>{ 8*20,  8*20, 19, 20},
+                                    HomoPoint3<>{-8*20,  8*20, 19, 20}));
 }
 
 TEST(AABB, IntersectPlaneZDown) {
@@ -108,10 +108,10 @@ TEST(AABB, IntersectPlaneZDown) {
     vertices.push_back(result.vertex(i));
   }
   EXPECT_THAT(vertices, ElementsAre(
-          Point3<32>{-5, -5, 0},
-          Point3<32>{-5, 5, 0},
-          Point3<32>{5, 5, 0},
-          Point3<32>{5, -5, 0}
+          Point3{-5, -5, 0},
+          Point3{-5, 5, 0},
+          Point3{5, 5, 0},
+          Point3{5, -5, 0}
         ));
 }
 
@@ -126,9 +126,9 @@ TEST(AABB, IntersectPlaneDiagPos) {
     vertices.push_back(result.vertex(i));
   }
   EXPECT_THAT(vertices, ElementsAre(
-          Point3<32>{2, 5, 5},
-          Point3<32>{5, 2, 5},
-          Point3<32>{5, 5, 2}
+          Point3{2, 5, 5},
+          Point3{5, 2, 5},
+          Point3{5, 5, 2}
         ));
 }
 
@@ -143,9 +143,9 @@ TEST(AABB, IntersectPlaneDiagNeg) {
     vertices.push_back(result.vertex(i));
   }
   EXPECT_THAT(vertices, ElementsAre(
-          Point3<32>{-5, -5, -2},
-          Point3<32>{-5, -2, -5},
-          Point3<32>{-2, -5, -5}
+          Point3{-5, -5, -2},
+          Point3{-5, -2, -5},
+          Point3{-2, -5, -5}
         ));
 }
 
@@ -154,18 +154,14 @@ void TestIntersectPlaneLowSlopeMin() {
   const BigInt<point3_bits> min_int = BigInt<point3_bits>::min_value();
   const BigInt<point3_bits> min_plus_1 = min_int + BigInt<point3_bits>(1);
   const BigInt<point3_bits> max_int = BigInt<point3_bits>::max_value();
-  AABB<point3_bits> prism(Point3<point3_bits>(min_int,
-                                                          min_int,
-                                                          min_int),
-                                      Point3<point3_bits>(max_int,
-                                                          max_int,
-                                                          max_int));
+  AABB<point3_bits> prism(Point3(min_int, min_int, min_int),
+                          Point3(max_int, max_int, max_int));
 
   for (int i = 0; i < 3; ++i) {
-    Point3<point3_bits> p[3] = {
-      Point3<point3_bits>{min_int, min_int, min_int},
-      Point3<point3_bits>{min_int, min_int, min_int},
-      Point3<point3_bits>{min_int, min_int, min_int},
+    Point3 p[3] = {
+      Point3{min_int, min_int, min_int},
+      Point3{min_int, min_int, min_int},
+      Point3{min_int, min_int, min_int},
     };
     p[0].components()[i] = min_plus_1;
     p[1].components()[(i + 1) % 3] = max_int;
@@ -257,10 +253,10 @@ TEST(AABB, IntersectPlaneZUpWithData) {
     EXPECT_EQ(result.edge(i).str, std::to_string(i));
   }
   EXPECT_THAT(vertices, ElementsAre(
-          Point3<32>{-5, -5, 0},
-          Point3<32>{5, -5, 0},
-          Point3<32>{5, 5, 0},
-          Point3<32>{-5, 5, 0}
+          Point3{-5, -5, 0},
+          Point3{5, -5, 0},
+          Point3{5, 5, 0},
+          Point3{-5, 5, 0}
         ));
 }
 

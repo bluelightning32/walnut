@@ -88,8 +88,7 @@ class HomoPoint3 {
   HomoPoint3(long x, long y, long z, long w) :
     vector_from_origin_(x, y, z), dist_denom_(w) { }
 
-  template <size_t other_num_bits>
-  HomoPoint3(const Point3<other_num_bits>& other) :
+  HomoPoint3(const Point3& other) :
     vector_from_origin_(other.vector_from_origin()), dist_denom_(1) { }
 
   HomoPoint3(const Vector3& v, const BigIntImpl& w) :
@@ -175,8 +174,7 @@ class HomoPoint3 {
   }
 
   // Note that everything equals the 0 point with a 0 denominator.
-  template <size_t other_bits>
-  bool operator==(const Point3<other_bits>& other) const {
+  bool operator==(const Point3& other) const {
     return vector_from_origin() == other.vector_from_origin().Scale(w());
   }
 
@@ -188,8 +186,7 @@ class HomoPoint3 {
   }
 
   // Note that everything equals the 0 point with a 0 denominator.
-  template <size_t other_bits>
-  bool operator!=(const Point3<other_bits>& other) const {
+  bool operator!=(const Point3& other) const {
     return !(*this == other);
   }
 
@@ -261,8 +258,8 @@ int HomoPoint3<num_bits, denom_bits>::CompareComponent(
   return scaled_this.Compare(scaled_other) * other.w().GetAbsMult(w());
 }
 
-template <size_t a_bits, size_t b_num_bits, size_t b_denom_bits>
-bool operator==(const Point3<a_bits>& a,
+template <size_t b_num_bits, size_t b_denom_bits>
+bool operator==(const Point3& a,
                 const HomoPoint3<b_num_bits, b_denom_bits>& b) {
   return b == a;
 }

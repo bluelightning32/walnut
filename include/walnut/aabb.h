@@ -27,8 +27,7 @@ class AABB {
   // Creates an AABB that does not contain any points.
   AABB() : min_point_num_(1, 1, 1), max_point_num_(0, 0, 0) { }
 
-  template <size_t other_num_bits>
-  AABB(Point3<other_num_bits> min_point, Point3<other_num_bits> max_point) :
+  AABB(Point3 min_point, Point3 max_point) :
     min_point_num_(min_point.vector_from_origin()),
     max_point_num_(max_point.vector_from_origin()) { }
 
@@ -65,8 +64,7 @@ class AABB {
     max_point_num_(/*x=*/radius, /*y=*/radius, /*z=*/radius) { }
 
   // Returns true if `p` is on the border (but still inside) of the prism.
-  template <size_t other_bits>
-  bool IsOnBorder(const Point3<other_bits>& p) const {
+  bool IsOnBorder(const Point3& p) const {
     if (!IsInside(p)) return false;
     for (int i = 0; i < 3; ++i) {
       if (p.components()[i] * denom_ == min_point_num_.components()[i] ||
@@ -91,8 +89,7 @@ class AABB {
   }
 
   // Returns true if `p` is inside or on the border of the prism.
-  template <size_t other_bits>
-  bool IsInside(const Point3<other_bits>& p) const {
+  bool IsInside(const Point3& p) const {
     for (int i = 0; i < 3; ++i) {
       if (p.components()[i] * denom_ < min_point_num_.components()[i] ||
           p.components()[i] * denom_ > max_point_num_.components()[i]) {
