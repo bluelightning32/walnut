@@ -11,8 +11,6 @@ template <size_t bits_template>
 class BigInt {
   template <size_t other_bits>
   friend class BigInt;
-
-  using BigIntRep = BigIntImpl;
  public:
 
   template <size_t other_bits = bits_template>
@@ -27,8 +25,8 @@ class BigInt {
   };
 
   static constexpr size_t bits = bits_template;
-  static constexpr size_t bits_per_word = BigIntRep::bits_per_word;
-  static constexpr size_t bytes_per_word = BigIntRep::bytes_per_word;
+  static constexpr size_t bits_per_word = BigIntImpl::bits_per_word;
+  static constexpr size_t bytes_per_word = BigIntImpl::bytes_per_word;
   static constexpr size_t word_count = (bits + bits_per_word - 1) /
                                        bits_per_word;
 
@@ -53,11 +51,11 @@ class BigInt {
   }
 
   static constexpr BigInt max_value() {
-    return BigIntRep::max_value(/*set_bits=*/bits - 1);
+    return BigIntImpl::max_value(/*set_bits=*/bits - 1);
   }
 
   static constexpr BigInt min_value() {
-    return BigIntRep::min_value(/*clear_bits=*/bits - 1);
+    return BigIntImpl::min_value(/*clear_bits=*/bits - 1);
   }
 
   template <size_t result_bits=bits>
@@ -366,7 +364,7 @@ class BigInt {
  private:
   constexpr BigInt(const BigIntImpl& other) : rep_(other) { }
 
-  BigIntRep rep_;
+  BigIntImpl rep_;
 };
 
 template <size_t print_bits>
