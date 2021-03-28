@@ -64,9 +64,9 @@ class EdgeLineConnector {
   // `error` is called, as many half-edges as possible will be connected. The
   // ones that cannot be connected will have nullptr partners.
   template <typename Iterator>
-  void Connect(Iterator edges_begin, const Iterator& edges_end,
-               int sorted_dimension,
-               const std::function<void(const std::string&)>& error) {
+  void ConnectSorted(Iterator edges_begin, const Iterator& edges_end,
+                     int sorted_dimension,
+                     const std::function<void(const std::string&)>& error) {
     assert(end_events_.empty());
     assert(need_partners_.empty());
 
