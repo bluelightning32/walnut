@@ -381,8 +381,7 @@ void SortEdges(
   EdgeLineConnector<>::SortEdgesInPlane(edges.begin(), edges.end(),
                                         /*drop_dimension=*/2);
 
-  using LineRep = ConnectedPolygon<>::LineRep;
-  const LineRep* prev_line = nullptr;
+  const PluckerLine* prev_line = nullptr;
   std::set<std::array<int, 3>> seen_lines;
   const ConnectedPolygon<>::EdgeRep* prev_edge = nullptr;
   using EdgeRef = std::reference_wrapper<ConnectedPolygon<>::EdgeRep>;
@@ -396,7 +395,7 @@ void SortEdges(
     if (prev_line == nullptr || (edge.get().line() != *prev_line &&
                                  edge.get().line() != -*prev_line)) {
       prev_line = &edge.get().line();
-      LineRep reduced;
+      PluckerLine reduced;
       if (edge.get().line().d().components()[sorted_dimension] < 0) {
         reduced = -edge.get().line();
       } else {

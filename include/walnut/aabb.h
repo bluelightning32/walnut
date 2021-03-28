@@ -212,7 +212,7 @@ ConvexPolygonRep AABB<num_bits, denom_bits>::IntersectPlane(
   const HalfSpace3* prev_plane = &parallelogram_planes[(4 + -1*flip) % 4];
   for (int i = 0; i < 4; ++i) {
     const HalfSpace3* cur_plane = &parallelogram_planes[(4 + i*flip) % 4];
-    typename ConvexPolygonRep::LineRep line(plane, *cur_plane);
+    PluckerLine line(plane, *cur_plane);
     edges.emplace_back(line.Intersect(*prev_plane), std::move(line));
     prev_plane = cur_plane;
   }

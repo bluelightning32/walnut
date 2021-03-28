@@ -38,7 +38,6 @@ class ConvexPolygon {
   using EdgeRep = ConvexPolygonEdge<point3_bits_template, EdgeParent>;
   using SplitInfoRep = ConvexPolygonSplitInfo<point3_bits_template>;
   using NormalRep = Vector3;
-  using LineRep = typename EdgeRep::LineRep;
   using EdgeVector = std::vector<AssignableWrapper<EdgeRep>>;
   using ConstVertexIterator =
     ConvexPolygonVertexIterator<typename EdgeVector::const_iterator>;
@@ -103,8 +102,7 @@ class ConvexPolygon {
       if (!edge.IsValidState()) return false;
       if (!plane().IsCoincident(edge.vertex())) return false;
 
-      PluckerLine<LineRep::d_bits * 2, LineRep::m_bits * 2> expected_line(
-          prev_edge->vertex(), edge.vertex());
+      PluckerLine expected_line(prev_edge->vertex(), edge.vertex());
       if (prev_edge->line() != expected_line) return false;
       if (!prev_edge->line().d().IsSameDir(expected_line.d())) return false;
 
@@ -885,14 +883,10 @@ template <size_t point3_bits, typename EdgeParent>
 typename ConvexPolygon<point3_bits, EdgeParent>::SplitInfoRep
 ConvexPolygon<point3_bits, EdgeParent>::GetSplitInfo(
     const HalfSpace3& half_space) const {
-  using PluckerLineBuilder =
-    PluckerLineFromPlanesFromPoint3sBuilder<point3_bits>;
-  using PluckerLineRep = typename PluckerLineBuilder::PluckerLineRep;
-
   int flip = normal().components()[drop_dimension()].GetAbsMult();
-  PluckerLineRep line = PluckerLineBuilder::Build(HalfSpace3(half_space.normal() * flip,
-                                                             half_space.d() * flip),
-                                                  plane_);
+  PluckerLine line(HalfSpace3(half_space.normal() * flip,
+                              half_space.d() * flip),
+                   plane_);
 
   if (!line.IsValid()) {
     // half_space is parallel to plane_.
@@ -959,8 +953,8 @@ ConvexPolygon<point3_bits, EdgeParent>::GetSplitInfo(
   // If the input polygon is counter-clockwise in its projected form, then
   // `line` is in the correct orientation for the positive output polygon.
   int neg_line_mult = -normal().components()[drop_dimension()].GetAbsMult();
-  result.new_line = LineRep(line.d() * neg_line_mult,
-                            line.m() * neg_line_mult);
+  result.new_line = PluckerLine(line.d() * neg_line_mult,
+                                line.m() * neg_line_mult);
 
   if (result.ranges.neg_range.second % vertex_count() ==
       result.ranges.pos_range.first % vertex_count()) {

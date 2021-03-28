@@ -63,18 +63,15 @@ class BSPEdgeInfo : public ParentTemplate {
   //
   // Inherit the vertex boundary angle from the parent, but default initialize
   // the edge boundary angle.
-  template <size_t d_bits, size_t m_bits>
-  BSPEdgeInfo(const BSPEdgeInfo& parent,
-              const PluckerLine<d_bits, m_bits>& new_line) :
+  BSPEdgeInfo(const BSPEdgeInfo& parent, const PluckerLine& new_line) :
     vertex_last_coincident_(parent.vertex_last_coincident_) { }
 
   // Create a new line starting on a new vertex on the parent's existing edge.
   //
   // Initialize the vertex boundary angle from the parent's edge boundary
   // angle. Default initialize the edge boundary angle.
-  template <size_t d_bits, size_t m_bits>
   BSPEdgeInfo(const BSPEdgeInfo& parent, const HomoPoint3& new_source,
-              const PluckerLine<d_bits, m_bits>& new_line) :
+              const PluckerLine& new_line) :
     vertex_last_coincident_(parent.edge_last_coincident_) { }
 
   bool operator==(const EdgeInfoRoot&) const {

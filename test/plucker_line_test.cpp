@@ -8,7 +8,7 @@ namespace walnut {
 TEST(PluckerLine, FromPointsDirection) {
   const Point3 p1(1, 2, 3);
   const Point3 p2(5, 7, 11);
-  PluckerLine<> line(p1, p2);
+  PluckerLine line(p1, p2);
 
   EXPECT_GT((p2 - p1).Dot(line.d()), 0);
   EXPECT_LT((p1 - p2).Dot(line.d()), 0);
@@ -18,7 +18,7 @@ TEST(PluckerLine, FromPointsDirection) {
 TEST(PluckerLine, IsCoincidentPoint3) {
   const Point3 p1(1, 2, 3);
   const Point3 p2(5, 7, 11);
-  PluckerLine<> line(p1, p2);
+  PluckerLine line(p1, p2);
 
   EXPECT_TRUE(line.IsCoincident(p1));
   EXPECT_TRUE(line.IsCoincident(p2));
@@ -42,7 +42,7 @@ TEST(PluckerLine, IsCoincidentPoint3) {
 TEST(PluckerLine, IsCoincidentThroughOrigin) {
   const Point3 p1(1, 2, 3);
   const Point3 p2(0, 0, 0);
-  PluckerLine<> line(p1, p2);
+  PluckerLine line(p1, p2);
 
   EXPECT_TRUE(line.IsCoincident(p1));
   EXPECT_TRUE(line.IsCoincident(p2));
@@ -54,7 +54,7 @@ TEST(PluckerLine, IsCoincidentThroughOrigin) {
 TEST(PluckerLine, IsCoincidentHalfSpace3) {
   const Point3 p1(1, 2, 3);
   const Point3 p2(5, 7, 11);
-  PluckerLine<> line(p1, p2);
+  PluckerLine line(p1, p2);
 
   const Point3 p3(6, 8, 14);
   HalfSpace3 a(p1, p2, p3);
@@ -68,11 +68,11 @@ TEST(PluckerLine, IsCoincidentHalfSpace3) {
 TEST(PluckerLine, EqualSameDir) {
   const Point3 p1(1, 2, 3);
   const Vector3 d(5, 7, 11);
-  const PluckerLine<> line(p1, Point3(p1 + d.Scale(2)));
+  const PluckerLine line(p1, Point3(p1 + d.Scale(2)));
 
   EXPECT_EQ(line, line);
 
-  const PluckerLine<> line2(p1 + d.Scale(3),
+  const PluckerLine line2(p1 + d.Scale(3),
                             p1 + d.Scale(5));
   EXPECT_EQ(line, line2);
 }
@@ -80,17 +80,17 @@ TEST(PluckerLine, EqualSameDir) {
 TEST(PluckerLine, NotEqualOppositeDir) {
   const Point3 p1(1, 2, 3);
   const Vector3 d(5, 7, 11);
-  const PluckerLine<> line(p1, Point3(p1 + d.Scale(2)));
+  const PluckerLine line(p1, Point3(p1 + d.Scale(2)));
 
-  const PluckerLine<> line2(p1 + d.Scale(5),
+  const PluckerLine line2(p1 + d.Scale(5),
                             p1 + d.Scale(3));
   EXPECT_NE(line, line2);
 
-  const PluckerLine<> line3(p1,
+  const PluckerLine line3(p1,
                             Point3(p1 + d.Scale(-3)));
   EXPECT_NE(line, line3);
 
-  const PluckerLine<> line4(Point3(p1 + d.Scale(2)), p1);
+  const PluckerLine line4(Point3(p1 + d.Scale(2)), p1);
   EXPECT_NE(line, line4);
   EXPECT_NE(line4, line);
 }
@@ -101,9 +101,9 @@ TEST(PluckerLine, NotEqualWithZeroMY) {
   const Point3 p3(-2, 0, 0);
 
   // { d={ -2, -2, 0 } m={ 0, 0, 0 } }
-  const PluckerLine<> line(p1, p2);
+  const PluckerLine line(p1, p2);
   // { d={ 0, 2, 0 } m={ 0, 0, -4 } }
-  const PluckerLine<> line2(p2, p3);
+  const PluckerLine line2(p2, p3);
   EXPECT_NE(line, line2);
   EXPECT_NE(line2, line);
 }
@@ -111,14 +111,14 @@ TEST(PluckerLine, NotEqualWithZeroMY) {
 TEST(PluckerLine, ConstructFromPlanes) {
   const Point3 p1(1, 2, 3);
   const Point3 p2(5, 7, 11);
-  const PluckerLine<> line_from_points(p1, p2);
+  const PluckerLine line_from_points(p1, p2);
 
   const Point3 p3(5, 7, 12);
   const Point3 p4(6, 7, 11);
 
   HalfSpace3 a(p1, p2, p3);
   HalfSpace3 b(p1, p2, p4);
-  const PluckerLine<> line_from_planes(a, b);
+  const PluckerLine line_from_planes(a, b);
 
   EXPECT_EQ(line_from_planes, line_from_points);
 
@@ -139,11 +139,11 @@ TEST(PluckerLine, ConstructFromPlanesOrientation) {
   neg_a.Negate();
   neg_b.Negate();
 
-  const PluckerLine<> line_a_b(a, b);
-  const PluckerLine<> line_neg_a_b(neg_a, b);
-  const PluckerLine<> line_a_neg_b(a, neg_b);
-  const PluckerLine<> line_neg_a_neg_b(neg_a, neg_b);
-  const PluckerLine<> line_b_a(b, a);
+  const PluckerLine line_a_b(a, b);
+  const PluckerLine line_neg_a_b(neg_a, b);
+  const PluckerLine line_a_neg_b(a, neg_b);
+  const PluckerLine line_neg_a_neg_b(neg_a, neg_b);
+  const PluckerLine line_b_a(b, a);
 
   auto d = line_a_b.d();
   auto neg_d = line_a_b.d();
@@ -162,16 +162,16 @@ TEST(PluckerLine, ConstructFromPlanesOrientation) {
 TEST(PluckerLine, ConstructFromHomoPoint3) {
   const Point3 p1(1, 2, 3);
   const Point3 p2(5, 7, 11);
-  PluckerLine<> line(p1, p2);
+  PluckerLine line(p1, p2);
 
   const HomoPoint3 homo_p1(1 * 11, 2 * 11, 3 * 11, 11);
   const HomoPoint3 homo_p2(5 * 13, 7 * 13, 11 * 13, 13);
-  PluckerLine<> from_homo_points(homo_p1, homo_p2);
+  PluckerLine from_homo_points(homo_p1, homo_p2);
 
   const HomoPoint3 homo_p1_neg(1 * -11, 2 * -11, 3 * -11, -11);
   const HomoPoint3 homo_p2_neg(5 * -13, 7 * -13, 11 * -13, -13);
-  PluckerLine<> from_homo_points2(homo_p1_neg, homo_p2);
-  PluckerLine<> from_homo_points3(homo_p1_neg, homo_p2_neg);
+  PluckerLine from_homo_points2(homo_p1_neg, homo_p2);
+  PluckerLine from_homo_points3(homo_p1_neg, homo_p2_neg);
 
   EXPECT_EQ(from_homo_points, line);
   EXPECT_TRUE(from_homo_points.d().IsSameDir(line.d()));
@@ -184,14 +184,14 @@ TEST(PluckerLine, ConstructFromHomoPoint3) {
 TEST(PluckerLine, FromPlanesDirection) {
   const Point3 p1(1, 2, 3);
   const Point3 p2(5, 7, 11);
-  const PluckerLine<> line_from_points(p1, p2);
+  const PluckerLine line_from_points(p1, p2);
 
   const Point3 p3(5, 7, 12);
   const Point3 p4(6, 7, 11);
 
   HalfSpace3 a(p1, p2, p3);
   HalfSpace3 b(p1, p2, p4);
-  const PluckerLine<> line(a, b);
+  const PluckerLine line(a, b);
 
   EXPECT_GT((p2 - p1).Dot(line.d()), 0);
   EXPECT_LT((p1 - p2).Dot(line.d()), 0);
@@ -201,7 +201,7 @@ TEST(PluckerLine, FromPlanesDirection) {
 TEST(PluckerLine, IntersectPlane) {
   const Point3 p1(1, 2, 3);
   const Point3 p2(5, 7, 11);
-  const PluckerLine<> line(p1, p2);
+  const PluckerLine line(p1, p2);
 
   const Point3 p3(6, 8, 12);
   const Point3 p4(6, 9, 11);
@@ -234,10 +234,7 @@ void TestIntersectPlanes() {
 
   HalfSpace3 plane3(Vector3(0, 0, 1), max_int);
 
-  using PluckerLineBuilder =
-    PluckerLineFromPlanesFromPoint3sBuilder<point3_bits>;
-  using PluckerLineRep = typename PluckerLineBuilder::PluckerLineRep;
-  const PluckerLineRep line(plane1, plane2);
+  const PluckerLine line(plane1, plane2);
 
   auto intersection = line.Intersect(plane3);
   EXPECT_TRUE(line.IsCoincident(intersection));
@@ -257,7 +254,7 @@ TEST(PluckerLine, IntersectPlanes128) {
 TEST(PluckerLine, Project2D) {
   const Point3 p1(17, 23, 31);
   const Point3 p2(131, 163, 197);
-  const PluckerLine<> line(p1, p2);
+  const PluckerLine line(p1, p2);
 
   const Point3 p3(41, 103, 73);
 
@@ -283,7 +280,7 @@ TEST(PluckerLine, Project2DDropYSideness) {
   const Point3 origin(0, 0, 0);
 
   {
-    const PluckerLine<> line(p1, p2);
+    const PluckerLine line(p1, p2);
     auto line2d = line.Project2D(/*dimension=*/1);
     // The `line` goes from (0, 1, 2) to (1, 1, 2). After dropping the y
     // coordinate and swapping x and z, `line2d` goes from (2, 0) to (2, 1). A
@@ -293,7 +290,7 @@ TEST(PluckerLine, Project2DDropYSideness) {
   }
 
   {
-    const PluckerLine<> line(p2, p1);
+    const PluckerLine line(p2, p1);
     auto line2d = line.Project2D(/*dimension=*/1);
     // The `line` goes from (1, 1, 2) to (0, 1, 2). After dropping the y
     // coordinate and swapping x and z, `line2d` goes from (2, 1) to (2, 0). A
@@ -310,20 +307,20 @@ TEST(PluckerLine, Project2DDropZSideness) {
   const Point3 origin(0, 0, 0);
 
   {
-    const PluckerLine<> line(p1, p2);
+    const PluckerLine line(p1, p2);
     auto line2d = line.Project2D(/*dimension=*/2);
     EXPECT_LT(line2d.Compare(origin.DropDimension(2)), 0);
   }
 
   {
-    const PluckerLine<> line(p2, p1);
+    const PluckerLine line(p2, p1);
     auto line2d = line.Project2D(/*dimension=*/2);
     EXPECT_GT(line2d.Compare(origin.DropDimension(2)), 0);
   }
 }
 
 TEST(PluckerLine, ReduceAllIntMin) {
-  PluckerLine<256, 256> original(
+  PluckerLine original(
       /*d=*/Vector3(/*x=*/BigInt<256>::min_value(),
                     /*y=*/BigInt<256>::min_value(),
                     /*z=*/BigInt<256>::min_value()),
@@ -331,7 +328,7 @@ TEST(PluckerLine, ReduceAllIntMin) {
                     /*y=*/BigInt<256>::min_value(),
                     /*z=*/BigInt<256>::min_value()));
 
-  PluckerLine<256, 256> reduced = original;
+  PluckerLine reduced = original;
   reduced.Reduce();
   EXPECT_EQ(reduced, original);
   EXPECT_EQ(reduced.d().x(), -1);

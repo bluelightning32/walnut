@@ -26,9 +26,6 @@ Approximate(const ConvexPolygonEdge<point3_bits, EdgeInfoRoot>& edge);
 template <size_t point3_bits_template = 32,
           typename ParentTemplate = EdgeInfoRoot>
 struct ConvexPolygonEdge : public ParentTemplate {
-  using Point3Rep = Point3;
-  using LineRep = typename PluckerLineFromPlanesFromPoint3sBuilder<
-    point3_bits_template>::PluckerLineRep;
   using Parent = ParentTemplate;
 
   ConvexPolygonEdge(const ConvexPolygonEdge&) = default;
@@ -47,7 +44,7 @@ struct ConvexPolygonEdge : public ParentTemplate {
   //
   // `line` should be in the direction from `vertex` to the next vertex in the
   // polygon.
-  ConvexPolygonEdge(const HomoPoint3& vertex, const LineRep& line) :
+  ConvexPolygonEdge(const HomoPoint3& vertex, const PluckerLine& line) :
     vertex_(vertex), line_(line) { }
 
   // Inherit the line and vertex data from `parent_edge`, but overwrite the
@@ -66,9 +63,9 @@ struct ConvexPolygonEdge : public ParentTemplate {
   // `line` should be in the direction from `vertex` to the next vertex in the
   // polygon.
   ConvexPolygonEdge(const ConvexPolygonEdge& parent_edge,
-                    const LineRep& line) : Parent(parent_edge, line),
-                                           vertex_(parent_edge.vertex_),
-                                           line_(line) { }
+                    const PluckerLine& line) : Parent(parent_edge, line),
+                                               vertex_(parent_edge.vertex_),
+                                               line_(line) { }
 
   // Inherit the vertex data from `parent_edge`, but overwrite the vertex and
   // line.
@@ -76,7 +73,7 @@ struct ConvexPolygonEdge : public ParentTemplate {
   // `line` should be in the direction from `vertex` to the next vertex in the
   // polygon.
   ConvexPolygonEdge(const ConvexPolygonEdge& parent_edge,
-                    const HomoPoint3& vertex, const LineRep& line) :
+                    const HomoPoint3& vertex, const PluckerLine& line) :
     Parent(parent_edge, vertex, line),
     vertex_(vertex), line_(line) { }
 
@@ -112,7 +109,7 @@ struct ConvexPolygonEdge : public ParentTemplate {
     return out.str();
   }
 
-  const LineRep& line() const {
+  const PluckerLine& line() const {
     return line_;
   }
 
@@ -146,7 +143,7 @@ struct ConvexPolygonEdge : public ParentTemplate {
   //
   // Notably:
   //   next_vertex == vertex + line.d()
-  LineRep line_;
+  PluckerLine line_;
 };
 
 template <size_t point3_bits, typename Parent>

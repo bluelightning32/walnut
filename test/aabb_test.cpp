@@ -216,15 +216,12 @@ struct StringVertexData : public EdgeInfoRoot {
                    const HomoPoint3& new_source) :
     str(parent.str) { }
 
-  template <size_t d_bits, size_t m_bits>
   StringVertexData(const StringVertexData& parent,
-                   const PluckerLine<d_bits, m_bits>& new_line) :
+                   const PluckerLine& new_line) :
     str(parent.str) { }
 
-  template <size_t d_bits, size_t m_bits>
   StringVertexData(const StringVertexData& parent,
-                   const HomoPoint3& new_source,
-                   const PluckerLine<d_bits, m_bits>& new_line) :
+                   const HomoPoint3& new_source, const PluckerLine& new_line) :
     str(parent.str) { }
 
   std::string str;

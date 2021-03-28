@@ -72,9 +72,6 @@ struct ConvexPolygonSplitRanges {
 // plane.
 template <size_t point3_bits_template = 32>
 struct ConvexPolygonSplitInfo {
-  using LineRep = typename PluckerLineFromPlanesFromPoint3sBuilder<
-    point3_bits_template>::PluckerLineRep;
-
   bool IsValid(size_t vertex_count) const {
     if (!ranges.IsValid(vertex_count)) return false;
 
@@ -121,7 +118,7 @@ struct ConvexPolygonSplitInfo {
   // should be used for the positive child.
   //
   // This field is only initialized if both children are emitted.
-  LineRep new_line;
+  PluckerLine new_line;
 
   bool has_new_shared_point1 = false;
   // If `has_new_shared_point1` is set, this point should be inserted before

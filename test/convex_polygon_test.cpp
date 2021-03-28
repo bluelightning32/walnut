@@ -1083,7 +1083,7 @@ TEST_P(ConvexPolygonFindSplitRanges, OnPosSide) {
       // projecting this line to 2D by dropping the Z coordinate.
       Point3 p1(-1, 1, 0);
       Point3 p2(-1, 0, 0);
-      PluckerLine<> line(p1, p2);
+      PluckerLine line(p1, p2);
 
       ConvexPolygonSplitRanges indices =
         (polygon.*GetParam())(line.Project2D(/*drop_dimension=*/2),
@@ -1102,7 +1102,7 @@ TEST_P(ConvexPolygonFindSplitRanges, OnPosSide) {
       // projecting this line to 2D by dropping the Z coordinate.
       Point3 p1(0, 1, 0);
       Point3 p2(0, 0, 0);
-      PluckerLine<> line(p1, p2);
+      PluckerLine line(p1, p2);
 
       ConvexPolygonSplitRanges indices =
         (polygon.*GetParam())(line.Project2D(/*drop_dimension=*/2),
@@ -1134,7 +1134,7 @@ TEST_P(ConvexPolygonFindSplitRanges, AtExistingVertices) {
     /*p[3]=*/Point3(0, 1, 10),
   };
 
-  PluckerLine<> line(p[0], p[2]);
+  PluckerLine line(p[0], p[2]);
 
   ConvexPolygon<32> polygon(MakeConvexPolygon(p));
 
@@ -1179,13 +1179,13 @@ TEST_P(ConvexPolygonFindSplitRanges, AtNewVertices) {
   ConvexPolygon<32> polygon(MakeConvexPolygon(p));
 
   for (int drop_dimension = 0; drop_dimension < 3; ++drop_dimension) {
-    PluckerLine<> line;
+    PluckerLine line;
     EXPECT_FALSE(
         polygon.plane().normal().components()[drop_dimension].IsZero());
     if (polygon.plane().normal().components()[drop_dimension] < 0) {
-      line = PluckerLine<>(n[1], n[0]);
+      line = PluckerLine(n[1], n[0]);
     } else {
-      line = PluckerLine<>(n[0], n[1]);
+      line = PluckerLine(n[0], n[1]);
     }
 
     ConvexPolygonSplitRanges indices =
@@ -1217,7 +1217,7 @@ TEST_P(ConvexPolygonFindSplitRanges, AtNewVerticesXPlane) {
 
   ConvexPolygon<> polygon = MakeConvexPolygon(p);
   HalfSpace3 half_space(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
-  PluckerLine<> line(half_space, polygon.plane());
+  PluckerLine line(half_space, polygon.plane());
 
   ConvexPolygonSplitRanges indices =
     (polygon.*GetParam())(line.Project2D(polygon.drop_dimension()),
@@ -1295,7 +1295,7 @@ void SplitHelper(const ConvexPolygon<>& polygon,
 
   for (const ConvexPolygon<32>* output : {&neg_side, &pos_side}) {
     for (size_t i = 0; i < output->vertex_count(); ++i) {
-      PluckerLine<> expected_line(
+      PluckerLine expected_line(
           output->vertex(i), output->vertex((i + 1) % output->vertex_count()));
       EXPECT_EQ(output->const_edge(i).line(), expected_line);
       EXPECT_TRUE(

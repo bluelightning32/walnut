@@ -10,17 +10,8 @@ namespace walnut {
 
 // Plücker coordinates are a way to store a R^3 line with homogeneous
 // coordinates.
-template <size_t d_bits_template = 31*2 + 1, size_t m_bits_template = 31*2 + 3>
 class PluckerLine {
  public:
-  using DVector = Vector3;
-  using MVector = Vector3;
-
-  // The minimum number of bits to support for each of the components of d.
-  static constexpr size_t d_bits = d_bits_template;
-  // The minimum number of bits to support for each of the components of m.
-  static constexpr size_t m_bits = m_bits_template;
-
   // Returns the direction vector for the line.
   //
   // If the line was constructed using points, the direction vector points from
@@ -66,8 +57,7 @@ class PluckerLine {
   PluckerLine(const Vector3& d, const Vector3& m) :
     d_(d), m_(m) { }
 
-  template <size_t other_d_bits, size_t other_m_bits>
-  PluckerLine(const PluckerLine<other_d_bits, other_m_bits>& other) :
+  PluckerLine(const PluckerLine& other) :
     PluckerLine(other.d(), other.m()) { }
 
   PluckerLine(const Point3& p1, const Point3& p2) :
@@ -143,10 +133,9 @@ class PluckerLine {
   //
   // The lines are considered not equal if their directions are opposite (one
   // scale factor is negative).
-  template <size_t other_d_bits, size_t other_m_bits>
-  bool operator==(const PluckerLine<other_d_bits, other_m_bits>& other) const {
-    BigInt<std::max(m_bits, d_bits) + 1> scale_other;
-    BigInt<std::max(other_m_bits, other_d_bits) + 1> scale_mine;
+  bool operator==(const PluckerLine& other) const {
+    BigIntImpl scale_other;
+    BigIntImpl scale_mine;
     bool unused;
     if (!d().x().IsZero()) {
       scale_other = d().x().GetAbs(unused);
@@ -168,8 +157,7 @@ class PluckerLine {
       m().z().Multiply(scale_mine) == other.m().z().Multiply(scale_other);
   }
 
-  template <size_t other_d_bits, size_t other_m_bits>
-  bool operator!=(const PluckerLine<other_d_bits, other_m_bits>& other) const {
+  bool operator!=(const PluckerLine& other) const {
     return !(*this == other);
   }
 
@@ -216,9 +204,8 @@ class PluckerLine {
   Vector3 m_;
 };
 
-template <size_t d_bits, size_t m_bits>
-void PluckerLine<d_bits, m_bits>::Reduce() {
-  BigInt<std::max(d_bits, m_bits)> common_factor =
+void PluckerLine::Reduce() {
+  BigIntImpl common_factor =
     d_.components()[0].GetGreatestCommonDivisor(d_.components()[1]);
   common_factor = common_factor.GetGreatestCommonDivisor(d_.components()[2]);
 
@@ -227,8 +214,7 @@ void PluckerLine<d_bits, m_bits>::Reduce() {
   common_factor = common_factor.GetGreatestCommonDivisor(m_.components()[2]);
 
   bool unused;
-  BigInt<std::max(d_bits, m_bits) + 1> abs_common_factor =
-    common_factor.GetAbs(unused);
+  BigIntImpl abs_common_factor = common_factor.GetAbs(unused);
 
   d_.components()[0] /= abs_common_factor;
   d_.components()[1] /= abs_common_factor;
@@ -239,46 +225,7 @@ void PluckerLine<d_bits, m_bits>::Reduce() {
   m_.components()[2] /= abs_common_factor;
 }
 
-// This is a wrapper around the PluckerLine constructor that takes 2 Point3's.
-// The only reason to use this wrapper is that it figures out how many bits are
-// necessary in the worst case for the PluckerLine d and m vector components,
-// given the number of bits in each Point3.
-template <size_t point3_bits_template = 32>
-class PluckerLineFromPoint3sBuilder {
- public:
-  using PluckerLineRep = PluckerLine<point3_bits_template + 1,
-                                     (point3_bits_template - 1)*2 + 2>;
-  using DInt = BigIntImpl;
-  using MInt = BigIntImpl;
-
-  static PluckerLineRep Build(const Point3& p1, const Point3& p2) {
-    return PluckerLineRep(p1, p2);
-  }
-};
-
-// This is a wrapper around the PluckerLine constructor that takes 2 Planes.
-// The only reason to use this wrapper is that it figures out how many bits are
-// necessary in the worst case for the PluckerLine d and m vector components,
-// given that the Plane components are all within the bounds defined by
-// HalfSpace3FromPoint3Builder<point3_bits>.
-template <size_t point3_bits_template = 32>
-class PluckerLineFromPlanesFromPoint3sBuilder {
- public:
-  static_assert(point3_bits_template >= 3,
-      "The bit formulas are only correct for point3_bits_template >= 3");
-  using PluckerLineRep = PluckerLine<(point3_bits_template - 1)*4 + 6,
-                                     (point3_bits_template - 1)*5 + 6>;
-  using DInt = BigIntImpl;
-  using MInt = BigIntImpl;
-
-  static PluckerLineRep Build(const HalfSpace3& p1, const HalfSpace3& p2) {
-    return PluckerLineRep(p1, p2);
-  }
-};
-
-template <size_t d_bits, size_t m_bits>
-std::ostream& operator<<(std::ostream& out,
-                         const PluckerLine<d_bits, m_bits>& line) {
+inline std::ostream& operator<<(std::ostream& out, const PluckerLine& line) {
   return out << "{ d=" << line.d() << " m=" << line.m() << " }";
 }
 

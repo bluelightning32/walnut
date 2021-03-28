@@ -36,7 +36,6 @@ class EdgeLineConnector {
                      >::value,
                      "EdgeRep must inherit from ConnectedEdge.");
   using NormalRep = typename PolygonRep::NormalRep;
-  using LineRep = typename EdgeRep::LineRep;
 
   // Connects the adjacent edges in the range of ConnectedEdges.
   //
@@ -141,8 +140,8 @@ class EdgeLineConnector {
 
       bool operator()(std::reference_wrapper<const EdgeRep> e1,
                       std::reference_wrapper<const EdgeRep> e2) const {
-        const LineRep& e1_line = e1.get().line();
-        const LineRep& e2_line = e2.get().line();
+        const PluckerLine& e1_line = e1.get().line();
+        const PluckerLine& e2_line = e2.get().line();
         const auto e1_2dline = e1_line.d().DropDimension(drop_dimension);
         const auto e2_2dline = e2_line.d().DropDimension(drop_dimension);
         if (!e1_2dline.IsSameOrOppositeDir(e2_2dline)) {
