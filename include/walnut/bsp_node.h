@@ -30,8 +30,6 @@ class BSPNode {
 
   BSPNode() = default;
 
-  BSPNode(const std::vector<int64_t>& pwn_by_id) : pwn_by_id_(pwn_by_id) { }
-
   // Convert a leaf node into an interior node.
   //
   // This may only be called on a leaf node.
@@ -42,7 +40,7 @@ class BSPNode {
   // The contents of this node will be pushed into the new child nodes.
   void Split(const HalfSpace3& half_space) {
     assert(half_space.IsValid());
-    MakeInterior(half_space, new BSPNode(pwn_by_id_), new BSPNode(pwn_by_id_));
+    MakeInterior(half_space, new BSPNode(), new BSPNode());
     PushContentsToChildren();
   }
 
@@ -104,6 +102,9 @@ class BSPNode {
     split_ = half_space;
     negative_child_ = std::unique_ptr<BSPNode>(negative_child);
     positive_child_ = std::unique_ptr<BSPNode>(positive_child);
+
+    negative_child->SetPWN(pwn_by_id_);
+    positive_child->SetPWN(pwn_by_id_);
   }
 
   void Reset() {
@@ -118,6 +119,10 @@ class BSPNode {
  private:
   template <typename OutputPolygonParent>
   friend class BSPTree;
+
+  void SetPWN(const std::vector<int64_t>& pwn_by_id) {
+    pwn_by_id_ = pwn_by_id;
+  }
 
   // Update the negative and positive child for the crossing (if any) that
   // occurs at a vertex.
