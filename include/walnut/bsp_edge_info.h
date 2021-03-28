@@ -112,6 +112,23 @@ std::ostream& operator<<(
   return out;
 }
 
+template <typename BSPNodeTemplate>
+std::ostream& operator<<(std::ostream& out,
+                         const BSPNodeSide<BSPNodeTemplate>& info) {
+  if (info.node == nullptr) {
+    out << "none";
+  } else {
+    out << "[";
+    if (info.pos_side) {
+      out << "pos";
+    } else {
+      out << "neg";
+    }
+    out << " " << info.node->split().normal() << "]";
+  }
+  return out;
+}
+
 }  // walnut
 
 #endif // WALNUT_BSP_EDGE_INFO_H__
