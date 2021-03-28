@@ -9,9 +9,6 @@
 namespace walnut {
 
 template <typename BSPNodeTemplate>
-class BSPPolygonWrapper;
-
-template <typename BSPNodeTemplate>
 struct BSPNodeSide {
   using BSPNodeRep = BSPNodeTemplate;
 
@@ -73,7 +70,9 @@ class BSPEdgeInfo : public ParentTemplate {
 
  private:
   friend BSPNodeRep;
-  friend BSPPolygonWrapper<BSPNodeRep>;
+  template <typename BSPNode, typename PolygonParent>
+  friend class BSPPolygonWrapper;
+
 
   void ResetBSPInfo() {
     edge_first_coincident_ = BSPNodeSideRep();

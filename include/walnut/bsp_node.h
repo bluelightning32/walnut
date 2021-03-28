@@ -19,21 +19,20 @@
 
 namespace walnut {
 
-template <typename OutputPolygonParentTemplate>
-class BSPTree;
-
 using BSPPolygonId = size_t;
 
-template <typename BSPNodeTemplate>
+template <typename BSPNodeTemplate, typename ParentTemplate = ConvexPolygon<>>
 class BSPPolygonWrapper :
-  public BSPNodeTemplate::OutputPolygonParent::template MakeParent<
-    BSPPolygonWrapper<BSPNodeTemplate>, BSPEdgeInfo<BSPNodeTemplate>
+  public ParentTemplate::template MakeParent<
+    BSPPolygonWrapper<BSPNodeTemplate, ParentTemplate>,
+    BSPEdgeInfo<BSPNodeTemplate>
   > {
  public:
   using BSPNodeRep = BSPNodeTemplate;
   using Parent =
-    typename BSPNodeTemplate::OutputPolygonParent::template MakeParent<
-      BSPPolygonWrapper<BSPNodeTemplate>, BSPEdgeInfo<BSPNodeRep>
+    typename ParentTemplate::template MakeParent<
+      BSPPolygonWrapper<BSPNodeRep, ParentTemplate>,
+      BSPEdgeInfo<BSPNodeRep>
     >;
   using typename Parent::EdgeParent;
   using BSPEdgeInfoRep = BSPEdgeInfo<BSPNodeRep>;
@@ -110,7 +109,8 @@ class BSPPolygonWrapper :
   }
 
  private:
-  friend BSPTree<typename BSPNodeTemplate::OutputPolygonParent>;
+  template <typename OutputPolygonParentTemplate>
+  friend class BSPTree;
 
   void ResetBSPInfo() {
     for (size_t i = 0; i < Parent::vertex_count(); ++i) {
@@ -126,13 +126,11 @@ template <typename OutputPolygonParentTemplate = AABBConvexPolygon<>>
 class BSPNode {
  public:
   using OutputPolygonParent = OutputPolygonParentTemplate;
-  using PolygonRep = BSPPolygonWrapper<BSPNode>;
+  using PolygonRep = BSPPolygonWrapper<BSPNode, OutputPolygonParent>;
   using EdgeParent = typename PolygonRep::EdgeParent;
   using EdgeRep = typename PolygonRep::EdgeRep;
   using BSPEdgeInfoRep = typename PolygonRep::BSPEdgeInfoRep;
   using BSPNodeSideRep = typename BSPEdgeInfoRep::BSPNodeSideRep;
-
-  friend class BSPTree<OutputPolygonParent>;
 
   BSPNode() = default;
 
@@ -214,6 +212,9 @@ class BSPNode {
   }
 
  private:
+  template <typename OutputPolygonParent>
+  friend class BSPTree;
+
   // Push the contents all the way down to descendant leaf nodes. Call
   // `leaf_callback` on each leaf node that the contents were pushed to (and
   // possibly more nodes that the contents were not pushed to).
