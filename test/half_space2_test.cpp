@@ -61,4 +61,27 @@ TEST(HalfSpace2, HalfSpacesDistinct) {
             HalfSpace2(/*x=*/0, /*y=*/0, /*dist=*/-10));
 }
 
+TEST(HalfSpace2, HasSameLineDifferentMagnitudes) {
+  EXPECT_TRUE(HalfSpace2(/*x=*/2, /*y=*/2, /*dist=*/6).HasSameLine(
+        HalfSpace2(/*x=*/5, /*y=*/5, /*dist=*/15)));
+
+  EXPECT_TRUE(HalfSpace2(/*x=*/-2, /*y=*/-2, /*dist=*/-6).HasSameLine(
+        HalfSpace2(/*x=*/-5, /*y=*/-5, /*dist=*/-15)));
+}
+
+TEST(HalfSpace2, HasSameLineDifferentSides) {
+  EXPECT_TRUE(HalfSpace2(/*x=*/2, /*y=*/2, /*dist=*/6).HasSameLine(
+        HalfSpace2(/*x=*/-2, /*y=*/-2, /*dist=*/-6)));
+}
+
+TEST(HalfSpace2, HasSameLineDifferentLines) {
+  EXPECT_FALSE(HalfSpace2(/*x=*/1, /*y=*/1, /*dist=*/0).HasSameLine(
+        HalfSpace2(/*x=*/-1, /*y=*/1, /*dist=*/0)));
+}
+
+TEST(HalfSpace2, HasSameLineDifferentDists) {
+  EXPECT_FALSE(HalfSpace2(/*x=*/1, /*y=*/1, /*dist=*/1).HasSameLine(
+        HalfSpace2(/*x=*/1, /*y=*/1, /*dist=*/2)));
+}
+
 }  // walnut

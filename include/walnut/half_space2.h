@@ -106,20 +106,42 @@ class HalfSpace2 {
            d().Multiply(scale_mine) == other.d().Multiply(scale_other);
   }
 
+  // Returns true if `other` shares the same line with `this.
+  //
+  // `other` will share the same line with `this` if it is the same half-space
+  // or the opposite half-space.
+  //
+  // Lines with the same direction but different distances from the origin are
+  // considered distinct.
+  bool HasSameLine(const HalfSpace2& other) const {
+    BigInt const *scale_other;
+    BigInt const *scale_mine;
+    if (!d().IsZero()) {
+      scale_other = &d();
+      scale_mine = &other.d();
+    } else if (x().IsZero()) {
+      scale_other = &x();
+      scale_mine = &other.x();
+    } else {
+      scale_other = &y();
+      scale_mine = &other.y();
+    }
+
+    return x().Multiply(*scale_mine) == other.x().Multiply(*scale_other) &&
+           y().Multiply(*scale_mine) == other.y().Multiply(*scale_other) &&
+           d().Multiply(*scale_mine) == other.d().Multiply(*scale_other);
+  }
+
   // Note that everything equals the zero vector.
   bool operator!=(const HalfSpace2& other) const {
     return !(*this == other);
   }
 
-  // This function could potentially overflow. The caller must ensure there is
-  // sufficient bitspace.
   void Negate() {
     normal_.Negate();
     dist_.Negate();
   }
 
-  // This function could potentially overflow. The caller must ensure there is
-  // sufficient bitspace.
   HalfSpace2 operator-() const {
     return HalfSpace2(-normal_, -dist_);
   }
@@ -129,12 +151,7 @@ class HalfSpace2 {
   BigInt dist_;
 };
 
-inline std::ostream& operator<<(std::ostream& out, const HalfSpace2& p) {
-  return out << "{ x*" << p.x()
-             << " + y*" << p.y()
-             << " = " << p.d()
-             << " }";
-}
+std::ostream& operator<<(std::ostream& out, const HalfSpace2& p);
 
 }  // walnut
 
