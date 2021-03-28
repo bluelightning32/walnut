@@ -1,7 +1,9 @@
 #ifndef WALNUT_BIG_UINT_H__
 #define WALNUT_BIG_UINT_H__
 
+// For std::min
 #include <algorithm>
+// For assert
 #include <cassert>
 
 #include "walnut/big_int_words.h"

@@ -1,11 +1,12 @@
 #ifndef WALNUT_BIG_INT_H__
 #define WALNUT_BIG_INT_H__
 
+// For std::min
 #include <algorithm>
+// For assert
 #include <cassert>
-#include <cmath>
+// For ostream
 #include <iostream>
-#include <vector>
 
 #include "walnut/big_int_words.h"
 #include "walnut/big_uint.h"

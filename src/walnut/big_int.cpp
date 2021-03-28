@@ -1,5 +1,8 @@
 #include "walnut/big_int.h"
 
+#include <cmath>
+#include <vector>
+
 namespace walnut {
 
 BigInt BigInt::max_value(size_t set_bits) {
