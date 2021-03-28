@@ -33,6 +33,7 @@ add_library(visualization STATIC
             observer_registration.cpp
             points_actor.cpp
             visualization_window.cpp)
+target_link_libraries(visualization walnut)
 
 add_executable(extrusion extrusion.cpp)
 target_link_libraries(extrusion

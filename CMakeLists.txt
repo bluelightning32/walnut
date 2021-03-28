@@ -56,8 +56,7 @@ if(BUILD_TESTS)
       # link the Google test infrastructure, mocking library, and a default
       # main fuction to the test executable.  Remove g_test_main if writing
       # your own main function.
-      target_link_libraries(${TESTNAME} gtest gmock gtest_main)
-      target_include_directories(${TESTNAME} PUBLIC include)
+      target_link_libraries(${TESTNAME} gtest gmock gtest_main walnut)
       # gtest_discover_tests replaces gtest_add_tests, see
       # https://cmake.org/cmake/help/v3.10/module/GoogleTest.html for more
       # options to pass to it
@@ -82,6 +81,10 @@ else()
   macro(package_add_test TESTNAME)
   endmacro()
 endif()
+
+AUX_SOURCE_DIRECTORY(src/walnut SOURCES)
+add_library(walnut STATIC ${SOURCES})
+target_include_directories(walnut PUBLIC include)
 
 package_add_test(aabb_convex_polygon_test test/aabb_convex_polygon_test.cpp)
 package_add_test(aabb_test test/aabb_test.cpp)
@@ -115,7 +118,3 @@ package_add_test(r_transformation_test test/r_transformation_test.cpp)
 package_add_test(rational_test test/rational_test.cpp)
 package_add_test(vector2_test test/vector2_test.cpp)
 package_add_test(vector3_test test/vector3_test.cpp)
-
-AUX_SOURCE_DIRECTORY(include/walnut HEADERS)
-
-add_library(walnut INTERFACE ${HEADERS})
