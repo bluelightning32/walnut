@@ -171,6 +171,44 @@ class EdgeLineConnector {
     std::sort(edges_begin, edges_end, EdgeCompare(drop_dimension));
   }
 
+  // Takes a sorted range of ConnectedEdges and returns the end iterator for
+  // the subrange sharing the same line.
+  //
+  // The edges must be sorted in the same way as what `SortEdgesInPlane`
+  // provides. The return value will point to an edge that has a different line
+  // than the first edge in the input range, or the end iterator if there are
+  // no more remaining subranges. Edges that are coincident with the same
+  // infinite line are considered part of the same subrange, even if there is a
+  // gap between the edges such that they do not overlap.
+  //
+  // In addition to the end of the first subrange, the sorted dimension is also
+  // returned.
+  //
+  // From `edges_begin` up to `edges_end` defines a range of
+  // std::reference_wrapper<ConnectedEdge>s. All of those edges must be
+  // coincident with the same plane. The `drop_dimension` component of that
+  // plane's normal must be non-zero.
+  template <typename Iterator>
+  static std::pair<Iterator, int> FindNextLineStart(
+      const Iterator& edges_begin, const Iterator& edges_end,
+      int drop_dimension) {
+    assert (edges_begin != edges_end);
+    HalfSpace2 line = edges_begin->get().line().Project2D(drop_dimension);
+    int sorted_dimension =
+      (edges_begin->get().line().d().components()[
+       (drop_dimension + 1) % 3].IsZero() ?
+       drop_dimension + 2 : drop_dimension + 1) % 3;
+    Iterator pos = edges_begin;
+    ++pos;
+    while (pos != edges_end) {
+      if (!pos->get().line().Project2D(drop_dimension).HasSameLine(line)) {
+        return std::make_pair(pos, sorted_dimension);
+      }
+      ++pos;
+    }
+    return std::make_pair(pos, sorted_dimension);
+  }
+
   // Returns true if l1[dim]/l1.w() < l2[dim]/l2.w()
   static bool IsLocationLessThan(const HomoPoint3& l1, const HomoPoint3& l2,
                                  int sorted_dimension) {

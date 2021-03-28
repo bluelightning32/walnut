@@ -376,6 +376,7 @@ TEST(EdgeLineConnector, SplitCoplanarPolygons) {
   EXPECT_EQ(t3_b.edge(0).extra_partner_count(), 0);
 }
 
+// Sorts and validates the sort of a vector of edges.
 void SortEdges(
     std::vector<std::reference_wrapper<ConnectedPolygon<>::EdgeRep>> &edges) {
   EdgeLineConnector<>::SortEdgesInPlane(edges.begin(), edges.end(),
@@ -514,6 +515,47 @@ TEST(EdgeLineConnector, SortEdgesInPlaneDifferentDenoms) {
     }
   }
   ShuffleAndSortEdges(triangles);
+}
+
+TEST(EdgeLineConnector, FindNextLineStart) {
+  HomoPoint2 p1(/*x=*/1, /*y=*/2, /*w=*/1);
+  HomoPoint2 p2(/*x=*/1 + 3, /*y=*/2 + 3, /*w=*/1);
+  HomoPoint2 p3(/*x=*/1 + 5, /*y=*/2 + 5, /*w=*/1);
+
+  HomoPoint2 q1(/*x=*/0, /*y=*/0, /*w=*/1);
+  HomoPoint2 q2(/*x=*/0, /*y=*/0 + 2, /*w=*/1);
+
+  ConnectedPolygon<> t1 = MakeTriangle(p1, p2);
+  ConnectedPolygon<> t2 = MakeTriangle(p2, p1);
+  ConnectedPolygon<> t3 = MakeTriangle(p1, p3);
+  ConnectedPolygon<> t4 = MakeTriangle(p2, p3);
+
+  ConnectedPolygon<> s1 = MakeTriangle(q1, q2);
+  ConnectedPolygon<> s2 = MakeTriangle(q2, q1);
+
+  using EdgeRef = std::reference_wrapper<ConnectedPolygon<>::EdgeRep>;
+  std::vector<EdgeRef> edges {
+    t1.edge(0),
+    t2.edge(0),
+    t3.edge(0),
+    t4.edge(0),
+
+    s1.edge(0),
+    s2.edge(0),
+  };
+
+  using Iterator = std::vector<EdgeRef>::iterator;
+  std::pair<Iterator, int> subrange;
+  subrange = EdgeLineConnector<>::FindNextLineStart(edges.begin(), edges.end(),
+                                                    /*drop_dimension=*/2);
+  EXPECT_EQ(subrange.first, edges.begin() + 4);
+  EXPECT_NE(subrange.second, 2);
+
+  subrange = EdgeLineConnector<>::FindNextLineStart(edges.begin() + 4,
+                                                    edges.end(),
+                                                    /*drop_dimension=*/2);
+  EXPECT_EQ(subrange.first, edges.end());
+  EXPECT_EQ(subrange.second, 1);
 }
 
 }  // walnut
