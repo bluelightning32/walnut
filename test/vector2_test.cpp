@@ -58,13 +58,12 @@ TEST(Vector2, Minus) {
 
 TEST(Vector3, MinusMax) {
   static constexpr int coord_bits = 640;
-  BigInt<coord_bits> min_value = BigInt<coord_bits>::min_value();
-  BigInt<coord_bits> max_value = BigInt<coord_bits>::max_value();
+  BigIntImpl min_value = BigIntImpl::min_value(coord_bits - 1);
+  BigIntImpl max_value = BigIntImpl::max_value(coord_bits - 1);
   Vector2 v1(min_value, min_value);
   Vector2 v2(max_value, max_value);
 
-  BigInt<coord_bits + 1> expected = BigInt<coord_bits + 1>(min_value) -
-                                    BigInt<coord_bits + 1>(max_value);
+  BigIntImpl expected = BigIntImpl(min_value) - BigIntImpl(max_value);
 
   EXPECT_EQ(v1 - v2, Vector2(expected, expected));
 }
@@ -95,13 +94,13 @@ TEST(Vector2, Scale) {
 
 TEST(Vector2, DotNegMax) {
   static constexpr int coord_bits = 64;
-  BigInt<coord_bits> min_value = BigInt<coord_bits>::min_value();
+  BigIntImpl min_value = BigIntImpl::min_value(coord_bits - 1);
   // Note that since min_value uses all coord_bits, coord_bits must be
   // explicitly passed to Vector2, because coord_bits could be larger than
   // Vector2::coord_bits.
   Vector2 min_vector(min_value, min_value);
 
-  BigInt<coord_bits*2 + 5> expected_scale = min_value;
+  BigIntImpl expected_scale = min_value;
   expected_scale = expected_scale * min_value;
   expected_scale = expected_scale * 2;
 
@@ -110,18 +109,18 @@ TEST(Vector2, DotNegMax) {
 
 TEST(Vector2, CrossMax) {
   static constexpr int coord_bits = 640;
-  BigInt<coord_bits> min_value = BigInt<coord_bits>::min_value();
-  BigInt<coord_bits> max_value = BigInt<coord_bits>::max_value();
+  BigIntImpl min_value = BigIntImpl::min_value(coord_bits - 1);
+  BigIntImpl max_value = BigIntImpl::max_value(coord_bits - 1);
   Vector2 v1(min_value, min_value);
   Vector2 v2(max_value, min_value);
 
   // Calculate the z coordinate of the cross product using an extra large
   // integer type, then verify it produces the same value.
-  BigInt<coord_bits*2 + 5> casted_min_value(min_value);
-  BigInt<coord_bits*2 + 5> casted_max_value(max_value);
+  BigIntImpl casted_min_value(min_value);
+  BigIntImpl casted_max_value(max_value);
 
-  BigInt<coord_bits*2 + 5> expected = casted_min_value*casted_min_value -
-                                        casted_min_value*casted_max_value;
+  BigIntImpl expected = casted_min_value*casted_min_value -
+                    casted_min_value*casted_max_value;
 
   EXPECT_EQ(v1.Cross(v2), expected);
 }

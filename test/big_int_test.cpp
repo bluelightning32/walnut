@@ -8,7 +8,7 @@ namespace walnut {
 
 TEST(BigInt, Int32Construction) {
   int32_t a = (1 << 31) + 3;
-  BigInt<64> b(a);
+  BigIntImpl b(a);
 
   EXPECT_EQ(a, b.low_uint32());
   EXPECT_EQ(a, b.low_uint64());
@@ -16,25 +16,24 @@ TEST(BigInt, Int32Construction) {
 
 TEST(BigInt, Int64Construction) {
   int64_t a = (static_cast<int64_t>(1) << 62) + 5;
-  BigInt<64> b(a);
+  BigIntImpl b(a);
 
   EXPECT_EQ(static_cast<uint32_t>(a), b.low_uint32());
   EXPECT_EQ(a, b.low_uint64());
 }
 
 TEST(BigInt, CopyConstructBig) {
-  static constexpr int big_bits =
-    BigInt<32>::word_count*BigInt<32>::bits_per_word*2;
-  BigInt<big_bits> big_value = BigInt<big_bits>::max_value();
-  BigInt<big_bits> copy(big_value);
+  static constexpr int big_bits = 10*BigIntImpl::bits_per_word*2;
+  BigIntImpl big_value = BigIntImpl::max_value(big_bits - 1);
+  BigIntImpl copy(big_value);
 }
 
 TEST(BigInt, LeftShiftPos) {
-  BigInt<64> a(3);
-  EXPECT_EQ(a << 1, BigInt<64>{3 << 1});
-  EXPECT_EQ(a << 61, BigInt<64>{static_cast<int64_t>(3) << 61});
+  BigIntImpl a(3);
+  EXPECT_EQ(a << 1, BigIntImpl{3 << 1});
+  EXPECT_EQ(a << 61, BigIntImpl{static_cast<int64_t>(3) << 61});
 
-  BigInt<128> b(3);
+  BigIntImpl b(3);
   EXPECT_LT(b << 63, b << 64);
   EXPECT_LE(b << 63, b << 64);
   EXPECT_LT(b << 64, b << 65);
@@ -45,7 +44,7 @@ TEST(BigInt, LeftShiftPos) {
   EXPECT_GE(b << 65, b << 64);
   EXPECT_EQ((b << 63).low_uint64(), static_cast<uint64_t>(1) << 63);
 
-  BigInt<128> c(static_cast<int64_t>(1) << 62);
+  BigIntImpl c(static_cast<int64_t>(1) << 62);
   EXPECT_LT(c, c << 1);
   EXPECT_LE(c, c << 1);
   EXPECT_LT(c << 1, c << 2);
@@ -59,15 +58,15 @@ TEST(BigInt, LeftShiftPos) {
 }
 
 TEST(BigInt, LeftShiftNeg) {
-  BigInt<64> a(-3);
-  EXPECT_EQ(a << 1, BigInt<64>{static_cast<int64_t>(-3) *
+  BigIntImpl a(-3);
+  EXPECT_EQ(a << 1, BigIntImpl{static_cast<int64_t>(-3) *
                                static_cast<int64_t>(
                                  (static_cast<uint64_t>(1) << 1))});
-  EXPECT_EQ(a << 61, BigInt<64>{static_cast<int64_t>(-3) *
+  EXPECT_EQ(a << 61, BigIntImpl{static_cast<int64_t>(-3) *
                                 static_cast<int64_t>(
                                   (static_cast<uint64_t>(1) << 61))});
 
-  BigInt<128> b(-3);
+  BigIntImpl b(-3);
   EXPECT_GT(b << 63, b << 64);
   EXPECT_GE(b << 63, b << 64);
   EXPECT_GT(b << 64, b << 65);
@@ -78,7 +77,7 @@ TEST(BigInt, LeftShiftNeg) {
   EXPECT_LE(b << 65, b << 64);
   EXPECT_EQ((b << 63).low_uint64(), static_cast<uint64_t>(1) << 63);
 
-  BigInt<128> c(static_cast<int64_t>(-1) *
+  BigIntImpl c(static_cast<int64_t>(-1) *
                 static_cast<int64_t>(static_cast<uint64_t>(1) << 62));
   EXPECT_GT(c, c << 1);
   EXPECT_GE(c, c << 1);
@@ -93,25 +92,25 @@ TEST(BigInt, LeftShiftNeg) {
 }
 
 TEST(BigInt, LeftShift0) {
-  BigInt<128> b(-1);
-  BigInt<128> result = b << 0;
+  BigIntImpl b(-1);
+  BigIntImpl result = b << 0;
   EXPECT_EQ(result.low_uint64(), -1);
-  EXPECT_LT(result, BigInt<128>{0});
-  EXPECT_GT(result, BigInt<128>{-1} << 1);
+  EXPECT_LT(result, BigIntImpl{0});
+  EXPECT_GT(result, BigIntImpl{-1} << 1);
 }
 
 TEST(BigInt, LeftShift64) {
-  BigInt<192> b(-1);
-  BigInt<192> result = b << 64;
+  BigIntImpl b(-1);
+  BigIntImpl result = b << 64;
   EXPECT_EQ(result.low_uint64(), 0);
-  EXPECT_LT(result, BigInt<128>{0});
-  EXPECT_GT(result, BigInt<128>{-1} << 65);
+  EXPECT_LT(result, BigIntImpl{0});
+  EXPECT_GT(result, BigIntImpl{-1} << 65);
 }
 
 TEST(BigInt, AddInt32CarryPos) {
-  BigInt<64> a(static_cast<int32_t>(1) << 30);
-  BigInt<64> b(static_cast<int32_t>(1) << 30);
-  BigInt<64> result = a.Add(b);
+  BigIntImpl a(static_cast<int32_t>(1) << 30);
+  BigIntImpl b(static_cast<int32_t>(1) << 30);
+  BigIntImpl result = a.Add(b);
 
   EXPECT_EQ(result.low_uint64(), static_cast<int64_t>(1) << 31);
   EXPECT_GT(result, a);
@@ -119,9 +118,9 @@ TEST(BigInt, AddInt32CarryPos) {
 }
 
 TEST(BigInt, AddInt32CarryNeg) {
-  BigInt<64> a(std::numeric_limits<int32_t>::min());
-  BigInt<64> b(std::numeric_limits<int32_t>::min());
-  BigInt<64> result = a.Add(b);
+  BigIntImpl a(std::numeric_limits<int32_t>::min());
+  BigIntImpl b(std::numeric_limits<int32_t>::min());
+  BigIntImpl result = a.Add(b);
 
   EXPECT_EQ(result.low_uint64(),
             static_cast<int64_t>(-1) *
@@ -131,9 +130,9 @@ TEST(BigInt, AddInt32CarryNeg) {
 }
 
 TEST(BigInt, AddInt32ToInt64) {
-  BigInt<64> a(static_cast<int32_t>(1) << 30);
-  BigInt<64> b(static_cast<int64_t>(1) << 62);
-  BigInt<64> result = a.Add<>(b);
+  BigIntImpl a(static_cast<int32_t>(1) << 30);
+  BigIntImpl b(static_cast<int64_t>(1) << 62);
+  BigIntImpl result = a.Add(b);
 
   EXPECT_EQ(result.low_uint64(),
       static_cast<int64_t>(1) << 30 | static_cast<int64_t>(1) << 62);
@@ -142,81 +141,81 @@ TEST(BigInt, AddInt32ToInt64) {
 }
 
 TEST(BigInt, AddInt64Carry) {
-  BigInt<64> a(std::numeric_limits<int64_t>::min());
-  BigInt<64> b(std::numeric_limits<int64_t>::min());
-  BigInt<65> result = a.Add<65>(b);
+  BigIntImpl a(std::numeric_limits<int64_t>::min());
+  BigIntImpl b(std::numeric_limits<int64_t>::min());
+  BigIntImpl result = a.Add(b);
 
   EXPECT_EQ(result.low_uint64(), 0);
-  EXPECT_EQ(result, BigInt<128>(a) << 1);
+  EXPECT_EQ(result, BigIntImpl(a) << 1);
   EXPECT_LT(result, a);
   EXPECT_GT(a, result);
 }
 
 TEST(BigInt, AddSubtractCarry3Words) {
-  BigInt<256> uint64_max = (BigInt<128>{
-      std::numeric_limits<int64_t>::max()} << 1) + BigInt<128>{1};
+  BigIntImpl uint64_max = (BigIntImpl{
+      std::numeric_limits<int64_t>::max()} << 1) + BigIntImpl{1};
 
-  BigInt<256> a;
-  a = a.Add<>(uint64_max);
-  a = a.Add<>(uint64_max << 64);
-  a = a.Add<>(uint64_max << 128);
-  BigInt<256> result = a.Add<>(BigInt<64>{1});
+  BigIntImpl a;
+  a = a.Add(uint64_max);
+  a = a.Add(uint64_max << 64);
+  a = a.Add(uint64_max << 128);
+  BigIntImpl result = a.Add(BigIntImpl{1});
 
   EXPECT_EQ(result.low_uint64(), 0);
-  EXPECT_EQ(result, BigInt<256>{1} << 192);
+  EXPECT_EQ(result, BigIntImpl{1} << 192);
 
-  BigInt<256> sub_result = result.Subtract<>(BigInt<64>{1});
+  BigIntImpl sub_result = result.Subtract(BigIntImpl{1});
   EXPECT_EQ(sub_result, a);
 }
 
 TEST(BigInt, PlusEqual) {
-  BigInt<128> result(1);
-  BigInt<128> add(1);
+  BigIntImpl result(1);
+  BigIntImpl add(1);
 
   for (int i = 0; i < 120; ++i) {
     result += (add << i);
   }
 
-  EXPECT_EQ(result, BigInt<128>(1) << 120);
+  EXPECT_EQ(result, BigIntImpl(1) << 120);
 }
 
 TEST(BigInt, PlusEqualCountDown) {
-  BigInt<128> result(1);
-  BigInt<128> add(1);
+  BigIntImpl result(1);
+  BigIntImpl add(1);
 
   for (int i = 119; i >= 0; --i) {
     result += (add << i);
   }
 
-  EXPECT_EQ(result, BigInt<128>(1) << 120);
+  EXPECT_EQ(result, BigIntImpl(1) << 120);
 }
 
 TEST(BigInt, PlusEqualNeg) {
-  BigInt<128> result(-1);
-  BigInt<128> add(-1);
+  BigIntImpl result(-1);
+  BigIntImpl add(-1);
 
   for (int i = 0; i < 120; ++i) {
     result += (add << i);
   }
 
-  EXPECT_EQ(result, BigInt<128>(-1) << 120);
+  EXPECT_EQ(result, BigIntImpl(-1) << 120);
 }
 
 TEST(BigInt, SubtractEqual) {
-  BigInt<128> result(-1);
-  BigInt<128> subtract(1);
+  BigIntImpl result(-1);
+  BigIntImpl subtract(1);
 
   for (int i = 0; i < 120; ++i) {
     result -= (subtract << i);
   }
 
-  EXPECT_EQ(result, BigInt<128>(-1) << 120);
+  EXPECT_EQ(result, BigIntImpl(-1) << 120);
 }
 
 TEST(BigInt, SubtractUInt64Carry) {
-  BigInt<64> a(static_cast<int64_t>(1) << 32);
-  BigInt<64> b(static_cast<int64_t>(1) << 31);
-  BigInt<64> result = a.Subtract<>(b);
+  BigIntImpl a(static_cast<int64_t>(1) << 32);
+  BigIntImpl b(static_cast<int64_t>(1) << 31);
+  BigIntImpl result = a.Subtract(b);
 
   EXPECT_EQ(result.low_uint64(), static_cast<int64_t>(1) << 31);
   EXPECT_EQ(result, b);
@@ -224,50 +223,50 @@ TEST(BigInt, SubtractUInt64Carry) {
 }
 
 TEST(BigInt, SubtractInt32ToNeg) {
-  BigInt<128> a(static_cast<int32_t>(1));
-  BigInt<64> b(static_cast<int32_t>(2));
-  BigInt<128> result = a.Subtract<>(b);
+  BigIntImpl a(static_cast<int32_t>(1));
+  BigIntImpl b(static_cast<int32_t>(2));
+  BigIntImpl result = a.Subtract(b);
 
   EXPECT_EQ(result.low_uint64(), static_cast<uint64_t>(-1));
-  EXPECT_EQ(result.Add<>(b), a);
-  EXPECT_EQ(result, BigInt<64>{-1});
+  EXPECT_EQ(result.Add(b), a);
+  EXPECT_EQ(result, BigIntImpl{-1});
 }
 
 TEST(BigInt, SubtractInt64ToNeg) {
-  BigInt<128> a(static_cast<int64_t>(1) << 32);
-  BigInt<64> b(static_cast<int64_t>(2) << 32);
-  BigInt<128> result = a.Subtract<>(b);
+  BigIntImpl a(static_cast<int64_t>(1) << 32);
+  BigIntImpl b(static_cast<int64_t>(2) << 32);
+  BigIntImpl result = a.Subtract(b);
 
   EXPECT_EQ(result.low_uint64(), static_cast<uint64_t>(-1) << 32);
-  EXPECT_EQ(result.Add<>(b), a);
-  EXPECT_EQ(result, BigInt<64>{static_cast<int64_t>(-1) *
+  EXPECT_EQ(result.Add(b), a);
+  EXPECT_EQ(result, BigIntImpl{static_cast<int64_t>(-1) *
                                static_cast<int64_t>(
                                    static_cast<uint64_t>(1) << 32)});
 }
 
 TEST(BigInt, SubtractCarryFrom127) {
-  BigInt<192> a = BigInt<192>{1} << 128;
-  BigInt<192> b = BigInt<192>{1} << 127;
-  BigInt<192> result = a.Subtract<>(b);
+  BigIntImpl a = BigIntImpl{1} << 128;
+  BigIntImpl b = BigIntImpl{1} << 127;
+  BigIntImpl result = a.Subtract(b);
 
   EXPECT_EQ(result, b);
   EXPECT_LT(result, a);
 }
 
 TEST(BigInt, Subtract192bNeg1Sub128bNeg1) {
-  BigInt<192> a(-1);
-  BigInt<128> b(-1);
-  BigInt<192> result = a.Subtract<>(b);
+  BigIntImpl a(-1);
+  BigIntImpl b(-1);
+  BigIntImpl result = a.Subtract(b);
 
-  BigInt<192> expected{0};
+  BigIntImpl expected{0};
   EXPECT_EQ(result, expected);
 }
 
 TEST(BigInt, SubtractAdjacentPosPow2) {
   for (int i = 1; i < 190; ++i) {
-    BigInt<192> a = BigInt<192>{1} << i;
-    BigInt<192> b = BigInt<192>{1} << (i - 1);
-    BigInt<192> result = a.Subtract<>(b);
+    BigIntImpl a = BigIntImpl{1} << i;
+    BigIntImpl b = BigIntImpl{1} << (i - 1);
+    BigIntImpl result = a.Subtract(b);
 
     EXPECT_EQ(result, b);
   }
@@ -275,196 +274,196 @@ TEST(BigInt, SubtractAdjacentPosPow2) {
 
 TEST(BigInt, SubtractAdjacentNegPow2) {
   for (int i = 1; i < 191; ++i) {
-    BigInt<192> a = BigInt<192>{-1} << i;
-    BigInt<192> b = BigInt<192>{-1} << (i - 1);
-    BigInt<192> result = a.Subtract<>(b);
+    BigIntImpl a = BigIntImpl{-1} << i;
+    BigIntImpl b = BigIntImpl{-1} << (i - 1);
+    BigIntImpl result = a.Subtract(b);
 
     EXPECT_EQ(result, b);
   }
 }
 
 TEST(BigInt, MultiplyInt32Max) {
-  BigInt<64> a{std::numeric_limits<int32_t>::max()};
-  BigInt<128> result = a.Multiply<>(a);
+  BigIntImpl a{std::numeric_limits<int32_t>::max()};
+  BigIntImpl result = a.Multiply(a);
 
-  BigInt<128> expected{
+  BigIntImpl expected{
     static_cast<int64_t>(std::numeric_limits<int32_t>::max()) *
     static_cast<int64_t>(std::numeric_limits<int32_t>::max())};
   EXPECT_EQ(result, expected);
 }
 
 TEST(BigInt, MultiplyInt64Max) {
-  BigInt<64> a{std::numeric_limits<int64_t>::max()};
-  BigInt<128> result = a.Multiply<>(a);
+  BigIntImpl a{std::numeric_limits<int64_t>::max()};
+  BigIntImpl result = a.Multiply(a);
 
-  BigInt<128> expected = (BigInt<128>{1} << 126) -
-    a - a - BigInt<64>{1};
+  BigIntImpl expected = (BigIntImpl{1} << 126) -
+    a - a - BigIntImpl{1};
   EXPECT_EQ(result, expected);
 }
 
 TEST(BigInt, MultiplyInt32Min) {
-  BigInt<64> a{std::numeric_limits<int32_t>::min()};
-  BigInt<128> result = a.Multiply<>(a);
+  BigIntImpl a{std::numeric_limits<int32_t>::min()};
+  BigIntImpl result = a.Multiply(a);
 
-  BigInt<128> expected{
+  BigIntImpl expected{
     static_cast<int64_t>(std::numeric_limits<int32_t>::min()) *
     static_cast<int64_t>(std::numeric_limits<int32_t>::min())};
   EXPECT_EQ(result, expected);
 }
 
 TEST(BigInt, MultiplyInt64Min) {
-  BigInt<64> a{std::numeric_limits<int64_t>::min()};
-  BigInt<128> result = a.Multiply<>(a);
+  BigIntImpl a{std::numeric_limits<int64_t>::min()};
+  BigIntImpl result = a.Multiply(a);
 
-  BigInt<128> expected = (BigInt<128>{1} << 126);
+  BigIntImpl expected = (BigIntImpl{1} << 126);
   EXPECT_EQ(result, expected);
 }
 
 TEST(BigInt, Multiply1With2Pow63) {
-  const BigInt<256> a(1);
-  const BigInt<256> a_shifted = a << 0;
-  const BigInt<256> b_shifted = a << 63;
-  const BigInt<512> result = a_shifted * b_shifted;
-  const BigInt<512> expected = BigInt<512>{1} << 63;
+  const BigIntImpl a(1);
+  const BigIntImpl a_shifted = a << 0;
+  const BigIntImpl b_shifted = a << 63;
+  const BigIntImpl result = a_shifted * b_shifted;
+  const BigIntImpl expected = BigIntImpl{1} << 63;
   EXPECT_EQ(result, expected);
 }
 
 TEST(BigInt, MultiplyQuadPower2PosPos) {
-  const BigInt<256> a(1);
+  const BigIntImpl a(1);
   for (size_t i = 0; i < BigUIntWord::bits_per_word*4 - 1; i++) {
-    const BigInt<256> a_shifted = a << i;
+    const BigIntImpl a_shifted = a << i;
     for (size_t j = 0; j < BigUIntWord::bits_per_word*4 - 1; j++) {
-      const BigInt<256> b_shifted = a << j;
-      const BigInt<512> result = a_shifted * b_shifted;
-      const BigInt<512> expected = (BigInt<512>{1} << (i + j));
+      const BigIntImpl b_shifted = a << j;
+      const BigIntImpl result = a_shifted * b_shifted;
+      const BigIntImpl expected = (BigIntImpl{1} << (i + j));
       EXPECT_EQ(result, expected);
     }
   }
 }
 
 TEST(BigInt, MultiplyQuadPower2PosNeg) {
-  const BigInt<256> a(1);
-  const BigInt<256> b(-1);
+  const BigIntImpl a(1);
+  const BigIntImpl b(-1);
   for (size_t i = 0; i < BigUIntWord::bits_per_word*4 - 1; i++) {
-    const BigInt<256> a_shifted = a << i;
+    const BigIntImpl a_shifted = a << i;
     for (size_t j = 0; j < BigUIntWord::bits_per_word*4 - 1; j++) {
-      const BigInt<256> b_shifted = b << j;
-      const BigInt<512> result = a_shifted * b_shifted;
-      const BigInt<512> expected = (BigInt<512>{-1} << (i + j));
+      const BigIntImpl b_shifted = b << j;
+      const BigIntImpl result = a_shifted * b_shifted;
+      const BigIntImpl expected = (BigIntImpl{-1} << (i + j));
       EXPECT_EQ(result, expected);
     }
   }
 }
 
 TEST(BigInt, MultiplyQuadPower2NegNeg) {
-  const BigInt<256> a(-1);
-  const BigInt<256> b(-1);
+  const BigIntImpl a(-1);
+  const BigIntImpl b(-1);
   for (size_t i = 0; i < BigUIntWord::bits_per_word*4 - 1; i++) {
-    const BigInt<256> a_shifted = a << i;
+    const BigIntImpl a_shifted = a << i;
     for (size_t j = 0; j < BigUIntWord::bits_per_word*4 - 1; j++) {
-      const BigInt<256> b_shifted = b << j;
-      const BigInt<512> result = a_shifted * b_shifted;
-      const BigInt<512> expected = (BigInt<512>{1} << (i + j));
+      const BigIntImpl b_shifted = b << j;
+      const BigIntImpl result = a_shifted * b_shifted;
+      const BigIntImpl expected = (BigIntImpl{1} << (i + j));
       EXPECT_EQ(result, expected);
     }
   }
 }
 
 TEST(BigInt, Negate0) {
-  const BigInt<128> a{0};
-  const BigInt<128> result = -a;
+  const BigIntImpl a{0};
+  const BigIntImpl result = -a;
   EXPECT_EQ(result, a);
 }
 
 TEST(BigInt, NegateInt32Min) {
-  const BigInt<64> a{std::numeric_limits<int32_t>::min()};
-  const BigInt<64> result = -a;
-  const BigInt<64> expected = BigInt<64>{1} << 31;
+  const BigIntImpl a{std::numeric_limits<int32_t>::min()};
+  const BigIntImpl result = -a;
+  const BigIntImpl expected = BigIntImpl{1} << 31;
   EXPECT_EQ(result, expected);
 }
 
 TEST(BigInt, NegateInt64Min) {
-  const BigInt<128> a{std::numeric_limits<int64_t>::min()};
-  const BigInt<128> result = -a;
-  const BigInt<128> expected = BigInt<128>{1} << 63;
+  const BigIntImpl a{std::numeric_limits<int64_t>::min()};
+  const BigIntImpl result = -a;
+  const BigIntImpl expected = BigIntImpl{1} << 63;
   EXPECT_EQ(result, expected);
 }
 
 TEST(BigInt, NegateInt128Min) {
-  const BigInt<192> a = BigInt<192>{std::numeric_limits<int64_t>::min()} << 64;
-  const BigInt<192> result = -a;
-  const BigInt<192> expected = BigInt<192>{1} << 127;
+  const BigIntImpl a = BigIntImpl{std::numeric_limits<int64_t>::min()} << 64;
+  const BigIntImpl result = -a;
+  const BigIntImpl expected = BigIntImpl{1} << 127;
   EXPECT_EQ(result, expected);
 }
 
 TEST(BigInt, NegateInt128MinAfterAssign) {
-  BigInt<192> a = BigInt<192>{5} << 128;
-  a = BigInt<192>{std::numeric_limits<int64_t>::min()} << 64;
+  BigIntImpl a = BigIntImpl{5} << 128;
+  a = BigIntImpl{std::numeric_limits<int64_t>::min()} << 64;
   a.Negate();
-  const BigInt<192> expected = BigInt<192>{1} << 127;
+  const BigIntImpl expected = BigIntImpl{1} << 127;
   EXPECT_EQ(a, expected);
 }
 
 TEST(BigInt, NegateInt128MaxExtraRoom) {
-  const BigInt<192> a = BigInt<128>::max_value();
-  const BigInt<192> result = -a;
+  const BigIntImpl a = BigIntImpl::max_value(127);
+  const BigIntImpl result = -a;
   EXPECT_LT(result, 0);
-  EXPECT_EQ(result - BigInt<192>(1), BigInt<128>::min_value());
+  EXPECT_EQ(result - BigIntImpl(1), BigIntImpl::min_value(127));
 }
 
 TEST(BigInt, NegateOverflowFalse) {
-  BigInt<128> a{std::numeric_limits<int64_t>::min()};
+  BigIntImpl a{std::numeric_limits<int64_t>::min()};
   EXPECT_FALSE(a.Negate());
 }
 
 TEST(BigInt, GetAbs64Int64Min) {
-  const BigInt<64> a{std::numeric_limits<int64_t>::min()};
+  const BigIntImpl a{std::numeric_limits<int64_t>::min()};
   bool was_signed;
   const auto result = a.GetAbs(was_signed);
-  const BigInt<65> expected = BigInt<65>{1} << 63;
+  const BigIntImpl expected = BigIntImpl{1} << 63;
   EXPECT_GT(result, 0);
   EXPECT_EQ(result, expected);
   EXPECT_TRUE(was_signed);
 }
 
 TEST(BigInt, DividePos1byPos1) {
-  BigInt<64> a(1);
-  BigInt<64> b(1);
-  BigInt<64> remainder;
-  BigInt<64> result = a.DivideRemainder(b, &remainder);
+  BigIntImpl a(1);
+  BigIntImpl b(1);
+  BigIntImpl remainder;
+  BigIntImpl result = a.DivideRemainder(b, &remainder);
 
-  EXPECT_EQ(result, BigInt<64>{1});
-  EXPECT_EQ(remainder, BigInt<64>{0});
+  EXPECT_EQ(result, BigIntImpl{1});
+  EXPECT_EQ(remainder, BigIntImpl{0});
 }
 
 TEST(BigInt, DivideNeg3byPos2) {
-  BigInt<64> a(-3);
-  BigInt<64> b(2);
-  BigInt<64> remainder;
-  BigInt<64> result = a.DivideRemainder(b, &remainder);
+  BigIntImpl a(-3);
+  BigIntImpl b(2);
+  BigIntImpl remainder;
+  BigIntImpl result = a.DivideRemainder(b, &remainder);
 
-  EXPECT_EQ(result, BigInt<64>{-1});
-  EXPECT_EQ(remainder, BigInt<64>{-1});
+  EXPECT_EQ(result, BigIntImpl{-1});
+  EXPECT_EQ(remainder, BigIntImpl{-1});
 }
 
 TEST(BigInt, DividePos3byNeg2) {
-  BigInt<64> a(3);
-  BigInt<64> b(-2);
-  BigInt<64> remainder;
-  BigInt<64> result = a.DivideRemainder(b, &remainder);
+  BigIntImpl a(3);
+  BigIntImpl b(-2);
+  BigIntImpl remainder;
+  BigIntImpl result = a.DivideRemainder(b, &remainder);
 
-  EXPECT_EQ(result, BigInt<64>{-1});
-  EXPECT_EQ(remainder, BigInt<64>{1});
+  EXPECT_EQ(result, BigIntImpl{-1});
+  EXPECT_EQ(remainder, BigIntImpl{1});
 }
 
 TEST(BigInt, DivideNeg3byNeg2) {
-  BigInt<64> a(-3);
-  BigInt<64> b(-2);
-  BigInt<64> remainder;
-  BigInt<64> result = a.DivideRemainder(b, &remainder);
+  BigIntImpl a(-3);
+  BigIntImpl b(-2);
+  BigIntImpl remainder;
+  BigIntImpl result = a.DivideRemainder(b, &remainder);
 
-  EXPECT_EQ(result, BigInt<64>{1});
-  EXPECT_EQ(remainder, BigInt<64>{-1});
+  EXPECT_EQ(result, BigIntImpl{1});
+  EXPECT_EQ(remainder, BigIntImpl{-1});
 }
 
 TEST(BigInt, DivideBig3And2Combinations) {
@@ -473,33 +472,33 @@ TEST(BigInt, DivideBig3And2Combinations) {
   for (int shift : shift_values) {
     for (int a_mult : mult) {
       for (int b_mult : mult) {
-        BigInt<192> a = BigInt<192>{3 * a_mult} << shift;
-        BigInt<192> b = BigInt<192>{2 * b_mult} << shift;
-        BigInt<192> remainder;
-        BigInt<192> result = a.DivideRemainder(b, &remainder);
+        BigIntImpl a = BigIntImpl{3 * a_mult} << shift;
+        BigIntImpl b = BigIntImpl{2 * b_mult} << shift;
+        BigIntImpl remainder;
+        BigIntImpl result = a.DivideRemainder(b, &remainder);
 
-        EXPECT_EQ(result, BigInt<192>{1 * a_mult * b_mult});
-        EXPECT_EQ(remainder, BigInt<192>{1 * a_mult} << shift);
+        EXPECT_EQ(result, BigIntImpl{1 * a_mult * b_mult});
+        EXPECT_EQ(remainder, BigIntImpl{1 * a_mult} << shift);
       }
     }
   }
 }
 
 TEST(BigInt, DivideManyBitsByFewBits) {
-  BigInt<128> a = BigInt<128>{1} << 64;
-  BigInt<8> b{2};
+  BigIntImpl a = BigIntImpl{1} << 64;
+  BigIntImpl b{2};
   auto result = a / b;
-  EXPECT_EQ(result, BigInt<128>{1} << 63);
+  EXPECT_EQ(result, BigIntImpl{1} << 63);
 }
 
 TEST(BigInt, DivideTouchBothWords) {
-  BigInt<128> a = (BigInt<128>{2} << 64) + BigInt<128>{2};
-  BigInt<128> b{2};
-  BigInt<128> remainder;
-  BigInt<128> result = a.DivideRemainder(b, &remainder);
+  BigIntImpl a = (BigIntImpl{2} << 64) + BigIntImpl{2};
+  BigIntImpl b{2};
+  BigIntImpl remainder;
+  BigIntImpl result = a.DivideRemainder(b, &remainder);
 
-  EXPECT_EQ(result, (BigInt<128>{1} << 64) + BigInt<128>{1});
-  EXPECT_EQ(remainder, BigInt<64>{0});
+  EXPECT_EQ(result, (BigIntImpl{1} << 64) + BigIntImpl{1});
+  EXPECT_EQ(remainder, BigIntImpl{0});
 }
 
 TEST(BigInt, Divide33bitOverflow) {
@@ -507,10 +506,10 @@ TEST(BigInt, Divide33bitOverflow) {
   // 2^64-1) by one greater than the divisor (which is 2^31 + 23169 + 1). The
   // remainder will be larger than 2^33. So the test verifies that the
   // algorithm is expecting that large of a remainder.
-  BigInt<196> a = (BigInt<196>{1} << 128) - BigInt<64>{1};
-  BigInt<64> divisor{(1l<<31) + 23169};
-  BigInt<64> remainder;
-  BigInt<196> result = a.DivideRemainder(divisor, &remainder);
+  BigIntImpl a = (BigIntImpl{1} << 128) - BigIntImpl{1};
+  BigIntImpl divisor{(1l<<31) + 23169};
+  BigIntImpl remainder;
+  BigIntImpl result = a.DivideRemainder(divisor, &remainder);
 
   EXPECT_LT(remainder, divisor);
   EXPECT_EQ(remainder, a - result*divisor);
@@ -518,47 +517,47 @@ TEST(BigInt, Divide33bitOverflow) {
 
 TEST(BigInt, GetSign) {
   constexpr int test_bits = 256;
-  EXPECT_EQ(BigInt<test_bits>{0}.GetSign(), 0);
+  EXPECT_EQ(BigIntImpl{0}.GetSign(), 0);
   for (int shift = 0; shift < test_bits - 1; ++shift) {
-    EXPECT_GT((BigInt<test_bits>{1} << shift).GetSign(), 0) << shift;
+    EXPECT_GT((BigIntImpl{1} << shift).GetSign(), 0) << shift;
   }
   for (int shift = 0; shift < test_bits; ++shift) {
-    EXPECT_LT((BigInt<test_bits>{-1} << shift).GetSign(), 0) << shift;
+    EXPECT_LT((BigIntImpl{-1} << shift).GetSign(), 0) << shift;
   }
 }
 
 TEST(BigInt, PrintNeg) {
   std::ostringstream os;
-  os << BigInt<32>(-1);
+  os << BigIntImpl(-1);
   EXPECT_EQ(os.str(), "-1");
 
   os.str("");
-  os << BigInt<32>(-25);
+  os << BigIntImpl(-25);
   EXPECT_EQ(os.str(), "-25");
 }
 
 TEST(BigInt, PrintPos) {
   std::ostringstream os;
-  os << BigInt<32>(1);
+  os << BigIntImpl(1);
   EXPECT_EQ(os.str(), "1");
 
   os.str("");
-  os << BigInt<32>(25);
+  os << BigIntImpl(25);
   EXPECT_EQ(os.str(), "25");
 }
 
 TEST(BigInt, Print2WordLargePos) {
-  BigInt<128> a = (BigInt<128>{2147483647} << 64) +
-                  (BigInt<128>{9223372033633550336} << 1) +
-                  (BigInt<128>{1});
+  BigIntImpl a = (BigIntImpl{2147483647} << 64) +
+                  (BigIntImpl{9223372033633550336} << 1) +
+                  (BigIntImpl{1});
   std::ostringstream os;
   os << a;
   EXPECT_EQ(os.str(), "39614081257132168790329524225");
 }
 
 TEST(BigInt, Print4WordLargePos) {
-  BigInt<256> a = (BigInt<256>{1} << 192) -
-                  BigInt<256>{1};
+  BigIntImpl a = (BigIntImpl{1} << 192) -
+                  BigIntImpl{1};
   std::ostringstream os;
   os << a;
   EXPECT_EQ(os.str(),
@@ -566,9 +565,9 @@ TEST(BigInt, Print4WordLargePos) {
 }
 
 TEST(BigInt, PrintRepeating2s) {
-  BigInt<512> a = BigInt<512>{3577192789080335246} +
-                  (BigInt<512>{6023345402697246855} << 65) +
-                  (BigInt<512>{1} << 64);
+  BigIntImpl a = BigIntImpl{3577192789080335246} +
+                  (BigIntImpl{6023345402697246855} << 65) +
+                  (BigIntImpl{1} << 64);
   std::ostringstream os;
   os << a;
   EXPECT_EQ(os.str(), "222222222222222222222222222222222222222");
@@ -576,149 +575,149 @@ TEST(BigInt, PrintRepeating2s) {
 
 TEST(BigInt, PrintZero) {
   std::ostringstream os;
-  os << BigInt<32>(0);
+  os << BigIntImpl(0);
   EXPECT_EQ(os.str(), "0");
 }
 
 TEST(BigInt, MinValue) {
-  EXPECT_EQ(BigInt<98>::min_value(), BigInt<128>{-1} << 97);
+  EXPECT_EQ(BigIntImpl::min_value(97), BigIntImpl{-1} << 97);
 }
 
 TEST(BigInt, MinValue65) {
-  EXPECT_EQ(BigInt<65>::min_value(), BigInt<128>{-1} << 64);
+  EXPECT_EQ(BigIntImpl::min_value(64), BigIntImpl{-1} << 64);
 }
 
 TEST(BigInt, MinValueInt256) {
-  EXPECT_EQ(BigInt<256>::min_value(), BigInt<256>{-1} << 255);
+  EXPECT_EQ(BigIntImpl::min_value(255), BigIntImpl{-1} << 255);
 }
 
 TEST(BigInt, MaxValue) {
-  EXPECT_EQ(BigInt<98>::max_value(), (BigInt<128>{1} << 97) - BigInt<128>{1});
+  EXPECT_EQ(BigIntImpl::max_value(97), (BigIntImpl{1} << 97) - BigIntImpl{1});
 }
 
 TEST(BigInt, MaxValue65) {
-  EXPECT_EQ(BigInt<65>::max_value(), (BigInt<128>{1} << 64) - BigInt<128>{1});
+  EXPECT_EQ(BigIntImpl::max_value(64), (BigIntImpl{1} << 64) - BigIntImpl{1});
 }
 
 template <int i>
 constexpr int force_constexpr_int = i;
 
 TEST(BigInt, CastDoubleInt64Min) {
-  const BigInt<128> a{std::numeric_limits<int64_t>::min()};
+  const BigIntImpl a{std::numeric_limits<int64_t>::min()};
   EXPECT_EQ((double)a, double(std::numeric_limits<int64_t>::min()));
 }
 
 TEST(BigInt, CastDoubleInt64Max) {
-  const BigInt<128> a{std::numeric_limits<int64_t>::max()};
+  const BigIntImpl a{std::numeric_limits<int64_t>::max()};
   EXPECT_EQ((double)a, double(std::numeric_limits<int64_t>::max()));
 }
 
 TEST(BigInt, CastDoubleInt64MaxShifted32) {
-  const BigInt<128> a(BigInt<128>{std::numeric_limits<int64_t>::max()} << 32);
+  const BigIntImpl a(BigIntImpl{std::numeric_limits<int64_t>::max()} << 32);
   EXPECT_EQ((double)a,
             double(std::numeric_limits<int64_t>::max()) * std::ldexp(1, 32));
 }
 
 TEST(BigInt, CastDoubleInt64MinShifted32) {
-  const BigInt<128> a(BigInt<128>{std::numeric_limits<int64_t>::min()} << 32);
+  const BigIntImpl a(BigIntImpl{std::numeric_limits<int64_t>::min()} << 32);
   EXPECT_EQ((double)a,
             double(std::numeric_limits<int64_t>::min()) * std::ldexp(1, 32));
 }
 
 TEST(BigInt, CastDoubleInt32MinShifted48) {
-  const BigInt<128> a(BigInt<128>{std::numeric_limits<int32_t>::min()} << 48);
+  const BigIntImpl a(BigIntImpl{std::numeric_limits<int32_t>::min()} << 48);
   EXPECT_EQ((double)a,
             double(std::numeric_limits<int32_t>::min()) * std::ldexp(1, 48));
 }
 
 TEST(BigInt, Compare0Against0) {
-  const BigInt<128> a(0);
-  const BigInt<128> b(0);
+  const BigIntImpl a(0);
+  const BigIntImpl b(0);
   EXPECT_EQ(a.Compare(b), 0);
 }
 
 TEST(BigInt, Compare0Against2Pow63) {
-  const BigInt<128> a(0);
-  const BigInt<128> b = BigInt<128>{1} << 63;
+  const BigIntImpl a(0);
+  const BigIntImpl b = BigIntImpl{1} << 63;
   EXPECT_EQ(a.Compare(b), -1);
 }
 
 TEST(BigInt, Compare0AgainstInt128Max) {
-  const BigInt<128> a(0);
-  const BigInt<128> b = BigInt<128>::max_value();
+  const BigIntImpl a(0);
+  const BigIntImpl b = BigIntImpl::max_value(127);
   EXPECT_EQ(a.Compare(b), -1);
 }
 
 TEST(BigInt, Compare2Pow63Against0) {
-  const BigInt<128> a = BigInt<128>{1} << 63;
-  const BigInt<128> b(0);
+  const BigIntImpl a = BigIntImpl{1} << 63;
+  const BigIntImpl b(0);
   EXPECT_EQ(a.Compare(b), 1);
 }
 
 TEST(BigInt, CompareInt128MaxAgainst0) {
-  const BigInt<128> a = BigInt<128>::max_value();
-  const BigInt<128> b(0);
+  const BigIntImpl a = BigIntImpl::max_value(127);
+  const BigIntImpl b(0);
   EXPECT_EQ(a.Compare(b), 1);
 }
 
 TEST(BigInt, Compare2Pow63Against2Pow64) {
-  const BigInt<128> a = BigInt<128>{1} << 63;
-  const BigInt<128> b = BigInt<128>{1} << 64;
+  const BigIntImpl a = BigIntImpl{1} << 63;
+  const BigIntImpl b = BigIntImpl{1} << 64;
   EXPECT_EQ(a.Compare(b), -1);
 }
 
 TEST(BigInt, CompareInt128MinAgainst2Pow64) {
-  const BigInt<128> a = BigInt<128>::min_value();
-  const BigInt<128> b = BigInt<128>{1} << 64;
+  const BigIntImpl a = BigIntImpl::min_value(127);
+  const BigIntImpl b = BigIntImpl{1} << 64;
   EXPECT_EQ(a.Compare(b), -1);
 }
 
 TEST(BigInt, Compare2Pow64Plus2Pow63Against2Pow64) {
-  const BigInt<128> a = (BigInt<128>{1} << 64) + (BigInt<128>{1} << 63);
-  const BigInt<128> b = BigInt<128>{1} << 64;
+  const BigIntImpl a = (BigIntImpl{1} << 64) + (BigIntImpl{1} << 63);
+  const BigIntImpl b = BigIntImpl{1} << 64;
   EXPECT_EQ(a.Compare(b), 1);
 }
 
 TEST(BigInt, CompareInt64MinAgainstInt64Max) {
-  const BigInt<128> a(std::numeric_limits<int64_t>::min());
-  const BigInt<128> b(std::numeric_limits<int64_t>::max());
+  const BigIntImpl a(std::numeric_limits<int64_t>::min());
+  const BigIntImpl b(std::numeric_limits<int64_t>::max());
   EXPECT_EQ(a.Compare(b), -1);
 }
 
 TEST(BigInt, Lt0Against0) {
-  const BigInt<128> a(0);
-  const BigInt<128> b(0);
+  const BigIntImpl a(0);
+  const BigIntImpl b(0);
   EXPECT_FALSE(a < b);
 }
 
 TEST(BigInt, LtEq0Against0) {
-  const BigInt<128> a(0);
-  const BigInt<128> b(0);
+  const BigIntImpl a(0);
+  const BigIntImpl b(0);
   EXPECT_TRUE(a <= b);
 }
 
 TEST(BigInt, Gt0Against0) {
-  const BigInt<128> a(0);
-  const BigInt<128> b(0);
+  const BigIntImpl a(0);
+  const BigIntImpl b(0);
   EXPECT_FALSE(a > b);
 }
 
 TEST(BigInt, GtEq0Against0) {
-  const BigInt<128> a(0);
-  const BigInt<128> b(0);
+  const BigIntImpl a(0);
+  const BigIntImpl b(0);
   EXPECT_TRUE(a >= b);
 }
 
 TEST(BigInt, LtFlippable0Against0) {
-  const BigInt<128> a(0);
-  const BigInt<128> b(0);
+  const BigIntImpl a(0);
+  const BigIntImpl b(0);
   EXPECT_FALSE(a.LessThan(/*flip=*/false, b));
   EXPECT_FALSE(a.LessThan(/*flip=*/true, b));
 }
 
 TEST(BigInt, LtFlippable0Against2Pow63) {
-  const BigInt<128> a(0);
-  const BigInt<128> b = BigInt<128>{1} << 63;
+  const BigIntImpl a(0);
+  const BigIntImpl b = BigIntImpl{1} << 63;
   EXPECT_TRUE(a.LessThan(/*flip=*/false, b));
   EXPECT_TRUE(b.LessThan(/*flip=*/true, a));
 
@@ -727,8 +726,8 @@ TEST(BigInt, LtFlippable0Against2Pow63) {
 }
 
 TEST(BigInt, LtFlippableMinIntAgainstMaxInt) {
-  const BigInt<128> min_value = BigInt<128>::min_value();
-  const BigInt<128> max_value = BigInt<128>::max_value();
+  const BigIntImpl min_value = BigIntImpl::min_value(127);
+  const BigIntImpl max_value = BigIntImpl::max_value(127);
   EXPECT_TRUE(min_value.LessThan(/*flip=*/false, max_value));
   EXPECT_FALSE(min_value.LessThan(/*flip=*/true, max_value));
 
@@ -737,14 +736,14 @@ TEST(BigInt, LtFlippableMinIntAgainstMaxInt) {
 }
 
 TEST(BigInt, LtFlippable2Pow63Against2Pow63) {
-  const BigInt<128> a = BigInt<128>{1} << 63;
+  const BigIntImpl a = BigIntImpl{1} << 63;
   EXPECT_FALSE(a.LessThan(/*flip=*/false, a));
   EXPECT_FALSE(a.LessThan(/*flip=*/true, a));
 }
 
 TEST(BigInt, LtFlippable2Pow63Against2Pow63Plus1) {
-  const BigInt<128> a = BigInt<128>{1} << 63;
-  const BigInt<128> b = a + 1;
+  const BigIntImpl a = BigIntImpl{1} << 63;
+  const BigIntImpl b = a + 1;
   EXPECT_TRUE(a.LessThan(/*flip=*/false, b));
   EXPECT_FALSE(a.LessThan(/*flip=*/true, b));
 
@@ -755,8 +754,8 @@ TEST(BigInt, LtFlippable2Pow63Against2Pow63Plus1) {
 TEST(BigInt, LtFlippableSmallInts) {
   for (int i = -5; i < 5; ++i) {
     for (int j = -5; j < 5; ++j) {
-      const BigInt<128> a(i);
-      const BigInt<128> b(j);
+      const BigIntImpl a(i);
+      const BigIntImpl b(j);
       EXPECT_EQ(i < j, a.LessThan(/*flip=*/false, b));
       EXPECT_EQ(j < i, a.LessThan(/*flip=*/true, b));
     }
@@ -764,27 +763,27 @@ TEST(BigInt, LtFlippableSmallInts) {
 }
 
 TEST(BigInt, DecrementInt64Min) {
-  BigInt<128> a = BigInt<64>::min_value();
+  BigIntImpl a = BigIntImpl::min_value(63);
   --a;
 
-  EXPECT_LT(a, BigInt<128>(0));
+  EXPECT_LT(a, BigIntImpl(0));
 }
 
 TEST(BigInt, GetGreatestCommonDivisorInt64Min) {
-  BigInt<64> a = BigInt<64>::min_value();
-  BigInt<64> b = BigInt<64>::min_value();
+  BigIntImpl a = BigIntImpl::min_value(63);
+  BigIntImpl b = BigIntImpl::min_value(63);
   EXPECT_EQ(a.GetGreatestCommonDivisor(b), a);
 }
 
 TEST(BigInt, GetGreatestCommonDivisorInt128Min) {
-  BigInt<128> a = BigInt<128>::min_value();
-  BigInt<128> b = BigInt<128>::min_value();
+  BigIntImpl a = BigIntImpl::min_value(127);
+  BigIntImpl b = BigIntImpl::min_value(127);
   EXPECT_EQ(a.GetGreatestCommonDivisor(b), a);
 }
 
 TEST(BigInt, GetGreatestCommonDivisorInt256Min) {
-  BigInt<256> a = BigInt<256>::min_value();
-  BigInt<256> b = BigInt<256>::min_value();
+  BigIntImpl a = BigIntImpl::min_value(255);
+  BigIntImpl b = BigIntImpl::min_value(255);
   EXPECT_EQ(a.GetGreatestCommonDivisor(b), a);
 }
 

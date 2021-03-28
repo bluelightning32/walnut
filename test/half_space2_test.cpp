@@ -8,7 +8,7 @@ namespace walnut {
 
 TEST(HalfSpace2, ComparePoint2) {
   // Anything with x>5 is included in the half space.
-  HalfSpace2 half_space(/*normal=*/Vector2(/*x=*/2, /*y=*/0), /*dist=*/BigInt<32>(10));
+  HalfSpace2 half_space(/*normal=*/Vector2(/*x=*/2, /*y=*/0), /*dist=*/BigIntImpl(10));
 
   EXPECT_TRUE(half_space.normal().IsSameDir(Vector2(1, 0)));
 
@@ -22,7 +22,7 @@ TEST(HalfSpace2, ComparePoint2) {
 
 TEST(HalfSpace3, CompareHomoPoint2) {
   // Anything with x>5 is included in the half space.
-  HalfSpace2 half_space(/*normal=*/Vector2(/*x=*/2, /*y=*/0), /*dist=*/BigInt<32>(10));
+  HalfSpace2 half_space(/*normal=*/Vector2(/*x=*/2, /*y=*/0), /*dist=*/BigIntImpl(10));
 
   // excluded
   EXPECT_LT(half_space.Compare(HomoPoint2(/*x=*/1, /*y=*/100, /*w=*/1)), 0);

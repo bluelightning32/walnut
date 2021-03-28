@@ -26,7 +26,7 @@ TEST(PluckerLine, IsCoincidentPoint3) {
   const Point3 p3(p2 + (p2 - p1));
   EXPECT_TRUE(line.IsCoincident(p3));
 
-  const HomoPoint3 doubled_p3(p3.vector_from_origin().Scale(2), BigInt<8>(2));
+  const HomoPoint3 doubled_p3(p3.vector_from_origin().Scale(2), BigIntImpl(2));
   EXPECT_TRUE(line.IsCoincident(doubled_p3));
 
   const Point3 p4(p1 - (p2 - p1));
@@ -35,7 +35,7 @@ TEST(PluckerLine, IsCoincidentPoint3) {
   const Point3 p5(17, 23, 31);
   EXPECT_FALSE(line.IsCoincident(p5));
 
-  const HomoPoint3 doubled_p5(p5.vector_from_origin().Scale(2), BigInt<8>(2));
+  const HomoPoint3 doubled_p5(p5.vector_from_origin().Scale(2), BigIntImpl(2));
   EXPECT_FALSE(line.IsCoincident(doubled_p5));
 }
 
@@ -218,9 +218,9 @@ TEST(PluckerLine, IntersectPlane) {
 
 template <int point3_bits>
 void TestIntersectPlanes() {
-  const BigInt<point3_bits> min_int = BigInt<point3_bits>::min_value();
-  const BigInt<point3_bits> min_plus_1 = min_int + BigInt<point3_bits>(1);
-  const BigInt<point3_bits> max_int = BigInt<point3_bits>::max_value();
+  const BigIntImpl min_int = BigIntImpl::min_value(point3_bits - 1);
+  const BigIntImpl min_plus_1 = min_int + BigIntImpl(1);
+  const BigIntImpl max_int = BigIntImpl::max_value(point3_bits - 1);
 
   Point3 plane1_points[3] = {
     Point3{min_plus_1, min_int, min_int},
@@ -321,12 +321,12 @@ TEST(PluckerLine, Project2DDropZSideness) {
 
 TEST(PluckerLine, ReduceAllIntMin) {
   PluckerLine original(
-      /*d=*/Vector3(/*x=*/BigInt<256>::min_value(),
-                    /*y=*/BigInt<256>::min_value(),
-                    /*z=*/BigInt<256>::min_value()),
-      /*m=*/Vector3(/*x=*/BigInt<256>::min_value(),
-                    /*y=*/BigInt<256>::min_value(),
-                    /*z=*/BigInt<256>::min_value()));
+      /*d=*/Vector3(/*x=*/BigIntImpl::min_value(255),
+                    /*y=*/BigIntImpl::min_value(255),
+                    /*z=*/BigIntImpl::min_value(255)),
+      /*m=*/Vector3(/*x=*/BigIntImpl::min_value(255),
+                    /*y=*/BigIntImpl::min_value(255),
+                    /*z=*/BigIntImpl::min_value(255)));
 
   PluckerLine reduced = original;
   reduced.Reduce();

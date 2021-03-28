@@ -55,13 +55,12 @@ TEST(Vector3, Minus) {
 
 TEST(Vector3, MinusMax) {
   static constexpr int coord_bits = 640;
-  BigInt<coord_bits> min_value = BigInt<coord_bits>::min_value();
-  BigInt<coord_bits> max_value = BigInt<coord_bits>::max_value();
+  BigIntImpl min_value = BigIntImpl::min_value(coord_bits - 1);
+  BigIntImpl max_value = BigIntImpl::max_value(coord_bits - 1);
   Vector3 v1(min_value, min_value, min_value);
   Vector3 v2(max_value, max_value, max_value);
 
-  BigInt<coord_bits + 1> expected = BigInt<coord_bits + 1>(min_value) -
-                                    BigInt<coord_bits + 1>(max_value);
+  BigIntImpl expected = min_value - max_value;
 
   EXPECT_EQ(v1 - v2, Vector3(expected, expected, expected));
 }
@@ -81,12 +80,12 @@ TEST(Vector3, GetScaleSquared) {
 
 TEST(Vector3, GetScaleSquaredMax) {
   static constexpr int coord_bits = 640;
-  BigInt<coord_bits> min_value = BigInt<coord_bits>::min_value();
+  BigIntImpl min_value = BigIntImpl::min_value(coord_bits - 1);
   // abs(int_min) > abs(int_max), so a vector with all int_min coordinates will
   // have the biggest scale.
   Vector3 min_vector(min_value, min_value, min_value);
 
-  BigInt<coord_bits*2 + 5> expected_scale = min_value;
+  BigIntImpl expected_scale = min_value;
   expected_scale = expected_scale * min_value;
   expected_scale = expected_scale * 3;
 
@@ -106,10 +105,10 @@ TEST(Vector3, Scale) {
 
 TEST(Vector3, DotNegMax) {
   static constexpr int coord_bits = 640;
-  BigInt<coord_bits> min_value = BigInt<coord_bits>::min_value();
+  BigIntImpl min_value = BigIntImpl::min_value(coord_bits - 1);
   Vector3 min_vector(min_value, min_value, min_value);
 
-  BigInt<coord_bits*2 + 5> expected_scale = min_value;
+  BigIntImpl expected_scale = min_value;
   expected_scale = expected_scale * min_value;
   expected_scale = expected_scale * 3;
 
@@ -118,10 +117,10 @@ TEST(Vector3, DotNegMax) {
 
 TEST(Vector3, DotPosMax) {
   static constexpr int coord_bits = 640;
-  BigInt<coord_bits> max_value = BigInt<coord_bits>::max_value();
+  BigIntImpl max_value = BigIntImpl::max_value(coord_bits - 1);
   Vector3 max_vector(max_value, max_value, max_value);
 
-  BigInt<coord_bits*2 + 5> expected_scale = max_value;
+  BigIntImpl expected_scale = max_value;
   expected_scale = expected_scale * max_value;
   expected_scale = expected_scale * 3;
 
@@ -130,17 +129,17 @@ TEST(Vector3, DotPosMax) {
 
 TEST(Vector3, CrossMax) {
   static constexpr int coord_bits = 640;
-  BigInt<coord_bits> min_value = BigInt<coord_bits>::min_value();
-  BigInt<coord_bits> max_value = BigInt<coord_bits>::max_value();
-  Vector3 v1(min_value, min_value, BigInt<coord_bits>(0));
-  Vector3 v2(max_value, min_value, BigInt<coord_bits>(0));
+  BigIntImpl min_value = BigIntImpl::min_value(coord_bits - 1);
+  BigIntImpl max_value = BigIntImpl::max_value(coord_bits - 1);
+  Vector3 v1(min_value, min_value, BigIntImpl(0));
+  Vector3 v2(max_value, min_value, BigIntImpl(0));
 
   // Calculate the z coordinate of the cross product using an extra large
   // integer type, then verify it produces the same value.
-  BigInt<coord_bits*2 + 5> casted_min_value(min_value);
-  BigInt<coord_bits*2 + 5> casted_max_value(max_value);
+  BigIntImpl casted_min_value(min_value);
+  BigIntImpl casted_max_value(max_value);
 
-  BigInt<coord_bits*2 + 5> expected_z = casted_min_value*casted_min_value -
+  BigIntImpl expected_z = casted_min_value*casted_min_value -
                                         casted_min_value*casted_max_value;
 
   EXPECT_EQ(v1.Cross(v2).z(), expected_z);
@@ -156,7 +155,7 @@ TEST(Vector3, DropDimensionSideness) {
     Vector2 a2 = a3.DropDimension(dimension);
     Vector2 b2 = b3.DropDimension(dimension);
 
-    BigInt<32> c = a2.Cross(b2);
+    BigIntImpl c = a2.Cross(b2);
 
     EXPECT_FALSE(c3.components()[dimension].IsZero())
       << "dimension=" << dimension;

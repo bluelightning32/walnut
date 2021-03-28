@@ -190,11 +190,11 @@ TEST(ConvexVertexAABBTracker, SplitBetweenVertices) {
     HomoPoint3 split_start(
         p[i].vector_from_origin() +
         p[(i + 1) % square.vertex_count()].vector_from_origin(),
-        /*w=*/BigInt<32>(2));
+        /*w=*/BigIntImpl(2));
     HomoPoint3 split_end(
         p[(i + 2) % square.vertex_count()].vector_from_origin() +
         p[(i + 3) % square.vertex_count()].vector_from_origin(),
-        /*w=*/BigInt<32>(2));
+        /*w=*/BigIntImpl(2));
     HalfSpace3 split(split_start, split_end, HomoPoint3(0, 0, 0, 1));
 
     ConvexPolygonSplitInfo split_info = square.GetSplitInfo(split);

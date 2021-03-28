@@ -118,7 +118,7 @@ TEST(BSPTree, SplitTo1Child) {
 
   std::vector<Point3> above_points;
   for (const Point3& p : triangle) {
-    above_points.emplace_back(p.x(), p.y(), BigInt<32>(p.z() + BigInt<32>(1)));
+    above_points.emplace_back(p.x(), p.y(), BigIntImpl(p.z() + BigIntImpl(1)));
   }
   HalfSpace3 above_up(above_points[0], above_points[1], above_points[2]);
   HalfSpace3 above_down = -above_up;
