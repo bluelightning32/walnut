@@ -73,32 +73,7 @@ class PluckerLine {
   //
   // Both `a` and `b` must be valid (have non-zero normals), and they must be
   // non-equal, otherwise `IsValid` will return false on the constructed line.
-  PluckerLine(const HalfSpace3& a, const HalfSpace3& b) :
-    // d = a_xyz x b_xyz = (p^23, p^31, p^12)
-    //
-    // p^23 = | a.y  a.z |
-    //        | b.y  b.z |
-    //
-    // p^31 = | a.z  a.x |
-    //        | b.z  b.x |
-    //
-    // p^12 = | a.x  a.y |
-    //        | b.x  b.y |
-    //
-    // m = (p^01, p^02, p^03)
-    //
-    // p^01 = | a.d  a.x |
-    //        | b.d  b.x |
-    //
-    // p^02 = | a.d  a.y |
-    //        | b.d  b.y |
-    //
-    // p^03 = | a.d  a.z |
-    //        | b.d  b.z |
-    d_(a.normal().Cross(b.normal())),
-    m_(BigInt::Determinant(-a.d(), a.x(), -b.d(), b.x()),
-       BigInt::Determinant(-a.d(), a.y(), -b.d(), b.y()),
-       BigInt::Determinant(-a.d(), a.z(), -b.d(), b.z())) { }
+  PluckerLine(const HalfSpace3& a, const HalfSpace3& b);
 
   // Returns true if `p` is on the line.
   bool IsCoincident(const Point3& p) const {
@@ -133,29 +108,7 @@ class PluckerLine {
   //
   // The lines are considered not equal if their directions are opposite (one
   // scale factor is negative).
-  bool operator==(const PluckerLine& other) const {
-    BigInt scale_other;
-    BigInt scale_mine;
-    bool unused;
-    if (!d().x().IsZero()) {
-      scale_other = d().x().GetAbs(unused);
-      scale_mine = other.d().x().GetAbs(unused);
-    } else if (!d().y().IsZero()) {
-      scale_other = d().y().GetAbs(unused);
-      scale_mine = other.d().y().GetAbs(unused);
-    } else {
-      scale_other = d().z().GetAbs(unused);
-      scale_mine = other.d().z().GetAbs(unused);
-    }
-
-    return
-      d().x().Multiply(scale_mine) == other.d().x().Multiply(scale_other) &&
-      d().y().Multiply(scale_mine) == other.d().y().Multiply(scale_other) &&
-      d().z().Multiply(scale_mine) == other.d().z().Multiply(scale_other) &&
-      m().x().Multiply(scale_mine) == other.m().x().Multiply(scale_other) &&
-      m().y().Multiply(scale_mine) == other.m().y().Multiply(scale_other) &&
-      m().z().Multiply(scale_mine) == other.m().z().Multiply(scale_other);
-  }
+  bool operator==(const PluckerLine& other) const;
 
   bool operator!=(const PluckerLine& other) const {
     return !(*this == other);
@@ -204,31 +157,8 @@ class PluckerLine {
   Vector3 m_;
 };
 
-void PluckerLine::Reduce() {
-  BigInt common_factor =
-    d_.components()[0].GetGreatestCommonDivisor(d_.components()[1]);
-  common_factor = common_factor.GetGreatestCommonDivisor(d_.components()[2]);
-
-  common_factor = common_factor.GetGreatestCommonDivisor(m_.components()[0]);
-  common_factor = common_factor.GetGreatestCommonDivisor(m_.components()[1]);
-  common_factor = common_factor.GetGreatestCommonDivisor(m_.components()[2]);
-
-  bool unused;
-  BigInt abs_common_factor = common_factor.GetAbs(unused);
-
-  d_.components()[0] /= abs_common_factor;
-  d_.components()[1] /= abs_common_factor;
-  d_.components()[2] /= abs_common_factor;
-
-  m_.components()[0] /= abs_common_factor;
-  m_.components()[1] /= abs_common_factor;
-  m_.components()[2] /= abs_common_factor;
-}
-
-inline std::ostream& operator<<(std::ostream& out, const PluckerLine& line) {
-  return out << "{ d=" << line.d() << " m=" << line.m() << " }";
-}
+std::ostream& operator<<(std::ostream& out, const PluckerLine& line);
 
 }  // walnut
 
-#endif // WALNUT_PLANE_H__
+#endif // WALNUT_PLUCKER_LINE_H__

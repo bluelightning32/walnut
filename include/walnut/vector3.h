@@ -200,13 +200,7 @@ inline bool Vector3::IsSameOrOppositeDir(const Vector3& other) const {
          z().Multiply(scale_mine) == other.z().Multiply(scale_other);
 }
 
-inline std::ostream& operator<<(std::ostream& out, const Vector3& v) {
-  return out << "{ "
-             << v.components()[0] << ", "
-             << v.components()[1] << ", "
-             << v.components()[2]
-             << " }";
-}
+std::ostream& operator<<(std::ostream& out, const Vector3& v);
 
 }  // walnut
 
