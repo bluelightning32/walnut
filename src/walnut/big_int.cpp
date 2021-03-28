@@ -2,6 +2,40 @@
 
 namespace walnut {
 
+BigInt BigInt::max_value(size_t set_bits) {
+  BigInt result;
+  result.words_.resize((set_bits + bits_per_word) / bits_per_word);
+  for (size_t i = 0; i < result.words_.size() - 1; ++i) {
+    result.words_[i] = BigUIntWord::max_value();
+  }
+  BigUIntWord last_word;
+  const size_t set_last_word_bits =
+    set_bits - (result.words_.size() - 1) * bits_per_word;
+  for (size_t i = 0; i < set_last_word_bits; ++i) {
+    last_word |= BigUIntWord{1} << i;
+  }
+  result.words_[result.words_.size() - 1] = last_word;
+  result.Trim();
+  return result;
+}
+
+BigInt BigInt::min_value(size_t clear_bits) {
+  BigInt result;
+  result.words_.resize((clear_bits + bits_per_word) / bits_per_word);
+  for (size_t i = 0; i < result.words_.size() - 1; ++i) {
+    result.words_[i] = BigUIntWord{0};
+  }
+  const size_t clear_last_word_bits =
+    clear_bits - (result.words_.size() - 1) * bits_per_word;
+  BigUIntWord last_word = BigUIntWord{-1};
+  for (size_t i = 0; i < clear_last_word_bits; ++i) {
+    last_word &= ~(BigUIntWord{1} << i);
+  }
+  result.words_[result.words_.size() - 1] = last_word;
+  result.Trim();
+  return result;
+}
+
 BigInt::operator double() const {
   static_assert(sizeof(BigIntWord) >= sizeof(double),
                 "The cast function assumes that at most 2 words need to be "
@@ -63,6 +97,26 @@ std::ostream& operator<<(std::ostream& out, const BigInt& bigint) {
   }
   out << digits_pos + 1;
   return out;
+}
+
+BigInt BigInt::DivideRemainderSlow(const BigInt& other,
+                                   BigInt* remainder_out) const {
+  bool this_signed = false;
+  BigUInt this_uint = GetUIntAbs(&this_signed);
+  bool other_signed = false;
+  BigUInt other_uint = other.GetUIntAbs(&other_signed);
+
+  BigUInt remainder;
+  BigUInt quotient = this_uint.DivideRemainder(other_uint, &remainder);
+  *remainder_out = remainder;
+  if (this_signed) {
+    remainder_out->Negate();
+  }
+  BigInt result{quotient};
+  if (this_signed ^ other_signed) {
+    result.Negate();
+  }
+  return result;
 }
 
 }  // walnut
