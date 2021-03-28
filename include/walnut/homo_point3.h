@@ -20,8 +20,8 @@ class HomoPoint3 {
     vector_from_origin_(other.vector_from_origin()),
     dist_denom_(other.dist_denom()) { }
 
-  HomoPoint3(const BigIntImpl& x, const BigIntImpl& y, const BigIntImpl& z,
-             const BigIntImpl& w) :
+  HomoPoint3(const BigInt& x, const BigInt& y, const BigInt& z,
+             const BigInt& w) :
     vector_from_origin_(x, y, z), dist_denom_(w) { }
 
   HomoPoint3(long x, long y, long z, long w) :
@@ -30,38 +30,38 @@ class HomoPoint3 {
   HomoPoint3(const Point3& other) :
     vector_from_origin_(other.vector_from_origin()), dist_denom_(1) { }
 
-  HomoPoint3(const Vector3& v, const BigIntImpl& w) :
+  HomoPoint3(const Vector3& v, const BigInt& w) :
     vector_from_origin_(v), dist_denom_(w) { }
 
-  BigIntImpl& x() {
+  BigInt& x() {
     return vector_from_origin_.x();
   }
 
-  const BigIntImpl& x() const {
+  const BigInt& x() const {
     return vector_from_origin_.x();
   }
 
-  BigIntImpl& y() {
+  BigInt& y() {
     return vector_from_origin_.y();
   }
 
-  const BigIntImpl& y() const {
+  const BigInt& y() const {
     return vector_from_origin_.y();
   }
 
-  BigIntImpl& z() {
+  BigInt& z() {
     return vector_from_origin_.z();
   }
 
-  const BigIntImpl& z() const {
+  const BigInt& z() const {
     return vector_from_origin_.z();
   }
 
-  BigIntImpl& w() {
+  BigInt& w() {
     return dist_denom_;
   }
 
-  const BigIntImpl& w() const {
+  const BigInt& w() const {
     return dist_denom_;
   }
 
@@ -73,11 +73,11 @@ class HomoPoint3 {
     return vector_from_origin_;
   }
 
-  BigIntImpl& dist_denom() {
+  BigInt& dist_denom() {
     return dist_denom_;
   }
 
-  const BigIntImpl& dist_denom() const {
+  const BigInt& dist_denom() const {
     return dist_denom_;
   }
 
@@ -100,7 +100,7 @@ class HomoPoint3 {
     // a.v * b.w <?> b.v * a.w (maybe flip sign)
     auto a_scaled = a.vector_from_origin() * b.dist_denom();
     auto b_scaled = b.vector_from_origin() * a.dist_denom();
-    BigIntImpl::FlippableCompare compare(
+    BigInt::FlippableCompare compare(
         /*flip=*/b.dist_denom().HasDifferentSign(a.dist_denom()));
     return std::lexicographical_compare(a_scaled.components().rbegin(),
                                         a_scaled.components().rend(),
@@ -192,7 +192,7 @@ class HomoPoint3 {
 
  private:
   Vector3 vector_from_origin_;
-  BigIntImpl dist_denom_;
+  BigInt dist_denom_;
 };
 
 inline void HomoPoint3::Reduce() {

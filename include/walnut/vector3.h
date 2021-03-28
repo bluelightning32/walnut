@@ -17,45 +17,45 @@ class Vector3 {
     components_{other.components()[0], other.components()[1],
                 other.components()[2]} { }
 
-  Vector3(const BigIntImpl& x, const BigIntImpl& y, const BigIntImpl& z) :
+  Vector3(const BigInt& x, const BigInt& y, const BigInt& z) :
     components_{x, y, z} { }
 
   Vector3(long x, long y, long z) :
-    components_{BigIntImpl(x), BigIntImpl(y), BigIntImpl(z)} { }
+    components_{BigInt(x), BigInt(y), BigInt(z)} { }
 
   static Vector3 Zero() {
     return Vector3(/*x=*/0, /*y=*/0, /*z=*/0);
   }
 
-  BigIntImpl& x() {
+  BigInt& x() {
     return components_[0];
   }
 
-  const BigIntImpl& x() const {
+  const BigInt& x() const {
     return components_[0];
   }
 
-  BigIntImpl& y() {
+  BigInt& y() {
     return components_[1];
   }
 
-  const BigIntImpl& y() const {
+  const BigInt& y() const {
     return components_[1];
   }
 
-  BigIntImpl& z() {
+  BigInt& z() {
     return components_[2];
   }
 
-  const BigIntImpl& z() const {
+  const BigInt& z() const {
     return components_[2];
   }
 
-  std::array<BigIntImpl, 3>& components() {
+  std::array<BigInt, 3>& components() {
     return components_;
   }
 
-  const std::array<BigIntImpl, 3>& components() const {
+  const std::array<BigInt, 3>& components() const {
     return components_;
   }
 
@@ -93,13 +93,13 @@ class Vector3 {
   bool IsSameOrOppositeDir(const Vector3& other) const;
 
   // Get the square of the scale of this vector
-  BigIntImpl GetScaleSquared() const {
+  BigInt GetScaleSquared() const {
     return Dot(*this);
   }
 
   // Compute the dot product
-  BigIntImpl Dot(const Vector3& other) const {
-    BigIntImpl result = x() * other.x();
+  BigInt Dot(const Vector3& other) const {
+    BigInt result = x() * other.x();
     result += y() * other.y();
     result += z() * other.z();
     return result;
@@ -112,15 +112,15 @@ class Vector3 {
                    /*z=*/x()*other.y() - y()*other.x());
   }
 
-  Vector3 Scale(const BigIntImpl& scale) const {
+  Vector3 Scale(const BigInt& scale) const {
     return Vector3(x() * scale, y() * scale, z() * scale);
   }
 
   Vector3 Scale(int scale) const {
-    return Scale(BigIntImpl(scale));
+    return Scale(BigInt(scale));
   }
 
-  Vector3 operator*(const BigIntImpl& scale) const {
+  Vector3 operator*(const BigInt& scale) const {
     return Scale(scale);
   }
 
@@ -147,7 +147,7 @@ class Vector3 {
   // This function could potentially overflow. The caller must ensure there is
   // sufficient bitspace.
   void Negate() {
-    for (BigIntImpl& coord : components_) {
+    for (BigInt& coord : components_) {
       bool overflowed = coord.Negate();
       assert(!overflowed);
     }
@@ -160,12 +160,12 @@ class Vector3 {
   }
 
  private:
-  std::array<BigIntImpl, 3> components_;
+  std::array<BigInt, 3> components_;
 };
 
 inline bool Vector3::IsSameDir(const Vector3& other) const {
-  BigIntImpl scale_other;
-  BigIntImpl scale_mine;
+  BigInt scale_other;
+  BigInt scale_mine;
   if (x() != 0) {
     scale_other = x().abs();
     scale_mine = other.x().abs();
@@ -183,8 +183,8 @@ inline bool Vector3::IsSameDir(const Vector3& other) const {
 }
 
 inline bool Vector3::IsSameOrOppositeDir(const Vector3& other) const {
-  BigIntImpl scale_other;
-  BigIntImpl scale_mine;
+  BigInt scale_other;
+  BigInt scale_mine;
   if (x() != 0) {
     scale_other = x();
     scale_mine = other.x();

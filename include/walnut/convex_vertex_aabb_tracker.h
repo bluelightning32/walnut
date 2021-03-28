@@ -144,7 +144,7 @@ class ConvexVertexAABBTracker {
   // Out of all of the extreme indices, returns the denominator with the
   // highest absolute value.
   template <typename VertexIterator>
-  BigIntImpl GetMaxDenominator(const VertexIterator& begin) const;
+  BigInt GetMaxDenominator(const VertexIterator& begin) const;
 
   // Builds `aabb_` from `min_indices_` and `max_indices_`.
   template <typename VertexIterator>
@@ -165,7 +165,7 @@ class ConvexVertexAABBTracker {
 
   // Builds `aabb_` from `min_indices_` and `max_indices_`.
   template <typename VertexIterator>
-  void ApproximateExtremes(const BigIntImpl& denom,
+  void ApproximateExtremes(const BigInt& denom,
                            const VertexIterator& begin);
 
   static void SplitComponent(size_t component, int min_max_mult,
@@ -291,21 +291,21 @@ ConvexVertexAABBTracker::CreateSplitChildren(
 }
 
 template <typename VertexIterator>
-BigIntImpl ConvexVertexAABBTracker::GetMaxDenominator(
+BigInt ConvexVertexAABBTracker::GetMaxDenominator(
     const VertexIterator& begin) const {
-  BigIntImpl denom = begin[min_indices_[0]].w().abs();
+  BigInt denom = begin[min_indices_[0]].w().abs();
   for (int i = 1; i < 3; ++i) {
-    denom = std::max<BigIntImpl>(denom, begin[min_indices_[i]].w().abs());
+    denom = std::max<BigInt>(denom, begin[min_indices_[i]].w().abs());
   }
   for (int i = 0; i < 3; ++i) {
-    denom = std::max<BigIntImpl>(denom, begin[max_indices_[i]].w().abs());
+    denom = std::max<BigInt>(denom, begin[max_indices_[i]].w().abs());
   }
   return denom;
 }
 
 template <typename VertexIterator>
 void ConvexVertexAABBTracker::ApproximateExtremes(
-    const BigIntImpl& denom, const VertexIterator& begin) {
+    const BigInt& denom, const VertexIterator& begin) {
   aabb_ = AABB(
       rational::RoundDown(begin[min_indices_[0]].x(),
                           begin[min_indices_[0]].w(), denom),
@@ -330,7 +330,7 @@ void ConvexVertexAABBTracker::UpdateExtremes(
   if (new_denom != parent.aabb().denom()) {
     ApproximateExtremes(std::move(new_denom), begin);
   } else {
-    BigIntImpl mins[3];
+    BigInt mins[3];
     for (int i = 0; i < 3; ++i) {
       if (min_modified[i]) {
         const auto& my_point = begin[min_indices_[i]];
@@ -341,7 +341,7 @@ void ConvexVertexAABBTracker::UpdateExtremes(
         mins[i] = parent.aabb().min_point_num().components()[i];
       }
     }
-    BigIntImpl maxes[3];
+    BigInt maxes[3];
     for (int i = 0; i < 3; ++i) {
       if (max_modified[i]) {
         const auto& my_point = begin[max_indices_[i]];

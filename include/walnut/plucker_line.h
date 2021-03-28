@@ -96,9 +96,9 @@ class PluckerLine {
     // p^03 = | a.d  a.z |
     //        | b.d  b.z |
     d_(a.normal().Cross(b.normal())),
-    m_(BigIntImpl::Determinant(-a.d(), a.x(), -b.d(), b.x()),
-       BigIntImpl::Determinant(-a.d(), a.y(), -b.d(), b.y()),
-       BigIntImpl::Determinant(-a.d(), a.z(), -b.d(), b.z())) { }
+    m_(BigInt::Determinant(-a.d(), a.x(), -b.d(), b.x()),
+       BigInt::Determinant(-a.d(), a.y(), -b.d(), b.y()),
+       BigInt::Determinant(-a.d(), a.z(), -b.d(), b.z())) { }
 
   // Returns true if `p` is on the line.
   bool IsCoincident(const Point3& p) const {
@@ -134,8 +134,8 @@ class PluckerLine {
   // The lines are considered not equal if their directions are opposite (one
   // scale factor is negative).
   bool operator==(const PluckerLine& other) const {
-    BigIntImpl scale_other;
-    BigIntImpl scale_mine;
+    BigInt scale_other;
+    BigInt scale_mine;
     bool unused;
     if (!d().x().IsZero()) {
       scale_other = d().x().GetAbs(unused);
@@ -205,7 +205,7 @@ class PluckerLine {
 };
 
 void PluckerLine::Reduce() {
-  BigIntImpl common_factor =
+  BigInt common_factor =
     d_.components()[0].GetGreatestCommonDivisor(d_.components()[1]);
   common_factor = common_factor.GetGreatestCommonDivisor(d_.components()[2]);
 
@@ -214,7 +214,7 @@ void PluckerLine::Reduce() {
   common_factor = common_factor.GetGreatestCommonDivisor(m_.components()[2]);
 
   bool unused;
-  BigIntImpl abs_common_factor = common_factor.GetAbs(unused);
+  BigInt abs_common_factor = common_factor.GetAbs(unused);
 
   d_.components()[0] /= abs_common_factor;
   d_.components()[1] /= abs_common_factor;

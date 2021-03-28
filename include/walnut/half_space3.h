@@ -22,7 +22,7 @@ class HalfSpace3 {
   // From that point, everything in the normal direction is considered in the
   // positive half-space and everything opposite to the normal direction is
   // considered in the negative half-space.
-  HalfSpace3(const Vector3& normal, const BigIntImpl& dist) :
+  HalfSpace3(const Vector3& normal, const BigInt& dist) :
     normal_(normal), dist_(dist) { }
 
   // Constructs a half-space from a normal in component form and distance from
@@ -32,8 +32,8 @@ class HalfSpace3 {
   // From that point, everything in the normal direction is considered in the
   // positive half-space and everything opposite to the normal direction is
   // considered in the negative half-space.
-  HalfSpace3(const BigIntImpl& x, const BigIntImpl& y, const BigIntImpl& z,
-             const BigIntImpl& dist) :
+  HalfSpace3(const BigInt& x, const BigInt& y, const BigInt& z,
+             const BigInt& dist) :
     normal_(x, y, z), dist_(dist) { }
 
   HalfSpace3(int x, int y, int z, int dist) : normal_(x, y, z), dist_(dist) { }
@@ -62,15 +62,15 @@ class HalfSpace3 {
     normal_ = unscaled_normal.Scale(p2.w().abs());
   }
 
-  const BigIntImpl& x() const {
+  const BigInt& x() const {
     return normal_.x();
   }
 
-  const BigIntImpl& y() const {
+  const BigInt& y() const {
     return normal_.y();
   }
 
-  const BigIntImpl& z() const {
+  const BigInt& z() const {
     return normal_.z();
   }
 
@@ -78,11 +78,11 @@ class HalfSpace3 {
     return normal_;
   }
 
-  BigIntImpl& d() {
+  BigInt& d() {
     return dist_;
   }
 
-  const BigIntImpl& d() const {
+  const BigInt& d() const {
     return dist_;
   }
 
@@ -135,15 +135,15 @@ class HalfSpace3 {
   // All vertices are coincident with the returned plane. `IsValid` will report
   // false for the returned plane.
   static HalfSpace3 Zero() {
-    return HalfSpace3(/*normal=*/Vector3::Zero(), /*dist=*/BigIntImpl(0));
+    return HalfSpace3(/*normal=*/Vector3::Zero(), /*dist=*/BigInt(0));
   }
 
   // Note that everything equals the zero plane.
   //
   // Two HalfSpace3s are not equal if they refer to different half-spaces.
   bool operator==(const HalfSpace3& other) const {
-    BigIntImpl scale_other;
-    BigIntImpl scale_mine;
+    BigInt scale_other;
+    BigInt scale_mine;
     if (d() != 0) {
       scale_other = d().abs();
       scale_mine = other.d().abs();
@@ -193,7 +193,7 @@ class HalfSpace3 {
 
  private:
   Vector3 normal_;
-  BigIntImpl dist_;
+  BigInt dist_;
 };
 
 inline void HalfSpace3::Reduce() {

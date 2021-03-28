@@ -70,10 +70,10 @@ TEST(HomoPoint3, ReduceNegDenom) {
 }
 
 TEST(HomoPoint3, ReduceAllIntMin) {
-  HomoPoint3 original(/*x=*/BigIntImpl::min_value(255),
-                      /*y=*/BigIntImpl::min_value(255),
-                      /*z=*/BigIntImpl::min_value(255),
-                      /*w=*/BigIntImpl::min_value(255));
+  HomoPoint3 original(/*x=*/BigInt::min_value(255),
+                      /*y=*/BigInt::min_value(255),
+                      /*z=*/BigInt::min_value(255),
+                      /*w=*/BigInt::min_value(255));
 
   HomoPoint3 reduced = original;
   reduced.Reduce();

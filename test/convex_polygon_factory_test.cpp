@@ -48,7 +48,7 @@ class ResultCollector : public Factory {
   // Check that every vertex in every convex polygon really is a convex vertex.
   void VerifyAllConvexVertices() const {
     for (const ConvexPolygonRep& polygon : result_) {
-      BigIntImpl drop_dim_value =
+      BigInt drop_dim_value =
         polygon.plane().normal().components()[polygon.drop_dimension()];
       ASSERT_NE(drop_dim_value, 0);
       const int orientation = drop_dim_value.GetSign();

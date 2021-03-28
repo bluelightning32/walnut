@@ -13,32 +13,32 @@ class Point2 {
   Point2(const Point2& other) :
     Point2(other.coords()[0], other.coords()[1]) { }
 
-  Point2(const BigIntImpl& x, const BigIntImpl& y) :
+  Point2(const BigInt& x, const BigInt& y) :
     vector_from_origin_(x, y) { }
 
   Point2(int x, int y) : vector_from_origin_(x, y) { }
 
-  std::array<BigIntImpl, 2>& coords() { return vector_from_origin_.coords(); }
+  std::array<BigInt, 2>& coords() { return vector_from_origin_.coords(); }
 
-  const std::array<BigIntImpl, 2>& coords() const { return vector_from_origin_.coords(); }
+  const std::array<BigInt, 2>& coords() const { return vector_from_origin_.coords(); }
 
   const Vector2& vector_from_origin() const {
     return vector_from_origin_;
   }
 
-  BigIntImpl& x() {
+  BigInt& x() {
     return vector_from_origin_.x();
   }
 
-  const BigIntImpl& x() const {
+  const BigInt& x() const {
     return vector_from_origin_.x();
   }
 
-  BigIntImpl& y() {
+  BigInt& y() {
     return vector_from_origin_.y();
   }
 
-  const BigIntImpl& y() const {
+  const BigInt& y() const {
     return vector_from_origin_.y();
   }
 

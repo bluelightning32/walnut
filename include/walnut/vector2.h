@@ -54,33 +54,33 @@ class Vector2 {
   Vector2(const Vector2& other) :
     coords_{other.coords()[0], other.coords()[1]} { }
 
-  Vector2(const BigIntImpl& x, const BigIntImpl& y) :
+  Vector2(const BigInt& x, const BigInt& y) :
     coords_{x, y} { }
 
   Vector2(int x, int y) :
-    coords_{BigIntImpl(x), BigIntImpl(y)} { }
+    coords_{BigInt(x), BigInt(y)} { }
 
-  BigIntImpl& x() {
+  BigInt& x() {
     return coords_[0];
   }
 
-  const BigIntImpl& x() const {
+  const BigInt& x() const {
     return coords_[0];
   }
 
-  BigIntImpl& y() {
+  BigInt& y() {
     return coords_[1];
   }
 
-  const BigIntImpl& y() const {
+  const BigInt& y() const {
     return coords_[1];
   }
 
-  std::array<BigIntImpl, 2>& coords() {
+  std::array<BigInt, 2>& coords() {
     return coords_;
   }
 
-  const std::array<BigIntImpl, 2>& coords() const {
+  const std::array<BigInt, 2>& coords() const {
     return coords_;
   }
 
@@ -109,31 +109,31 @@ class Vector2 {
   bool IsSameOrOppositeDir(const Vector2& other) const;
 
   // Get the square of the scale of this vector
-  BigIntImpl GetScaleSquared() const {
+  BigInt GetScaleSquared() const {
     return Dot(*this);
   }
 
   // Compute the dot product
-  BigIntImpl Dot(const Vector2& other) const {
-    BigIntImpl result = x() * other.x();
+  BigInt Dot(const Vector2& other) const {
+    BigInt result = x() * other.x();
     result += y() * other.y();
     return result;
   }
 
   // Compute the cross product
-  BigIntImpl Cross(const Vector2& other) const {
+  BigInt Cross(const Vector2& other) const {
     return x()*other.y() - y()*other.x();
   }
 
-  Vector2 Scale(const BigIntImpl& scale) const {
+  Vector2 Scale(const BigInt& scale) const {
     return Vector2(x() * scale, y() * scale);
   }
 
   Vector2 Scale(int scale) const {
-    return Scale(BigIntImpl(scale));
+    return Scale(BigInt(scale));
   }
 
-  Vector2 operator*(const BigIntImpl& scale) const {
+  Vector2 operator*(const BigInt& scale) const {
     return Scale(scale);
   }
 
@@ -164,7 +164,7 @@ class Vector2 {
   // This function could potentially overflow. The caller must ensure there is
   // sufficient bitspace.
   void Negate() {
-    for (BigIntImpl& coord : coords_) {
+    for (BigInt& coord : coords_) {
       bool overflowed = coord.Negate();
       assert(!overflowed);
     }
@@ -196,12 +196,12 @@ class Vector2 {
   bool IsRotationLessThan(const Vector2& other) const;
 
  private:
-  std::array<BigIntImpl, 2> coords_;
+  std::array<BigInt, 2> coords_;
 };
 
 inline bool Vector2::IsSameDir(const Vector2& other) const {
-  BigIntImpl scale_other;
-  BigIntImpl scale_mine;
+  BigInt scale_other;
+  BigInt scale_mine;
   if (x() != 0) {
     scale_other = x().abs();
     scale_mine = other.x().abs();
@@ -215,8 +215,8 @@ inline bool Vector2::IsSameDir(const Vector2& other) const {
 }
 
 inline bool Vector2::IsSameOrOppositeDir(const Vector2& other) const {
-  BigIntImpl scale_other;
-  BigIntImpl scale_mine;
+  BigInt scale_other;
+  BigInt scale_mine;
   if (x() != 0) {
     scale_other = x();
     scale_mine = other.x();

@@ -7,7 +7,7 @@ namespace walnut {
 TEST(HalfSpace3, ComparePoint3) {
   // Anything with x>5 is included in the half space.
   HalfSpace3 plane(/*normal=*/Vector3(/*x=*/2, /*y=*/0, /*z=*/0),
-                     /*dist=*/BigIntImpl(10));
+                     /*dist=*/BigInt(10));
 
   EXPECT_TRUE(plane.normal().IsSameDir(Vector3(1, 0, 0)));
 
@@ -22,7 +22,7 @@ TEST(HalfSpace3, ComparePoint3) {
 TEST(HalfSpace3, CompareHomoPoint3) {
   // Anything with x>5 is included in the half space.
   HalfSpace3 plane(/*normal=*/Vector3(/*x=*/2, /*y=*/0, /*z=*/0),
-                     /*dist=*/BigIntImpl(10));
+                     /*dist=*/BigInt(10));
 
   // excluded
   EXPECT_LT(plane.Compare(HomoPoint3(/*x=*/1, /*y=*/100, /*z=*/100,
@@ -44,7 +44,7 @@ TEST(HalfSpace3, CompareHomoPoint3) {
 TEST(HalfSpace3, ComparePosHomoPoint3NegDist) {
   // Anything with x<5 is included in the half space.
   HalfSpace3 plane(/*normal=*/Vector3(/*x=*/-2, /*y=*/0, /*z=*/0),
-                     /*dist=*/BigIntImpl(-10));
+                     /*dist=*/BigInt(-10));
 
   // included
   EXPECT_GT(plane.Compare(HomoPoint3(/*x=*/1, /*y=*/100, /*z=*/100,
@@ -57,7 +57,7 @@ TEST(HalfSpace3, ComparePosHomoPoint3NegDist) {
 TEST(HalfSpace3, CompareNegHomoPoint3PosDist) {
   // Anything with x>5 is included in the half space.
   HalfSpace3 plane(/*normal=*/Vector3(/*x=*/2, /*y=*/0, /*z=*/0),
-                     /*dist=*/BigIntImpl(10));
+                     /*dist=*/BigInt(10));
 
   // excluded
   EXPECT_LT(plane.Compare(HomoPoint3(/*x=*/1, /*y=*/100, /*z=*/100,
@@ -70,7 +70,7 @@ TEST(HalfSpace3, CompareNegHomoPoint3PosDist) {
 TEST(HalfSpace3, CompareNegHomoPoint3NegDist) {
   // Anything with x<5 is included in the half space.
   HalfSpace3 plane(/*normal=*/Vector3(/*x=*/-2, /*y=*/0, /*z=*/0),
-                     /*dist=*/BigIntImpl(-10));
+                     /*dist=*/BigInt(-10));
 
   // included
   EXPECT_GT(plane.Compare(HomoPoint3(/*x=*/1, /*y=*/100, /*z=*/100,
@@ -84,19 +84,19 @@ TEST(HalfSpace3, CompareParallelPlane) {
   // These are in sorted order.
   std::vector<HalfSpace3> positive_half_spaces = {
     HalfSpace3(/*normal=*/Vector3(/*x=*/1, /*y=*/0, /*z=*/0),
-                 /*dist=*/BigIntImpl(-2)),
+                 /*dist=*/BigInt(-2)),
     HalfSpace3(/*normal=*/Vector3(/*x=*/1, /*y=*/0, /*z=*/0),
-                 /*dist=*/BigIntImpl(-1)),
+                 /*dist=*/BigInt(-1)),
     HalfSpace3(/*normal=*/Vector3(/*x=*/2, /*y=*/0, /*z=*/0),
-                 /*dist=*/BigIntImpl(-1)),
+                 /*dist=*/BigInt(-1)),
     HalfSpace3(/*normal=*/Vector3(/*x=*/1, /*y=*/0, /*z=*/0),
-                 /*dist=*/BigIntImpl(0)),
+                 /*dist=*/BigInt(0)),
     HalfSpace3(/*normal=*/Vector3(/*x=*/2, /*y=*/0, /*z=*/0),
-                 /*dist=*/BigIntImpl(1)),
+                 /*dist=*/BigInt(1)),
     HalfSpace3(/*normal=*/Vector3(/*x=*/1, /*y=*/0, /*z=*/0),
-                 /*dist=*/BigIntImpl(1)),
+                 /*dist=*/BigInt(1)),
     HalfSpace3(/*normal=*/Vector3(/*x=*/1, /*y=*/0, /*z=*/0),
-                 /*dist=*/BigIntImpl(2)),
+                 /*dist=*/BigInt(2)),
   };
   std::vector<HalfSpace3> negative_half_spaces;
   for (const HalfSpace3& h : positive_half_spaces) {
@@ -174,7 +174,7 @@ TEST(HalfSpace3, BuildFromHomoPoints) {
       scaled_p[i] = HomoPoint3(p[i].x() * scale,
                                  p[i].y() * scale,
                                  p[i].z() * scale,
-                                 BigIntImpl(scale));
+                                 BigInt(scale));
       HalfSpace3 from_homo_point3(scaled_p[0], scaled_p[1], scaled_p[2]);
       EXPECT_EQ(from_homo_point3, from_point3)
         << "scale=" << scale << ", scaled_index=" << i;
@@ -193,7 +193,7 @@ TEST(HalfSpace3, HalfSpacesDistinct) {
 
 TEST(HalfSpace3, ReduceAllPos) {
   HalfSpace3 plane(/*normal=*/Vector3(/*x=*/10, /*y=*/5, /*z=*/15),
-                     /*dist=*/BigIntImpl(20));
+                     /*dist=*/BigInt(20));
 
   HalfSpace3 reduced(plane);
   reduced.Reduce();
@@ -206,7 +206,7 @@ TEST(HalfSpace3, ReduceAllPos) {
 
 TEST(HalfSpace3, ReduceAllNeg) {
   HalfSpace3 plane(/*normal=*/Vector3(/*x=*/-10, /*y=*/-5, /*z=*/-15),
-                     /*dist=*/BigIntImpl(-20));
+                     /*dist=*/BigInt(-20));
 
   HalfSpace3 reduced(plane);
   reduced.Reduce();

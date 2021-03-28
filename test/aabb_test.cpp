@@ -151,9 +151,9 @@ TEST(AABB, IntersectPlaneDiagNeg) {
 
 template <size_t point3_bits>
 void TestIntersectPlaneLowSlopeMin() {
-  const BigIntImpl min_int = BigIntImpl::min_value(point3_bits - 1);
-  const BigIntImpl min_plus_1 = min_int + BigIntImpl(1);
-  const BigIntImpl max_int = BigIntImpl::max_value(point3_bits - 1);
+  const BigInt min_int = BigInt::min_value(point3_bits - 1);
+  const BigInt min_plus_1 = min_int + BigInt(1);
+  const BigInt max_int = BigInt::max_value(point3_bits - 1);
   AABB prism(Point3(min_int, min_int, min_int),
              Point3(max_int, max_int, max_int));
 

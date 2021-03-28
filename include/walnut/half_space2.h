@@ -10,11 +10,11 @@ namespace walnut {
 // Represents part of R^2 on one side of a line.
 class HalfSpace2 {
  public:
-  const BigIntImpl& x() const {
+  const BigInt& x() const {
     return normal_.x();
   }
 
-  const BigIntImpl& y() const {
+  const BigInt& y() const {
     return normal_.y();
   }
 
@@ -22,11 +22,11 @@ class HalfSpace2 {
     return normal_;
   }
 
-  BigIntImpl& d() {
+  BigInt& d() {
     return dist_;
   }
 
-  const BigIntImpl& d() const {
+  const BigInt& d() const {
     return dist_;
   }
 
@@ -37,10 +37,10 @@ class HalfSpace2 {
   // Leaves the coordinates in an undefined state
   HalfSpace2() = default;
 
-  HalfSpace2(const Vector2& normal, const BigIntImpl& dist) :
+  HalfSpace2(const Vector2& normal, const BigInt& dist) :
     normal_(normal), dist_(dist) { }
 
-  HalfSpace2(const BigIntImpl& x, const BigIntImpl& y, const BigIntImpl& dist) :
+  HalfSpace2(const BigInt& x, const BigInt& y, const BigInt& dist) :
     normal_(x, y), dist_(dist) { }
 
   HalfSpace2(int x, int y, int dist) : normal_(x, y), dist_(dist) { }
@@ -80,7 +80,7 @@ class HalfSpace2 {
   // All vertices are coincident with the returned half-space. `IsValid` will
   // report false for the returned value.
   static HalfSpace2 Zero() {
-    return HalfSpace2(/*normal=*/Vector2::Zero(), /*dist=*/BigIntImpl(0));
+    return HalfSpace2(/*normal=*/Vector2::Zero(), /*dist=*/BigInt(0));
   }
 
   // Note that everything equals the zero half-space.
@@ -88,8 +88,8 @@ class HalfSpace2 {
   // Two HalfSpace2s are not equal if they refer to different sides of the same
   // line.
   bool operator==(const HalfSpace2& other) const {
-    BigIntImpl scale_other;
-    BigIntImpl scale_mine;
+    BigInt scale_other;
+    BigInt scale_mine;
     if (d() != 0) {
       scale_other = d().abs();
       scale_mine = other.d().abs();
@@ -127,7 +127,7 @@ class HalfSpace2 {
 
  private:
   Vector2 normal_;
-  BigIntImpl dist_;
+  BigInt dist_;
 };
 
 inline std::ostream& operator<<(std::ostream& out, const HalfSpace2& p) {

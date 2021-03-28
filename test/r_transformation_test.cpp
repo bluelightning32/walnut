@@ -40,7 +40,7 @@ TEST(RXYCompareBivector, DiagonalPlanes) {
 
   HomoPoint3 p_transformed[5];
   for (int i = 0; i < 5; ++i) {
-    p_transformed[i] = RTransform(p[i], BigIntImpl(10));
+    p_transformed[i] = RTransform(p[i], BigInt(10));
   }
 
   HalfSpace3 h1_transformed(p_transformed[0], p_transformed[1],
@@ -85,7 +85,7 @@ TEST(RXYCompareBivector, Y0Normal) {
 
   HomoPoint3 p_transformed[4];
   for (int i = 0; i < 4; ++i) {
-    p_transformed[i] = RTransform(p[i], BigIntImpl(10));
+    p_transformed[i] = RTransform(p[i], BigInt(10));
   }
 
   HalfSpace3 h1_transformed(p_transformed[0], p_transformed[1],
@@ -135,7 +135,7 @@ TEST(RXYCompareBivector, X0Normal) {
 
   HomoPoint3 p_transformed[4];
   for (int i = 0; i < 4; ++i) {
-    p_transformed[i] = RTransform(p[i], BigIntImpl(10));
+    p_transformed[i] = RTransform(p[i], BigInt(10));
   }
 
   HalfSpace3 h1_transformed(p_transformed[0], p_transformed[1],

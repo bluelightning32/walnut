@@ -17,16 +17,16 @@ class Point3 {
 
   Point3(const Point3& other) : Point3(other.vector_from_origin()) { }
 
-  Point3(const BigIntImpl& x, const BigIntImpl& y, const BigIntImpl& z) :
+  Point3(const BigInt& x, const BigInt& y, const BigInt& z) :
     vector_from_origin_(x, y, z) { }
 
   Point3(int x, int y, int z) : vector_from_origin_(x, y, z) { }
 
-  std::array<BigIntImpl, 3>& components() {
+  std::array<BigInt, 3>& components() {
     return vector_from_origin_.components();
   }
 
-  const std::array<BigIntImpl, 3>& components() const {
+  const std::array<BigInt, 3>& components() const {
     return vector_from_origin_.components();
   }
 
@@ -34,27 +34,27 @@ class Point3 {
     return vector_from_origin_;
   }
 
-  BigIntImpl& x() {
+  BigInt& x() {
     return vector_from_origin_.x();
   }
 
-  const BigIntImpl& x() const {
+  const BigInt& x() const {
     return vector_from_origin_.x();
   }
 
-  BigIntImpl& y() {
+  BigInt& y() {
     return vector_from_origin_.y();
   }
 
-  const BigIntImpl& y() const {
+  const BigInt& y() const {
     return vector_from_origin_.y();
   }
 
-  BigIntImpl& z() {
+  BigInt& z() {
     return vector_from_origin_.z();
   }
 
-  const BigIntImpl& z() const {
+  const BigInt& z() const {
     return vector_from_origin_.z();
   }
 

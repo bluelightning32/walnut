@@ -48,9 +48,9 @@ ConnectedPolygon<> MakeTriangle(const HomoPoint2& p1, const HomoPoint2& p2) {
     // The ConvexPolygon constructor shifts the edges by one as part of
     // calculating the edge direction. The last vertex in the list becomes the
     // first in the polygon. So start with the second vertex to compensate.
-    HomoPoint3(p2.x(), p2.y(), BigIntImpl(0), p2.w()),
-    HomoPoint3(p2.x(), p2.y(), BigIntImpl(1), p2.w()),
-    HomoPoint3(p1.x(), p1.y(), BigIntImpl(0), p1.w()),
+    HomoPoint3(p2.x(), p2.y(), BigInt(0), p2.w()),
+    HomoPoint3(p2.x(), p2.y(), BigInt(1), p2.w()),
+    HomoPoint3(p1.x(), p1.y(), BigInt(0), p1.w()),
   };
   HalfSpace3 plane(p[0], p[1], p[2]);
   const int drop_dimension = plane.normal().GetFirstNonzeroDimension();

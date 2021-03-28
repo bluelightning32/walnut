@@ -12,11 +12,11 @@ namespace rational {
 // Takes an input rational in the form: numerator/old_denominator and finds the
 // closest rational that is greater than or equal to the old one and in the
 // form: new_num/new_denominator. new_num is returned.
-inline BigIntImpl RoundUp(const BigIntImpl& numerator,
-                          const BigIntImpl& old_denominator,
-                          const BigIntImpl& new_denominator) {
-  BigIntImpl remainder;
-  BigIntImpl new_num =
+inline BigInt RoundUp(const BigInt& numerator,
+                          const BigInt& old_denominator,
+                          const BigInt& new_denominator) {
+  BigInt remainder;
+  BigInt new_num =
     (numerator * new_denominator).DivideRemainder(old_denominator, &remainder);
   // The exact result is:
   //   new_num/new_denominator + (remainder/old_denominator)/new_denominator
@@ -34,11 +34,11 @@ inline BigIntImpl RoundUp(const BigIntImpl& numerator,
 // Takes an input rational in the form: numerator/old_denominator and finds the
 // closest rational that is less than or equal to the old one and in the
 // form: new_num/new_denominator. new_num is returned.
-inline BigIntImpl RoundDown(const BigIntImpl& numerator,
-                            const BigIntImpl& old_denominator,
-                            const BigIntImpl& new_denominator) {
-  BigIntImpl remainder;
-  BigIntImpl new_num =
+inline BigInt RoundDown(const BigInt& numerator,
+                            const BigInt& old_denominator,
+                            const BigInt& new_denominator) {
+  BigInt remainder;
+  BigInt new_num =
     (numerator * new_denominator).DivideRemainder(old_denominator, &remainder);
   // The exact result is:
   //   new_num/new_denominator + (remainder/old_denominator)/new_denominator
@@ -55,8 +55,8 @@ inline BigIntImpl RoundDown(const BigIntImpl& numerator,
   return new_num;
 }
 
-inline bool IsLessThan(const BigIntImpl& num1, const BigIntImpl& denom1,
-                       const BigIntImpl& num2, const BigIntImpl& denom2) {
+inline bool IsLessThan(const BigInt& num1, const BigInt& denom1,
+                       const BigInt& num2, const BigInt& denom2) {
   // num1 / denom1 <? num2 / denom2
   // num1 * denom2 <? num2 * denom1 (flip if (denom1 * denom2) is negative)
   return (num1 * denom2).LessThan(
@@ -65,8 +65,8 @@ inline bool IsLessThan(const BigIntImpl& num1, const BigIntImpl& denom1,
 }
 
 // Returns true if num1/denom1 == num2/denom2.
-inline bool Equals(const BigIntImpl& num1, const BigIntImpl& denom1,
-                   const BigIntImpl& num2, const BigIntImpl& denom2) {
+inline bool Equals(const BigInt& num1, const BigInt& denom1,
+                   const BigInt& num2, const BigInt& denom2) {
   return num1 * denom2 == num2 * denom1;
 }
 
@@ -80,10 +80,10 @@ inline bool Equals(const BigIntImpl& num1, const BigIntImpl& denom1,
 // `y1_x2` must be set to y1*x2, and `y2_x1` must be set to y2*x1.
 //
 // Note that this comparison has the transitive property.
-inline bool IsHalfRotationLessThan(const BigIntImpl& x1, const BigIntImpl& y1,
-                                   const BigIntImpl& x2, const BigIntImpl& y2,
-                                   const BigIntImpl& y1_x2,
-                                   const BigIntImpl& y2_x1) {
+inline bool IsHalfRotationLessThan(const BigInt& x1, const BigInt& y1,
+                                   const BigInt& x2, const BigInt& y2,
+                                   const BigInt& y1_x2,
+                                   const BigInt& y2_x1) {
   // For determining whether to negate `this`, look at the sign of y1, when
   // y1 != 0. If y1 == 0, use the sign of x1 instead.
   //

@@ -10,27 +10,27 @@ namespace walnut {
 // like a divisor for the x and y coordinates.
 class HomoPoint2 {
  public:
-  BigIntImpl& x() {
+  BigInt& x() {
     return vector_from_origin_.x();
   }
 
-  const BigIntImpl& x() const {
+  const BigInt& x() const {
     return vector_from_origin_.x();
   }
 
-  BigIntImpl& y() {
+  BigInt& y() {
     return vector_from_origin_.y();
   }
 
-  const BigIntImpl& y() const {
+  const BigInt& y() const {
     return vector_from_origin_.y();
   }
 
-  BigIntImpl& w() {
+  BigInt& w() {
     return dist_denom_;
   }
 
-  const BigIntImpl& w() const {
+  const BigInt& w() const {
     return dist_denom_;
   }
 
@@ -42,11 +42,11 @@ class HomoPoint2 {
     return vector_from_origin_;
   }
 
-  BigIntImpl& dist_denom() {
+  BigInt& dist_denom() {
     return dist_denom_;
   }
 
-  const BigIntImpl& dist_denom() const {
+  const BigInt& dist_denom() const {
     return dist_denom_;
   }
 
@@ -56,7 +56,7 @@ class HomoPoint2 {
   HomoPoint2(const HomoPoint2& other) :
     vector_from_origin_(other.vector_from_origin_), dist_denom_(other.dist_denom_) { }
 
-  HomoPoint2(const BigIntImpl& x, const BigIntImpl& y, const BigIntImpl& w) :
+  HomoPoint2(const BigInt& x, const BigInt& y, const BigInt& w) :
     vector_from_origin_(x, y), dist_denom_(w) { }
 
   HomoPoint2(int x, int y, int w) :
@@ -65,7 +65,7 @@ class HomoPoint2 {
   HomoPoint2(const Point2& other) :
     vector_from_origin_(other.vector_from_origin()), dist_denom_(1) { }
 
-  HomoPoint2(const Vector2& v, const BigIntImpl& w) :
+  HomoPoint2(const Vector2& v, const BigInt& w) :
     vector_from_origin_(v), dist_denom_(w) { }
 
   static bool LexicographicallyLt(const HomoPoint2& a, const HomoPoint2& b) {
@@ -100,7 +100,7 @@ class HomoPoint2 {
 
  private:
   Vector2 vector_from_origin_;
-  BigIntImpl dist_denom_;
+  BigInt dist_denom_;
 };
 
 inline bool operator==(const Point2& a, const HomoPoint2& b) {

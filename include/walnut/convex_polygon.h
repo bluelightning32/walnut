@@ -658,7 +658,7 @@ ConvexPolygon<EdgeParent>::GetOppositeEdgeIndicesBisect(
   auto initial_dist = edge(0).vertex().vector_from_origin()
                              .DropDimension(drop_dimension).Dot(v_flipped);
 
-  const BigIntImpl& initial_dist_denom = edge(0).vertex().w();
+  const BigInt& initial_dist_denom = edge(0).vertex().w();
 
   // Current range being considered by the binary search. The range includes
   // the begin side but excludes the end side.
@@ -677,7 +677,7 @@ ConvexPolygon<EdgeParent>::GetOppositeEdgeIndicesBisect(
     }
     auto dist = vertex(mid).vector_from_origin()
                            .DropDimension(drop_dimension).Dot(v_flipped);
-    const BigIntImpl& dist_denom = vertex(mid).w();
+    const BigInt& dist_denom = vertex(mid).w();
     if ((initial_dist*dist_denom).LessThan(
           /*flip=*/initial_dist_denom.HasDifferentSign(dist_denom),
           dist*initial_dist_denom)) {

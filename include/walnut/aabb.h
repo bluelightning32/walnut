@@ -21,7 +21,7 @@ class AABB {
     max_point_num_(max_point.vector_from_origin()) { }
 
   AABB(const Vector3& min_point, const Vector3& max_point,
-       const BigIntImpl& denom) :
+       const BigInt& denom) :
       min_point_num_(min_point), max_point_num_(max_point), denom_(denom) {
     if (denom_.GetSign() < 0) {
       min_point_num_.Negate();
@@ -31,17 +31,17 @@ class AABB {
   }
 
   AABB(const Vector3& min_point, const Vector3& max_point, int denom) :
-    AABB(min_point, max_point, BigIntImpl(denom)) { }
+    AABB(min_point, max_point, BigInt(denom)) { }
 
-  AABB(const BigIntImpl& min_x, const BigIntImpl& min_y,
-       const BigIntImpl& min_z, const BigIntImpl& max_x,
-       const BigIntImpl& max_y, const BigIntImpl& max_z) :
-    AABB(min_x, min_y, min_z, max_x, max_y, max_z, BigIntImpl(1)) { }
+  AABB(const BigInt& min_x, const BigInt& min_y,
+       const BigInt& min_z, const BigInt& max_x,
+       const BigInt& max_y, const BigInt& max_z) :
+    AABB(min_x, min_y, min_z, max_x, max_y, max_z, BigInt(1)) { }
 
-  AABB(const BigIntImpl& min_x, const BigIntImpl& min_y,
-       const BigIntImpl& min_z, const BigIntImpl& max_x,
-       const BigIntImpl& max_y, const BigIntImpl& max_z,
-       const BigIntImpl& denom) :
+  AABB(const BigInt& min_x, const BigInt& min_y,
+       const BigInt& min_z, const BigInt& max_x,
+       const BigInt& max_y, const BigInt& max_z,
+       const BigInt& denom) :
     AABB(Vector3(min_x, min_y, min_z), Vector3(max_x, max_y, max_z),
          denom) { }
 
@@ -70,7 +70,7 @@ class AABB {
   bool IsOnBorder(const HomoPoint3& p) const {
     if (!IsInside(p)) return false;
     for (int i = 0; i < 3; ++i) {
-      const BigIntImpl& p_comp =
+      const BigInt& p_comp =
         p.vector_from_origin().components()[i] * denom_;
       if (p_comp == min_point_num_.components()[i] * p.w() ||
           p_comp == max_point_num_.components()[i] * p.w()) return true;
@@ -143,7 +143,7 @@ class AABB {
     return max_point_num_;
   }
 
-  const BigIntImpl& denom() const {
+  const BigInt& denom() const {
     return denom_;
   }
 
@@ -168,7 +168,7 @@ class AABB {
   Vector3 max_point_num_;
 
   // Must be positive.
-  BigIntImpl denom_ = BigIntImpl(1);
+  BigInt denom_ = BigInt(1);
 };
 
 template <typename ConvexPolygonRep>
@@ -193,9 +193,9 @@ ConvexPolygonRep AABB::IntersectPlane(
   dir3.components()[drop_dimension] = denom_;
   HalfSpace3 parallelogram_planes[4] = {
     HalfSpace3(-dir1,
-               -BigIntImpl(min_point_num_.components()[dim1])),
+               -BigInt(min_point_num_.components()[dim1])),
     HalfSpace3(-dir2,
-               -BigIntImpl(min_point_num_.components()[dim2])),
+               -BigInt(min_point_num_.components()[dim2])),
     HalfSpace3(dir1, max_point_num_.components()[dim1]),
     HalfSpace3(dir2, max_point_num_.components()[dim2]),
   };

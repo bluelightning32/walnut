@@ -22,9 +22,9 @@ namespace walnut {
 //
 // Since this function is likely to overflow the HomoPoint3 precision, this
 // function should only be used for testing purposes.
-HomoPoint3 RTransform(const HomoPoint3& p, const BigIntImpl& eps_inv) {
+HomoPoint3 RTransform(const HomoPoint3& p, const BigInt& eps_inv) {
   // Add eps^2 to x and eps to y.
-  BigIntImpl eps_inv_squared(eps_inv * eps_inv);
+  BigInt eps_inv_squared(eps_inv * eps_inv);
   return HomoPoint3(p.x()*eps_inv_squared + p.w(),
                     p.y()*eps_inv_squared + eps_inv * p.w(),
                     (p.z()*eps_inv + p.y())*eps_inv + p.x(),
