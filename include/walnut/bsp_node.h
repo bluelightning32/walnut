@@ -234,8 +234,6 @@ class BSPNode {
 
   friend class BSPTree<OutputPolygonParent>;
 
-  static constexpr int point3_bits = OutputPolygonParent::point3_bits;
-
   BSPNode() = default;
 
   BSPNode(const std::vector<int64_t>& pwn_by_id) : pwn_by_id_(pwn_by_id) { }
