@@ -14,37 +14,33 @@ template <size_t vector_bits_template = 31*2 + 3,
           size_t dist_bits_template = 31*3 + 3>
 class HalfSpace3 {
  public:
-  using VectorRep = Vector3;
-  using VectorInt = BigIntImpl;
-  using DistInt = BigInt<dist_bits_template>;
-
   // The minimum number of bits to support for each of the x, y, and z
   // components.
   static constexpr size_t vector_bits = vector_bits_template;
   // The minimum number of bits to support for the d component.
   static constexpr size_t dist_bits = dist_bits_template;
 
-  const VectorInt& x() const {
+  const BigIntImpl& x() const {
     return normal_.x();
   }
 
-  const VectorInt& y() const {
+  const BigIntImpl& y() const {
     return normal_.y();
   }
 
-  const VectorInt& z() const {
+  const BigIntImpl& z() const {
     return normal_.z();
   }
 
-  const VectorRep& normal() const {
+  const Vector3& normal() const {
     return normal_;
   }
 
-  DistInt& d() {
+  BigIntImpl& d() {
     return dist_;
   }
 
-  const DistInt& d() const {
+  const BigIntImpl& d() const {
     return dist_;
   }
 
@@ -62,7 +58,7 @@ class HalfSpace3 {
   // From that point, everything in the normal direction is considered in the
   // positive half-space and everything opposite to the normal direction is
   // considered in the negative half-space.
-  HalfSpace3(const Vector3& normal, const DistInt& dist) :
+  HalfSpace3(const Vector3& normal, const BigIntImpl& dist) :
     normal_(normal), dist_(dist) { }
 
   // Constructs a half-space from a normal in component form and distance from
@@ -72,8 +68,8 @@ class HalfSpace3 {
   // From that point, everything in the normal direction is considered in the
   // positive half-space and everything opposite to the normal direction is
   // considered in the negative half-space.
-  HalfSpace3(const VectorInt& x, const VectorInt& y, const VectorInt& z,
-        const DistInt& dist) :
+  HalfSpace3(const BigIntImpl& x, const BigIntImpl& y, const BigIntImpl& z,
+             const BigIntImpl& dist) :
     normal_(x, y, z), dist_(dist) { }
 
   HalfSpace3(int x, int y, int z, int dist) : normal_(x, y, z), dist_(dist) { }
@@ -96,11 +92,11 @@ class HalfSpace3 {
     // Use p2 as the center point, because if p1, p2, and p3 are from a polygon
     // with more than 3 points, (p3 - p2) and (p1 - p2) are likely to be
     // shorter than (p2 - p1) and (p3 - p1).
-    VectorRep unscaled_normal((p3.vector_from_origin()*p2.w() -
-                               p2.vector_from_origin()*p3.w())
-                              .Cross((p1.vector_from_origin()*p2.w() -
-                                      p2.vector_from_origin()*p1.w()))
-                              .Scale(p1.w().GetAbsMult(p3.w())));
+    Vector3 unscaled_normal((p3.vector_from_origin()*p2.w() -
+                             p2.vector_from_origin()*p3.w())
+                            .Cross((p1.vector_from_origin()*p2.w() -
+                                    p2.vector_from_origin()*p1.w()))
+                            .Scale(p1.w().GetAbsMult(p3.w())));
     dist_ = unscaled_normal.Dot(p2.vector_from_origin()) * p2.w().GetAbsMult();
     normal_ = unscaled_normal.Scale(p2.w().abs());
   }
@@ -154,7 +150,7 @@ class HalfSpace3 {
   // All vertices are coincident with the returned plane. `IsValid` will report
   // false for the returned plane.
   static HalfSpace3 Zero() {
-    return HalfSpace3(/*normal=*/VectorRep::Zero(), /*dist=*/DistInt(0));
+    return HalfSpace3(/*normal=*/Vector3::Zero(), /*dist=*/BigIntImpl(0));
   }
 
   // Note that everything equals the zero plane.
@@ -192,17 +188,6 @@ class HalfSpace3 {
     return !(*this == other);
   }
 
-  // Verifies the fields are in their supported ranges.
-  //
-  // The BigInts can sometimes internally support a larger range than what is
-  // requested in the template parameters. This function returns true if all of
-  // the fields are in their supported range.
-  //
-  // This function exists for testing purposes. It should always return true.
-  bool IsValidState() const {
-    return dist_.IsValidState();
-  }
-
   // This function could potentially overflow. The caller must ensure there is
   // sufficient bitspace.
   void Negate() {
@@ -226,8 +211,8 @@ class HalfSpace3 {
   void Reduce();
 
  private:
-  VectorRep normal_;
-  DistInt dist_;
+  Vector3 normal_;
+  BigIntImpl dist_;
 };
 
 // This is a wrapper around the HalfSpace3 constructor that takes 3 Point3's.
@@ -239,8 +224,6 @@ class HalfSpace3FromPoint3Builder {
  public:
   using HalfSpace3Rep = HalfSpace3<(point3_bits_template - 1)*2 + 3,
                          (point3_bits_template - 1)*3 + 3>;
-  using VectorInt = typename HalfSpace3Rep::VectorInt;
-  using DistInt = typename HalfSpace3Rep::DistInt;
 
   static HalfSpace3Rep Build(const Point3& p1, const Point3& p2,
                              const Point3& p3) {

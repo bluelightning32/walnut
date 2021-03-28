@@ -198,12 +198,11 @@ ConvexPolygonRep AABB<num_bits, denom_bits>::IntersectPlane(
 
   // First create a parallelogram by intersecting `plane` with 4 sides of the
   // prism.
-  using Vector3Rep = typename HalfSpace3Rep::VectorRep;
   const int dim1 = (drop_dimension + 1) % 3;
   const int dim2 = (drop_dimension + 2) % 3;
-  Vector3Rep dir1 = Vector3Rep::Zero();
-  Vector3Rep dir2 = Vector3Rep::Zero();
-  Vector3Rep dir3 = Vector3Rep::Zero();
+  Vector3 dir1 = Vector3::Zero();
+  Vector3 dir2 = Vector3::Zero();
+  Vector3 dir3 = Vector3::Zero();
   dir1.components()[dim1] = denom_;
   dir2.components()[dim2] = denom_;
   dir3.components()[drop_dimension] = denom_;

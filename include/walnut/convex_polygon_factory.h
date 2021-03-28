@@ -73,8 +73,8 @@ class ConvexPolygonFactory :
   // Returns -1 if the vertex will be convex after projection, or 1 if the
   // vertex will be reflex. The return value is undefined if
   // cross_product.IsZero().
-  static int GetPlaneOrientationAfterProjection(
-      typename HalfSpace3Rep::VectorRep cross_product, int drop_dimension) {
+  static int GetPlaneOrientationAfterProjection(const Vector3& cross_product,
+                                                int drop_dimension) {
     return -cross_product.components()[drop_dimension].GetAbsMult();
   }
 

@@ -240,7 +240,7 @@ class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
                                         double(edge_vector.z()) * edge_dist);
     BSPNode<>* return_child;
     BSPNode<>* other_child;
-    HalfSpace3<> split(normal, HalfSpace3<>::DistInt(long(dist)));
+    HalfSpace3<> split(normal, BigIntImpl(long(dist)));
     Split(parent, split, return_child, other_child);
     for (BSPPolygonId id = 0; id < tree_.next_id(); ++id) {
       EXPECT_EQ(other_child->GetPWNForId(id), parent->GetPWNForId(id))

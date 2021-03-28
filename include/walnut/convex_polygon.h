@@ -40,7 +40,7 @@ class ConvexPolygon {
   using HomoPoint3Rep = typename EdgeRep::HomoPoint3Rep;
   using HalfSpace3Rep =
     typename HalfSpace3FromPoint3Builder<point3_bits_template>::HalfSpace3Rep;
-  using NormalRep = typename HalfSpace3Rep::VectorRep;
+  using NormalRep = Vector3;
   using LineRep = typename EdgeRep::LineRep;
   using EdgeVector = std::vector<AssignableWrapper<EdgeRep>>;
   using ConstVertexIterator =
@@ -110,7 +110,6 @@ class ConvexPolygon {
   bool IsValidState() const {
     if (vertex_count() == 0) return true;
 
-    if (!plane().IsValidState()) return false;
     if (normal().components()[drop_dimension()].IsZero()) return false;
     const EdgeRep* prev_edge = &edges().back();
     for (const EdgeRep& edge : edges()) {
