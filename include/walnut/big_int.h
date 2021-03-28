@@ -656,7 +656,7 @@ class BigInt {
   // Negates *this and returns whether the result overflowed.
   //
   // A return value of false means it did not overflow.
-  constexpr bool Negate() {
+  constexpr void Negate() {
     const BigUIntWord old_last_word(words_[used_words() - 1]);
     bool carry = true;
     size_t i = 0;
@@ -667,7 +667,6 @@ class BigInt {
     // the same sign.
     const BigUIntWord sign_changed =
       (old_last_word ^ words_[i - 1]) >> (bits_per_word - 1);
-    bool overflowed = false;
     // carry is true if the result is 0.
     if (!(sign_changed.low_uint32() | carry)) {
       // The result kept the same sign, and the result isn't 0 (because carry
@@ -678,13 +677,11 @@ class BigInt {
     }
     assert(used_words() == i);
     Trim();
-    return overflowed;
   }
 
   BigInt operator-() const {
     BigInt result = *this;
-    bool overflowed = result.Negate();
-    assert(!overflowed);
+    result.Negate();
     return result;
   }
 
@@ -703,8 +700,7 @@ class BigInt {
     BigInt result = *this;
     was_signed = GetSign() < 0;
     if (was_signed) {
-      bool overflow = result.Negate();
-      assert(!overflow);
+      result.Negate();
     }
     return result;
   }
@@ -834,13 +830,11 @@ class BigInt {
     BigUInt quotient = this_uint.DivideRemainder(other_uint, &remainder);
     *remainder_out = remainder;
     if (this_signed) {
-      bool overflowed = remainder_out->Negate();
-      assert(!overflowed);
+      remainder_out->Negate();
     }
     BigInt result{quotient};
     if (this_signed ^ other_signed) {
-      bool overflowed = result.Negate();
-      assert(!overflowed);
+      result.Negate();
     }
     return result;
   }

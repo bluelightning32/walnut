@@ -205,8 +205,7 @@ inline void HomoPoint3::Reduce() {
 
   // Prioritize making the dist positive.
   if ((common_factor.GetSign() < 0) != (dist_denom_.GetSign() < 0)) {
-    bool overflowed = common_factor.Negate();
-    assert(!overflowed);
+    common_factor.Negate();
   }
 
   dist_denom_ /= common_factor;

@@ -411,11 +411,6 @@ TEST(BigInt, NegateInt128MaxExtraRoom) {
   EXPECT_EQ(result - BigInt(1), BigInt::min_value(127));
 }
 
-TEST(BigInt, NegateOverflowFalse) {
-  BigInt a{std::numeric_limits<int64_t>::min()};
-  EXPECT_FALSE(a.Negate());
-}
-
 TEST(BigInt, GetAbs64Int64Min) {
   const BigInt a{std::numeric_limits<int64_t>::min()};
   bool was_signed;

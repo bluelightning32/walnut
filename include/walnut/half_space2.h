@@ -115,8 +115,7 @@ class HalfSpace2 {
   // sufficient bitspace.
   void Negate() {
     normal_.Negate();
-    bool overflowed = dist_.Negate();
-    assert(!overflowed);
+    dist_.Negate();
   }
 
   // This function could potentially overflow. The caller must ensure there is

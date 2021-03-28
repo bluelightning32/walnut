@@ -165,8 +165,7 @@ class Vector2 {
   // sufficient bitspace.
   void Negate() {
     for (BigInt& coord : coords_) {
-      bool overflowed = coord.Negate();
-      assert(!overflowed);
+      coord.Negate();
     }
   }
 

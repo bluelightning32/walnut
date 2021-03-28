@@ -148,8 +148,7 @@ class Vector3 {
   // sufficient bitspace.
   void Negate() {
     for (BigInt& coord : components_) {
-      bool overflowed = coord.Negate();
-      assert(!overflowed);
+      coord.Negate();
     }
   }
 
