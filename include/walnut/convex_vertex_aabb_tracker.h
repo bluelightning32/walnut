@@ -30,8 +30,6 @@ namespace walnut {
 template <size_t num_bits_template = 32, size_t denom_bits_template = 32>
 class ConvexVertexAABBTracker {
  public:
-  using AABBRep = AABB<num_bits_template, denom_bits_template>;
-
   static constexpr size_t num_bits = num_bits_template;
   static constexpr size_t denom_bits = denom_bits_template;
 
@@ -132,7 +130,7 @@ class ConvexVertexAABBTracker {
     return max_indices_;
   }
 
-  const AABBRep& aabb() const {
+  const AABB& aabb() const {
     return aabb_;
   }
 
@@ -188,7 +186,7 @@ class ConvexVertexAABBTracker {
 
   std::array<size_t, 3> min_indices_;
   std::array<size_t, 3> max_indices_;
-  AABBRep aabb_;
+  AABB aabb_;
 };
 
 template <size_t num_bits, size_t denom_bits>
@@ -321,7 +319,7 @@ template <size_t num_bits, size_t denom_bits>
 template <typename VertexIterator>
 void ConvexVertexAABBTracker<num_bits, denom_bits>::ApproximateExtremes(
     const BigIntImpl& denom, const VertexIterator& begin) {
-  aabb_ = AABBRep(
+  aabb_ = AABB(
       rational::RoundDown(begin[min_indices_[0]].x(),
                           begin[min_indices_[0]].w(), denom),
       rational::RoundDown(begin[min_indices_[1]].y(),
@@ -368,7 +366,7 @@ void ConvexVertexAABBTracker<num_bits, denom_bits>::UpdateExtremes(
         maxes[i] = parent.aabb().max_point_num().components()[i];
       }
     }
-    aabb_ = AABBRep(
+    aabb_ = AABB(
         std::move(mins[0]),
         std::move(mins[1]),
         std::move(mins[2]),

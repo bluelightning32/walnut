@@ -51,7 +51,7 @@ TEST(ConvexVertexAABBTracker, ConstructEmpty) {
   std::vector<HomoPoint3> vertices;
   ConvexVertexAABBTracker<> tracker(vertices.begin(), vertices.end());
 
-  EXPECT_EQ(tracker.aabb(), AABB<>());
+  EXPECT_EQ(tracker.aabb(), AABB());
 }
 
 TEST(ConvexVertexAABBTracker, ConstructFromOne) {
@@ -62,7 +62,7 @@ TEST(ConvexVertexAABBTracker, ConstructFromOne) {
 
   EXPECT_EQ(tracker.min_indices(), (std::array<size_t, 3>{0, 0, 0}));
   EXPECT_EQ(tracker.max_indices(), (std::array<size_t, 3>{0, 0, 0}));
-  EXPECT_EQ(tracker.aabb(), AABB<>(/*min_x=*/1, /*min_y=*/2, /*min_z=*/3,
+  EXPECT_EQ(tracker.aabb(), AABB(/*min_x=*/1, /*min_y=*/2, /*min_z=*/3,
                                    /*max_x=*/1, /*max_y=*/2, /*max_z=*/3,
                                    /*denom=*/4));
 }
@@ -76,7 +76,7 @@ TEST(ConvexVertexAABBTracker, ConstructFromDifferentDenoms) {
 
   EXPECT_EQ(tracker.min_indices(), (std::array<size_t, 3>{1, 1, 1}));
   EXPECT_EQ(tracker.max_indices(), (std::array<size_t, 3>{0, 0, 0}));
-  EXPECT_EQ(tracker.aabb(), AABB<>(/*min_x=*/-1, /*min_y=*/-2, /*min_z=*/-3,
+  EXPECT_EQ(tracker.aabb(), AABB(/*min_x=*/-1, /*min_y=*/-2, /*min_z=*/-3,
                                    /*max_x=*/2, /*max_y=*/3, /*max_z=*/4,
                                    /*denom=*/5));
 }

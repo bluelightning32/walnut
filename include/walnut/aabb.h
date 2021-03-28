@@ -11,12 +11,8 @@ namespace walnut {
 // Axis-aligned bounding box
 //
 // This is a rectangular prism whose sides are perpendicular to the axes.
-template <size_t num_bits_template = 32, size_t denom_bits_template = 32>
 class AABB {
  public:
-  static constexpr size_t num_bits = num_bits_template;
-  static constexpr size_t denom_bits = denom_bits_template;
-
   // Creates an AABB that does not contain any points.
   AABB() : min_point_num_(1, 1, 1), max_point_num_(0, 0, 0) { }
 
@@ -74,7 +70,7 @@ class AABB {
   bool IsOnBorder(const HomoPoint3& p) const {
     if (!IsInside(p)) return false;
     for (int i = 0; i < 3; ++i) {
-      const BigInt<num_bits>& p_comp =
+      const BigIntImpl& p_comp =
         p.vector_from_origin().components()[i] * denom_;
       if (p_comp == min_point_num_.components()[i] * p.w() ||
           p_comp == max_point_num_.components()[i] * p.w()) return true;
@@ -151,8 +147,7 @@ class AABB {
     return denom_;
   }
 
-  template <size_t other_num_bits, size_t other_denom_bits>
-  bool operator==(const AABB<other_num_bits, other_denom_bits>& other) const {
+  bool operator==(const AABB& other) const {
     if (min_point_num() * other.denom() != other.min_point_num() * denom()) {
       return false;
     }
@@ -162,8 +157,7 @@ class AABB {
     return true;
   }
 
-  template <size_t other_num_bits, size_t other_denom_bits>
-  bool operator!=(const AABB<other_num_bits, other_denom_bits>& other) const {
+  bool operator!=(const AABB& other) const {
     return !(*this == other);
   }
 
@@ -177,9 +171,8 @@ class AABB {
   BigIntImpl denom_ = BigIntImpl(1);
 };
 
-template <size_t num_bits, size_t denom_bits>
 template <typename ConvexPolygonRep>
-ConvexPolygonRep AABB<num_bits, denom_bits>::IntersectPlane(
+ConvexPolygonRep AABB::IntersectPlane(
     const HalfSpace3& plane) const {
   int drop_dimension = plane.normal().GetFirstNonzeroDimension();
   if (drop_dimension == -1) {
@@ -200,9 +193,9 @@ ConvexPolygonRep AABB<num_bits, denom_bits>::IntersectPlane(
   dir3.components()[drop_dimension] = denom_;
   HalfSpace3 parallelogram_planes[4] = {
     HalfSpace3(-dir1,
-               -BigInt<num_bits + 1>(min_point_num_.components()[dim1])),
+               -BigIntImpl(min_point_num_.components()[dim1])),
     HalfSpace3(-dir2,
-               -BigInt<num_bits + 1>(min_point_num_.components()[dim2])),
+               -BigIntImpl(min_point_num_.components()[dim2])),
     HalfSpace3(dir1, max_point_num_.components()[dim1]),
     HalfSpace3(dir2, max_point_num_.components()[dim2]),
   };
@@ -249,9 +242,7 @@ ConvexPolygonRep AABB<num_bits, denom_bits>::IntersectPlane(
   return result;
 }
 
-template <size_t num_bits, size_t denom_bits>
-std::vector<ConvexPolygon<>>
-AABB<num_bits, denom_bits>::GetWalls() const {
+std::vector<ConvexPolygon<>> AABB::GetWalls() const {
   HomoPoint3 p[] = {
     HomoPoint3(min_point_num_.x(), min_point_num_.y(), min_point_num_.z(),
                denom_),
@@ -309,9 +300,7 @@ AABB<num_bits, denom_bits>::GetWalls() const {
   return result;
 }
 
-template <size_t num_bits, size_t denom_bits>
-int AABB<num_bits, denom_bits>::GetPlaneSide(
-    const HalfSpace3& plane) const {
+int AABB::GetPlaneSide(const HalfSpace3& plane) const {
   const bool x_pos = plane.x().GetSign() > 0;
   const bool y_pos = plane.y().GetSign() > 0;
   const bool z_pos = plane.z().GetSign() > 0;
@@ -342,9 +331,7 @@ int AABB<num_bits, denom_bits>::GetPlaneSide(
   }
 }
 
-template <size_t num_bits, size_t denom_bits>
-std::ostream& operator<<(std::ostream& out,
-                         const AABB<num_bits, denom_bits>& rect) {
+std::ostream& operator<<(std::ostream& out, const AABB& rect) {
   out << "[ min=" << rect.min_point_num();
   out << " max=" << rect.max_point_num();
   out << " / " << rect.denom() << " ]";

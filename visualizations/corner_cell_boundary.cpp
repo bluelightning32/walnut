@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
   walnut::BSPTree<> tree;
   walnut::HalfSpace3 split(p[0], p[1], p[2]);
   tree.root.Split(split);
-  walnut::AABB<> bounding_box(walnut::Point3(0, 0, 0),
+  walnut::AABB bounding_box(walnut::Point3(0, 0, 0),
                               walnut::Point3(2, 2, 2));
   std::vector<bool> node_path = {false};
   walnut::BSPTree<>::MappedBSPNode node_border_root;

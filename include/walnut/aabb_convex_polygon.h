@@ -22,8 +22,6 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
                 "AABBConvexPolygon.");
   using Parent = ParentTemplate;
   using typename Parent::EdgeRep;
-  using AABBRep =
-    typename ConvexVertexAABBTracker<32, 32>::AABBRep;
 
   // Subclasses can inherit from this. `NewEdgeParent` should be the subclass's
   // EdgeInfo type.
@@ -79,7 +77,7 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
   using Parent::vertex_count;
   using Parent::vertex;
 
-  const AABBRep& aabb() const {
+  const AABB& aabb() const {
     return aabb_tracker_.aabb();
   }
 

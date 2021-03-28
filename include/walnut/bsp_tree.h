@@ -100,10 +100,10 @@ class BSPTree {
   //
   // In case the BSPNode border is unbounded, `bounding_box` provides an upper
   // bound for how far the ConvexPolygons will extend.
-  template<size_t point3_bits, typename Iterator>
+  template<typename Iterator>
   MappedBSPNode* GetNodeBorder(
       Iterator node_path_begin, Iterator node_path_end,
-      const AABB<point3_bits>& bounding_box, MappedBSPNode& mapped_root) const;
+      const AABB& bounding_box, MappedBSPNode& mapped_root) const;
 
   BSPPolygonId AllocateId() {
     return next_id_++;
@@ -120,11 +120,11 @@ class BSPTree {
 };
 
 template <typename ConvexPolygonTemplate>
-template <size_t point3_bits, typename Iterator>
+template <typename Iterator>
 typename BSPTree<ConvexPolygonTemplate>::MappedBSPNode*
 BSPTree<ConvexPolygonTemplate>::GetNodeBorder(
     Iterator node_path_begin, Iterator node_path_end,
-    const AABB<point3_bits>& bounding_box,
+    const AABB& bounding_box,
     MappedBSPNode& mapped_root) const {
   mapped_root.Reset(&root);
   for (auto& polygon : bounding_box.GetWalls()) {

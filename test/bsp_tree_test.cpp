@@ -595,7 +595,7 @@ TEST(BSPTree, SplitBorderTo2Children) {
 TEST(BSPTree, GetNodeBorderEmptyTree) {
   BSPTree<> tree;
 
-  AABB<> bounding_box(Point3(-1, -1, -1), Point3(2, 2, 2));
+  AABB bounding_box(Point3(-1, -1, -1), Point3(2, 2, 2));
   std::vector<bool> node_path = { };
 
   BSPTree<>::MappedBSPNode node_border_root;
@@ -662,7 +662,7 @@ TEST(BSPTree, GetNodeBorder1Split) {
     HalfSpace3 split(p[1], p[3], p[4]);
     tree.root.Split(pos_side ? -split : split);
     std::vector<bool> node_path = {pos_side};
-    AABB<> bounding_box(Point3(-1, -1, -1), Point3(2, 2, 2));
+    AABB bounding_box(Point3(-1, -1, -1), Point3(2, 2, 2));
 
     BSPTree<>::MappedBSPNode node_border_root;
     BSPTree<>::MappedBSPNode* node_border_leaf =

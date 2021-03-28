@@ -10,7 +10,7 @@ TEST(AABBConvexPolygon, ConstructEmpty) {
   AABBConvexPolygon<> polygon;
 
   EXPECT_TRUE(polygon.IsValidState());
-  EXPECT_EQ(polygon.aabb(), AABB<>());
+  EXPECT_EQ(polygon.aabb(), AABB());
 }
 
 TEST(AABBConvexPolygon, SquareBounds) {
@@ -28,7 +28,7 @@ TEST(AABBConvexPolygon, SquareBounds) {
   HalfSpace3 plane(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10);
   AABBConvexPolygon<> polygon(plane, /*drop_dimension=*/2, p);
   EXPECT_TRUE(polygon.IsValidState());
-  EXPECT_EQ(polygon.aabb(), AABB<>(/*min_x=*/0, /*min_y=*/0, /*min_z=*/10,
+  EXPECT_EQ(polygon.aabb(), AABB(/*min_x=*/0, /*min_y=*/0, /*min_z=*/10,
                                    /*max_x=*/2, /*max_y=*/1, /*max_z=*/10,
                                    /*denom=*/1));
 }
@@ -153,11 +153,11 @@ TEST(AABBConvexPolygon, SplitInMiddle) {
   EXPECT_TRUE(children.second.IsValidState());
 
   EXPECT_EQ(children.first.aabb(),
-            AABB<>(/*min_x=*/0, /*min_y=*/0, /*min_z=*/10,
+            AABB(/*min_x=*/0, /*min_y=*/0, /*min_z=*/10,
                    /*max_x=*/1, /*max_y=*/1, /*max_z=*/10,
                    /*denom=*/1));
   EXPECT_EQ(children.second.aabb(),
-            AABB<>(/*min_x=*/1, /*min_y=*/0, /*min_z=*/10,
+            AABB(/*min_x=*/1, /*min_y=*/0, /*min_z=*/10,
                    /*max_x=*/2, /*max_y=*/1, /*max_z=*/10,
                    /*denom=*/1));
 }

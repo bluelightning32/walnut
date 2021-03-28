@@ -10,7 +10,7 @@ namespace walnut {
 using testing::ElementsAre;
 
 TEST(AABB, IsOnBorder) {
-  AABB<> prism(2);
+  AABB prism(2);
 
   EXPECT_TRUE(prism.IsOnBorder(Point3(2, 0, 0)));
   EXPECT_TRUE(prism.IsOnBorder(Point3(0, 2, 0)));
@@ -24,7 +24,7 @@ TEST(AABB, IsOnBorder) {
 }
 
 TEST(AABB, IsOnBorderHomoPoint3) {
-  AABB<> prism(Point3(-1, -1, -1), Point3(2, 2, 2));
+  AABB prism(Point3(-1, -1, -1), Point3(2, 2, 2));
 
   EXPECT_TRUE(prism.IsOnBorder(HomoPoint3(2, 0, 0, 1)));
   EXPECT_TRUE(prism.IsOnBorder(HomoPoint3(-2, 0, 0, -1)));
@@ -38,7 +38,7 @@ TEST(AABB, IsOnBorderHomoPoint3) {
 }
 
 TEST(AABB, IsOnBorderHomoPoint3Denom2) {
-  AABB<> prism(Vector3(-1, -1, -1), Vector3(2, 2, 2), 2);
+  AABB prism(Vector3(-1, -1, -1), Vector3(2, 2, 2), 2);
 
   EXPECT_TRUE(prism.IsOnBorder(HomoPoint3(2, 0, 0, 2)));
   EXPECT_TRUE(prism.IsOnBorder(HomoPoint3(1, 0, 0, 1)));
@@ -54,7 +54,7 @@ TEST(AABB, IsOnBorderHomoPoint3Denom2) {
 }
 
 TEST(AABB, IsInside) {
-  AABB<> prism(2);
+  AABB prism(2);
 
   EXPECT_TRUE(prism.IsInside(Point3(-2, 0, 0)));
   EXPECT_TRUE(prism.IsInside(Point3(2, 0, 0)));
@@ -65,7 +65,7 @@ TEST(AABB, IsInside) {
 }
 
 TEST(AABB, IntersectPlaneZUp) {
-  AABB<> prism(5);
+  AABB prism(5);
 
   MutableConvexPolygon<> result =
     prism.IntersectPlane(HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/1, /*d=*/0));
@@ -83,7 +83,7 @@ TEST(AABB, IntersectPlaneZUp) {
 }
 
 TEST(AABB, IntersectPlaneZUpFactional) {
-  AABB<> prism(Point3(-8, -8, 0), Point3(8, 8, 10));
+  AABB prism(Point3(-8, -8, 0), Point3(8, 8, 10));
   auto result = prism.IntersectPlane(HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/20,
                                                   /*d=*/19));
   result.SortVertices();
@@ -98,7 +98,7 @@ TEST(AABB, IntersectPlaneZUpFactional) {
 }
 
 TEST(AABB, IntersectPlaneZDown) {
-  AABB<> prism(5);
+  AABB prism(5);
 
   MutableConvexPolygon<> result =
     prism.IntersectPlane(HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/-1, /*d=*/0));
@@ -116,7 +116,7 @@ TEST(AABB, IntersectPlaneZDown) {
 }
 
 TEST(AABB, IntersectPlaneDiagPos) {
-  AABB<> prism(5);
+  AABB prism(5);
 
   MutableConvexPolygon<> result =
     prism.IntersectPlane(HalfSpace3(/*x=*/1, /*y=*/1, /*z=*/1, /*d=*/12));
@@ -133,7 +133,7 @@ TEST(AABB, IntersectPlaneDiagPos) {
 }
 
 TEST(AABB, IntersectPlaneDiagNeg) {
-  AABB<> prism(5);
+  AABB prism(5);
 
   MutableConvexPolygon<> result =
     prism.IntersectPlane(HalfSpace3(/*x=*/-1, /*y=*/-1, /*z=*/-1, /*d=*/12));
@@ -154,8 +154,8 @@ void TestIntersectPlaneLowSlopeMin() {
   const BigInt<point3_bits> min_int = BigInt<point3_bits>::min_value();
   const BigInt<point3_bits> min_plus_1 = min_int + BigInt<point3_bits>(1);
   const BigInt<point3_bits> max_int = BigInt<point3_bits>::max_value();
-  AABB<point3_bits> prism(Point3(min_int, min_int, min_int),
-                          Point3(max_int, max_int, max_int));
+  AABB prism(Point3(min_int, min_int, min_int),
+             Point3(max_int, max_int, max_int));
 
   for (int i = 0; i < 3; ++i) {
     Point3 p[3] = {
@@ -191,9 +191,9 @@ TEST(AABB, IntersectPlaneLowSlopeMin256) {
 }
 
 TEST(AABB, Equality) {
-  AABB<> prism1(-1, -2, -3, 4, 5, 6, /*denom=*/1);
-  AABB<> prism2(-1, -2, -3, 4, 5, 6, /*denom=*/2);
-  AABB<> prism3(-2, -4, -6, 8, 10, 12, /*denom=*/2);
+  AABB prism1(-1, -2, -3, 4, 5, 6, /*denom=*/1);
+  AABB prism2(-1, -2, -3, 4, 5, 6, /*denom=*/2);
+  AABB prism3(-2, -4, -6, 8, 10, 12, /*denom=*/2);
 
   EXPECT_EQ(prism1, prism3);
   EXPECT_NE(prism1, prism2);
@@ -201,8 +201,8 @@ TEST(AABB, Equality) {
 }
 
 TEST(AABB, Assignment) {
-  AABB<> prism1(-1, -2, -3, 4, 5, 6, /*denom=*/1);
-  AABB<> prism2(-1, -2, -3, 4, 5, 6, /*denom=*/2);
+  AABB prism1(-1, -2, -3, 4, 5, 6, /*denom=*/1);
+  AABB prism2(-1, -2, -3, 4, 5, 6, /*denom=*/2);
   EXPECT_NE(prism1, prism2);
 
   prism1 = prism2;
@@ -228,7 +228,7 @@ struct StringVertexData : public EdgeInfoRoot {
 };
 
 TEST(AABB, IntersectPlaneZUpWithData) {
-  AABB<> prism(5);
+  AABB prism(5);
 
   using ConvexPolygonRep = MutableConvexPolygon<StringVertexData>;
   ConvexPolygonRep result =
@@ -256,12 +256,12 @@ TEST(AABB, IntersectPlaneZUpWithData) {
 
 class GetAABBPlaneSideTest : public testing::TestWithParam<int> {
  protected:
-  AABB<> GetScaledAABB(const AABB<>& box) const {
+  AABB GetScaledAABB(const AABB& box) const {
     int mult = GetParam();
-    return AABB<>(box.min_point_num()*mult, box.max_point_num()*mult, mult);
+    return AABB(box.min_point_num()*mult, box.max_point_num()*mult, mult);
   }
 
-  void ExpectNegativeSide(const HalfSpace3& plane, const AABB<>& box) {
+  void ExpectNegativeSide(const HalfSpace3& plane, const AABB& box) {
     EXPECT_EQ(box.GetPlaneSide(plane), -1);
 
     EXPECT_EQ(GetScaledAABB(box).GetPlaneSide(plane), -1);
@@ -271,7 +271,7 @@ class GetAABBPlaneSideTest : public testing::TestWithParam<int> {
     EXPECT_EQ(GetScaledAABB(box).GetPlaneSide(-plane), 1);
   }
 
-  void ExpectStraddle(const HalfSpace3& plane, const AABB<>& box) {
+  void ExpectStraddle(const HalfSpace3& plane, const AABB& box) {
     EXPECT_EQ(box.GetPlaneSide(plane), 0);
 
     EXPECT_EQ(GetScaledAABB(box).GetPlaneSide(plane), 0);
@@ -284,19 +284,19 @@ class GetAABBPlaneSideTest : public testing::TestWithParam<int> {
 
 TEST_P(GetAABBPlaneSideTest, SideOfXYZPosNormal) {
   HalfSpace3 half_space(1, 1, 1, 10);
-  AABB<> aabb(-1, -1, -1, 1, 1, 1, 1);
+  AABB aabb(-1, -1, -1, 1, 1, 1, 1);
   ExpectNegativeSide(half_space, aabb);
 }
 
 TEST_P(GetAABBPlaneSideTest, SideOfXYZNegNormal) {
   HalfSpace3 half_space(-1, -1, -1, 10);
-  AABB<> aabb(-1, -1, -1, 1, 1, 1, 1);
+  AABB aabb(-1, -1, -1, 1, 1, 1, 1);
   ExpectNegativeSide(half_space, aabb);
 }
 
 TEST_P(GetAABBPlaneSideTest, Touching) {
   HalfSpace3 half_space(1, -10, 1, 30);
-  AABB<> aabb(10, -2, 10, 11, -1, 11, 1);
+  AABB aabb(10, -2, 10, 11, -1, 11, 1);
   ExpectStraddle(half_space, aabb);
 }
 
