@@ -83,12 +83,20 @@ class BSPNode {
     }
   }
 
- protected:
   // Push the contents of an interior node to the children.
   //
-  // This may only be called on an interior node.
+  // This is a no-op for leaves.
   void PushContentsToChildren();
 
+  // Push the contents all the way down to descendant leaf nodes. Call
+  // `leaf_callback` on each leaf node that the contents were pushed to (and
+  // possibly more nodes that the contents were not pushed to).
+  //
+  // This may be called on leaf or interior nodes.
+  template <typename LeafCallback>
+  void PushContentsToLeaves(LeafCallback leaf_callback);
+
+ protected:
   void MakeInterior(const HalfSpace3& half_space,
                     BSPNode* negative_child,
                     BSPNode* positive_child) {
@@ -110,14 +118,6 @@ class BSPNode {
  private:
   template <typename OutputPolygonParent>
   friend class BSPTree;
-
-  // Push the contents all the way down to descendant leaf nodes. Call
-  // `leaf_callback` on each leaf node that the contents were pushed to (and
-  // possibly more nodes that the contents were not pushed to).
-  //
-  // This may be called on leaf or interior nodes.
-  template <typename LeafCallback>
-  void PushContentsToLeaves(LeafCallback leaf_callback);
 
   // Update the negative and positive child for the crossing (if any) that
   // occurs at a vertex.
@@ -326,6 +326,9 @@ void BSPNode<OutputPolygonParent>::UpdateBoundaryAngles(
 
 template <typename OutputPolygonParent>
 void BSPNode<OutputPolygonParent>::PushContentsToChildren() {
+  if (IsLeaf()) {
+    return;
+  }
   PushContentPWNToChildren();
 
   for (PolygonRep& polygon : contents_) {
