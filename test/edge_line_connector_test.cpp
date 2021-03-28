@@ -558,4 +558,48 @@ TEST(EdgeLineConnector, FindNextLineStart) {
   EXPECT_EQ(subrange.second, 1);
 }
 
+TEST(EdgeLineConnector, ConnectUnsorted) {
+  HomoPoint2 p1(/*x=*/1, /*y=*/2, /*w=*/1);
+  HomoPoint2 p2(/*x=*/1 + 3, /*y=*/2 + 3, /*w=*/1);
+
+  HomoPoint2 q1(/*x=*/0, /*y=*/0, /*w=*/1);
+  HomoPoint2 q2(/*x=*/0, /*y=*/0 + 2, /*w=*/1);
+
+  ConnectedPolygon<> t1 = MakeTriangle(p1, p2);
+  ConnectedPolygon<> t2 = MakeTriangle(p2, p1);
+
+  ConnectedPolygon<> s1 = MakeTriangle(q1, q2);
+  ConnectedPolygon<> s2 = MakeTriangle(q2, q1);
+
+  using EdgeRef = std::reference_wrapper<ConnectedPolygon<>::EdgeRep>;
+  std::vector<EdgeRef> edges {
+    s1.edge(0),
+    t1.edge(0),
+    t2.edge(0),
+    s2.edge(0),
+  };
+
+  EdgeLineConnector<> connector;
+  bool errored = false;
+  auto error_handler = [&errored](const std::string& message) {
+    std::cout << message << std::endl;
+    errored = true;
+  };
+  connector.ConnectUnsorted(edges.begin(), edges.end(), /*drop_dimension=*/2,
+                            error_handler);
+  EXPECT_FALSE(errored);
+
+  EXPECT_EQ(t1.edge(0).partner(), &t2.edge(0));
+  EXPECT_EQ(t1.edge(0).extra_partner_count(), 0);
+
+  EXPECT_EQ(t2.edge(0).partner(), &t1.edge(0));
+  EXPECT_EQ(t2.edge(0).extra_partner_count(), 0);
+
+  EXPECT_EQ(s1.edge(0).partner(), &s2.edge(0));
+  EXPECT_EQ(s1.edge(0).extra_partner_count(), 0);
+
+  EXPECT_EQ(s2.edge(0).partner(), &s1.edge(0));
+  EXPECT_EQ(s2.edge(0).extra_partner_count(), 0);
+}
+
 }  // walnut

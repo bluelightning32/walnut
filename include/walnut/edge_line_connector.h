@@ -39,6 +39,38 @@ class EdgeLineConnector {
   // Connects the adjacent edges in the range of ConnectedEdges.
   //
   // From `edges_begin` up to `edges_end` defines a range of
+  // std::reference_wrapper<ConnectedEdge>s. All edges must lie in a common
+  // plane. `drop_dimension` indicates which component of the normal of that
+  // plane is non-zero.
+  //
+  // Two half-edges are only connected if their line segments overlap. When
+  // there are more than two half-edges overlapping the same line segment, then
+  // each half-edge is connected to the half-edge that is closest rotationally
+  // around the common line. Positive half-edges are connected to the next
+  // half-edge by going counter-clockwise around the common line. Negative
+  // edges are connected to the next half-edge by going clockwise around the
+  // common line.
+  //
+  // `error` is called if the half-edges come from an open polyhedron. Even if
+  // `error` is called, as many half-edges as possible will be connected. The
+  // ones that cannot be connected will have nullptr partners.
+  template <typename Iterator>
+  void ConnectUnsorted(Iterator edges_begin, const Iterator& edges_end,
+                       int drop_dimension,
+                       const std::function<void(const std::string&)>& error) {
+    SortEdgesInPlane(edges_begin, edges_end, drop_dimension);
+    while (edges_begin != edges_end) {
+      std::pair<Iterator, int> range_end =
+        FindNextLineStart(edges_begin, edges_end, drop_dimension);
+      ConnectSorted(edges_begin, range_end.first,
+                    /*sorted_dimension=*/range_end.second, error);
+      edges_begin = std::move(range_end.first);
+    }
+  }
+
+  // Connects the adjacent edges in the range of ConnectedEdges.
+  //
+  // From `edges_begin` up to `edges_end` defines a range of
   // std::reference_wrapper<ConnectedEdge>s.
   //
   // All of the half-edges in the range must be coincident with the same line.
