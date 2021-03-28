@@ -27,12 +27,8 @@ namespace walnut {
 // of the extreme vertices may not be exact multiples of the chosen
 // denominator. The resultant AABB is enlarged so that it contains all of the
 // input vertices.
-template <size_t num_bits_template = 32, size_t denom_bits_template = 32>
 class ConvexVertexAABBTracker {
  public:
-  static constexpr size_t num_bits = num_bits_template;
-  static constexpr size_t denom_bits = denom_bits_template;
-
   // Creates the AABB from the input vertices
   template <typename VertexIterator>
   ConvexVertexAABBTracker(const VertexIterator& begin,
@@ -138,10 +134,7 @@ class ConvexVertexAABBTracker {
   //
   // The extreme indices and bounding box must be equal for the trackers to be
   // considered equal.
-  template <size_t other_num_bits, size_t other_denom_bits>
-  bool operator==(
-      const ConvexVertexAABBTracker<other_num_bits,
-                                    other_denom_bits>& other) const {
+  bool operator==(const ConvexVertexAABBTracker& other) const {
     return min_indices() == other.min_indices() &&
            max_indices() == other.max_indices() &&
            aabb() == other.aabb();
@@ -189,8 +182,7 @@ class ConvexVertexAABBTracker {
   AABB aabb_;
 };
 
-template <size_t num_bits, size_t denom_bits>
-void ConvexVertexAABBTracker<num_bits, denom_bits>::SplitComponent(
+void ConvexVertexAABBTracker::SplitComponent(
     size_t component, int min_max_mult,
     const HomoPoint3& shared1, const HomoPoint3& shared2,
     size_t parent_shifted, size_t neg_count, size_t pos_count,
@@ -242,11 +234,9 @@ void ConvexVertexAABBTracker<num_bits, denom_bits>::SplitComponent(
   }
 }
 
-template <size_t num_bits, size_t denom_bits>
 template <typename VertexIterator>
-std::pair<ConvexVertexAABBTracker<num_bits, denom_bits>,
-          ConvexVertexAABBTracker<num_bits, denom_bits>>
-ConvexVertexAABBTracker<num_bits, denom_bits>::CreateSplitChildren(
+std::pair<ConvexVertexAABBTracker, ConvexVertexAABBTracker>
+ConvexVertexAABBTracker::CreateSplitChildren(
     size_t parent_count, const VertexIterator& neg_begin,
     const VertexIterator& pos_begin,
     const ConvexPolygonSplitRanges& split) const {
@@ -300,10 +290,8 @@ ConvexVertexAABBTracker<num_bits, denom_bits>::CreateSplitChildren(
   return result;
 }
 
-template <size_t num_bits, size_t denom_bits>
 template <typename VertexIterator>
-BigIntImpl
-ConvexVertexAABBTracker<num_bits, denom_bits>::GetMaxDenominator(
+BigIntImpl ConvexVertexAABBTracker::GetMaxDenominator(
     const VertexIterator& begin) const {
   BigIntImpl denom = begin[min_indices_[0]].w().abs();
   for (int i = 1; i < 3; ++i) {
@@ -315,9 +303,8 @@ ConvexVertexAABBTracker<num_bits, denom_bits>::GetMaxDenominator(
   return denom;
 }
 
-template <size_t num_bits, size_t denom_bits>
 template <typename VertexIterator>
-void ConvexVertexAABBTracker<num_bits, denom_bits>::ApproximateExtremes(
+void ConvexVertexAABBTracker::ApproximateExtremes(
     const BigIntImpl& denom, const VertexIterator& begin) {
   aabb_ = AABB(
       rational::RoundDown(begin[min_indices_[0]].x(),
@@ -335,9 +322,8 @@ void ConvexVertexAABBTracker<num_bits, denom_bits>::ApproximateExtremes(
       std::move(denom));
 }
 
-template <size_t num_bits, size_t denom_bits>
 template <typename VertexIterator>
-void ConvexVertexAABBTracker<num_bits, denom_bits>::UpdateExtremes(
+void ConvexVertexAABBTracker::UpdateExtremes(
     const ConvexVertexAABBTracker& parent, const bool min_modified[3],
     const bool max_modified[3], const VertexIterator& begin) {
   auto new_denom = GetMaxDenominator(begin);
@@ -377,10 +363,8 @@ void ConvexVertexAABBTracker<num_bits, denom_bits>::UpdateExtremes(
   }
 }
 
-template <size_t num_bits, size_t denom_bits>
-std::ostream& operator<<(
-    std::ostream& out,
-    const ConvexVertexAABBTracker<num_bits, denom_bits>& tracker) {
+inline std::ostream& operator<<(std::ostream& out,
+                                const ConvexVertexAABBTracker& tracker) {
   out << "min_indices=[";
   for (size_t i = 0; i < 3; ++i) {
     out << tracker.min_indices()[i];

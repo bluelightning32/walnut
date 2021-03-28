@@ -165,7 +165,7 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
   }
 
  private:
-  ConvexVertexAABBTracker<32, 32> aabb_tracker_;
+  ConvexVertexAABBTracker aabb_tracker_;
 };
 
 // Adds AABBConvexPolygon on top of `Parent`, if `Parent` does not already

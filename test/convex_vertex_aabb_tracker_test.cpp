@@ -49,7 +49,7 @@ MutableConvexPolygon<> MakeConvexPolygon(const Container& vertices) {
 
 TEST(ConvexVertexAABBTracker, ConstructEmpty) {
   std::vector<HomoPoint3> vertices;
-  ConvexVertexAABBTracker<> tracker(vertices.begin(), vertices.end());
+  ConvexVertexAABBTracker tracker(vertices.begin(), vertices.end());
 
   EXPECT_EQ(tracker.aabb(), AABB());
 }
@@ -58,7 +58,7 @@ TEST(ConvexVertexAABBTracker, ConstructFromOne) {
   std::vector<HomoPoint3> vertices{
     HomoPoint3{1, 2, 3, 4}
   };
-  ConvexVertexAABBTracker<> tracker(vertices.begin(), vertices.end());
+  ConvexVertexAABBTracker tracker(vertices.begin(), vertices.end());
 
   EXPECT_EQ(tracker.min_indices(), (std::array<size_t, 3>{0, 0, 0}));
   EXPECT_EQ(tracker.max_indices(), (std::array<size_t, 3>{0, 0, 0}));
@@ -72,7 +72,7 @@ TEST(ConvexVertexAABBTracker, ConstructFromDifferentDenoms) {
     HomoPoint3{1, 2, 3, 4},
     HomoPoint3{1, 2, 3, -5}
   };
-  ConvexVertexAABBTracker<> tracker(vertices.begin(), vertices.end());
+  ConvexVertexAABBTracker tracker(vertices.begin(), vertices.end());
 
   EXPECT_EQ(tracker.min_indices(), (std::array<size_t, 3>{1, 1, 1}));
   EXPECT_EQ(tracker.max_indices(), (std::array<size_t, 3>{0, 0, 0}));
@@ -88,12 +88,12 @@ TEST(ConvexVertexAABBTracker, RotateIndices) {
     HomoPoint3{3, 4, 1, 1},
     HomoPoint3{4, 1, 2, 1},
   };
-  ConvexVertexAABBTracker<> tracker(vertices.begin(), vertices.end());
+  ConvexVertexAABBTracker tracker(vertices.begin(), vertices.end());
 
   EXPECT_EQ(tracker.min_indices(), (std::array<size_t, 3>{0, 3, 2}));
   EXPECT_EQ(tracker.max_indices(), (std::array<size_t, 3>{3, 2, 1}));
 
-  ConvexVertexAABBTracker<> rotated(tracker);
+  ConvexVertexAABBTracker rotated(tracker);
   rotated.RotateIndices(2, vertices.size());
 
   EXPECT_EQ(rotated.min_indices(), (std::array<size_t, 3>{2, 1, 0}));
@@ -103,7 +103,7 @@ TEST(ConvexVertexAABBTracker, RotateIndices) {
 }
 
 TEST(ConvexVertexAABBTracker, DefaultConstructsInvalid) {
-  ConvexVertexAABBTracker<> tracker;
+  ConvexVertexAABBTracker tracker;
   EXPECT_TRUE(tracker.IsValidState(0));
 }
 
@@ -126,7 +126,7 @@ TEST(ConvexVertexAABBTracker, SplitAtExistingVertices) {
 
   ConvexPolygon<> square = MakeConvexPolygon(p);
 
-  ConvexVertexAABBTracker<> tracker(square.vertices_begin(),
+  ConvexVertexAABBTracker tracker(square.vertices_begin(),
                                     square.vertices_end());
 
   EXPECT_EQ(tracker.min_indices(), (std::array<size_t, 3>{0, 1, 1}));
@@ -145,17 +145,17 @@ TEST(ConvexVertexAABBTracker, SplitAtExistingVertices) {
     std::pair<ConvexPolygon<>, ConvexPolygon<>> polygon_children =
       square.CreateSplitChildren(split_info);
 
-    std::pair<ConvexVertexAABBTracker<>,
-              ConvexVertexAABBTracker<>> tracker_children =
+    std::pair<ConvexVertexAABBTracker,
+              ConvexVertexAABBTracker> tracker_children =
       tracker.CreateSplitChildren(square.vertex_count(),
                                   polygon_children.first.vertices_begin(),
                                   polygon_children.second.vertices_begin(),
                                   split_info.ranges);
     EXPECT_EQ(tracker_children.first,
-        ConvexVertexAABBTracker<>(polygon_children.first.vertices_begin(),
+        ConvexVertexAABBTracker(polygon_children.first.vertices_begin(),
                                   polygon_children.first.vertices_end()));
     EXPECT_EQ(tracker_children.second,
-        ConvexVertexAABBTracker<>(polygon_children.second.vertices_begin(),
+        ConvexVertexAABBTracker(polygon_children.second.vertices_begin(),
                                   polygon_children.second.vertices_end()))
       << "split_info=" << split_info;
   }
@@ -180,7 +180,7 @@ TEST(ConvexVertexAABBTracker, SplitBetweenVertices) {
 
   ConvexPolygon<> square = MakeConvexPolygon(p);
 
-  ConvexVertexAABBTracker<> tracker(square.vertices_begin(),
+  ConvexVertexAABBTracker tracker(square.vertices_begin(),
                                     square.vertices_end());
 
   EXPECT_EQ(tracker.min_indices(), (std::array<size_t, 3>{0, 1, 1}));
@@ -206,17 +206,17 @@ TEST(ConvexVertexAABBTracker, SplitBetweenVertices) {
     std::pair<ConvexPolygon<>, ConvexPolygon<>> polygon_children =
       square.CreateSplitChildren(split_info);
 
-    std::pair<ConvexVertexAABBTracker<>,
-              ConvexVertexAABBTracker<>> tracker_children =
+    std::pair<ConvexVertexAABBTracker,
+              ConvexVertexAABBTracker> tracker_children =
       tracker.CreateSplitChildren(square.vertex_count(),
                                   polygon_children.first.vertices_begin(),
                                   polygon_children.second.vertices_begin(),
                                   split_info.ranges);
     EXPECT_EQ(tracker_children.first,
-        ConvexVertexAABBTracker<>(polygon_children.first.vertices_begin(),
+        ConvexVertexAABBTracker(polygon_children.first.vertices_begin(),
                                   polygon_children.first.vertices_end()));
     EXPECT_EQ(tracker_children.second,
-        ConvexVertexAABBTracker<>(polygon_children.second.vertices_begin(),
+        ConvexVertexAABBTracker(polygon_children.second.vertices_begin(),
                                   polygon_children.second.vertices_end()))
       << "split_info=" << split_info;
   }
