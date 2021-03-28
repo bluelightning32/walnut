@@ -26,7 +26,7 @@ TEST(PluckerLine, IsCoincidentPoint3) {
   const Point3 p3(p2 + (p2 - p1));
   EXPECT_TRUE(line.IsCoincident(p3));
 
-  const HomoPoint3<> doubled_p3(p3.vector_from_origin().Scale(2), BigInt<8>(2));
+  const HomoPoint3 doubled_p3(p3.vector_from_origin().Scale(2), BigInt<8>(2));
   EXPECT_TRUE(line.IsCoincident(doubled_p3));
 
   const Point3 p4(p1 - (p2 - p1));
@@ -35,7 +35,7 @@ TEST(PluckerLine, IsCoincidentPoint3) {
   const Point3 p5(17, 23, 31);
   EXPECT_FALSE(line.IsCoincident(p5));
 
-  const HomoPoint3<> doubled_p5(p5.vector_from_origin().Scale(2), BigInt<8>(2));
+  const HomoPoint3 doubled_p5(p5.vector_from_origin().Scale(2), BigInt<8>(2));
   EXPECT_FALSE(line.IsCoincident(doubled_p5));
 }
 
@@ -164,12 +164,12 @@ TEST(PluckerLine, ConstructFromHomoPoint3) {
   const Point3 p2(5, 7, 11);
   PluckerLine<> line(p1, p2);
 
-  const HomoPoint3<> homo_p1(1 * 11, 2 * 11, 3 * 11, 11);
-  const HomoPoint3<> homo_p2(5 * 13, 7 * 13, 11 * 13, 13);
+  const HomoPoint3 homo_p1(1 * 11, 2 * 11, 3 * 11, 11);
+  const HomoPoint3 homo_p2(5 * 13, 7 * 13, 11 * 13, 13);
   PluckerLine<> from_homo_points(homo_p1, homo_p2);
 
-  const HomoPoint3<> homo_p1_neg(1 * -11, 2 * -11, 3 * -11, -11);
-  const HomoPoint3<> homo_p2_neg(5 * -13, 7 * -13, 11 * -13, -13);
+  const HomoPoint3 homo_p1_neg(1 * -11, 2 * -11, 3 * -11, -11);
+  const HomoPoint3 homo_p2_neg(5 * -13, 7 * -13, 11 * -13, -13);
   PluckerLine<> from_homo_points2(homo_p1_neg, homo_p2);
   PluckerLine<> from_homo_points3(homo_p1_neg, homo_p2_neg);
 
@@ -212,7 +212,7 @@ TEST(PluckerLine, IntersectPlane) {
   HalfSpace3 plane(p2, p3, p4);
 
   auto intersect_point = line.Intersect(plane);
-  EXPECT_EQ(intersect_point, HomoPoint3<>(p2));
+  EXPECT_EQ(intersect_point, HomoPoint3(p2));
   EXPECT_TRUE(line.IsCoincident(intersect_point));
 }
 

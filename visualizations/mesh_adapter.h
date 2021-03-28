@@ -24,15 +24,13 @@ vtkSmartPointer<vtkPolyData> ConvertWalnutMesh(
                                     typename Polygon::EdgeParent>,
                       Polygon>::value,
       "Polygon must inherit from ConvexPolygon");
-  using HomoPoint3Rep = typename Polygon::HomoPoint3Rep;
-
   auto points = vtkSmartPointer<vtkPoints>::New();
   auto cell_array = vtkSmartPointer<vtkCellArray>::New();
   for (const Polygon& polygon : mesh) {
     auto converted_polygon = vtkSmartPointer<vtkPolygon>::New();
     converted_polygon->GetPointIds()->SetNumberOfIds(polygon.vertex_count());
     for (size_t i = 0; i < polygon.vertex_count(); ++i) {
-      HomoPoint3Rep point = polygon.vertex(i);
+      HomoPoint3 point = polygon.vertex(i);
       double w(point.w());
       vtkIdType point_id = points->InsertNextPoint(double(point.x()) / w,
                                                    double(point.y()) / w,
@@ -49,14 +47,13 @@ vtkSmartPointer<vtkPolyData> ConvertWalnutMesh(
 }
 
 template<typename Polygon>
-typename Polygon::HomoPoint3Rep GetTopPoint(const std::vector<Polygon>& mesh) {
-  using HomoPoint3Rep = typename Polygon::HomoPoint3Rep;
-  HomoPoint3Rep top(0, 0, 0, 0);
+HomoPoint3 GetTopPoint(const std::vector<Polygon>& mesh) {
+  HomoPoint3 top(0, 0, 0, 0);
 
   for (const Polygon& polygon : mesh) {
     for (size_t i = 0; i < polygon.vertex_count(); ++i) {
-      const HomoPoint3Rep& point = polygon.vertex(i);
-      if (top.w().IsZero() || HomoPoint3Rep::TopnessLt(top, point)) {
+      const HomoPoint3& point = polygon.vertex(i);
+      if (top.w().IsZero() || HomoPoint3::TopnessLt(top, point)) {
         top = point;
       }
     }

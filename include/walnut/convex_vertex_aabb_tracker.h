@@ -31,9 +31,6 @@ template <size_t num_bits_template = 32, size_t denom_bits_template = 32>
 class ConvexVertexAABBTracker {
  public:
   using AABBRep = AABB<num_bits_template, denom_bits_template>;
-  using NumInt = typename AABBRep::NumInt;
-  using DenomInt = typename AABBRep::DenomInt;
-  using HomoPoint3Rep = typename AABBRep::HomoPoint3Rep;
 
   static constexpr size_t num_bits = num_bits_template;
   static constexpr size_t denom_bits = denom_bits_template;
@@ -49,13 +46,13 @@ class ConvexVertexAABBTracker {
       ++it;
       for (size_t pos = 1; it != end; ++it, ++pos) {
         for (size_t i = 0; i < 3; ++i) {
-          const HomoPoint3Rep& old_min = begin[min_indices_[i]];
+          const HomoPoint3& old_min = begin[min_indices_[i]];
           if (it->CompareComponent(i, old_min) < 0) {
             // new_min is lower.
             min_indices_[i] = pos;
           }
 
-          const HomoPoint3Rep& old_max = begin[max_indices_[i]];
+          const HomoPoint3& old_max = begin[max_indices_[i]];
           if (it->CompareComponent(i, old_max) > 0) {
             // new_max is greater.
             max_indices_[i] = pos;
@@ -156,7 +153,7 @@ class ConvexVertexAABBTracker {
   // Out of all of the extreme indices, returns the denominator with the
   // highest absolute value.
   template <typename VertexIterator>
-  DenomInt GetMaxDenominator(const VertexIterator& begin) const;
+  BigIntImpl GetMaxDenominator(const VertexIterator& begin) const;
 
   // Builds `aabb_` from `min_indices_` and `max_indices_`.
   template <typename VertexIterator>
@@ -177,11 +174,12 @@ class ConvexVertexAABBTracker {
 
   // Builds `aabb_` from `min_indices_` and `max_indices_`.
   template <typename VertexIterator>
-  void ApproximateExtremes(DenomInt denom, const VertexIterator& begin);
+  void ApproximateExtremes(const BigIntImpl& denom,
+                           const VertexIterator& begin);
 
   static void SplitComponent(size_t component, int min_max_mult,
-                             const HomoPoint3Rep& shared1,
-                             const HomoPoint3Rep& shared2,
+                             const HomoPoint3& shared1,
+                             const HomoPoint3& shared2,
                              size_t parent_shifted, size_t neg_count,
                              size_t pos_count, size_t pos_range_start_shifted,
                              size_t pos_range_end_shifted, size_t& neg_output,
@@ -196,7 +194,7 @@ class ConvexVertexAABBTracker {
 template <size_t num_bits, size_t denom_bits>
 void ConvexVertexAABBTracker<num_bits, denom_bits>::SplitComponent(
     size_t component, int min_max_mult,
-    const HomoPoint3Rep& shared1, const HomoPoint3Rep& shared2,
+    const HomoPoint3& shared1, const HomoPoint3& shared2,
     size_t parent_shifted, size_t neg_count, size_t pos_count,
     size_t pos_range_start_shifted, size_t pos_range_end_shifted,
     size_t& neg_output, size_t& pos_output, bool& neg_modified,
@@ -263,10 +261,10 @@ ConvexVertexAABBTracker<num_bits, denom_bits>::CreateSplitChildren(
   size_t pos_count = split.pos_range.second - split.pos_range.first;
   // For the negative child, shared1 is located at neg_count + 1.
   // For the positive child, shared1 is located at pos_count + 1.
-  const HomoPoint3Rep& shared1 = neg_begin[neg_count + 1];
+  const HomoPoint3& shared1 = neg_begin[neg_count + 1];
   // For the negative child, shared2 is located at neg_count.
   // For the positive child, shared2 is located at 0.
-  const HomoPoint3Rep& shared2 = pos_begin[0];
+  const HomoPoint3& shared2 = pos_begin[0];
   size_t pos_range_start_shifted =
     (split.pos_range.first + neg_shift) % parent_count;
   size_t pos_range_end_shifted = pos_range_start_shifted + pos_count;
@@ -306,15 +304,15 @@ ConvexVertexAABBTracker<num_bits, denom_bits>::CreateSplitChildren(
 
 template <size_t num_bits, size_t denom_bits>
 template <typename VertexIterator>
-typename ConvexVertexAABBTracker<num_bits, denom_bits>::DenomInt
+BigIntImpl
 ConvexVertexAABBTracker<num_bits, denom_bits>::GetMaxDenominator(
     const VertexIterator& begin) const {
-  DenomInt denom = begin[min_indices_[0]].w().abs();
+  BigIntImpl denom = begin[min_indices_[0]].w().abs();
   for (int i = 1; i < 3; ++i) {
-    denom = std::max<DenomInt>(denom, begin[min_indices_[i]].w().abs());
+    denom = std::max<BigIntImpl>(denom, begin[min_indices_[i]].w().abs());
   }
   for (int i = 0; i < 3; ++i) {
-    denom = std::max<DenomInt>(denom, begin[max_indices_[i]].w().abs());
+    denom = std::max<BigIntImpl>(denom, begin[max_indices_[i]].w().abs());
   }
   return denom;
 }
@@ -322,7 +320,7 @@ ConvexVertexAABBTracker<num_bits, denom_bits>::GetMaxDenominator(
 template <size_t num_bits, size_t denom_bits>
 template <typename VertexIterator>
 void ConvexVertexAABBTracker<num_bits, denom_bits>::ApproximateExtremes(
-    DenomInt denom, const VertexIterator& begin) {
+    const BigIntImpl& denom, const VertexIterator& begin) {
   aabb_ = AABBRep(
       rational::RoundDown(begin[min_indices_[0]].x(),
                           begin[min_indices_[0]].w(), denom),
@@ -348,7 +346,7 @@ void ConvexVertexAABBTracker<num_bits, denom_bits>::UpdateExtremes(
   if (new_denom != parent.aabb().denom()) {
     ApproximateExtremes(std::move(new_denom), begin);
   } else {
-    NumInt mins[3];
+    BigIntImpl mins[3];
     for (int i = 0; i < 3; ++i) {
       if (min_modified[i]) {
         const auto& my_point = begin[min_indices_[i]];
@@ -359,7 +357,7 @@ void ConvexVertexAABBTracker<num_bits, denom_bits>::UpdateExtremes(
         mins[i] = parent.aabb().min_point_num().components()[i];
       }
     }
-    NumInt maxes[3];
+    BigIntImpl maxes[3];
     for (int i = 0; i < 3; ++i) {
       if (max_modified[i]) {
         const auto& my_point = begin[max_indices_[i]];

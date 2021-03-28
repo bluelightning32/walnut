@@ -14,22 +14,18 @@ namespace walnut {
 template <size_t num_bits_template = 32, size_t denom_bits_template = 32>
 class AABB {
  public:
-  using HomoPoint3Rep = HomoPoint3<num_bits_template, denom_bits_template>;
-  using VectorRep = typename HomoPoint3Rep::VectorRep;
-  using NumInt = typename HomoPoint3Rep::NumInt;
-  using DenomInt = typename HomoPoint3Rep::DenomInt;
-
   static constexpr size_t num_bits = num_bits_template;
   static constexpr size_t denom_bits = denom_bits_template;
 
   // Creates an AABB that does not contain any points.
   AABB() : min_point_num_(1, 1, 1), max_point_num_(0, 0, 0) { }
 
-  AABB(Point3 min_point, Point3 max_point) :
+  AABB(const Point3& min_point, const Point3& max_point) :
     min_point_num_(min_point.vector_from_origin()),
     max_point_num_(max_point.vector_from_origin()) { }
 
-  AABB(VectorRep min_point, VectorRep max_point, const DenomInt& denom) :
+  AABB(const Vector3& min_point, const Vector3& max_point,
+       const BigIntImpl& denom) :
       min_point_num_(min_point), max_point_num_(max_point), denom_(denom) {
     if (denom_.GetSign() < 0) {
       min_point_num_.Negate();
@@ -38,23 +34,24 @@ class AABB {
     }
   }
 
-  AABB(VectorRep min_point, VectorRep max_point, int denom) :
-    AABB(min_point, max_point, DenomInt(denom)) { }
+  AABB(const Vector3& min_point, const Vector3& max_point, int denom) :
+    AABB(min_point, max_point, BigIntImpl(denom)) { }
 
-  AABB(const NumInt& min_x, const NumInt& min_y,
-       const NumInt& min_z, const NumInt& max_x,
-       const NumInt& max_y, const NumInt& max_z) :
-    AABB(min_x, min_y, min_z, max_x, max_y, max_z, DenomInt(1)) { }
+  AABB(const BigIntImpl& min_x, const BigIntImpl& min_y,
+       const BigIntImpl& min_z, const BigIntImpl& max_x,
+       const BigIntImpl& max_y, const BigIntImpl& max_z) :
+    AABB(min_x, min_y, min_z, max_x, max_y, max_z, BigIntImpl(1)) { }
 
-  AABB(const NumInt& min_x, const NumInt& min_y,
-       const NumInt& min_z, const NumInt& max_x,
-       const NumInt& max_y, const NumInt& max_z, const DenomInt& denom) :
-    AABB(VectorRep(min_x, min_y, min_z), VectorRep(max_x, max_y, max_z),
+  AABB(const BigIntImpl& min_x, const BigIntImpl& min_y,
+       const BigIntImpl& min_z, const BigIntImpl& max_x,
+       const BigIntImpl& max_y, const BigIntImpl& max_z,
+       const BigIntImpl& denom) :
+    AABB(Vector3(min_x, min_y, min_z), Vector3(max_x, max_y, max_z),
          denom) { }
 
   AABB(int min_x, int min_y, int min_z, int max_x, int max_y, int max_z,
        int denom) :
-    AABB(VectorRep(min_x, min_y, min_z), VectorRep(max_x, max_y, max_z),
+    AABB(Vector3(min_x, min_y, min_z), Vector3(max_x, max_y, max_z),
          denom) { }
 
   AABB(int radius) :
@@ -74,8 +71,7 @@ class AABB {
   }
 
   // Returns true if `p` is on the border (but still inside) of the prism.
-  template <size_t num_bits, size_t denom_bits>
-  bool IsOnBorder(const HomoPoint3<num_bits, denom_bits>& p) const {
+  bool IsOnBorder(const HomoPoint3& p) const {
     if (!IsInside(p)) return false;
     for (int i = 0; i < 3; ++i) {
       const BigInt<num_bits>& p_comp =
@@ -98,8 +94,7 @@ class AABB {
   }
 
   // Returns true if `p` is inside or on the border of the prism.
-  template <size_t num_bits, size_t denom_bits>
-  bool IsInside(const HomoPoint3<num_bits, denom_bits>& p) const {
+  bool IsInside(const HomoPoint3& p) const {
     const bool flip = p.w().GetSign() < 0;
     for (int i = 0; i < 3; ++i) {
       auto p_scaled = p.vector_from_origin().components()[i] * denom_;
@@ -136,23 +131,23 @@ class AABB {
   // Returns all 6 sides of the prism.
   std::vector<ConvexPolygon<num_bits>> GetWalls() const;
 
-  HomoPoint3Rep min_point() const {
-    return HomoPoint3Rep(min_point_num_, denom_);
+  HomoPoint3 min_point() const {
+    return HomoPoint3(min_point_num_, denom_);
   }
 
-  VectorRep min_point_num() const {
+  const Vector3& min_point_num() const {
     return min_point_num_;
   }
 
-  HomoPoint3Rep max_point() const {
-    return HomoPoint3Rep(max_point_num_, denom_);
+  HomoPoint3 max_point() const {
+    return HomoPoint3(max_point_num_, denom_);
   }
 
-  VectorRep max_point_num() const {
+  const Vector3& max_point_num() const {
     return max_point_num_;
   }
 
-  const DenomInt& denom() const {
+  const BigIntImpl& denom() const {
     return denom_;
   }
 
@@ -174,12 +169,12 @@ class AABB {
 
  private:
   // min_point_num_/denom_ is part of the prism
-  VectorRep min_point_num_;
+  Vector3 min_point_num_;
   // max_point_num_/denom_ is part of the prism
-  VectorRep max_point_num_;
+  Vector3 max_point_num_;
 
   // Must be positive.
-  DenomInt denom_ = DenomInt(1);
+  BigIntImpl denom_ = BigIntImpl(1);
 };
 
 template <size_t num_bits, size_t denom_bits>
@@ -257,23 +252,23 @@ ConvexPolygonRep AABB<num_bits, denom_bits>::IntersectPlane(
 template <size_t num_bits, size_t denom_bits>
 std::vector<ConvexPolygon<AABB<num_bits, denom_bits>::num_bits>>
 AABB<num_bits, denom_bits>::GetWalls() const {
-  HomoPoint3<num_bits, denom_bits> p[] = {
-    HomoPoint3<num_bits, denom_bits>(
-        min_point_num_.x(), min_point_num_.y(), min_point_num_.z(), denom_),
-    HomoPoint3<num_bits, denom_bits>(
-        max_point_num_.x(), min_point_num_.y(), min_point_num_.z(), denom_),
-    HomoPoint3<num_bits, denom_bits>(
-        max_point_num_.x(), max_point_num_.y(), min_point_num_.z(), denom_),
-    HomoPoint3<num_bits, denom_bits>(
-        min_point_num_.x(), max_point_num_.y(), min_point_num_.z(), denom_),
-    HomoPoint3<num_bits, denom_bits>(
-        min_point_num_.x(), min_point_num_.y(), max_point_num_.z(), denom_),
-    HomoPoint3<num_bits, denom_bits>(
-        max_point_num_.x(), min_point_num_.y(), max_point_num_.z(), denom_),
-    HomoPoint3<num_bits, denom_bits>(
-        max_point_num_.x(), max_point_num_.y(), max_point_num_.z(), denom_),
-    HomoPoint3<num_bits, denom_bits>(
-        min_point_num_.x(), max_point_num_.y(), max_point_num_.z(), denom_),
+  HomoPoint3 p[] = {
+    HomoPoint3(min_point_num_.x(), min_point_num_.y(), min_point_num_.z(),
+               denom_),
+    HomoPoint3(max_point_num_.x(), min_point_num_.y(), min_point_num_.z(),
+               denom_),
+    HomoPoint3(max_point_num_.x(), max_point_num_.y(), min_point_num_.z(),
+               denom_),
+    HomoPoint3(min_point_num_.x(), max_point_num_.y(), min_point_num_.z(),
+               denom_),
+    HomoPoint3(min_point_num_.x(), min_point_num_.y(), max_point_num_.z(),
+               denom_),
+    HomoPoint3(max_point_num_.x(), min_point_num_.y(), max_point_num_.z(),
+               denom_),
+    HomoPoint3(max_point_num_.x(), max_point_num_.y(), max_point_num_.z(),
+               denom_),
+    HomoPoint3(min_point_num_.x(), max_point_num_.y(), max_point_num_.z(),
+               denom_),
   };
 
   struct FacetInfo {
@@ -295,7 +290,7 @@ AABB<num_bits, denom_bits>::GetWalls() const {
   };
 
   std::vector<ConvexPolygon<num_bits>> result;
-  std::vector<HomoPoint3<num_bits, denom_bits>> vertices;
+  std::vector<HomoPoint3> vertices;
   vertices.reserve(4);
   for (int side = 0; side < 6; ++side) {
     const FacetInfo& facet_info = facet_infos[side];

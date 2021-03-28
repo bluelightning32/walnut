@@ -12,7 +12,6 @@ template <typename Factory = ConvexPolygonFactory<>>
 class ResultCollector : public Factory {
  public:
   using ConvexPolygonRep = typename Factory::ConvexPolygonRep;
-  using HomoPoint3Rep = typename ConvexPolygonRep::HomoPoint3Rep;
 
   std::vector<ConvexPolygonRep> GetSortedPolygonResult() {
     for (ConvexPolygonRep& polygon : result_) {
@@ -29,7 +28,7 @@ class ResultCollector : public Factory {
     for (const ConvexPolygonRep& polygon : sorted) {
       std::vector<Point3> vertices;
       for (size_t i = 0; i < polygon.vertex_count(); ++i) {
-        const HomoPoint3Rep& vertex = polygon.vertex(i);
+        const HomoPoint3& vertex = polygon.vertex(i);
         EXPECT_EQ(vertex.dist_denom(), 1);
         vertices.emplace_back(vertex.x(), vertex.y(), vertex.z());
       }
@@ -55,10 +54,10 @@ class ResultCollector : public Factory {
       const int orientation = drop_dim_value.GetSign();
       const size_t vertex_count = polygon.vertex_count();
       for (int i = 0; i < vertex_count; ++i) {
-        const HomoPoint3Rep& prev = polygon.vertex(
+        const HomoPoint3& prev = polygon.vertex(
             (vertex_count + i - 1) % vertex_count);
-        const HomoPoint3Rep& cur = polygon.vertex(i);
-        const HomoPoint3Rep& next = polygon.vertex((i + 1) % vertex_count);
+        const HomoPoint3& cur = polygon.vertex(i);
+        const HomoPoint3& next = polygon.vertex((i + 1) % vertex_count);
         EXPECT_LE(cur.Get2DTwistDir(polygon.drop_dimension(), prev, next) *
                   orientation, 0);
       }
@@ -69,7 +68,7 @@ class ResultCollector : public Factory {
     size_t matching = 0;
     for (const ConvexPolygonRep& polygon : result_) {
       for (size_t i = 0; i < polygon.vertex_count(); ++i) {
-        const HomoPoint3Rep& hv = polygon.vertex(i);
+        const HomoPoint3& hv = polygon.vertex(i);
         if (v == hv) {
           ++matching;
         }

@@ -27,18 +27,14 @@ template <typename EdgeTemplate = ConnectedPolygon<>::EdgeRep>
 class EdgeLineConnector {
  public:
   using EdgeRep = EdgeTemplate;
-  using HomoPoint3Rep = typename EdgeRep::HomoPoint3Rep;
   using PolygonRep = typename EdgeRep::FinalPolygon;
   static_assert(
-      std::is_base_of<ConnectedEdge<HomoPoint3Rep,
-                                    PolygonRep,
+      std::is_base_of<ConnectedEdge<PolygonRep,
                                     typename EdgeRep::ConnectedEdgeRep::Parent
                                    >,
                                    EdgeTemplate
                      >::value,
                      "EdgeRep must inherit from ConnectedEdge.");
-  using NumInt = typename HomoPoint3Rep::NumInt;
-  using DenomInt = typename HomoPoint3Rep::DenomInt;
   using NormalRep = typename PolygonRep::NormalRep;
   using LineRep = typename EdgeRep::LineRep;
 
@@ -79,9 +75,9 @@ class EdgeLineConnector {
     ActiveEdgeMap active_edges((RotationCompare(sorted_dimension)));
     EndEventsCompare end_events_compare(sorted_dimension);
 
-    const HomoPoint3Rep* prev_location = nullptr;
+    const HomoPoint3* prev_location = nullptr;
     while (edges_begin != edges_end) {
-      const HomoPoint3Rep* current_location;
+      const HomoPoint3* current_location;
       if (end_events_.empty() ||
           IsLocationLessThan(
             edges_begin->get().GetBeginLocation(sorted_dimension),
@@ -118,7 +114,7 @@ class EdgeLineConnector {
     }
 
     while (!end_events_.empty()) {
-      const HomoPoint3Rep& current_location =
+      const HomoPoint3& current_location =
         end_events_.front()->first->GetEndLocation(sorted_dimension);
       ProcessEndEvents(sorted_dimension, active_edges, current_location,
                        end_events_compare);
@@ -178,8 +174,7 @@ class EdgeLineConnector {
   }
 
   // Returns true if l1[dim]/l1.w() < l2[dim]/l2.w()
-  static bool IsLocationLessThan(const HomoPoint3Rep& l1,
-                                 const HomoPoint3Rep& l2,
+  static bool IsLocationLessThan(const HomoPoint3& l1, const HomoPoint3& l2,
                                  int sorted_dimension) {
     return rational::IsLessThan(
         l1.vector_from_origin().components()[sorted_dimension], l1.w(),
@@ -259,7 +254,7 @@ class EdgeLineConnector {
   // If the edges had partners which were not deleted, they are added to
   // `need_partners_.`
   void ProcessEndEvents(int sorted_dimension, ActiveEdgeMap& active_edges,
-                        const HomoPoint3Rep& location,
+                        const HomoPoint3& location,
                         const EndEventsCompare& compare) {
     // Process events from end_events_ as long as their location matches
     // `location`.
@@ -314,7 +309,7 @@ class EdgeLineConnector {
   // Repartner everything in need_partners_, and clear needs_partners_.
   void ProcessNeedPartners(
       int sorted_dimension, ActiveEdgeMap& active_edges,
-      const HomoPoint3Rep& location,
+      const HomoPoint3& location,
       const std::function<void(const std::string&)>& error) {
     while (!need_partners_.empty()) {
       ActiveEdge needs_partner = need_partners_.back();
@@ -371,7 +366,7 @@ class EdgeLineConnector {
   // Set source's current partner to target, unless it already points to
   // target.
   void Repartner(int sorted_dimension, ActiveEdge source, bool source_pos,
-                 const HomoPoint3Rep& location, ActiveEdge target) {
+                 const HomoPoint3& location, ActiveEdge target) {
     if (target->second != source->first) {
       need_partners_.push_back(target);
     }
@@ -390,8 +385,8 @@ class EdgeLineConnector {
   // Note that the location check is necessary because with malformed input,
   // the first partner could be nullptr, followed by a non-null partner.
   void AddPartner(int sorted_dimension, EdgeRep& edge, bool pos_edge,
-                  const HomoPoint3Rep& location, EdgeRep* target) {
-    const HomoPoint3Rep& compare_endpoint =
+                  const HomoPoint3& location, EdgeRep* target) {
+    const HomoPoint3& compare_endpoint =
       pos_edge ? edge.vertex() : edge.next_vertex();
     if (rational::Equals(
           location.vector_from_origin().components()[sorted_dimension],

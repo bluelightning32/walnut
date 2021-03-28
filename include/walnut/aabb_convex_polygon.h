@@ -24,8 +24,7 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
   using typename Parent::EdgeRep;
   using typename Parent::SplitInfoRep;
   using AABBRep =
-    typename ConvexVertexAABBTracker<Parent::homo_point3_num_bits,
-                                     Parent::homo_point3_denom_bits>::AABBRep;
+    typename ConvexVertexAABBTracker<32, 32>::AABBRep;
 
   // Subclasses can inherit from this. `NewEdgeParent` should be the subclass's
   // EdgeInfo type.
@@ -35,8 +34,6 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
                                                            NewEdgeParent>>;
 
   using Parent::point3_bits;
-  using Parent::homo_point3_num_bits;
-  using Parent::homo_point3_denom_bits;
 
   AABBConvexPolygon() { }
 
@@ -61,10 +58,8 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
       Parent(plane, drop_dimension, vertices),
       aabb_tracker_(Parent::vertices_begin(), Parent::vertices_end()) { }
 
-  template <size_t num_bits, size_t denom_bits>
   AABBConvexPolygon(const HalfSpace3& plane, int drop_dimension,
-                    const std::vector<HomoPoint3<num_bits,
-                                                 denom_bits>>& vertices) :
+                    const std::vector<HomoPoint3>& vertices) :
       Parent(plane, drop_dimension, vertices),
       aabb_tracker_(Parent::vertices_begin(), Parent::vertices_end()) { }
 
@@ -175,8 +170,7 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
   }
 
  private:
-  ConvexVertexAABBTracker<homo_point3_num_bits,
-                          homo_point3_denom_bits> aabb_tracker_;
+  ConvexVertexAABBTracker<32, 32> aabb_tracker_;
 };
 
 // Adds AABBConvexPolygon on top of `Parent`, if `Parent` does not already

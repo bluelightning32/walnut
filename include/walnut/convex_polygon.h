@@ -37,7 +37,6 @@ class ConvexPolygon {
   using EdgeParent = EdgeParentTemplate;
   using EdgeRep = ConvexPolygonEdge<point3_bits_template, EdgeParent>;
   using SplitInfoRep = ConvexPolygonSplitInfo<point3_bits_template>;
-  using HomoPoint3Rep = typename EdgeRep::HomoPoint3Rep;
   using NormalRep = Vector3;
   using LineRep = typename EdgeRep::LineRep;
   using EdgeVector = std::vector<AssignableWrapper<EdgeRep>>;
@@ -52,14 +51,6 @@ class ConvexPolygon {
   // The minimum number of bits to support for each component of the vertex3's
   // that the polygon is built from.
   static constexpr size_t point3_bits = point3_bits_template;
-
-  // The minimum number of bits to support for each of the x, y, and z
-  // components for each vertex, after an arbitrary number of splits from
-  // planes of the type HalfSpace3.
-  static constexpr int homo_point3_num_bits = HomoPoint3Rep::num_bits;
-  // The minimum number of bits to support the w component for each vertex,
-  // after an arbitrary number of splits from planes of the type HalfSpace3.
-  static constexpr int homo_point3_denom_bits = HomoPoint3Rep::denom_bits;
 
   ConvexPolygon() : plane_(HalfSpace3::Zero()), drop_dimension_(-1) { }
 
@@ -89,14 +80,12 @@ class ConvexPolygon {
     assert(IsValidState());
   }
 
-  template <size_t num_bits, size_t denom_bits>
   ConvexPolygon(const HalfSpace3& plane, int drop_dimension,
-                const std::vector<HomoPoint3<num_bits,
-                                             denom_bits>>& vertices) :
+                const std::vector<HomoPoint3>& vertices) :
       plane_(plane), drop_dimension_(drop_dimension) {
     edges_.reserve(vertices.size());
-    const HomoPoint3<num_bits, denom_bits>* prev = &vertices.back();
-    for (const HomoPoint3<num_bits, denom_bits>& vertex : vertices) {
+    const HomoPoint3* prev = &vertices.back();
+    for (const HomoPoint3& vertex : vertices) {
       edges_.emplace_back(*prev, vertex);
       assert(edges_.back().IsValidState());
       prev = &vertex;
@@ -135,7 +124,7 @@ class ConvexPolygon {
     return edges_.size();
   }
 
-  const HomoPoint3Rep& vertex(size_t index) const {
+  const HomoPoint3& vertex(size_t index) const {
     return edges_[index].vertex();
   }
 
@@ -172,7 +161,7 @@ class ConvexPolygon {
   size_t GetMinimumIndex() const {
     size_t min = 0;
     for (size_t i = 1; i < edges_.size(); ++i) {
-      if (HomoPoint3Rep::LexicographicallyLt(vertex(i), vertex(min))) {
+      if (HomoPoint3::LexicographicallyLt(vertex(i), vertex(min))) {
         min = i;
       }
     }
@@ -682,8 +671,7 @@ ConvexPolygon<point3_bits, EdgeParent>::GetOppositeEdgeIndicesBisect(
   auto initial_dist = edge(0).vertex().vector_from_origin()
                              .DropDimension(drop_dimension).Dot(v_flipped);
 
-  const typename HomoPoint3Rep::DenomInt& initial_dist_denom =
-    edge(0).vertex().w();
+  const BigIntImpl& initial_dist_denom = edge(0).vertex().w();
 
   // Current range being considered by the binary search. The range includes
   // the begin side but excludes the end side.
@@ -702,7 +690,7 @@ ConvexPolygon<point3_bits, EdgeParent>::GetOppositeEdgeIndicesBisect(
     }
     auto dist = vertex(mid).vector_from_origin()
                            .DropDimension(drop_dimension).Dot(v_flipped);
-    const typename HomoPoint3Rep::DenomInt& dist_denom = vertex(mid).w();
+    const BigIntImpl& dist_denom = vertex(mid).w();
     if ((initial_dist*dist_denom).LessThan(
           /*flip=*/initial_dist_denom.HasDifferentSign(dist_denom),
           dist*initial_dist_denom)) {

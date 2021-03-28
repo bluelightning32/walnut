@@ -263,8 +263,8 @@ TEST(ConvexPolygon, CounterClockwiseTriangleEdges) {
   ASSERT_EQ(polygon.vertex_count(), std::end(input) - std::begin(input));
   for (size_t i = 0; i < polygon.vertex_count(); ++i) {
     EXPECT_EQ(polygon.vertex(i), input[i]);
-    const ConvexPolygon<32>::HomoPoint3Rep& vertex = polygon.vertex(i);
-    const ConvexPolygon<32>::HomoPoint3Rep& next_vertex = polygon.vertex(
+    const HomoPoint3& vertex = polygon.vertex(i);
+    const HomoPoint3& next_vertex = polygon.vertex(
         (i + 1) % polygon.vertex_count());
     const Point3& input_vertex = input[i];
     const Point3& next_input_vertex = input[
@@ -292,8 +292,8 @@ TEST(ConvexPolygon, CounterClockwiseSquareEdges) {
   ASSERT_EQ(polygon.vertex_count(), std::end(input) - std::begin(input));
   for (size_t i = 0; i < polygon.vertex_count(); ++i) {
     EXPECT_EQ(polygon.vertex(i), input[i]);
-    const ConvexPolygon<32>::HomoPoint3Rep& vertex = polygon.vertex(i);
-    const ConvexPolygon<32>::HomoPoint3Rep& next_vertex = polygon.vertex(
+    const HomoPoint3& vertex = polygon.vertex(i);
+    const HomoPoint3& next_vertex = polygon.vertex(
         (i + 1) % polygon.vertex_count());
     const Point3& input_vertex = input[i];
     const Point3& next_input_vertex = input[
@@ -321,8 +321,8 @@ TEST(ConvexPolygon, ClockwiseSquareEdges) {
   ASSERT_EQ(polygon.vertex_count(), std::end(input) - std::begin(input));
   for (size_t i = 0; i < polygon.vertex_count(); ++i) {
     EXPECT_EQ(polygon.vertex(i), input[i]);
-    const ConvexPolygon<32>::HomoPoint3Rep& vertex = polygon.vertex(i);
-    const ConvexPolygon<32>::HomoPoint3Rep& next_vertex = polygon.vertex(
+    const HomoPoint3& vertex = polygon.vertex(i);
+    const HomoPoint3& next_vertex = polygon.vertex(
         (i + 1) % polygon.vertex_count());
     const Point3& input_vertex = input[i];
     const Point3& next_input_vertex = input[
@@ -354,8 +354,8 @@ TEST(ConvexPolygon, RedundantEdges) {
   ASSERT_EQ(polygon.vertex_count(), std::end(input) - std::begin(input));
   for (size_t i = 0; i < polygon.vertex_count(); ++i) {
     EXPECT_EQ(polygon.vertex(i), input[i]);
-    const ConvexPolygon<32>::HomoPoint3Rep& vertex = polygon.vertex(i);
-    const ConvexPolygon<32>::HomoPoint3Rep& next_vertex = polygon.vertex(
+    const HomoPoint3& vertex = polygon.vertex(i);
+    const HomoPoint3& next_vertex = polygon.vertex(
         (i + 1) % polygon.vertex_count());
     const Point3& input_vertex = input[i];
     const Point3& next_input_vertex = input[
@@ -504,15 +504,15 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesCCWMidSameDir) {
 }
 
 TEST(ConvexPolygon, GetOppositeEdgeIndicesLargeInts) {
-  std::vector<HomoPoint3<>> p{
-    HomoPoint3<>(98983800000, 478250000000, -496997400000, -165665800000),
-    HomoPoint3<>(1237096350000, 1110633380000, 1422518250000, 474172750000),
-    HomoPoint3<>(193810800000, 433923320000, 468159600000, 156053200000),
-    HomoPoint3<>(0, 493174500000, 506610000000, 168870000000),
-    HomoPoint3<>(-193810800000, 433923320000, 468159600000, 156053200000),
-    HomoPoint3<>(1237096350000, -1110633380000, -1422518250000, -474172750000),
-    HomoPoint3<>(1555715850000, 1413200000000, -1810284150000, -603428050000),
-    HomoPoint3<>(281623200000, 361828700000, -421395600000, -140465200000),
+  std::vector<HomoPoint3> p{
+    HomoPoint3(98983800000, 478250000000, -496997400000, -165665800000),
+    HomoPoint3(1237096350000, 1110633380000, 1422518250000, 474172750000),
+    HomoPoint3(193810800000, 433923320000, 468159600000, 156053200000),
+    HomoPoint3(0, 493174500000, 506610000000, 168870000000),
+    HomoPoint3(-193810800000, 433923320000, 468159600000, 156053200000),
+    HomoPoint3(1237096350000, -1110633380000, -1422518250000, -474172750000),
+    HomoPoint3(1555715850000, 1413200000000, -1810284150000, -603428050000),
+    HomoPoint3(281623200000, 361828700000, -421395600000, -140465200000),
   };
 
   HalfSpace3 plane(0, 0, 10000, 30000);
@@ -528,7 +528,7 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesLargeInts) {
 
   // Reduce everything to smaller coordinates and rerun the test, to double
   // check that the expected values are correct.
-  for (HomoPoint3<>& point : p) {
+  for (HomoPoint3& point : p) {
     point.Reduce();
   }
   plane.Reduce();
@@ -558,18 +558,18 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesDenom) {
   //     \        /      |
   //      --> p[2]       |
   //
-  std::vector<HomoPoint3<>> p{
-    HomoPoint3<32>(101, -101, 0, 1),
-    HomoPoint3<32>(103, -102, 0, 1),
-    HomoPoint3<32>(104, -101, 0, 1),
-    HomoPoint3<32>(100, 100, 0, 1),
+  std::vector<HomoPoint3> p{
+    HomoPoint3(101, -101, 0, 1),
+    HomoPoint3(103, -102, 0, 1),
+    HomoPoint3(104, -101, 0, 1),
+    HomoPoint3(100, 100, 0, 1),
   };
 
   HalfSpace3 plane(0, 0, 1, 0);
 
   for (size_t i = 0; i < p.size(); ++i) {
     for (int multiple : {-1, 1000, -1000}) {
-      std::vector<HomoPoint3<>> p_copy(p);
+      std::vector<HomoPoint3> p_copy(p);
       p_copy[i].x() *= multiple;
       p_copy[i].y() *= multiple;
       p_copy[i].z() *= multiple;

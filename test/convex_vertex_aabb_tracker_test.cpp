@@ -48,15 +48,15 @@ MutableConvexPolygon<32> MakeConvexPolygon(const Container& vertices) {
 }
 
 TEST(ConvexVertexAABBTracker, ConstructEmpty) {
-  std::vector<HomoPoint3<>> vertices;
+  std::vector<HomoPoint3> vertices;
   ConvexVertexAABBTracker<> tracker(vertices.begin(), vertices.end());
 
   EXPECT_EQ(tracker.aabb(), AABB<>());
 }
 
 TEST(ConvexVertexAABBTracker, ConstructFromOne) {
-  std::vector<HomoPoint3<>> vertices{
-    HomoPoint3<>{1, 2, 3, 4}
+  std::vector<HomoPoint3> vertices{
+    HomoPoint3{1, 2, 3, 4}
   };
   ConvexVertexAABBTracker<> tracker(vertices.begin(), vertices.end());
 
@@ -68,9 +68,9 @@ TEST(ConvexVertexAABBTracker, ConstructFromOne) {
 }
 
 TEST(ConvexVertexAABBTracker, ConstructFromDifferentDenoms) {
-  std::vector<HomoPoint3<>> vertices{
-    HomoPoint3<>{1, 2, 3, 4},
-    HomoPoint3<>{1, 2, 3, -5}
+  std::vector<HomoPoint3> vertices{
+    HomoPoint3{1, 2, 3, 4},
+    HomoPoint3{1, 2, 3, -5}
   };
   ConvexVertexAABBTracker<> tracker(vertices.begin(), vertices.end());
 
@@ -82,11 +82,11 @@ TEST(ConvexVertexAABBTracker, ConstructFromDifferentDenoms) {
 }
 
 TEST(ConvexVertexAABBTracker, RotateIndices) {
-  std::vector<HomoPoint3<>> vertices{
-    HomoPoint3<>{1, 2, 3, 1},
-    HomoPoint3<>{2, 3, 4, 1},
-    HomoPoint3<>{3, 4, 1, 1},
-    HomoPoint3<>{4, 1, 2, 1},
+  std::vector<HomoPoint3> vertices{
+    HomoPoint3{1, 2, 3, 1},
+    HomoPoint3{2, 3, 4, 1},
+    HomoPoint3{3, 4, 1, 1},
+    HomoPoint3{4, 1, 2, 1},
   };
   ConvexVertexAABBTracker<> tracker(vertices.begin(), vertices.end());
 
@@ -187,15 +187,15 @@ TEST(ConvexVertexAABBTracker, SplitBetweenVertices) {
   EXPECT_EQ(tracker.max_indices(), (std::array<size_t, 3>{2, 3, 3}));
 
   for (size_t i = 0; i < 4; ++i) {
-    HomoPoint3<> split_start(
+    HomoPoint3 split_start(
         p[i].vector_from_origin() +
         p[(i + 1) % square.vertex_count()].vector_from_origin(),
         /*w=*/BigInt<32>(2));
-    HomoPoint3<> split_end(
+    HomoPoint3 split_end(
         p[(i + 2) % square.vertex_count()].vector_from_origin() +
         p[(i + 3) % square.vertex_count()].vector_from_origin(),
         /*w=*/BigInt<32>(2));
-    HalfSpace3 split(split_start, split_end, HomoPoint3<>(0, 0, 0, 1));
+    HalfSpace3 split(split_start, split_end, HomoPoint3(0, 0, 0, 1));
 
     ConvexPolygon<>::SplitInfoRep split_info = square.GetSplitInfo(split);
     ASSERT_TRUE(split_info.ShouldEmitNegativeChild());

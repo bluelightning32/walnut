@@ -27,8 +27,6 @@ template <size_t point3_bits_template = 32,
           typename ParentTemplate = EdgeInfoRoot>
 struct ConvexPolygonEdge : public ParentTemplate {
   using Point3Rep = Point3;
-  using HomoPoint3Rep = HomoPoint3<(point3_bits_template - 1)*7 + 10,
-                                   (point3_bits_template - 1)*6 + 10>;
   using LineRep = typename PluckerLineFromPlanesFromPoint3sBuilder<
     point3_bits_template>::PluckerLineRep;
   using Parent = ParentTemplate;
@@ -40,9 +38,7 @@ struct ConvexPolygonEdge : public ParentTemplate {
     vertex_(vertex), line_(vertex, next_vertex) { }
 
   // Parent must be default-constructible to use this constructor.
-  template <size_t num_bits, size_t denom_bits>
-  ConvexPolygonEdge(const HomoPoint3<num_bits, denom_bits>& vertex,
-                    const HomoPoint3<num_bits, denom_bits>& next_vertex) :
+  ConvexPolygonEdge(const HomoPoint3& vertex, const HomoPoint3& next_vertex) :
       vertex_(vertex), line_(vertex, next_vertex) {
     assert(line_.IsValid());
   }
@@ -51,7 +47,7 @@ struct ConvexPolygonEdge : public ParentTemplate {
   //
   // `line` should be in the direction from `vertex` to the next vertex in the
   // polygon.
-  ConvexPolygonEdge(const HomoPoint3Rep& vertex, const LineRep& line) :
+  ConvexPolygonEdge(const HomoPoint3& vertex, const LineRep& line) :
     vertex_(vertex), line_(line) { }
 
   // Inherit the line and vertex data from `parent_edge`, but overwrite the
@@ -59,7 +55,7 @@ struct ConvexPolygonEdge : public ParentTemplate {
   //
   // `vertex` must be on `parent_edge.line_`.
   ConvexPolygonEdge(const ConvexPolygonEdge& parent_edge,
-                    const HomoPoint3Rep& vertex) :
+                    const HomoPoint3& vertex) :
     Parent(parent_edge, vertex),
     vertex_(vertex),
     line_(parent_edge.line_) { }
@@ -80,8 +76,7 @@ struct ConvexPolygonEdge : public ParentTemplate {
   // `line` should be in the direction from `vertex` to the next vertex in the
   // polygon.
   ConvexPolygonEdge(const ConvexPolygonEdge& parent_edge,
-                    const HomoPoint3Rep& vertex,
-                    const LineRep& line) :
+                    const HomoPoint3& vertex, const LineRep& line) :
     Parent(parent_edge, vertex, line),
     vertex_(vertex), line_(line) { }
 
@@ -96,12 +91,11 @@ struct ConvexPolygonEdge : public ParentTemplate {
 
   static bool LexicographicallyLt(const ConvexPolygonEdge& a,
                                   const ConvexPolygonEdge& b) {
-    return HomoPoint3Rep::LexicographicallyLt(a.vertex_, b.vertex_);
+    return HomoPoint3::LexicographicallyLt(a.vertex_, b.vertex_);
   }
 
   bool IsValidState() const {
-    return vertex_.IsValidState() && line_.IsValid() &&
-           line_.IsCoincident(vertex_);
+    return vertex_.IsValid() && line_.IsValid() && line_.IsCoincident(vertex_);
   }
 
   // Return a string representation of the edge that uses decimal points to
@@ -122,7 +116,7 @@ struct ConvexPolygonEdge : public ParentTemplate {
     return line_;
   }
 
-  const HomoPoint3Rep& vertex() const {
+  const HomoPoint3& vertex() const {
     return vertex_;
   }
 
@@ -146,7 +140,7 @@ struct ConvexPolygonEdge : public ParentTemplate {
   }
 
  private:
-  HomoPoint3Rep vertex_;
+  HomoPoint3 vertex_;
 
   // This line starts at `vertex` and goes to the next vertex in the polygon.
   //

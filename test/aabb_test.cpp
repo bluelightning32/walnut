@@ -26,31 +26,31 @@ TEST(AABB, IsOnBorder) {
 TEST(AABB, IsOnBorderHomoPoint3) {
   AABB<> prism(Point3(-1, -1, -1), Point3(2, 2, 2));
 
-  EXPECT_TRUE(prism.IsOnBorder(HomoPoint3<>(2, 0, 0, 1)));
-  EXPECT_TRUE(prism.IsOnBorder(HomoPoint3<>(-2, 0, 0, -1)));
-  EXPECT_TRUE(prism.IsOnBorder(HomoPoint3<>(1, 0, 0, -1)));
-  EXPECT_TRUE(prism.IsOnBorder(HomoPoint3<>(-1, 0, 0, 1)));
+  EXPECT_TRUE(prism.IsOnBorder(HomoPoint3(2, 0, 0, 1)));
+  EXPECT_TRUE(prism.IsOnBorder(HomoPoint3(-2, 0, 0, -1)));
+  EXPECT_TRUE(prism.IsOnBorder(HomoPoint3(1, 0, 0, -1)));
+  EXPECT_TRUE(prism.IsOnBorder(HomoPoint3(-1, 0, 0, 1)));
 
-  EXPECT_FALSE(prism.IsOnBorder(HomoPoint3<>(2, 0, 0, -1)));
-  EXPECT_FALSE(prism.IsOnBorder(HomoPoint3<>(-2, 0, 0, 1)));
-  EXPECT_FALSE(prism.IsOnBorder(HomoPoint3<>(1, 0, 0, 1)));
-  EXPECT_FALSE(prism.IsOnBorder(HomoPoint3<>(-1, 0, 0, -1)));
+  EXPECT_FALSE(prism.IsOnBorder(HomoPoint3(2, 0, 0, -1)));
+  EXPECT_FALSE(prism.IsOnBorder(HomoPoint3(-2, 0, 0, 1)));
+  EXPECT_FALSE(prism.IsOnBorder(HomoPoint3(1, 0, 0, 1)));
+  EXPECT_FALSE(prism.IsOnBorder(HomoPoint3(-1, 0, 0, -1)));
 }
 
 TEST(AABB, IsOnBorderHomoPoint3Denom2) {
   AABB<> prism(Vector3(-1, -1, -1), Vector3(2, 2, 2), 2);
 
-  EXPECT_TRUE(prism.IsOnBorder(HomoPoint3<>(2, 0, 0, 2)));
-  EXPECT_TRUE(prism.IsOnBorder(HomoPoint3<>(1, 0, 0, 1)));
-  EXPECT_TRUE(prism.IsOnBorder(HomoPoint3<>(-2, 0, 0, -2)));
-  EXPECT_TRUE(prism.IsOnBorder(HomoPoint3<>(-1, 0, 0, -1)));
-  EXPECT_TRUE(prism.IsOnBorder(HomoPoint3<>(1, 0, 0, -2)));
-  EXPECT_TRUE(prism.IsOnBorder(HomoPoint3<>(-1, 0, 0, 2)));
+  EXPECT_TRUE(prism.IsOnBorder(HomoPoint3(2, 0, 0, 2)));
+  EXPECT_TRUE(prism.IsOnBorder(HomoPoint3(1, 0, 0, 1)));
+  EXPECT_TRUE(prism.IsOnBorder(HomoPoint3(-2, 0, 0, -2)));
+  EXPECT_TRUE(prism.IsOnBorder(HomoPoint3(-1, 0, 0, -1)));
+  EXPECT_TRUE(prism.IsOnBorder(HomoPoint3(1, 0, 0, -2)));
+  EXPECT_TRUE(prism.IsOnBorder(HomoPoint3(-1, 0, 0, 2)));
 
-  EXPECT_FALSE(prism.IsOnBorder(HomoPoint3<>(2, 0, 0, -2)));
-  EXPECT_FALSE(prism.IsOnBorder(HomoPoint3<>(-2, 0, 0, 2)));
-  EXPECT_FALSE(prism.IsOnBorder(HomoPoint3<>(1, 0, 0, 2)));
-  EXPECT_FALSE(prism.IsOnBorder(HomoPoint3<>(-1, 0, 0, -2)));
+  EXPECT_FALSE(prism.IsOnBorder(HomoPoint3(2, 0, 0, -2)));
+  EXPECT_FALSE(prism.IsOnBorder(HomoPoint3(-2, 0, 0, 2)));
+  EXPECT_FALSE(prism.IsOnBorder(HomoPoint3(1, 0, 0, 2)));
+  EXPECT_FALSE(prism.IsOnBorder(HomoPoint3(-1, 0, 0, -2)));
 }
 
 TEST(AABB, IsInside) {
@@ -70,7 +70,7 @@ TEST(AABB, IntersectPlaneZUp) {
   MutableConvexPolygon<32> result =
     prism.IntersectPlane(HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/1, /*d=*/0));
   result.SortVertices();
-  std::vector<HomoPoint3<>> vertices;
+  std::vector<HomoPoint3> vertices;
   for (size_t i = 0; i < result.vertex_count(); ++i) {
     vertices.push_back(result.vertex(i));
   }
@@ -87,14 +87,14 @@ TEST(AABB, IntersectPlaneZUpFactional) {
   auto result = prism.IntersectPlane(HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/20,
                                                   /*d=*/19));
   result.SortVertices();
-  std::vector<HomoPoint3<>> vertices;
+  std::vector<HomoPoint3> vertices;
   for (size_t i = 0; i < result.vertex_count(); ++i) {
     vertices.push_back(result.vertex(i));
   }
-  EXPECT_THAT(vertices, ElementsAre(HomoPoint3<>{-8*20, -8*20, 19, 20},
-                                    HomoPoint3<>{ 8*20, -8*20, 19, 20},
-                                    HomoPoint3<>{ 8*20,  8*20, 19, 20},
-                                    HomoPoint3<>{-8*20,  8*20, 19, 20}));
+  EXPECT_THAT(vertices, ElementsAre(HomoPoint3{-8*20, -8*20, 19, 20},
+                                    HomoPoint3{ 8*20, -8*20, 19, 20},
+                                    HomoPoint3{ 8*20,  8*20, 19, 20},
+                                    HomoPoint3{-8*20,  8*20, 19, 20}));
 }
 
 TEST(AABB, IntersectPlaneZDown) {
@@ -103,7 +103,7 @@ TEST(AABB, IntersectPlaneZDown) {
   MutableConvexPolygon<32> result =
     prism.IntersectPlane(HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/-1, /*d=*/0));
   result.SortVertices();
-  std::vector<HomoPoint3<>> vertices;
+  std::vector<HomoPoint3> vertices;
   for (size_t i = 0; i < result.vertex_count(); ++i) {
     vertices.push_back(result.vertex(i));
   }
@@ -121,7 +121,7 @@ TEST(AABB, IntersectPlaneDiagPos) {
   MutableConvexPolygon<32> result =
     prism.IntersectPlane(HalfSpace3(/*x=*/1, /*y=*/1, /*z=*/1, /*d=*/12));
   result.SortVertices();
-  std::vector<HomoPoint3<>> vertices;
+  std::vector<HomoPoint3> vertices;
   for (size_t i = 0; i < result.vertex_count(); ++i) {
     vertices.push_back(result.vertex(i));
   }
@@ -138,7 +138,7 @@ TEST(AABB, IntersectPlaneDiagNeg) {
   MutableConvexPolygon<32> result =
     prism.IntersectPlane(HalfSpace3(/*x=*/-1, /*y=*/-1, /*z=*/-1, /*d=*/12));
   result.SortVertices();
-  std::vector<HomoPoint3<>> vertices;
+  std::vector<HomoPoint3> vertices;
   for (size_t i = 0; i < result.vertex_count(); ++i) {
     vertices.push_back(result.vertex(i));
   }
@@ -212,9 +212,8 @@ TEST(AABB, Assignment) {
 struct StringVertexData : public EdgeInfoRoot {
   StringVertexData() = default;
 
-  template <size_t num_bits, size_t denom_bits>
   StringVertexData(const StringVertexData& parent,
-                   const HomoPoint3<num_bits, denom_bits>& new_source) :
+                   const HomoPoint3& new_source) :
     str(parent.str) { }
 
   template <size_t d_bits, size_t m_bits>
@@ -222,9 +221,9 @@ struct StringVertexData : public EdgeInfoRoot {
                    const PluckerLine<d_bits, m_bits>& new_line) :
     str(parent.str) { }
 
-  template <size_t num_bits, size_t denom_bits, size_t d_bits, size_t m_bits>
+  template <size_t d_bits, size_t m_bits>
   StringVertexData(const StringVertexData& parent,
-                   const HomoPoint3<num_bits, denom_bits>& new_source,
+                   const HomoPoint3& new_source,
                    const PluckerLine<d_bits, m_bits>& new_line) :
     str(parent.str) { }
 
@@ -241,7 +240,7 @@ TEST(AABB, IntersectPlaneZUpWithData) {
                                                         /*z=*/1,
                                                         /*d=*/0));
   result.SortVertices();
-  std::vector<HomoPoint3<>> vertices;
+  std::vector<HomoPoint3> vertices;
   for (size_t i = 0; i < result.vertex_count(); ++i) {
     vertices.push_back(result.vertex(i));
     EXPECT_EQ(result.edge(i).str, "");

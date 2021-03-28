@@ -11,73 +11,12 @@ namespace walnut {
 
 // 3D point represented with homogeneous coordinates. The w component acts
 // like a divisor for the x, y, and z component.
-template <size_t num_bits_template = 32*7 + 9,
-          size_t denom_bits_template = 32*6 + 7>
 class HomoPoint3 {
  public:
-  using VectorRep = Vector3;
-  using NumInt = BigIntImpl;
-  using DenomInt = BigInt<denom_bits_template>;
-
-  // The minimum number of bits to support for each of the x, y, and z
-  // components.
-  static constexpr size_t num_bits = num_bits_template;
-  // The minimum number of bits to support for the w component.
-  static constexpr size_t denom_bits = denom_bits_template;
-
-  NumInt& x() {
-    return vector_from_origin_.x();
-  }
-
-  const NumInt& x() const {
-    return vector_from_origin_.x();
-  }
-
-  NumInt& y() {
-    return vector_from_origin_.y();
-  }
-
-  const NumInt& y() const {
-    return vector_from_origin_.y();
-  }
-
-  NumInt& z() {
-    return vector_from_origin_.z();
-  }
-
-  const NumInt& z() const {
-    return vector_from_origin_.z();
-  }
-
-  DenomInt& w() {
-    return dist_denom_;
-  }
-
-  const DenomInt& w() const {
-    return dist_denom_;
-  }
-
-  VectorRep& vector_from_origin() {
-    return vector_from_origin_;
-  }
-
-  const VectorRep& vector_from_origin() const {
-    return vector_from_origin_;
-  }
-
-  DenomInt& dist_denom() {
-    return dist_denom_;
-  }
-
-  const DenomInt& dist_denom() const {
-    return dist_denom_;
-  }
-
   // Leaves the components in an undefined state
   HomoPoint3() = default;
 
-  template <size_t other_num_bits, size_t other_denom_bits>
-  HomoPoint3(const HomoPoint3<other_num_bits, other_denom_bits>& other) :
+  HomoPoint3(const HomoPoint3& other) :
     vector_from_origin_(other.vector_from_origin()),
     dist_denom_(other.dist_denom()) { }
 
@@ -94,9 +33,55 @@ class HomoPoint3 {
   HomoPoint3(const Vector3& v, const BigIntImpl& w) :
     vector_from_origin_(v), dist_denom_(w) { }
 
-  template <size_t other_num_bits=num_bits, size_t other_denom_bits=denom_bits>
-  static bool LexicographicallyLt(const HomoPoint3& a,
-      const HomoPoint3<other_num_bits, other_denom_bits>& b) {
+  BigIntImpl& x() {
+    return vector_from_origin_.x();
+  }
+
+  const BigIntImpl& x() const {
+    return vector_from_origin_.x();
+  }
+
+  BigIntImpl& y() {
+    return vector_from_origin_.y();
+  }
+
+  const BigIntImpl& y() const {
+    return vector_from_origin_.y();
+  }
+
+  BigIntImpl& z() {
+    return vector_from_origin_.z();
+  }
+
+  const BigIntImpl& z() const {
+    return vector_from_origin_.z();
+  }
+
+  BigIntImpl& w() {
+    return dist_denom_;
+  }
+
+  const BigIntImpl& w() const {
+    return dist_denom_;
+  }
+
+  Vector3& vector_from_origin() {
+    return vector_from_origin_;
+  }
+
+  const Vector3& vector_from_origin() const {
+    return vector_from_origin_;
+  }
+
+  BigIntImpl& dist_denom() {
+    return dist_denom_;
+  }
+
+  const BigIntImpl& dist_denom() const {
+    return dist_denom_;
+  }
+
+  static bool LexicographicallyLt(const HomoPoint3& a, const HomoPoint3& b) {
     // a.v / a.w <?> b.v / b.w
     // a.v <?> b.v * a.w / b.w (maybe flip sign)
     // a.v * b.w <?> b.v * a.w (maybe flip sign)
@@ -109,9 +94,7 @@ class HomoPoint3 {
                                         b_scaled.components().end());
   }
 
-  template <size_t other_num_bits=num_bits, size_t other_denom_bits=denom_bits>
-  static bool TopnessLt(const HomoPoint3& a,
-      const HomoPoint3<other_num_bits, other_denom_bits>& b) {
+  static bool TopnessLt(const HomoPoint3& a, const HomoPoint3& b) {
     // a.v / a.w <?> b.v / b.w
     // a.v <?> b.v * a.w / b.w (maybe flip sign)
     // a.v * b.w <?> b.v * a.w (maybe flip sign)
@@ -133,10 +116,8 @@ class HomoPoint3 {
   //
   // The calculations are done in 2D by removing (treating it as 0)
   // `drop_dimension` from the point.
-  template <size_t other_num_bits, size_t other_denom_bits>
-  BigIntWord Get2DTwistDir(int drop_dimension,
-      const HomoPoint3<other_num_bits, other_denom_bits>& p1,
-      const HomoPoint3<other_num_bits, other_denom_bits>& p3) const {
+  BigIntWord Get2DTwistDir(int drop_dimension, const HomoPoint3& p1,
+                           const HomoPoint3& p3) const {
     // We roughly want to calculate:
     //   sign( (p1 - *this) x (p3 - *this) )
     //
@@ -166,9 +147,7 @@ class HomoPoint3 {
   }
 
   // Note that everything equals the 0 point with a 0 denominator.
-  template <size_t other_num_bits, size_t other_denom_bits>
-  bool operator==(
-      const HomoPoint3<other_num_bits, other_denom_bits>& other) const {
+  bool operator==(const HomoPoint3& other) const {
     return vector_from_origin().Scale(other.w()) ==
       other.vector_from_origin().Scale(w());
   }
@@ -179,9 +158,7 @@ class HomoPoint3 {
   }
 
   // Note that everything equals the 0 point with a 0 denominator.
-  template <size_t other_num_bits, size_t other_denom_bits>
-  bool operator!=(
-      const HomoPoint3<other_num_bits, other_denom_bits>& other) const {
+  bool operator!=(const HomoPoint3& other) const {
     return !(*this == other);
   }
 
@@ -196,13 +173,10 @@ class HomoPoint3 {
   // Returns <0 if the component is less in this than other.
   // Returns 0 if the is equal in the two points.
   // Returns >0 if the component is larger in this than other.
-  template <size_t other_num_bits, size_t other_denom_bits>
-  int CompareComponent(size_t component,
-                       const HomoPoint3<other_num_bits,
-                                        other_denom_bits>& other) const;
+  int CompareComponent(size_t component, const HomoPoint3& other) const;
 
-  bool IsValidState() const {
-    return dist_denom_.IsValidState();
+  bool IsValid() const {
+    return !dist_denom_.IsZero();
   }
 
   // Removes the common factor.
@@ -217,12 +191,11 @@ class HomoPoint3 {
   std::string Approximate() const;
 
  private:
-  VectorRep vector_from_origin_;
-  DenomInt dist_denom_;
+  Vector3 vector_from_origin_;
+  BigIntImpl dist_denom_;
 };
 
-template <size_t num_bits, size_t denom_bits>
-void HomoPoint3<num_bits, denom_bits>::Reduce() {
+inline void HomoPoint3::Reduce() {
   auto common_factor = dist_denom_.GetGreatestCommonDivisor(
       vector_from_origin_.x());
   common_factor = common_factor.GetGreatestCommonDivisor(
@@ -242,11 +215,8 @@ void HomoPoint3<num_bits, denom_bits>::Reduce() {
   vector_from_origin_.z() /= common_factor;
 }
 
-template <size_t num_bits, size_t denom_bits>
-template <size_t other_num_bits, size_t other_denom_bits>
-int HomoPoint3<num_bits, denom_bits>::CompareComponent(
-    size_t component,
-    const HomoPoint3<other_num_bits, other_denom_bits>& other) const {
+inline int HomoPoint3::CompareComponent(size_t component,
+                                        const HomoPoint3& other) const {
   // Check:
   // new_min/new_denom < old_min/old_denom
   // new_min*old_denom * sgn(new_denom*old_denom) <
@@ -258,14 +228,11 @@ int HomoPoint3<num_bits, denom_bits>::CompareComponent(
   return scaled_this.Compare(scaled_other) * other.w().GetAbsMult(w());
 }
 
-template <size_t b_num_bits, size_t b_denom_bits>
-bool operator==(const Point3& a,
-                const HomoPoint3<b_num_bits, b_denom_bits>& b) {
+inline bool operator==(const Point3& a, const HomoPoint3& b) {
   return b == a;
 }
 
-template <size_t num_bits, size_t denom_bits>
-std::string HomoPoint3<num_bits, denom_bits>::Approximate() const {
+inline std::string HomoPoint3::Approximate() const {
   std::ostringstream out;
   double w_double(w());
   out << "{ "
@@ -276,9 +243,7 @@ std::string HomoPoint3<num_bits, denom_bits>::Approximate() const {
   return out.str();
 }
 
-template <size_t num_bits, size_t denom_bits>
-std::ostream& operator<<(std::ostream& out,
-                         const HomoPoint3<num_bits, denom_bits>& p) {
+inline std::ostream& operator<<(std::ostream& out, const HomoPoint3& p) {
   return out << "{ ["
              << p.x() << ", "
              << p.y() << ", "

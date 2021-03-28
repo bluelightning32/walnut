@@ -23,16 +23,14 @@ using testing::ElementsAre;
 // The third vertex of the triangle is the plane that is perpendicular to l at
 // <extra, -extra, 0>. That vertex is roughly 1 unit away in `angle` direction.
 ConnectedPolygon<> MakeTriangle(int start, int end, int extra, double angle) {
-  using HomoPoint3Rep = ConnectedPolygon<>::HomoPoint3Rep;
-  std::vector<HomoPoint3Rep> p = {
+  std::vector<HomoPoint3> p = {
     // The ConvexPolygon constructor shifts the edges by one as part of
     // calculating the edge direction. The last vertex in the list becomes the
     // first in the polygon. So start with the second vertex to compensate.
-    HomoPoint3Rep(end, -end, 0, 1),
-    HomoPoint3Rep(10 * (extra + std::cos(angle)),
-                  10 * (-extra + std::cos(angle)),
-                  10 * std::sin(angle), 10),
-    HomoPoint3Rep(start, -start, 0, 1),
+    HomoPoint3(end, -end, 0, 1),
+    HomoPoint3(10 * (extra + std::cos(angle)), 10 * (-extra + std::cos(angle)),
+               10 * std::sin(angle), 10),
+    HomoPoint3(start, -start, 0, 1),
   };
   HalfSpace3 plane(p[0], p[1], p[2]);
   const int drop_dimension = plane.normal().GetFirstNonzeroDimension();
@@ -46,14 +44,13 @@ ConnectedPolygon<> MakeTriangle(int start, int end, int extra, double angle) {
 // A 0 z component is added to p1 and p2. A non-zero z component is given to
 // p3.
 ConnectedPolygon<> MakeTriangle(const HomoPoint2& p1, const HomoPoint2& p2) {
-  using HomoPoint3Rep = ConnectedPolygon<>::HomoPoint3Rep;
-  std::vector<HomoPoint3Rep> p = {
+  std::vector<HomoPoint3> p = {
     // The ConvexPolygon constructor shifts the edges by one as part of
     // calculating the edge direction. The last vertex in the list becomes the
     // first in the polygon. So start with the second vertex to compensate.
-    HomoPoint3Rep(p2.x(), p2.y(), BigIntImpl(0), p2.w()),
-    HomoPoint3Rep(p2.x(), p2.y(), BigIntImpl(1), p2.w()),
-    HomoPoint3Rep(p1.x(), p1.y(), BigIntImpl(0), p1.w()),
+    HomoPoint3(p2.x(), p2.y(), BigIntImpl(0), p2.w()),
+    HomoPoint3(p2.x(), p2.y(), BigIntImpl(1), p2.w()),
+    HomoPoint3(p1.x(), p1.y(), BigIntImpl(0), p1.w()),
   };
   HalfSpace3 plane(p[0], p[1], p[2]);
   const int drop_dimension = plane.normal().GetFirstNonzeroDimension();

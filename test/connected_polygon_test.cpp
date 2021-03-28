@@ -106,7 +106,6 @@ TEST(ConnectedPolygon, edge_index) {
 
 TEST(ConnectedEdge, ReversePartnerList) {
   ConnectedPolygon<> polygon(MakeRectangle());
-  using HomoPoint3Rep = ConnectedPolygon<>::HomoPoint3Rep;
 
   polygon.edge(0).ReversePartnerList();
 
@@ -116,26 +115,26 @@ TEST(ConnectedEdge, ReversePartnerList) {
   EXPECT_EQ(polygon.edge(1).extra_partner_count(), 0);
 
   polygon.edge(2).partner_ = &polygon.edge(0);
-  polygon.edge(2).extra_partners_.emplace_back(HomoPoint3Rep(1, 0, 0, 1),
+  polygon.edge(2).extra_partners_.emplace_back(HomoPoint3(1, 0, 0, 1),
                                                &polygon.edge(1));
   polygon.edge(2).ReversePartnerList();
   EXPECT_EQ(polygon.edge(2).partner(), &polygon.edge(1));
   ASSERT_EQ(polygon.edge(2).extra_partner_count(), 1);
   EXPECT_EQ(polygon.edge(2).extra_partner(0), &polygon.edge(0));
-  EXPECT_EQ(polygon.edge(2).extra_partner_start(0), HomoPoint3Rep(1, 0, 0, 1));
+  EXPECT_EQ(polygon.edge(2).extra_partner_start(0), HomoPoint3(1, 0, 0, 1));
 
   polygon.edge(3).partner_ = &polygon.edge(0);
-  polygon.edge(3).extra_partners_.emplace_back(HomoPoint3Rep(1, 0, 0, 1),
+  polygon.edge(3).extra_partners_.emplace_back(HomoPoint3(1, 0, 0, 1),
                                                &polygon.edge(1));
-  polygon.edge(3).extra_partners_.emplace_back(HomoPoint3Rep(2, 0, 0, 1),
+  polygon.edge(3).extra_partners_.emplace_back(HomoPoint3(2, 0, 0, 1),
                                                &polygon.edge(2));
   polygon.edge(3).ReversePartnerList();
   EXPECT_EQ(polygon.edge(3).partner(), &polygon.edge(2));
   ASSERT_EQ(polygon.edge(3).extra_partner_count(), 2);
   EXPECT_EQ(polygon.edge(3).extra_partner(0), &polygon.edge(1));
-  EXPECT_EQ(polygon.edge(3).extra_partner_start(0), HomoPoint3Rep(2, 0, 0, 1));
+  EXPECT_EQ(polygon.edge(3).extra_partner_start(0), HomoPoint3(2, 0, 0, 1));
   EXPECT_EQ(polygon.edge(3).extra_partner(1), &polygon.edge(0));
-  EXPECT_EQ(polygon.edge(3).extra_partner_start(1), HomoPoint3Rep(1, 0, 0, 1));
+  EXPECT_EQ(polygon.edge(3).extra_partner_start(1), HomoPoint3(1, 0, 0, 1));
 }
 
 }  // walnut

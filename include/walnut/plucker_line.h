@@ -73,9 +73,7 @@ class PluckerLine {
   PluckerLine(const Point3& p1, const Point3& p2) :
     d_(p2 - p1), m_(p1.vector_from_origin().Cross(p2.vector_from_origin())) { }
 
-  template <size_t num_bits, size_t denom_bits>
-  PluckerLine(const HomoPoint3<num_bits, denom_bits>& p1,
-              const HomoPoint3<num_bits, denom_bits>& p2) :
+  PluckerLine(const HomoPoint3& p1, const HomoPoint3& p2) :
     d_((p2.vector_from_origin().Scale(p1.w()) -
         p1.vector_from_origin().Scale(p2.w())) * p1.w().GetAbsMult(p2.w())),
     m_(p1.vector_from_origin().Cross(p2.vector_from_origin()) *
@@ -123,8 +121,7 @@ class PluckerLine {
   }
 
   // Returns true if `p` is on the line.
-  template <size_t num_bits, size_t denom_bits>
-  bool IsCoincident(const HomoPoint3<num_bits, denom_bits>& p) const {
+  bool IsCoincident(const HomoPoint3& p) const {
     /*
      * p x (p + p.dist*d) == m
      * p x p + p x (p.dist*d) == m
@@ -177,12 +174,10 @@ class PluckerLine {
   }
 
   // Calculate the intersection between this line and a plane.
-  HomoPoint3<std::max(m_bits, d_bits) + 1, d_bits + 1>
-  Intersect(const HalfSpace3& p) const {
+  HomoPoint3 Intersect(const HalfSpace3& p) const {
     auto vector = p.normal().Cross(m()) + d().Scale(p.d());
     auto w = p.normal().Dot(d());
-    using Result = HomoPoint3<std::max(m_bits, d_bits) + 1, d_bits + 1>;
-    return Result(vector, w);
+    return HomoPoint3(vector, w);
   }
 
   // Project the line into a HalfSpace2 by dropping one of the dimensions.

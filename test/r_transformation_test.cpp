@@ -17,12 +17,12 @@ TEST(RXYCompareBivector, DiagonalPlanes) {
   //       \                  |
   //        n1                |
   //
-  HomoPoint3<> p[5] = {
-    HomoPoint3<>(1, 1, 5, 1),
-    HomoPoint3<>(2, 2, 5, 1),
-    HomoPoint3<>(2, 2, 6, 1),
-    HomoPoint3<>(0, 2, 5, 1),
-    HomoPoint3<>(0, 2, 6, 1),
+  HomoPoint3 p[5] = {
+    HomoPoint3(1, 1, 5, 1),
+    HomoPoint3(2, 2, 5, 1),
+    HomoPoint3(2, 2, 6, 1),
+    HomoPoint3(0, 2, 5, 1),
+    HomoPoint3(0, 2, 6, 1),
   };
 
   HalfSpace3 h1(p[0], p[1], p[2]);
@@ -38,9 +38,9 @@ TEST(RXYCompareBivector, DiagonalPlanes) {
   EXPECT_GT(h1.normal().DropDimension(2).Cross(
         h2.normal().DropDimension(2)), 0);
 
-  HomoPoint3<> p_transformed[5];
+  HomoPoint3 p_transformed[5];
   for (int i = 0; i < 5; ++i) {
-    p_transformed[i] = RTransform(p[i], HomoPoint3<>::DenomInt(10));
+    p_transformed[i] = RTransform(p[i], BigIntImpl(10));
   }
 
   HalfSpace3 h1_transformed(p_transformed[0], p_transformed[1],
@@ -63,11 +63,11 @@ TEST(RXYCompareBivector, Y0Normal) {
   //      n1 ->
   //      n2 ->
   //
-  HomoPoint3<> p[4] = {
-    HomoPoint3<>(1, 1, 5, 1),
-    HomoPoint3<>(1, 2, 5, 1),
-    HomoPoint3<>(0, 2, 6, 1),
-    HomoPoint3<>(-1, 2, 6, 1),
+  HomoPoint3 p[4] = {
+    HomoPoint3(1, 1, 5, 1),
+    HomoPoint3(1, 2, 5, 1),
+    HomoPoint3(0, 2, 6, 1),
+    HomoPoint3(-1, 2, 6, 1),
   };
 
   HalfSpace3 h1(p[0], p[1], p[2]);
@@ -83,9 +83,9 @@ TEST(RXYCompareBivector, Y0Normal) {
   EXPECT_GT(h2.z(), h1.z());
   EXPECT_NE(h1.normal(), h2.normal());
 
-  HomoPoint3<> p_transformed[4];
+  HomoPoint3 p_transformed[4];
   for (int i = 0; i < 4; ++i) {
-    p_transformed[i] = RTransform(p[i], HomoPoint3<>::DenomInt(10));
+    p_transformed[i] = RTransform(p[i], BigIntImpl(10));
   }
 
   HalfSpace3 h1_transformed(p_transformed[0], p_transformed[1],
@@ -113,11 +113,11 @@ TEST(RXYCompareBivector, X0Normal) {
   //       |
   //      n2
   //
-  HomoPoint3<> p[4] = {
-    HomoPoint3<>(1, 1, 5, 1),
-    HomoPoint3<>(0, 1, 5, 1),
-    HomoPoint3<>(0, -1, 6, 1),
-    HomoPoint3<>(0, -2, 6, 1),
+  HomoPoint3 p[4] = {
+    HomoPoint3(1, 1, 5, 1),
+    HomoPoint3(0, 1, 5, 1),
+    HomoPoint3(0, -1, 6, 1),
+    HomoPoint3(0, -2, 6, 1),
   };
 
   HalfSpace3 h1(p[0], p[1], p[2]);
@@ -133,9 +133,9 @@ TEST(RXYCompareBivector, X0Normal) {
   EXPECT_GT(h2.z(), h1.z());
   EXPECT_NE(h1.normal(), h2.normal());
 
-  HomoPoint3<> p_transformed[4];
+  HomoPoint3 p_transformed[4];
   for (int i = 0; i < 4; ++i) {
-    p_transformed[i] = RTransform(p[i], HomoPoint3<>::DenomInt(10));
+    p_transformed[i] = RTransform(p[i], BigIntImpl(10));
   }
 
   HalfSpace3 h1_transformed(p_transformed[0], p_transformed[1],

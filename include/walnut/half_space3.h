@@ -48,10 +48,8 @@ class HalfSpace3 {
     normal_((p3 - p2).Cross(p1 - p2)),
     dist_(normal_.Dot(p2.vector_from_origin())) { }
 
-  template <size_t num_bits, size_t denom_bits>
-  HalfSpace3(const HomoPoint3<num_bits, denom_bits>& p1,
-             const HomoPoint3<num_bits, denom_bits>& p2,
-             const HomoPoint3<num_bits, denom_bits>& p3) {
+  HalfSpace3(const HomoPoint3& p1, const HomoPoint3& p2,
+             const HomoPoint3& p3) {
     // Use p2 as the center point, because if p1, p2, and p3 are from a polygon
     // with more than 3 points, (p3 - p2) and (p1 - p2) are likely to be
     // shorter than (p2 - p1) and (p3 - p1).
@@ -105,15 +103,13 @@ class HalfSpace3 {
 
   // Returns >0 if `v` is in the positive half-space, 0 if `v` is coincident
   // with the plane, or <0 if `v` is in the negative half-space.
-  template <size_t v_num_bits, size_t v_denom_bits>
-  int Compare(const HomoPoint3<v_num_bits, v_denom_bits>& v) const {
+  int Compare(const HomoPoint3& v) const {
     return normal_.Dot(v.vector_from_origin()).Compare(
         v.dist_denom() * dist_) * v.dist_denom().GetAbsMult();
   }
 
   // Returns true if the point is on the plane
-  template <size_t v_num_bits, size_t v_denom_bits>
-  bool IsCoincident(const HomoPoint3<v_num_bits, v_denom_bits>& v) const {
+  bool IsCoincident(const HomoPoint3& v) const {
     return Compare(v) == 0;
   }
 

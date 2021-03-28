@@ -21,16 +21,14 @@ class PointsActor {
 
   vtkIdType AddPoint(double x, double y, double z);
 
-  template <size_t num_bits, size_t denom_bits>
-  vtkIdType AddPoint(const HomoPoint3<num_bits, denom_bits>& p) {
+  vtkIdType AddPoint(const HomoPoint3& p) {
     double w(p.w());
     return AddPoint(double(p.x()) / w, double(p.y()) / w, double(p.z()) / w);
   }
 
   void SetPoint(vtkIdType index, double x, double y, double z);
 
-  template <size_t num_bits, size_t denom_bits>
-  void SetPoint(vtkIdType index, const HomoPoint3<num_bits, denom_bits>& p) {
+  void SetPoint(vtkIdType index, const HomoPoint3& p) {
     double w(p.w());
     SetPoint(index, double(p.x()) / w, double(p.y()) / w, double(p.z()) / w);
   }

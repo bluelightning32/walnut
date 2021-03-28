@@ -22,17 +22,13 @@ namespace walnut {
 //
 // Since this function is likely to overflow the HomoPoint3 precision, this
 // function should only be used for testing purposes.
-template <size_t num_bits, size_t denom_bits>
-HomoPoint3<num_bits, denom_bits> RTransform(
-    const HomoPoint3<num_bits, denom_bits>& p,
-    const BigInt<denom_bits>& eps_inv) {
+HomoPoint3 RTransform(const HomoPoint3& p, const BigIntImpl& eps_inv) {
   // Add eps^2 to x and eps to y.
-  BigInt<denom_bits> eps_inv_squared(eps_inv * eps_inv);
-  return HomoPoint3<num_bits, denom_bits>(
-      BigInt<num_bits>(p.x()*eps_inv_squared + p.w()),
-      BigInt<num_bits>(p.y()*eps_inv_squared + eps_inv * p.w()),
-      BigInt<num_bits>((p.z()*eps_inv + p.y())*eps_inv + p.x()),
-      BigInt<denom_bits>(p.w()*eps_inv_squared));
+  BigIntImpl eps_inv_squared(eps_inv * eps_inv);
+  return HomoPoint3(p.x()*eps_inv_squared + p.w(),
+                    p.y()*eps_inv_squared + eps_inv * p.w(),
+                    (p.z()*eps_inv + p.y())*eps_inv + p.x(),
+                    p.w()*eps_inv_squared);
 }
 
 // Applies the R transform to two bivectors and compares the result in the XY

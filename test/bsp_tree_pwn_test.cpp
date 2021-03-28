@@ -256,7 +256,7 @@ class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
     auto added_to_leaf = [&](BSPNode<>& leaf) { };
     if (std::get<1>(GetParam())) {
       // flip the input polygon
-      std::vector<typename InputPolygon::HomoPoint3Rep> vertices;
+      std::vector<HomoPoint3> vertices;
       for (auto it = polygon.edges().rbegin(); it != polygon.edges().rend();
            ++it) {
         vertices.push_back(it->vertex());

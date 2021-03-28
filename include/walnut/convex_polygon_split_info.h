@@ -72,8 +72,6 @@ struct ConvexPolygonSplitRanges {
 // plane.
 template <size_t point3_bits_template = 32>
 struct ConvexPolygonSplitInfo {
-  using HomoPoint3Rep = HomoPoint3<(point3_bits_template - 1)*7 + 10,
-                                   (point3_bits_template - 1)*6 + 10>;
   using LineRep = typename PluckerLineFromPlanesFromPoint3sBuilder<
     point3_bits_template>::PluckerLineRep;
 
@@ -133,7 +131,7 @@ struct ConvexPolygonSplitInfo {
   // return true, then the vertex at pos_range.second should be inserted before
   // neg_range and after pos_range. In this case:
   //   neg_range.first % vertex_count == (pos_range.second + 1) % vertex_count
-  HomoPoint3Rep new_shared_point1;
+  HomoPoint3 new_shared_point1;
 
   bool has_new_shared_point2 = false;
   // If `has_new_shared_point2` is set, this point should be inserted before
@@ -143,7 +141,7 @@ struct ConvexPolygonSplitInfo {
   // return true, then the vertex at neg_range.second should be inserted before
   // pos_range and after neg_range. In this case:
   //   pos_range.first % vertex_count == (neg_range.second + 1) % vertex_count
-  HomoPoint3Rep new_shared_point2;
+  HomoPoint3 new_shared_point2;
 };
 
 std::ostream& operator<<(

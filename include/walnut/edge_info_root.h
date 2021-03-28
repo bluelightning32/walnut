@@ -13,17 +13,14 @@ struct EdgeInfoRoot {
 
   constexpr explicit EdgeInfoRoot(const EdgeInfoRoot&) = default;
 
-  template <size_t num_bits, size_t denom_bits>
-  EdgeInfoRoot(const EdgeInfoRoot& parent,
-               const HomoPoint3<num_bits, denom_bits>& new_source) { }
+  EdgeInfoRoot(const EdgeInfoRoot& parent, const HomoPoint3& new_source) { }
 
   template <size_t d_bits, size_t m_bits>
   EdgeInfoRoot(const EdgeInfoRoot& parent,
                const PluckerLine<d_bits, m_bits>& new_line) { }
 
-  template <size_t num_bits, size_t denom_bits, size_t d_bits, size_t m_bits>
-  EdgeInfoRoot(const EdgeInfoRoot& parent,
-               const HomoPoint3<num_bits, denom_bits>& new_source,
+  template <size_t d_bits, size_t m_bits>
+  EdgeInfoRoot(const EdgeInfoRoot& parent, const HomoPoint3& new_source,
                const PluckerLine<d_bits, m_bits>& new_line) { }
 
   constexpr bool operator==(const EdgeInfoRoot& other) const {

@@ -25,19 +25,19 @@ TEST(HalfSpace3, CompareHomoPoint3) {
                      /*dist=*/BigInt<32>(10));
 
   // excluded
-  EXPECT_LT(plane.Compare(HomoPoint3<>(/*x=*/1, /*y=*/100, /*z=*/100,
+  EXPECT_LT(plane.Compare(HomoPoint3(/*x=*/1, /*y=*/100, /*z=*/100,
                                        /*w=*/1)), 0);
-  EXPECT_LT(plane.Compare(HomoPoint3<>(/*x=*/9, /*y=*/100, /*z=*/100,
+  EXPECT_LT(plane.Compare(HomoPoint3(/*x=*/9, /*y=*/100, /*z=*/100,
                                        /*w=*/2)), 0);
   // coincident
-  EXPECT_EQ(plane.Compare(HomoPoint3<>(/*x=*/5, /*y=*/100, /*z=*/100,
+  EXPECT_EQ(plane.Compare(HomoPoint3(/*x=*/5, /*y=*/100, /*z=*/100,
                                        /*w=*/1)), 0);
-  EXPECT_EQ(plane.Compare(HomoPoint3<>(/*x=*/10, /*y=*/100, /*z=*/100,
+  EXPECT_EQ(plane.Compare(HomoPoint3(/*x=*/10, /*y=*/100, /*z=*/100,
                                        /*w=*/2)), 0);
   // included
-  EXPECT_GT(plane.Compare(HomoPoint3<>(/*x=*/6, /*y=*/100, /*z=*/100,
+  EXPECT_GT(plane.Compare(HomoPoint3(/*x=*/6, /*y=*/100, /*z=*/100,
                                        /*w=*/1)), 0);
-  EXPECT_GT(plane.Compare(HomoPoint3<>(/*x=*/11, /*y=*/100, /*z=*/100,
+  EXPECT_GT(plane.Compare(HomoPoint3(/*x=*/11, /*y=*/100, /*z=*/100,
                                        /*w=*/2)), 0);
 }
 
@@ -47,10 +47,10 @@ TEST(HalfSpace3, ComparePosHomoPoint3NegDist) {
                      /*dist=*/BigInt<32>(-10));
 
   // included
-  EXPECT_GT(plane.Compare(HomoPoint3<>(/*x=*/1, /*y=*/100, /*z=*/100,
+  EXPECT_GT(plane.Compare(HomoPoint3(/*x=*/1, /*y=*/100, /*z=*/100,
                                        /*w=*/1)), 0);
   // excluded
-  EXPECT_LT(plane.Compare(HomoPoint3<>(/*x=*/6, /*y=*/100, /*z=*/100,
+  EXPECT_LT(plane.Compare(HomoPoint3(/*x=*/6, /*y=*/100, /*z=*/100,
                                        /*w=*/1)), 0);
 }
 
@@ -60,10 +60,10 @@ TEST(HalfSpace3, CompareNegHomoPoint3PosDist) {
                      /*dist=*/BigInt<32>(10));
 
   // excluded
-  EXPECT_LT(plane.Compare(HomoPoint3<>(/*x=*/1, /*y=*/100, /*z=*/100,
+  EXPECT_LT(plane.Compare(HomoPoint3(/*x=*/1, /*y=*/100, /*z=*/100,
                                        /*w=*/-1)), 0);
   // included
-  EXPECT_GT(plane.Compare(HomoPoint3<>(/*x=*/-6, /*y=*/100, /*z=*/100,
+  EXPECT_GT(plane.Compare(HomoPoint3(/*x=*/-6, /*y=*/100, /*z=*/100,
                                        /*w=*/-1)), 0);
 }
 
@@ -73,10 +73,10 @@ TEST(HalfSpace3, CompareNegHomoPoint3NegDist) {
                      /*dist=*/BigInt<32>(-10));
 
   // included
-  EXPECT_GT(plane.Compare(HomoPoint3<>(/*x=*/1, /*y=*/100, /*z=*/100,
+  EXPECT_GT(plane.Compare(HomoPoint3(/*x=*/1, /*y=*/100, /*z=*/100,
                                        /*w=*/-1)), 0);
   // excluded
-  EXPECT_LT(plane.Compare(HomoPoint3<>(/*x=*/-6, /*y=*/100, /*z=*/100,
+  EXPECT_LT(plane.Compare(HomoPoint3(/*x=*/-6, /*y=*/100, /*z=*/100,
                                        /*w=*/-1)), 0);
 }
 
@@ -170,8 +170,8 @@ TEST(HalfSpace3, BuildFromHomoPoints) {
 
   for (const int scale : {-2, -1, 1, 2}) {
     for (int i = 0; i < 3; ++i) {
-      HomoPoint3<> scaled_p[3] = {p[0], p[1], p[2]};
-      scaled_p[i] = HomoPoint3<>(p[i].x() * scale,
+      HomoPoint3 scaled_p[3] = {p[0], p[1], p[2]};
+      scaled_p[i] = HomoPoint3(p[i].x() * scale,
                                  p[i].y() * scale,
                                  p[i].z() * scale,
                                  BigInt<32>(scale));

@@ -54,9 +54,7 @@ class BSPEdgeInfo : public ParentTemplate {
   // Inherit the edge boundary angle from the parent, but initialize
   // the vertex boundary angle from the edge boundary angle instead of
   // inheriting the parent's vertex boundary angle.
-  template <size_t num_bits, size_t denom_bits>
-  BSPEdgeInfo(const BSPEdgeInfo& parent,
-              const HomoPoint3<num_bits, denom_bits>& new_source) :
+  BSPEdgeInfo(const BSPEdgeInfo& parent, const HomoPoint3& new_source) :
     edge_first_coincident_(parent.edge_first_coincident_),
     vertex_last_coincident_(parent.edge_last_coincident_),
     edge_last_coincident_(parent.edge_last_coincident_) { }
@@ -74,9 +72,8 @@ class BSPEdgeInfo : public ParentTemplate {
   //
   // Initialize the vertex boundary angle from the parent's edge boundary
   // angle. Default initialize the edge boundary angle.
-  template <size_t num_bits, size_t denom_bits, size_t d_bits, size_t m_bits>
-  BSPEdgeInfo(const BSPEdgeInfo& parent,
-              const HomoPoint3<num_bits, denom_bits>& new_source,
+  template <size_t d_bits, size_t m_bits>
+  BSPEdgeInfo(const BSPEdgeInfo& parent, const HomoPoint3& new_source,
               const PluckerLine<d_bits, m_bits>& new_line) :
     vertex_last_coincident_(parent.edge_last_coincident_) { }
 

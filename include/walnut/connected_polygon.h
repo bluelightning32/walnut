@@ -14,10 +14,9 @@ namespace walnut {
 // edges in the parent polygon must remain stable during the connection
 // process, because inserting new edges would break existing EdgeConnections.
 // So instead the extra connections are stored in `extra_partners_`.
-template <typename HomoPoint3Template, typename FinalPolygonTemplate,
+template <typename FinalPolygonTemplate,
           typename ParentTemplate>
 struct ConnectedEdge : public ParentTemplate {
-  using HomoPoint3Rep = HomoPoint3Template;
   using FinalPolygon = FinalPolygonTemplate;
   using Parent = ParentTemplate;
   using ConnectedEdgeRep = ConnectedEdge;
@@ -27,14 +26,14 @@ struct ConnectedEdge : public ParentTemplate {
     ExtraConnection(const ExtraConnection&) = default;
     ExtraConnection(ExtraConnection&&) = default;
 
-    ExtraConnection(const HomoPoint3Rep& start, ConnectedEdge* partner) :
+    ExtraConnection(const HomoPoint3& start, ConnectedEdge* partner) :
       start(start), partner(partner) { }
 
     bool operator==(const ExtraConnection& other) const {
       return partner == other.partner && start == other.start;
     }
 
-    HomoPoint3Rep start;
+    HomoPoint3 start;
     ConnectedEdge* partner = nullptr;
   };
 
@@ -81,7 +80,7 @@ struct ConnectedEdge : public ParentTemplate {
     return extra_partners_;
   }
 
-  const HomoPoint3Rep& extra_partner_start(size_t i) const {
+  const HomoPoint3& extra_partner_start(size_t i) const {
     return extra_partners_[i].start;
   }
 
@@ -106,7 +105,7 @@ struct ConnectedEdge : public ParentTemplate {
   }
 
   // Returns the start vertex of the next edge in this edges's polygon.
-  const HomoPoint3Rep& next_vertex() const {
+  const HomoPoint3& next_vertex() const {
     using FinalEdgeRep = typename FinalPolygon::EdgeRep;
     const FinalEdgeRep& next_edge =
       polygon().edge((edge_index() + 1) % polygon().vertex_count());
@@ -115,7 +114,7 @@ struct ConnectedEdge : public ParentTemplate {
 
   // Returns the begin location of this edge as defined by the
   // `EdgeLineConnector`.
-  const HomoPoint3Rep& GetBeginLocation(int sorted_dimension) const {
+  const HomoPoint3& GetBeginLocation(int sorted_dimension) const {
     if (IsPositive(sorted_dimension)) {
       // This is a positive edge. It starts at the start point of the edge.
       using FinalEdgeRep = typename FinalPolygon::EdgeRep;
@@ -129,7 +128,7 @@ struct ConnectedEdge : public ParentTemplate {
 
   // Returns the end location of this edge as defined by the
   // `EdgeLineConnector`.
-  const HomoPoint3Rep& GetEndLocation(int sorted_dimension) const {
+  const HomoPoint3& GetEndLocation(int sorted_dimension) const {
     if (IsPositive(sorted_dimension)) {
       // This is a positive edge. It ends at the start of the next edge.
       return next_vertex();
@@ -216,7 +215,6 @@ template <typename ParentTemplate = ConvexPolygon<>,
 class ConnectedPolygon : public ParentTemplate::template MakeParent<
                                   FinalPolygonTemplate,
                                   ConnectedEdge<
-                                    typename ParentTemplate::HomoPoint3Rep,
                                     std::conditional_t<
                                       std::is_void<
                                         FinalPolygonTemplate
@@ -237,9 +235,7 @@ class ConnectedPolygon : public ParentTemplate::template MakeParent<
     std::conditional_t<std::is_void<FinalPolygonTemplate>::value,
                        ConnectedPolygon, FinalPolygonTemplate>;
   using EdgeParent = EdgeParentTemplate;
-  using HomoPoint3Rep = typename ParentTemplate::HomoPoint3Rep;
-  using ConnectedEdgeRep = ConnectedEdge<HomoPoint3Rep, FinalPolygon,
-                                         EdgeParent>;
+  using ConnectedEdgeRep = ConnectedEdge<FinalPolygon, EdgeParent>;
   using Parent =
     typename ParentTemplate::template MakeParent<FinalPolygon,
                                                  ConnectedEdgeRep>;
@@ -272,10 +268,8 @@ class ConnectedPolygon : public ParentTemplate::template MakeParent<
     SetEdgeBackPointers();
   }
 
-  template <size_t num_bits, size_t denom_bits>
   ConnectedPolygon(const HalfSpace3& plane, int drop_dimension,
-                   const std::vector<HomoPoint3<num_bits,
-                                                denom_bits>>& vertices) :
+                   const std::vector<HomoPoint3>& vertices) :
       Parent(plane, drop_dimension, vertices) {
     SetEdgeBackPointers();
   }
@@ -345,11 +339,10 @@ class ConnectedPolygon : public ParentTemplate::template MakeParent<
   }
 };
 
-template <typename HomoPoint3Rep, typename FinalPolygon,
-          typename Parent>
-std::ostream& operator<<(std::ostream& out,
-                         const ConnectedEdge<HomoPoint3Rep, FinalPolygon,
-                                             Parent>& edge) {
+template <typename FinalPolygon, typename Parent>
+inline std::ostream& operator<<(std::ostream& out,
+                                const ConnectedEdge<FinalPolygon,
+                                                    Parent>& edge) {
   out << "polygon=" << &edge.polygon() << " partner=" << edge.partner();
   if (edge.extra_partner_count()) {
     out << " [ ";
