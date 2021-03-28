@@ -81,7 +81,7 @@ TEST(ConnectedPolygon, SplitInMiddle) {
   ConnectedPolygon<> polygon(MakeRectangle());
 
   HalfSpace3 split(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
-  ConnectedPolygon<>::SplitInfoRep split_info = polygon.GetSplitInfo(split);
+  ConvexPolygonSplitInfo split_info = polygon.GetSplitInfo(split);
   EXPECT_TRUE(split_info.IsValid(polygon.vertex_count()));
   EXPECT_TRUE(split_info.ShouldEmitNegativeChild());
   EXPECT_TRUE(split_info.ShouldEmitPositiveChild());

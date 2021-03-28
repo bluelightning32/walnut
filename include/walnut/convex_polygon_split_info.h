@@ -70,7 +70,6 @@ struct ConvexPolygonSplitRanges {
 
 // Stores information about how to build the ConvexPolygons on both sides of a
 // plane.
-template <size_t point3_bits_template = 32>
 struct ConvexPolygonSplitInfo {
   bool IsValid(size_t vertex_count) const {
     if (!ranges.IsValid(vertex_count)) return false;
@@ -150,9 +149,8 @@ std::ostream& operator<<(
   return out;
 }
 
-template <size_t point3_bits>
-std::ostream& operator<<(
-    std::ostream& out, const ConvexPolygonSplitInfo<point3_bits>& info) {
+inline std::ostream& operator<<(std::ostream& out,
+                                const ConvexPolygonSplitInfo& info) {
   out << info.ranges;
   if (info.has_new_shared_point1) {
     out << ", new_shared_point1=" << info.new_shared_point1;

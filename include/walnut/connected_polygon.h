@@ -240,7 +240,6 @@ class ConnectedPolygon : public ParentTemplate::template MakeParent<
     typename ParentTemplate::template MakeParent<FinalPolygon,
                                                  ConnectedEdgeRep>;
   using typename Parent::EdgeRep;
-  using typename Parent::SplitInfoRep;
 
   // Subclasses can inherit from this. `NewEdgeParent` should be the subclass's
   // EdgeInfo type.
@@ -277,7 +276,7 @@ class ConnectedPolygon : public ParentTemplate::template MakeParent<
 
   // Overrides the non-virtual function from ConvexPolygon.
   std::pair<ConnectedPolygon, ConnectedPolygon> CreateSplitChildren(
-      const SplitInfoRep& split) const {
+      const ConvexPolygonSplitInfo& split) const {
     std::pair<ConnectedPolygon, ConnectedPolygon> result;
     FillInSplitChildren(*this, split, result.first, result.second);
     return result;
@@ -285,7 +284,7 @@ class ConnectedPolygon : public ParentTemplate::template MakeParent<
 
   // Overrides the non-virtual function from ConvexPolygon.
   std::pair<ConnectedPolygon, ConnectedPolygon> CreateSplitChildren(
-      SplitInfoRep&& split) && {
+      ConvexPolygonSplitInfo&& split) && {
     std::pair<ConnectedPolygon, ConnectedPolygon> result;
     FillInSplitChildren(std::move(*this), std::move(split), result.first,
                         result.second);

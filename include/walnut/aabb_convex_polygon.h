@@ -22,7 +22,6 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
                 "AABBConvexPolygon.");
   using Parent = ParentTemplate;
   using typename Parent::EdgeRep;
-  using typename Parent::SplitInfoRep;
   using AABBRep =
     typename ConvexVertexAABBTracker<32, 32>::AABBRep;
 
@@ -98,19 +97,19 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
   }
 
   // Overrides the non-virtual function from ConvexPolygon.
-  SplitInfoRep GetSplitInfo(const HalfSpace3& half_space) const {
+  ConvexPolygonSplitInfo GetSplitInfo(const HalfSpace3& half_space) const {
     switch (aabb().GetPlaneSide(half_space)) {
       case -1:
         // All on the negative side.
         {
-          SplitInfoRep result;
+          ConvexPolygonSplitInfo result;
           result.ranges.neg_range.second = vertex_count();
           return result;
         }
       case 1:
         // All on the positive side.
         {
-          SplitInfoRep result;
+          ConvexPolygonSplitInfo result;
           result.ranges.pos_range.second = vertex_count();
           return result;
         }
@@ -124,7 +123,7 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
 
   // Overrides the non-virtual function from ConvexPolygon.
   std::pair<AABBConvexPolygon, AABBConvexPolygon> CreateSplitChildren(
-      const SplitInfoRep& split) const {
+      const ConvexPolygonSplitInfo& split) const {
     std::pair<AABBConvexPolygon, AABBConvexPolygon> result;
     FillInSplitChildren(*this, split, result.first, result.second);
     return result;
@@ -132,7 +131,7 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
 
   // Overrides the non-virtual function from ConvexPolygon.
   std::pair<AABBConvexPolygon, AABBConvexPolygon> CreateSplitChildren(
-      SplitInfoRep&& split) && {
+      ConvexPolygonSplitInfo&& split) && {
     std::pair<AABBConvexPolygon, AABBConvexPolygon> result;
     FillInSplitChildren(std::move(*this), std::move(split), result.first,
                         result.second);

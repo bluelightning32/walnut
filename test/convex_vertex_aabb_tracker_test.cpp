@@ -136,7 +136,7 @@ TEST(ConvexVertexAABBTracker, SplitAtExistingVertices) {
     HalfSpace3 split(p[i], p[(i + 2) % square.vertex_count()],
                        Point3(0, 0, 0));
 
-    ConvexPolygon<>::SplitInfoRep split_info = square.GetSplitInfo(split);
+    ConvexPolygonSplitInfo split_info = square.GetSplitInfo(split);
     ASSERT_TRUE(split_info.ShouldEmitNegativeChild());
     ASSERT_TRUE(split_info.ShouldEmitPositiveChild());
     EXPECT_FALSE(split_info.has_new_shared_point1);
@@ -197,7 +197,7 @@ TEST(ConvexVertexAABBTracker, SplitBetweenVertices) {
         /*w=*/BigInt<32>(2));
     HalfSpace3 split(split_start, split_end, HomoPoint3(0, 0, 0, 1));
 
-    ConvexPolygon<>::SplitInfoRep split_info = square.GetSplitInfo(split);
+    ConvexPolygonSplitInfo split_info = square.GetSplitInfo(split);
     ASSERT_TRUE(split_info.ShouldEmitNegativeChild());
     ASSERT_TRUE(split_info.ShouldEmitPositiveChild());
     EXPECT_TRUE(split_info.has_new_shared_point1);

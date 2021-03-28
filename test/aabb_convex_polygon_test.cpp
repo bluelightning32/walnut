@@ -91,7 +91,7 @@ TEST(AABBConvexPolygon, SplitOnNegativeSide) {
   AABBConvexPolygon<> polygon(plane, /*drop_dimension=*/2, p);
 
   HalfSpace3 split(/*x=*/-1, /*y=*/0, /*z=*/0, /*dist=*/1);
-  AABBConvexPolygon<>::SplitInfoRep split_info = polygon.GetSplitInfo(split);
+  ConvexPolygonSplitInfo split_info = polygon.GetSplitInfo(split);
   EXPECT_TRUE(split_info.IsValid(p.size()));
   EXPECT_TRUE(split_info.ShouldEmitNegativeChild());
   EXPECT_FALSE(split_info.ShouldEmitPositiveChild());
@@ -113,7 +113,7 @@ TEST(AABBConvexPolygon, SplitOnPositiveSide) {
   AABBConvexPolygon<> polygon(plane, /*drop_dimension=*/2, p);
 
   HalfSpace3 split(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/-1);
-  AABBConvexPolygon<>::SplitInfoRep split_info = polygon.GetSplitInfo(split);
+  ConvexPolygonSplitInfo split_info = polygon.GetSplitInfo(split);
   EXPECT_TRUE(split_info.IsValid(p.size()));
   EXPECT_FALSE(split_info.ShouldEmitNegativeChild());
   EXPECT_TRUE(split_info.ShouldEmitPositiveChild());
@@ -139,7 +139,7 @@ TEST(AABBConvexPolygon, SplitInMiddle) {
   AABBConvexPolygon<> polygon(plane, /*drop_dimension=*/2, p);
 
   HalfSpace3 split(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
-  AABBConvexPolygon<>::SplitInfoRep split_info = polygon.GetSplitInfo(split);
+  ConvexPolygonSplitInfo split_info = polygon.GetSplitInfo(split);
   EXPECT_TRUE(split_info.IsValid(p.size()));
   EXPECT_TRUE(split_info.ShouldEmitNegativeChild());
   EXPECT_TRUE(split_info.ShouldEmitPositiveChild());

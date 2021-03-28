@@ -135,7 +135,6 @@ class BSPPolygonWrapper :
     typename BSPNodeTemplate::OutputPolygonParent::template MakeParent<
       BSPPolygonWrapper<BSPNodeTemplate>, BSPEdgeInfo<BSPNodeRep>
     >;
-  using typename Parent::SplitInfoRep;
   using typename Parent::EdgeParent;
   using BSPEdgeInfoRep = BSPEdgeInfo<BSPNodeRep>;
   using BSPNodeSideRep = typename BSPEdgeInfoRep::BSPNodeSideRep;
@@ -167,7 +166,7 @@ class BSPPolygonWrapper :
 
   // Overload CreateSplitChildren to create the derived polygon type.
   std::pair<BSPPolygonWrapper, BSPPolygonWrapper> CreateSplitChildren(
-      const SplitInfoRep& split) const {
+      const ConvexPolygonSplitInfo& split) const {
     std::pair<BSPPolygonWrapper, BSPPolygonWrapper> result;
     FillInSplitChildren(*this, split, result.first, result.second);
     return result;
@@ -175,7 +174,7 @@ class BSPPolygonWrapper :
 
   // Overload CreateSplitChildren to create the derived polygon type.
   std::pair<BSPPolygonWrapper, BSPPolygonWrapper> CreateSplitChildren(
-      SplitInfoRep&& split) && {
+      ConvexPolygonSplitInfo&& split) && {
     std::pair<BSPPolygonWrapper, BSPPolygonWrapper> result;
     FillInSplitChildren(std::move(*this), std::move(split), result.first,
                         result.second);
@@ -537,7 +536,7 @@ void BSPNode<OutputPolygonParent>::PushContentsToChildren() {
 
   for (PolygonRep& polygon : contents_) {
     assert(polygon.vertex_count() > 0);
-    typename PolygonRep::SplitInfoRep info = polygon.GetSplitInfo(split_);
+    ConvexPolygonSplitInfo info = polygon.GetSplitInfo(split_);
     assert(info.IsValid(polygon.vertex_count()));
 
     if (info.ShouldEmitNegativeChild()) {
@@ -592,8 +591,7 @@ void BSPNode<OutputPolygonParent>::PushContentsToChildren() {
 
   for (PolygonRep& polygon : border_contents_) {
     assert(polygon.vertex_count() > 0);
-    typename OutputPolygonParent::SplitInfoRep info =
-      polygon.GetSplitInfo(split_);
+    ConvexPolygonSplitInfo info = polygon.GetSplitInfo(split_);
 
     if (info.ShouldEmitNegativeChild()) {
       if (info.ShouldEmitPositiveChild()) {

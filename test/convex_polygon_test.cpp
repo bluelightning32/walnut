@@ -1341,7 +1341,7 @@ TEST(ConvexPolygon, SplitAtExistingVertices) {
 
   {
     HalfSpace3 polygon_plane =  polygon.plane();
-    ConvexPolygonSplitInfo<> info = polygon.GetSplitInfo(-half_space);
+    ConvexPolygonSplitInfo info = polygon.GetSplitInfo(-half_space);
     std::pair<ConvexPolygon<>, ConvexPolygon<>> children =
       std::move(polygon).CreateSplitChildren(std::move(info));
     EXPECT_EQ(children.first.plane(), polygon_plane);

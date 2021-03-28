@@ -36,7 +36,6 @@ class ConvexPolygon {
 
   using EdgeParent = EdgeParentTemplate;
   using EdgeRep = ConvexPolygonEdge<EdgeParent>;
-  using SplitInfoRep = ConvexPolygonSplitInfo<point3_bits_template>;
   using NormalRep = Vector3;
   using EdgeVector = std::vector<AssignableWrapper<EdgeRep>>;
   using ConstVertexIterator =
@@ -440,7 +439,7 @@ class ConvexPolygon {
   // Otherwise if `ShouldEmitNegativeChild` and `ShouldEmitPositiveChild` both
   // return true, the info should be passed to `CreateSplitChildren` to create
   // both children.
-  SplitInfoRep GetSplitInfo(const HalfSpace3& half_space) const;
+  ConvexPolygonSplitInfo GetSplitInfo(const HalfSpace3& half_space) const;
 
   // Returns the vertex indices for the positive and negative sides of a
   // ConvexPolygon split by a 2D half-space.
@@ -488,7 +487,7 @@ class ConvexPolygon {
   // plane. Whereas for the postive child, the first and last vertices will be
   // on the split plane.
   std::pair<ConvexPolygon, ConvexPolygon> CreateSplitChildren(
-      const SplitInfoRep& split) const {
+      const ConvexPolygonSplitInfo& split) const {
     std::pair<ConvexPolygon, ConvexPolygon> result;
     FillInSplitChildren(*this, split, result.first, result.second);
     return result;
@@ -551,7 +550,7 @@ class ConvexPolygon {
   // plane. Whereas for the postive child, the first and last vertices will be
   // on the split plane.
   std::pair<ConvexPolygon, ConvexPolygon> CreateSplitChildren(
-      SplitInfoRep&& split) && {
+      ConvexPolygonSplitInfo&& split) && {
     std::pair<ConvexPolygon, ConvexPolygon> result;
     FillInSplitChildren(std::move(*this), std::move(split), result.first,
                         result.second);
@@ -880,8 +879,7 @@ void ConvexPolygon<point3_bits, EdgeParent>::FillInSplitChildren(
 }
 
 template <size_t point3_bits, typename EdgeParent>
-typename ConvexPolygon<point3_bits, EdgeParent>::SplitInfoRep
-ConvexPolygon<point3_bits, EdgeParent>::GetSplitInfo(
+ConvexPolygonSplitInfo ConvexPolygon<point3_bits, EdgeParent>::GetSplitInfo(
     const HalfSpace3& half_space) const {
   int flip = normal().components()[drop_dimension()].GetAbsMult();
   PluckerLine line(HalfSpace3(half_space.normal() * flip,
@@ -925,7 +923,7 @@ ConvexPolygon<point3_bits, EdgeParent>::GetSplitInfo(
                    half_space.normal().components()[drop_dimension()]).Compare(
         half_space.d() *
         normal().components()[drop_dimension()]) * plane_abs_mult;
-    SplitInfoRep result;
+    ConvexPolygonSplitInfo result;
     if (compare < 0) {
       // The polygon is entirely on the negative side.
       result.ranges.neg_range.second = vertex_count();
@@ -939,7 +937,7 @@ ConvexPolygon<point3_bits, EdgeParent>::GetSplitInfo(
   }
 
   auto half_space2 = line.Project2D(drop_dimension());
-  SplitInfoRep result;
+  ConvexPolygonSplitInfo result;
   result.ranges = vertex_count() < 10 ?
     FindSplitRangesLinear(half_space2, drop_dimension()) :
     FindSplitRangesBisect(half_space2, drop_dimension());

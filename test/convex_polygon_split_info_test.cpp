@@ -13,7 +13,7 @@ TEST(ConvexPolygonSplitInfo, SplitSquareAtVertices) {
   // | neg  \ v
   // p3 <---- p2
 
-  ConvexPolygonSplitInfo<> info;
+  ConvexPolygonSplitInfo info;
   // The postive-only range starts at p1, because p0 is shared
   info.ranges.pos_range.first = 1;
   // The postive-only range ends before p2, because p2 is shared
