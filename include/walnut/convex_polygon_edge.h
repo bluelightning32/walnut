@@ -11,20 +11,16 @@
 
 namespace walnut {
 
-template <size_t point3_bits_template, typename ParentTemplate>
+template <typename ParentTemplate>
 struct ConvexPolygonEdge;
 
-template <size_t point3_bits, typename Parent>
-std::string
-Approximate(const ConvexPolygonEdge<point3_bits, Parent>& edge);
+template <typename Parent>
+std::string Approximate(const ConvexPolygonEdge<Parent>& edge);
 
-template <size_t point3_bits>
-std::string
-Approximate(const ConvexPolygonEdge<point3_bits, EdgeInfoRoot>& edge);
+std::string Approximate(const ConvexPolygonEdge<EdgeInfoRoot>& edge);
 
 // An edge of a ConvexPolygon
-template <size_t point3_bits_template = 32,
-          typename ParentTemplate = EdgeInfoRoot>
+template <typename ParentTemplate = EdgeInfoRoot>
 struct ConvexPolygonEdge : public ParentTemplate {
   using Parent = ParentTemplate;
 
@@ -81,9 +77,8 @@ struct ConvexPolygonEdge : public ParentTemplate {
                     const Point3& next_vertex) :
     Parent(vertex.data), vertex_(vertex), line_(vertex, next_vertex) { }
 
-  template <size_t other_point3_bits, typename OtherParent>
-  explicit ConvexPolygonEdge(
-      const ConvexPolygonEdge<other_point3_bits, OtherParent>& other) :
+  template <typename OtherParent>
+  explicit ConvexPolygonEdge(const ConvexPolygonEdge<OtherParent>& other) :
     Parent(other), vertex_(other.vertex()), line_(other.line()) { }
 
   static bool LexicographicallyLt(const ConvexPolygonEdge& a,
@@ -127,9 +122,8 @@ struct ConvexPolygonEdge : public ParentTemplate {
   ConvexPolygonEdge& operator=(const ConvexPolygonEdge&) = default;
   ConvexPolygonEdge& operator=(ConvexPolygonEdge&&) = default;
 
-  template <size_t other_point3_bits, typename OtherParent>
-  ConvexPolygonEdge& operator=(const ConvexPolygonEdge<other_point3_bits,
-                                                       OtherParent>& other) {
+  template <typename OtherParent>
+  ConvexPolygonEdge& operator=(const ConvexPolygonEdge<OtherParent>& other) {
     Parent::operator=(other);
     vertex_ = other.vertex();
     line_ = other.line();
@@ -146,32 +140,27 @@ struct ConvexPolygonEdge : public ParentTemplate {
   PluckerLine line_;
 };
 
-template <size_t point3_bits, typename Parent>
-std::string
-Approximate(const ConvexPolygonEdge<point3_bits, Parent>& edge) {
+template <typename Parent>
+std::string Approximate(const ConvexPolygonEdge<Parent>& edge) {
   std::ostringstream out;
   out << edge.vertex().Approximate() << ": "
       << static_cast<const Parent&>(edge);
   return out.str();
 }
 
-template <size_t point3_bits>
-std::string
-Approximate(const ConvexPolygonEdge<point3_bits, EdgeInfoRoot>& edge) {
+inline std::string Approximate(const ConvexPolygonEdge<EdgeInfoRoot>& edge) {
   return edge.ApproximateNoData();
 }
 
-template <size_t point3_bits, typename Parent>
+template <typename Parent>
 std::ostream& operator<<(
-    std::ostream& out, const ConvexPolygonEdge<point3_bits, Parent>& edge) {
+    std::ostream& out, const ConvexPolygonEdge<Parent>& edge) {
   out << edge.vertex() << ": " << static_cast<const Parent&>(edge);
   return out;
 }
 
-template <size_t point3_bits>
-std::ostream& operator<<(
-    std::ostream& out,
-    const ConvexPolygonEdge<point3_bits, EdgeInfoRoot>& edge) {
+inline std::ostream& operator<<(std::ostream& out,
+                                const ConvexPolygonEdge<EdgeInfoRoot>& edge) {
   out << edge.vertex();
   return out;
 }

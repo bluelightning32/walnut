@@ -35,7 +35,7 @@ class ConvexPolygon {
                 "EdgeParentTemplate should inherit from EdgeInfoRoot");
 
   using EdgeParent = EdgeParentTemplate;
-  using EdgeRep = ConvexPolygonEdge<point3_bits_template, EdgeParent>;
+  using EdgeRep = ConvexPolygonEdge<EdgeParent>;
   using SplitInfoRep = ConvexPolygonSplitInfo<point3_bits_template>;
   using NormalRep = Vector3;
   using EdgeVector = std::vector<AssignableWrapper<EdgeRep>>;
