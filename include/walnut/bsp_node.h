@@ -22,16 +22,16 @@ namespace walnut {
 using BSPPolygonId = size_t;
 
 template <typename BSPNodeTemplate, typename ParentTemplate = ConvexPolygon<>>
-class BSPPolygonWrapper :
+class BSPPolygon :
   public ParentTemplate::template MakeParent<
-    BSPPolygonWrapper<BSPNodeTemplate, ParentTemplate>,
+    BSPPolygon<BSPNodeTemplate, ParentTemplate>,
     BSPEdgeInfo<BSPNodeTemplate>
   > {
  public:
   using BSPNodeRep = BSPNodeTemplate;
   using Parent =
     typename ParentTemplate::template MakeParent<
-      BSPPolygonWrapper<BSPNodeRep, ParentTemplate>,
+      BSPPolygon<BSPNodeRep, ParentTemplate>,
       BSPEdgeInfo<BSPNodeRep>
     >;
   using typename Parent::EdgeParent;
@@ -44,36 +44,36 @@ class BSPPolygonWrapper :
   static_assert(std::is_base_of<ConvexPolygon<EdgeParent>, Parent>::value,
       "The OutputPolygonParentTemplate must inherit from ConvexPolygon.");
 
-  BSPPolygonWrapper() = default;
+  BSPPolygon() = default;
 
   template <typename OtherPolygon>
-  BSPPolygonWrapper(BSPPolygonId id, const BSPNodeRep* on_node_plane,
-                    bool pos_side, OtherPolygon&& parent) :
+  BSPPolygon(BSPPolygonId id, const BSPNodeRep* on_node_plane, bool pos_side,
+             OtherPolygon&& parent) :
     Parent(std::forward<OtherPolygon>(parent)), id(id),
     on_node_plane{on_node_plane, pos_side} { }
 
-  BSPPolygonWrapper(const BSPNodeRep* on_node_plane, bool pos_side,
-                    const BSPPolygonWrapper& parent) :
+  BSPPolygon(const BSPNodeRep* on_node_plane, bool pos_side,
+             const BSPPolygon& parent) :
     Parent(parent), id(parent.id),
     on_node_plane{on_node_plane, pos_side} { }
 
-  BSPPolygonWrapper(const BSPNodeRep* on_node_plane, bool pos_side,
-                    BSPPolygonWrapper&& parent) :
+  BSPPolygon(const BSPNodeRep* on_node_plane, bool pos_side,
+             BSPPolygon&& parent) :
     Parent(std::move(parent)), id(parent.id),
     on_node_plane{on_node_plane, pos_side} { }
 
   // Overload CreateSplitChildren to create the derived polygon type.
-  std::pair<BSPPolygonWrapper, BSPPolygonWrapper> CreateSplitChildren(
+  std::pair<BSPPolygon, BSPPolygon> CreateSplitChildren(
       const ConvexPolygonSplitInfo& split) const {
-    std::pair<BSPPolygonWrapper, BSPPolygonWrapper> result;
+    std::pair<BSPPolygon, BSPPolygon> result;
     FillInSplitChildren(*this, split, result.first, result.second);
     return result;
   }
 
   // Overload CreateSplitChildren to create the derived polygon type.
-  std::pair<BSPPolygonWrapper, BSPPolygonWrapper> CreateSplitChildren(
+  std::pair<BSPPolygon, BSPPolygon> CreateSplitChildren(
       ConvexPolygonSplitInfo&& split) && {
-    std::pair<BSPPolygonWrapper, BSPPolygonWrapper> result;
+    std::pair<BSPPolygon, BSPPolygon> result;
     FillInSplitChildren(std::move(*this), std::move(split), result.first,
                         result.second);
     return result;
@@ -96,8 +96,8 @@ class BSPPolygonWrapper :
   // Overrides the non-virtual function from ConvexPolygon.
   template <typename ParentRef, typename SplitInfoRef>
   static void FillInSplitChildren(ParentRef&& parent, SplitInfoRef&& split,
-                                  BSPPolygonWrapper& neg_child,
-                                  BSPPolygonWrapper& pos_child) {
+                                  BSPPolygon& neg_child,
+                                  BSPPolygon& pos_child) {
     pos_child.id = parent.id;
     pos_child.on_node_plane = parent.on_node_plane;
     neg_child.id = parent.id;
@@ -126,7 +126,7 @@ template <typename OutputPolygonParentTemplate = AABBConvexPolygon<>>
 class BSPNode {
  public:
   using OutputPolygonParent = OutputPolygonParentTemplate;
-  using PolygonRep = BSPPolygonWrapper<BSPNode, OutputPolygonParent>;
+  using PolygonRep = BSPPolygon<BSPNode, OutputPolygonParent>;
   using EdgeParent = typename PolygonRep::EdgeParent;
   using EdgeRep = typename PolygonRep::EdgeRep;
   using BSPEdgeInfoRep = typename PolygonRep::BSPEdgeInfoRep;
