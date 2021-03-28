@@ -550,7 +550,7 @@ TEST_P(BSPTreePWN, MPathGoesThroughStraddlingEdge) {
   // left side of the north edge. The test than splits the tilted cube again
   // such that the split plane passes through the prism.
   //
-  // If the titled boundary cube, the north-west facet was formed befor the
+  // In the titled boundary cube, the north-west facet was formed before the
   // north-east facet. So even though the content edge appears to be coincident
   // with the boundary edge from the north-east and north-west facets, the kerf
   // of the north-west boundary edge moved the content edge into the north-west
