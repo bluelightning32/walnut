@@ -242,7 +242,7 @@ class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
     BSPNode<>* other_child;
     HalfSpace3 split(normal, BigInt(long(dist)));
     Split(parent, split, return_child, other_child);
-    for (BSPPolygonId id = 0; id < tree_.next_id(); ++id) {
+    for (BSPContentId id = 0; id < tree_.next_id(); ++id) {
       EXPECT_EQ(other_child->GetPWNForId(id), parent->GetPWNForId(id))
         << "id=" << id;
     }
@@ -252,7 +252,7 @@ class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
   // Add a polygon to `tree_`, flipping it first if configured by the test
   // parameters.
   template <typename InputPolygon>
-  void AddContent(BSPPolygonId id, const InputPolygon& polygon) {
+  void AddContent(BSPContentId id, const InputPolygon& polygon) {
     auto added_to_leaf = [&](BSPNode<>& leaf) { };
     if (std::get<1>(GetParam())) {
       // flip the input polygon
@@ -283,7 +283,7 @@ class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
 };
 
 TEST_P(BSPTreePWN, EmptyCube) {
-  BSPPolygonId id = tree_.AllocateId();
+  BSPContentId id = tree_.AllocateId();
   EXPECT_EQ(id, 0);
 
   BSPNode<>* inside_cube = SplitToCube();
@@ -300,7 +300,7 @@ TEST_P(BSPTreePWN, BeforeCrossing) {
   //
   // Since the split happened before the prism on the M-path, both children
   // should still have a PWN of 0.
-  BSPPolygonId id = tree_.AllocateId();
+  BSPContentId id = tree_.AllocateId();
   EXPECT_EQ(id, 0);
 
   AABB prism(/*min_x=*/cube_north_west.x(),
@@ -328,7 +328,7 @@ TEST_P(BSPTreePWN, BeforeCrossing) {
 }
 
 TEST_P(BSPTreePWN, SimpleCrossing) {
-  BSPPolygonId id = tree_.AllocateId();
+  BSPContentId id = tree_.AllocateId();
   EXPECT_EQ(id, 0);
 
   int y_dist = cube_north.y().ToInt() - cube_north_west.y().ToInt();
@@ -374,7 +374,7 @@ TEST_P(BSPTreePWN, SimpleCrossing) {
 TEST_P(BSPTreePWN, SimpleCrossing2) {
   // This is almost the same as SimpleCrossing, except that a full cube is
   // used.
-  BSPPolygonId id = tree_.AllocateId();
+  BSPContentId id = tree_.AllocateId();
   EXPECT_EQ(id, 0);
 
   int y_dist = cube_north.y().ToInt() - cube_north_west.y().ToInt();
@@ -407,7 +407,7 @@ TEST_P(BSPTreePWN, SimpleCrossing2) {
 
 TEST_P(BSPTreePWN, MinimumExcluded) {
   // Verify that minimums are excluded from the PWN calculation.
-  BSPPolygonId id = tree_.AllocateId();
+  BSPContentId id = tree_.AllocateId();
   EXPECT_EQ(id, 0);
 
   BigInt polygon_x(cube_south_east.x().ToInt()/2);
@@ -448,7 +448,7 @@ TEST_P(BSPTreePWN, MPathBends) {
   // outside prism2.
   int y_dist = cube_north.y().ToInt() - cube_north_west.y().ToInt();
 
-  BSPPolygonId prism1_id = tree_.AllocateId();
+  BSPContentId prism1_id = tree_.AllocateId();
   BigInt prism1_y = cube_north_west.y() + y_dist/5;
   AABB prism1(/*min_x=*/cube_north_west.x(),
                 /*min_y=*/prism1_y,
@@ -460,7 +460,7 @@ TEST_P(BSPTreePWN, MPathBends) {
     AddContent(prism1_id, wall);
   }
 
-  BSPPolygonId prism2_id = tree_.AllocateId();
+  BSPContentId prism2_id = tree_.AllocateId();
   BigInt prism2_y = cube_north_west.y() + y_dist*3/5;
   AABB prism2(/*min_x=*/cube_north_west.x(),
                 /*min_y=*/prism2_y,
@@ -497,7 +497,7 @@ TEST_P(BSPTreePWN, SkipEdgesAlongIPath) {
   // the cut off prism's top facet only touches the tilted cube's north-west
   // facet at the north edge.
 
-  BSPPolygonId id = tree_.AllocateId();
+  BSPContentId id = tree_.AllocateId();
   BigInt bounding_start_y(cube_north.y().ToInt() / 4);
   BigInt bounding_end_y(cube_north.y().ToInt() * 3 / 4);
   AABB bounding_box(/*min_x=*/cube_north_west.x(),
@@ -556,7 +556,7 @@ TEST_P(BSPTreePWN, MPathGoesThroughStraddlingEdge) {
   // of the north-west boundary edge moved the content edge into the north-west
   // facet. So the M-path should go through the content prism.
 
-  BSPPolygonId id = tree_.AllocateId();
+  BSPContentId id = tree_.AllocateId();
   BigInt prism_start_y(cube_north.y().ToInt() / 4);
   BigInt prism_end_y(cube_north.y().ToInt() * 3 / 4);
   AABB prism(/*min_x=*/cube_north_west.x(),
@@ -594,7 +594,7 @@ TEST_P(BSPTreePWN, MPathSkipsContentContainedByRecentSplit) {
   // left side of the north boundary edge. So the PWN should not be affected by
   // the prism.
 
-  BSPPolygonId id = tree_.AllocateId();
+  BSPContentId id = tree_.AllocateId();
   BigInt prism_start_y(cube_north.y().ToInt() / 4);
   BigInt prism_end_y(cube_north.y().ToInt() * 3 / 4);
   AABB prism(/*min_x=*/cube_top.x(),
@@ -631,7 +631,7 @@ TEST_P(BSPTreePWN, BothEdgeSidesTouchMPath) {
   // enough along the north edge that the M-path should enter then leave the
   // prism, resulting in a PWN of 0.
 
-  BSPPolygonId id = tree_.AllocateId();
+  BSPContentId id = tree_.AllocateId();
   BigInt prism_start_y(cube_north.y().ToInt() / 4);
   BigInt prism_end_y(cube_north.y().ToInt() * 3 / 4);
   AABB prism(/*min_x=*/cube_north_west.x(),
@@ -662,7 +662,7 @@ TEST_P(BSPTreePWN, SplitTwice) {
   // This is almost the same as SimpleCrossing, except that the child is split
   // again. The only polygon is already passed, so the second split should not
   // impact the PWN.
-  BSPPolygonId id = tree_.AllocateId();
+  BSPContentId id = tree_.AllocateId();
   EXPECT_EQ(id, 0);
 
   int y_dist = cube_north.y().ToInt() - cube_north_west.y().ToInt();
@@ -722,7 +722,7 @@ TEST_P(BSPTreePWN, MPathOvershootsMValue) {
   //
   // Later the titled cube is split again on the north-west side. For that
   // split, the prism is entered.
-  BSPPolygonId id = tree_.AllocateId();
+  BSPContentId id = tree_.AllocateId();
   EXPECT_EQ(id, 0);
 
   BigInt polygon_y(cube_north.y().ToInt()/4);
@@ -817,19 +817,19 @@ TEST_P(BSPTreePWN, SplitAgainThroughMvalue) {
             /*max_y=*/cube_north.y(),
             /*max_z=*/cube_top.z());
 
-  BSPPolygonId r1_id = tree_.AllocateId();
-  BSPPolygonId r2_id = tree_.AllocateId();
-  BSPPolygonId r3_id = tree_.AllocateId();
-  BSPPolygonId r4_id = tree_.AllocateId();
+  BSPContentId r1_id = tree_.AllocateId();
+  BSPContentId r2_id = tree_.AllocateId();
+  BSPContentId r3_id = tree_.AllocateId();
+  BSPContentId r4_id = tree_.AllocateId();
 
-  std::pair<BSPPolygonId, AABB&> prisms[] = {
+  std::pair<BSPContentId, AABB&> prisms[] = {
     {r1_id, r1},
     {r2_id, r2},
     {r3_id, r3},
     {r4_id, r4},
   };
 
-  for (const std::pair<BSPPolygonId, AABB&>& prism : prisms) {
+  for (const std::pair<BSPContentId, AABB&>& prism : prisms) {
     for (const ConvexPolygon<>& wall : prism.second.GetWalls()) {
       AddContent(prism.first, wall);
     }

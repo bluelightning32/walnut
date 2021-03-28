@@ -75,7 +75,7 @@ class BSPNode {
     return border_contents_;
   }
 
-  int64_t GetPWNForId(BSPPolygonId id) const {
+  int64_t GetPWNForId(BSPContentId id) const {
     if (id < pwn_by_id_.size()) {
       return pwn_by_id_[id];
     } else {
@@ -129,7 +129,7 @@ class BSPNode {
   // crossing_flip should be 1 if the vertex_to_edge direction can be used
   // directly to update the PWN, or crossing_flip should be -1 if the opposite
   // should be used.
-  void PushVertexPWNToChildren(BSPPolygonId polygon_id, int edge_comparison,
+  void PushVertexPWNToChildren(BSPContentId polygon_id, int edge_comparison,
                                const BSPNodeSideRep& edge_last_coincident,
                                const EdgeRep& vertex_edge, int crossing_flip);
 
@@ -178,7 +178,7 @@ class BSPNode {
 
 template <typename OutputPolygonParent>
 void BSPNode<OutputPolygonParent>::PushVertexPWNToChildren(
-    BSPPolygonId polygon_id, int edge_comparison,
+    BSPContentId polygon_id, int edge_comparison,
     const BSPNodeSideRep& edge_last_coincident, const EdgeRep& vertex_edge,
     int crossing_flip) {
   const BSPNodeSideRep& vertex_last_coincident =

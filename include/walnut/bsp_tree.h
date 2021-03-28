@@ -65,7 +65,7 @@ class BSPTree {
   // new contents settle in. There may also be spurious calls to
   // `leaf_callback` for leaves where the contents did not land in.
   template <typename InputConvexPolygon, typename LeafCallback>
-  void AddContent(InputConvexPolygon&& polygon, BSPPolygonId id,
+  void AddContent(InputConvexPolygon&& polygon, BSPContentId id,
                   LeafCallback leaf_callback) {
     root.contents_.emplace_back(id, /*on_node_plane=*/nullptr,
                                 /*pos_side=*/false,
@@ -105,18 +105,18 @@ class BSPTree {
       Iterator node_path_begin, Iterator node_path_end,
       const AABB& bounding_box, MappedBSPNode& mapped_root) const;
 
-  BSPPolygonId AllocateId() {
+  BSPContentId AllocateId() {
     return next_id_++;
   }
 
-  BSPPolygonId next_id() const {
+  BSPContentId next_id() const {
     return next_id_;
   }
 
   BSPNodeRep root;
 
  private:
-  BSPPolygonId next_id_ = 0;
+  BSPContentId next_id_ = 0;
 };
 
 template <typename ConvexPolygonTemplate>

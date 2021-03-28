@@ -11,7 +11,7 @@
 
 namespace walnut {
 
-using BSPPolygonId = size_t;
+using BSPContentId = size_t;
 
 template <typename BSPNodeTemplate, typename ParentTemplate = ConvexPolygon<>>
 class BSPPolygon :
@@ -36,7 +36,7 @@ class BSPPolygon :
   BSPPolygon() = default;
 
   template <typename OtherPolygon>
-  BSPPolygon(BSPPolygonId id, const BSPNodeRep* on_node_plane, bool pos_side,
+  BSPPolygon(BSPContentId id, const BSPNodeRep* on_node_plane, bool pos_side,
              OtherPolygon&& parent) :
     Parent(std::forward<OtherPolygon>(parent)), id(id),
     on_node_plane{on_node_plane, pos_side} { }
@@ -72,7 +72,7 @@ class BSPPolygon :
     return this->edge(index);
   }
 
-  BSPPolygonId id;
+  BSPContentId id;
 
   // This is the BSPNode whose split plane is coincident with this polygon's
   // plane, or nullptr if no such BSPNode exists.
