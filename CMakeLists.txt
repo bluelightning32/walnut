@@ -47,6 +47,10 @@ option(RUN_TESTS
 as part of the default build target. Set this to OFF to disable building and \
 running the unit tests." ON)
 
+AUX_SOURCE_DIRECTORY(src/walnut SOURCES)
+add_library(walnut STATIC ${SOURCES})
+target_include_directories(walnut PUBLIC include)
+
 if(BUILD_TESTS)
     enable_testing()
     include(GoogleTest)
@@ -81,10 +85,6 @@ else()
   macro(package_add_test TESTNAME)
   endmacro()
 endif()
-
-AUX_SOURCE_DIRECTORY(src/walnut SOURCES)
-add_library(walnut STATIC ${SOURCES})
-target_include_directories(walnut PUBLIC include)
 
 package_add_test(aabb_convex_polygon_test test/aabb_convex_polygon_test.cpp)
 package_add_test(aabb_test test/aabb_test.cpp)

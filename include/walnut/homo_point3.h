@@ -81,33 +81,9 @@ class HomoPoint3 {
     return dist_denom_;
   }
 
-  static bool LexicographicallyLt(const HomoPoint3& a, const HomoPoint3& b) {
-    // a.v / a.w <?> b.v / b.w
-    // a.v <?> b.v * a.w / b.w (maybe flip sign)
-    // a.v * b.w <?> b.v * a.w (maybe flip sign)
-    int sign_flip = b.dist_denom().GetAbsMult(a.dist_denom());
-    auto a_scaled = a.vector_from_origin() * (b.dist_denom() * sign_flip);
-    auto b_scaled = b.vector_from_origin() * (a.dist_denom() * sign_flip);
-    return std::lexicographical_compare(a_scaled.components().begin(),
-                                        a_scaled.components().end(),
-                                        b_scaled.components().begin(),
-                                        b_scaled.components().end());
-  }
+  static bool LexicographicallyLt(const HomoPoint3& a, const HomoPoint3& b);
 
-  static bool TopnessLt(const HomoPoint3& a, const HomoPoint3& b) {
-    // a.v / a.w <?> b.v / b.w
-    // a.v <?> b.v * a.w / b.w (maybe flip sign)
-    // a.v * b.w <?> b.v * a.w (maybe flip sign)
-    auto a_scaled = a.vector_from_origin() * b.dist_denom();
-    auto b_scaled = b.vector_from_origin() * a.dist_denom();
-    BigInt::FlippableCompare compare(
-        /*flip=*/b.dist_denom().HasDifferentSign(a.dist_denom()));
-    return std::lexicographical_compare(a_scaled.components().rbegin(),
-                                        a_scaled.components().rend(),
-                                        b_scaled.components().rbegin(),
-                                        b_scaled.components().rend(),
-                                        compare);
-  }
+  static bool TopnessLt(const HomoPoint3& a, const HomoPoint3& b);
 
   // Returns 0 if (p1, `this`, p3) are collinear.
   // Returns >0 if p3 is counter-clockwise from p1, with `this` as the center
@@ -117,29 +93,7 @@ class HomoPoint3 {
   // The calculations are done in 2D by removing (treating it as 0)
   // `drop_dimension` from the point.
   BigIntWord Get2DTwistDir(int drop_dimension, const HomoPoint3& p1,
-                           const HomoPoint3& p3) const {
-    // We roughly want to calculate:
-    //   sign( (p1 - *this) x (p3 - *this) )
-    //
-    // However, each HomoPoint3 is like a fraction. The fractions must have
-    // common bases to perform subtraction. However, only the pairs that will
-    // be subtracted need to have common bases. The trick is to make two copies
-    // of *this, one for p1's denominator and one for p3's denominator.
-    //
-    // The vectors (p1 - *this) and (p3 - *this) will have different scales,
-    // but that's okay since we're only looking at the sign of the cross
-    // product.
-    Vector2 p1_from_origin =
-      p1.vector_from_origin().DropDimension(drop_dimension) * dist_denom();
-    Vector2 p2_from_origin1 =
-      vector_from_origin().DropDimension(drop_dimension) * p1.dist_denom();
-    Vector2 p2_from_origin3 =
-      vector_from_origin().DropDimension(drop_dimension) * p3.dist_denom();
-    Vector2 p3_from_origin =
-      p3.vector_from_origin().DropDimension(drop_dimension) * dist_denom();
-    return (p1_from_origin - p2_from_origin1).Cross(
-        p3_from_origin - p2_from_origin3).GetSign();
-  }
+                           const HomoPoint3& p3) const;
 
   HomoPoint2 DropDimension(int drop_dimension) const {
     Vector2 v = vector_from_origin().DropDimension(drop_dimension);
@@ -195,25 +149,6 @@ class HomoPoint3 {
   BigInt dist_denom_;
 };
 
-inline void HomoPoint3::Reduce() {
-  auto common_factor = dist_denom_.GetGreatestCommonDivisor(
-      vector_from_origin_.x());
-  common_factor = common_factor.GetGreatestCommonDivisor(
-      vector_from_origin_.y());
-  common_factor = common_factor.GetGreatestCommonDivisor(
-      vector_from_origin_.z());
-
-  // Prioritize making the dist positive.
-  if ((common_factor.GetSign() < 0) != (dist_denom_.GetSign() < 0)) {
-    common_factor.Negate();
-  }
-
-  dist_denom_ /= common_factor;
-  vector_from_origin_.x() /= common_factor;
-  vector_from_origin_.y() /= common_factor;
-  vector_from_origin_.z() /= common_factor;
-}
-
 inline int HomoPoint3::CompareComponent(size_t component,
                                         const HomoPoint3& other) const {
   // Check:
@@ -231,25 +166,7 @@ inline bool operator==(const Point3& a, const HomoPoint3& b) {
   return b == a;
 }
 
-inline std::string HomoPoint3::Approximate() const {
-  std::ostringstream out;
-  double w_double(w());
-  out << "{ "
-      << (double)x()/w_double << ", "
-      << (double)y()/w_double << ", "
-      << (double)z()/w_double
-      << " }";
-  return out.str();
-}
-
-inline std::ostream& operator<<(std::ostream& out, const HomoPoint3& p) {
-  return out << "{ ["
-             << p.x() << ", "
-             << p.y() << ", "
-             << p.z() << "] / "
-             << p.w()
-             << " }";
-}
+std::ostream& operator<<(std::ostream& out, const HomoPoint3& p);
 
 }  // walnut
 
