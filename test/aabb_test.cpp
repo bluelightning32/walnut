@@ -67,7 +67,7 @@ TEST(AABB, IsInside) {
 TEST(AABB, IntersectPlaneZUp) {
   AABB<> prism(5);
 
-  MutableConvexPolygon<32> result =
+  MutableConvexPolygon<> result =
     prism.IntersectPlane(HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/1, /*d=*/0));
   result.SortVertices();
   std::vector<HomoPoint3> vertices;
@@ -100,7 +100,7 @@ TEST(AABB, IntersectPlaneZUpFactional) {
 TEST(AABB, IntersectPlaneZDown) {
   AABB<> prism(5);
 
-  MutableConvexPolygon<32> result =
+  MutableConvexPolygon<> result =
     prism.IntersectPlane(HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/-1, /*d=*/0));
   result.SortVertices();
   std::vector<HomoPoint3> vertices;
@@ -118,7 +118,7 @@ TEST(AABB, IntersectPlaneZDown) {
 TEST(AABB, IntersectPlaneDiagPos) {
   AABB<> prism(5);
 
-  MutableConvexPolygon<32> result =
+  MutableConvexPolygon<> result =
     prism.IntersectPlane(HalfSpace3(/*x=*/1, /*y=*/1, /*z=*/1, /*d=*/12));
   result.SortVertices();
   std::vector<HomoPoint3> vertices;
@@ -135,7 +135,7 @@ TEST(AABB, IntersectPlaneDiagPos) {
 TEST(AABB, IntersectPlaneDiagNeg) {
   AABB<> prism(5);
 
-  MutableConvexPolygon<32> result =
+  MutableConvexPolygon<> result =
     prism.IntersectPlane(HalfSpace3(/*x=*/-1, /*y=*/-1, /*z=*/-1, /*d=*/12));
   result.SortVertices();
   std::vector<HomoPoint3> vertices;
@@ -169,7 +169,7 @@ void TestIntersectPlaneLowSlopeMin() {
 
     HalfSpace3 plane(p[0], p[1], p[2]);
 
-    ConvexPolygon<point3_bits> result = prism.IntersectPlane(plane);
+    ConvexPolygon<> result = prism.IntersectPlane(plane);
     EXPECT_EQ(result.vertex_count(), 3);
     for (size_t i = 0; i < result.vertex_count(); ++i) {
       EXPECT_TRUE(prism.IsOnBorder(result.vertex(i)));
@@ -230,7 +230,7 @@ struct StringVertexData : public EdgeInfoRoot {
 TEST(AABB, IntersectPlaneZUpWithData) {
   AABB<> prism(5);
 
-  using ConvexPolygonRep = MutableConvexPolygon<32, StringVertexData>;
+  using ConvexPolygonRep = MutableConvexPolygon<StringVertexData>;
   ConvexPolygonRep result =
     prism.IntersectPlane<ConvexPolygonRep>(HalfSpace3(/*x=*/0,
                                                         /*y=*/0,

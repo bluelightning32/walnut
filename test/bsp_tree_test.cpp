@@ -32,7 +32,7 @@ void SortPolygons(std::vector<Polygon>& polygons) {
 }
 
 template<typename Container>
-MutableConvexPolygon<32> MakeUnsortedConvexPolygon(const Container& vertices) {
+MutableConvexPolygon<> MakeUnsortedConvexPolygon(const Container& vertices) {
   using Iterator = decltype(std::begin(vertices));
   using Point3Rep = typename std::iterator_traits<Iterator>::value_type;
   using Factory = ConvexPolygonFactory<Point3Rep>;
@@ -66,16 +66,16 @@ MutableConvexPolygon<32> MakeUnsortedConvexPolygon(const Container& vertices) {
 
 
 template<typename Container>
-MutableConvexPolygon<32> MakeConvexPolygon(const Container& vertices) {
+MutableConvexPolygon<> MakeConvexPolygon(const Container& vertices) {
   auto result = MakeUnsortedConvexPolygon(vertices);
   result.SortVertices();
   return result;
 }
 
 template <typename InputConvexPolygon>
-std::vector<ConvexPolygon<InputConvexPolygon::point3_bits>> DropVertexData(
+std::vector<ConvexPolygon<>> DropVertexData(
     const std::vector<InputConvexPolygon> &input) {
-  return std::vector<ConvexPolygon<InputConvexPolygon::point3_bits>>(
+  return std::vector<ConvexPolygon<>>(
       input.begin(), input.end());
 }
 

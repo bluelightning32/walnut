@@ -32,8 +32,6 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
     AABBConvexPolygon<typename Parent::template MakeParent<FinalPolygon,
                                                            NewEdgeParent>>;
 
-  using Parent::point3_bits;
-
   AABBConvexPolygon() { }
 
   // `EdgeParent` must be constructible from `OtherEdgeParent`.

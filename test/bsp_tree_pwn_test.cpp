@@ -10,7 +10,7 @@ using testing::IsEmpty;
 using testing::SizeIs;
 
 template<typename Container>
-ConvexPolygon<32> MakeConvexPolygon(const Container& vertices) {
+ConvexPolygon<> MakeConvexPolygon(const Container& vertices) {
   using Iterator = decltype(std::begin(vertices));
   using Point3Rep = typename std::iterator_traits<Iterator>::value_type;
   using Factory = ConvexPolygonFactory<Point3Rep>;
@@ -261,9 +261,8 @@ class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
            ++it) {
         vertices.push_back(it->vertex());
       }
-      using ConvexPolygonRep = ConvexPolygon<InputPolygon::point3_bits>;
-      tree_.AddContent(ConvexPolygonRep(-polygon.plane(),
-                                        polygon.drop_dimension(), vertices),
+      tree_.AddContent(ConvexPolygon<>(-polygon.plane(),
+                                       polygon.drop_dimension(), vertices),
                        id, added_to_leaf);
     } else {
       tree_.AddContent(polygon, id, added_to_leaf);

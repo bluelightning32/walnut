@@ -12,7 +12,7 @@ using testing::AnyOf;
 using testing::Eq;
 
 template<typename Container>
-MutableConvexPolygon<32> MakeUnsortedConvexPolygon(const Container& vertices) {
+MutableConvexPolygon<> MakeUnsortedConvexPolygon(const Container& vertices) {
   using Iterator = decltype(std::begin(vertices));
   using Point3Rep = typename std::iterator_traits<Iterator>::value_type;
   using Factory = ConvexPolygonFactory<Point3Rep>;
@@ -46,7 +46,7 @@ MutableConvexPolygon<32> MakeUnsortedConvexPolygon(const Container& vertices) {
 
 
 template<typename Container>
-MutableConvexPolygon<32> MakeConvexPolygon(const Container& vertices) {
+MutableConvexPolygon<> MakeConvexPolygon(const Container& vertices) {
   auto result = MakeUnsortedConvexPolygon(vertices);
   result.SortVertices();
   return result;
@@ -59,7 +59,7 @@ TEST(ConvexPolygon, TrianglePlane) {
     Point3(1, 1, 10),
   };
 
-  ConvexPolygon<32> polygon = MakeConvexPolygon(input);
+  ConvexPolygon<> polygon = MakeConvexPolygon(input);
   EXPECT_EQ(polygon.plane(),
             HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10));
 
@@ -79,7 +79,7 @@ TEST(ConvexPolygon, Triangle0DistPlane) {
     Point3(10, 10, 0),
   };
 
-  ConvexPolygon<32> polygon = MakeConvexPolygon(input);
+  ConvexPolygon<> polygon = MakeConvexPolygon(input);
   EXPECT_EQ(polygon.plane(),
             HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/0));
 
@@ -97,7 +97,7 @@ TEST(ConvexPolygon, TriangleXZPlane) {
     Point3(10 - 5, 10, 10 + 5),
   };
 
-  ConvexPolygon<32> polygon = MakeConvexPolygon(input);
+  ConvexPolygon<> polygon = MakeConvexPolygon(input);
   EXPECT_EQ(polygon.plane(),
             HalfSpace3(/*x=*/-1, /*y=*/0, /*z=*/1, /*dist=*/10));
 
@@ -113,7 +113,7 @@ TEST(ConvexPolygon, ClockwiseTrianglePlane) {
     Point3(1, 0, 10),
   };
 
-  ConvexPolygon<32> polygon = MakeConvexPolygon(input);
+  ConvexPolygon<> polygon = MakeConvexPolygon(input);
   EXPECT_EQ(polygon.plane(),
             HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/-1, /*dist=*/-10));
 
@@ -133,7 +133,7 @@ TEST(ConvexPolygon, ClockwiseTriangleXZPlane) {
     Point3(10 - 5, 0, 10 + 5),
   };
 
-  ConvexPolygon<32> polygon = MakeConvexPolygon(input);
+  ConvexPolygon<> polygon = MakeConvexPolygon(input);
   EXPECT_EQ(polygon.plane(),
             HalfSpace3(/*x=*/1, /*y=*/0, /*z=*/-1, /*dist=*/-10));
 
@@ -153,7 +153,7 @@ TEST(ConvexPolygon, ClockwiseSquareYZPlane) {
     Point3(10, 0, 0),
   };
 
-  ConvexPolygon<32> polygon = MakeConvexPolygon(input);
+  ConvexPolygon<> polygon = MakeConvexPolygon(input);
   EXPECT_EQ(polygon.plane(),
             HalfSpace3(/*x=*/0, /*y=*/1, /*z=*/-10, /*dist=*/0));
 
@@ -171,8 +171,8 @@ TEST(ConvexPolygon, CopyConstructor) {
     Point3(1, 1, 10),
   };
 
-  ConvexPolygon<32> polygon1 = MakeConvexPolygon(input);
-  ConvexPolygon<32> polygon2(polygon1);
+  ConvexPolygon<> polygon1 = MakeConvexPolygon(input);
+  ConvexPolygon<> polygon2(polygon1);
   EXPECT_EQ(polygon2, polygon1);
 }
 
@@ -182,7 +182,7 @@ TEST(ConvexPolygon, EqualityOperator) {
     Point3(1, 0, 10),
     Point3(1, 1, 10),
   };
-  ConvexPolygon<32> polygon1 = MakeUnsortedConvexPolygon(input1);
+  ConvexPolygon<> polygon1 = MakeUnsortedConvexPolygon(input1);
   EXPECT_EQ(polygon1, polygon1);
 
   // different plane
@@ -192,7 +192,7 @@ TEST(ConvexPolygon, EqualityOperator) {
       Point3(1, 0, 11),
       Point3(1, 1, 11),
     };
-    ConvexPolygon<32> polygon2 = MakeUnsortedConvexPolygon(input2);
+    ConvexPolygon<> polygon2 = MakeUnsortedConvexPolygon(input2);
     EXPECT_NE(polygon1, polygon2);
     EXPECT_NE(polygon2, polygon1);
   }
@@ -204,7 +204,7 @@ TEST(ConvexPolygon, EqualityOperator) {
       Point3(2, 0, 10),
       Point3(2, 1, 10),
     };
-    ConvexPolygon<32> polygon3 = MakeUnsortedConvexPolygon(input3);
+    ConvexPolygon<> polygon3 = MakeUnsortedConvexPolygon(input3);
     EXPECT_NE(polygon1, polygon3);
     EXPECT_NE(polygon3, polygon1);
   }
@@ -216,7 +216,7 @@ TEST(ConvexPolygon, EqualityOperator) {
       input1[1],
       Point3(2, 1, 10),
     };
-    ConvexPolygon<32> polygon4 = MakeUnsortedConvexPolygon(input4);
+    ConvexPolygon<> polygon4 = MakeUnsortedConvexPolygon(input4);
     EXPECT_NE(polygon1, polygon4);
     EXPECT_NE(polygon4, polygon1);
   }
@@ -228,7 +228,7 @@ TEST(ConvexPolygon, EqualityOperator) {
       input1[1],
       input1[0],
     };
-    ConvexPolygon<32> polygon5 = MakeUnsortedConvexPolygon(input5);
+    ConvexPolygon<> polygon5 = MakeUnsortedConvexPolygon(input5);
     EXPECT_NE(polygon1, polygon5);
     EXPECT_NE(polygon5, polygon1);
   }
@@ -240,7 +240,7 @@ TEST(ConvexPolygon, EqualityOperator) {
       input1[2],
       input1[0],
     };
-    MutableConvexPolygon<32> compare_polygon =
+    MutableConvexPolygon<> compare_polygon =
       MakeUnsortedConvexPolygon(compare_input);
     EXPECT_EQ(polygon1, compare_polygon);
     EXPECT_EQ(compare_polygon, polygon1);
@@ -258,7 +258,7 @@ TEST(ConvexPolygon, CounterClockwiseTriangleEdges) {
     Point3(1, 1, 10),
   };
 
-  ConvexPolygon<32> polygon = MakeConvexPolygon(input);
+  ConvexPolygon<> polygon = MakeConvexPolygon(input);
 
   ASSERT_EQ(polygon.vertex_count(), std::end(input) - std::begin(input));
   for (size_t i = 0; i < polygon.vertex_count(); ++i) {
@@ -287,7 +287,7 @@ TEST(ConvexPolygon, CounterClockwiseSquareEdges) {
     Point3(0, 1, 10),
   };
 
-  ConvexPolygon<32> polygon = MakeConvexPolygon(input);
+  ConvexPolygon<> polygon = MakeConvexPolygon(input);
 
   ASSERT_EQ(polygon.vertex_count(), std::end(input) - std::begin(input));
   for (size_t i = 0; i < polygon.vertex_count(); ++i) {
@@ -316,7 +316,7 @@ TEST(ConvexPolygon, ClockwiseSquareEdges) {
     Point3(1, 0, 10),
   };
 
-  ConvexPolygon<32> polygon = MakeConvexPolygon(input);
+  ConvexPolygon<> polygon = MakeConvexPolygon(input);
 
   ASSERT_EQ(polygon.vertex_count(), std::end(input) - std::begin(input));
   for (size_t i = 0; i < polygon.vertex_count(); ++i) {
@@ -349,7 +349,7 @@ TEST(ConvexPolygon, RedundantEdges) {
     Point3(0, 1, 10),
   };
 
-  ConvexPolygon<32> polygon = MakeConvexPolygon(input);
+  ConvexPolygon<> polygon = MakeConvexPolygon(input);
 
   ASSERT_EQ(polygon.vertex_count(), std::end(input) - std::begin(input));
   for (size_t i = 0; i < polygon.vertex_count(); ++i) {
@@ -392,7 +392,7 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesBisectStartPerp) {
     /*p[6]=*/Point3(3, 1, 10),
     /*p[7]=*/Point3(2, 1, 10),
   };
-  ConvexPolygon<32> polygon = MakeConvexPolygon(p);
+  ConvexPolygon<> polygon = MakeConvexPolygon(p);
 
   Vector2 vector(0, 1);
   std::pair<size_t, size_t> opp_edges = polygon.GetOppositeEdgeIndicesBisect(
@@ -430,7 +430,7 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesBisect) {
 
   const Vector2 vector(-1, 0);
   for (size_t offset = 0; offset < sizeof(p)/sizeof(p[0]); ++offset) {
-    ConvexPolygon<32> polygon = MakeConvexPolygon(p);
+    ConvexPolygon<> polygon = MakeConvexPolygon(p);
 
     std::pair<size_t, size_t> opp_edges = polygon.GetOppositeEdgeIndicesBisect(
         vector, /*drop_dimension=*/2);
@@ -464,7 +464,7 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesCWMidSameDir) {
     Point3(2, -3, 0),
     Point3(1, -4, 0),
   };
-  ConvexPolygon<32> polygon = MakeConvexPolygon(p);
+  ConvexPolygon<> polygon = MakeConvexPolygon(p);
 
   Vector2 vector(0, -1);
   std::pair<size_t, size_t> opp_edges = polygon.GetOppositeEdgeIndicesBisect(
@@ -491,7 +491,7 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesCCWMidSameDir) {
     Point3(3, -2, 0),
     Point3(4, -1, 0),
   };
-  ConvexPolygon<32> polygon = MakeConvexPolygon(p);
+  ConvexPolygon<> polygon = MakeConvexPolygon(p);
 
   Vector2 vector(1, 0);
   std::pair<size_t, size_t> opp_edges = polygon.GetOppositeEdgeIndicesBisect(
@@ -517,7 +517,7 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesLargeInts) {
 
   HalfSpace3 plane(0, 0, 10000, 30000);
   {
-    ConvexPolygon<32> polygon(plane, 2, p);
+    ConvexPolygon<> polygon(plane, 2, p);
 
     Vector2 vector(-92360000, -2450000);
     std::pair<size_t, size_t> opp_edges = polygon.GetOppositeEdgeIndicesBisect(
@@ -534,7 +534,7 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesLargeInts) {
   plane.Reduce();
 
   {
-    ConvexPolygon<32> polygon(plane, 2, p);
+    ConvexPolygon<> polygon(plane, 2, p);
 
     Vector2 vector(-9236, -245);
     std::pair<size_t, size_t> opp_edges = polygon.GetOppositeEdgeIndicesBisect(
@@ -575,7 +575,7 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesDenom) {
       p_copy[i].z() *= multiple;
       p_copy[i].w() *= multiple;
 
-      ConvexPolygon<32> polygon(plane, /*drop_dimension=*/2, p_copy);
+      ConvexPolygon<> polygon(plane, /*drop_dimension=*/2, p_copy);
 
       Vector2 vector(1, 0);
       std::pair<size_t, size_t> opp_edges =
@@ -597,7 +597,7 @@ TEST(ConvexPolygon, GetGreaterCycleIndex) {
     Point3(1, 0, 10),
   };
 
-  ConvexPolygon<32> polygon = MakeConvexPolygon(input);
+  ConvexPolygon<> polygon = MakeConvexPolygon(input);
 
   for (size_t a = 0; a < polygon.vertex_count(); ++a) {
     for (size_t b = 0; b < polygon.vertex_count(); ++b) {
@@ -621,7 +621,7 @@ TEST(ConvexPolygon, CounterClockwiseSquareGetExtremeIndexBisect) {
     Point3(0, 1, 10),
   };
 
-  ConvexPolygon<32> polygon = MakeConvexPolygon(p);
+  ConvexPolygon<> polygon = MakeConvexPolygon(p);
 
   Vector2 to_corner[] = {
     Vector2(-1, -1),
@@ -660,7 +660,7 @@ TEST(ConvexPolygon, CounterClockwiseSquareGetPosSideVertex) {
     Point3(0, 1, 10),
   };
 
-  ConvexPolygon<32> polygon = MakeConvexPolygon(p);
+  ConvexPolygon<> polygon = MakeConvexPolygon(p);
 
   HalfSpace2 only_corner[] = {
     HalfSpace2(p[1].DropDimension(2), p[3].DropDimension(2)),
@@ -721,7 +721,7 @@ TEST(ConvexPolygon, CounterClockwiseSquareGetNegSideVertex) {
     Point3(0, 1, 10),
   };
 
-  ConvexPolygon<32> polygon = MakeConvexPolygon(p);
+  ConvexPolygon<> polygon = MakeConvexPolygon(p);
 
   HalfSpace2 only_corner[] = {
     HalfSpace2(p[3].DropDimension(2), p[1].DropDimension(2)),
@@ -782,7 +782,7 @@ TEST(ConvexPolygon, ClockwiseSquareGetExtremeIndexBisect) {
     Point3(1, 0, 10),
   };
 
-  ConvexPolygon<32> polygon = MakeConvexPolygon(p);
+  ConvexPolygon<> polygon = MakeConvexPolygon(p);
 
   Vector2 to_corner[] = {
     Vector2(-1, -1),
@@ -821,7 +821,7 @@ TEST(ConvexPolygon, CounterClockwiseSquareGetExtremeIndexBisect3D) {
     Point3(0, 1, 0),
   };
 
-  ConvexPolygon<32> polygon = MakeConvexPolygon(p);
+  ConvexPolygon<> polygon = MakeConvexPolygon(p);
 
   Vector3 to_corner[] = {
     Vector3(-1, -1, -1),
@@ -847,7 +847,7 @@ TEST(ConvexPolygon, ClockwiseSquareGetExtremeIndexBisect3D) {
     Point3(1, 0, 0),
   };
 
-  ConvexPolygon<32> polygon = MakeConvexPolygon(p);
+  ConvexPolygon<> polygon = MakeConvexPolygon(p);
   EXPECT_LT(polygon.plane().normal().z(), 0);
 
   Vector3 to_corner[] = {
@@ -907,7 +907,7 @@ TEST(ConvexPolygon, GetExtremeIndexBisect3DIsNot2DProjection) {
     Point3(20, 45, 2),
     Point3(0, 40, 0),
   };
-  ConvexPolygon<32> polygon = MakeConvexPolygon(p);
+  ConvexPolygon<> polygon = MakeConvexPolygon(p);
 
   EXPECT_EQ(polygon.GetExtremeIndexBisect(p[2] - p[0]), 2);
 
@@ -936,7 +936,7 @@ TEST(ConvexPolygon, GetLastNegSideVertexOnPlane) {
     /*p[9]=*/Point3(0, 1, 10),
   };
 
-  const ConvexPolygon<32> polygon = MakeConvexPolygon(p);
+  const ConvexPolygon<> polygon = MakeConvexPolygon(p);
   HalfSpace2 half_space(p[9].DropDimension(2), p[4].DropDimension(2));
 
   for (size_t neg_side_index = 0; neg_side_index < 4; neg_side_index++) {
@@ -986,7 +986,7 @@ TEST(ConvexPolygon, GetLastNegSideVertex) {
     /*p[9]=*/Point3(0, 1, 10),
   };
 
-  const ConvexPolygon<32> polygon = MakeConvexPolygon(p);
+  const ConvexPolygon<> polygon = MakeConvexPolygon(p);
   HalfSpace2 half_space(Point2(0, 2), Point2(1, 2));
 
   for (size_t neg_side_index = 9; neg_side_index <= 9 + 4; neg_side_index++) {
@@ -1027,8 +1027,8 @@ TEST(ConvexPolygon, ConvertVertexData) {
     Point3(1, 1, 10),
   };
 
-  ConvexPolygon<32> polygon_raw = MakeConvexPolygon(input);
-  MutableConvexPolygon<32, TestEdgeInfo> polygon(polygon_raw);
+  ConvexPolygon<> polygon_raw = MakeConvexPolygon(input);
+  MutableConvexPolygon<TestEdgeInfo> polygon(polygon_raw);
 
   EXPECT_EQ(polygon, polygon_raw);
   ASSERT_EQ(polygon.vertex_count(), 3);
@@ -1038,15 +1038,15 @@ TEST(ConvexPolygon, ConvertVertexData) {
   EXPECT_TRUE(polygon.edge(0).on_split);
 }
 
-using FindSplitRangesFunc = ConvexPolygonSplitRanges (ConvexPolygon<32>::*)(
+using FindSplitRangesFunc = ConvexPolygonSplitRanges (ConvexPolygon<>::*)(
     const HalfSpace2&, int) const;
 
 // Overload the << operator for FindSplitRangesFunc so that Google Test doesn't
 // pick very long test name.
 std::ostream& operator<<(std::ostream& out, FindSplitRangesFunc func) {
-  if (func == &ConvexPolygon<32>::FindSplitRangesBisect) {
+  if (func == &ConvexPolygon<>::FindSplitRangesBisect) {
     out << "Bisect";
-  } else if (func == &ConvexPolygon<32>::FindSplitRangesLinear) {
+  } else if (func == &ConvexPolygon<>::FindSplitRangesLinear) {
     out << "Linear";
   } else {
     out << "Unknown";
@@ -1075,7 +1075,7 @@ TEST_P(ConvexPolygonFindSplitRanges, OnPosSide) {
   };
 
   for (int i = 0; i < 2; ++i) {
-    MutableConvexPolygon<32> polygon(MakeConvexPolygon(input[i]));
+    MutableConvexPolygon<> polygon(MakeConvexPolygon(input[i]));
 
     // Test where the polygon is completely in the positive half-space.
     {
@@ -1136,7 +1136,7 @@ TEST_P(ConvexPolygonFindSplitRanges, AtExistingVertices) {
 
   PluckerLine line(p[0], p[2]);
 
-  ConvexPolygon<32> polygon(MakeConvexPolygon(p));
+  ConvexPolygon<> polygon(MakeConvexPolygon(p));
 
   // Run it in a loop a few times to get a sense of how fast the
   // function is from the overall test time.
@@ -1176,7 +1176,7 @@ TEST_P(ConvexPolygonFindSplitRanges, AtNewVertices) {
     /*n[1]=*/Point3(1, 1, 2),
   };
 
-  ConvexPolygon<32> polygon(MakeConvexPolygon(p));
+  ConvexPolygon<> polygon(MakeConvexPolygon(p));
 
   for (int drop_dimension = 0; drop_dimension < 3; ++drop_dimension) {
     PluckerLine line;
@@ -1234,8 +1234,8 @@ TEST_P(ConvexPolygonFindSplitRanges, AtNewVerticesXPlane) {
 }
 
 INSTANTIATE_TEST_SUITE_P(, ConvexPolygonFindSplitRanges,
-    testing::Values(&ConvexPolygon<32>::FindSplitRangesBisect,
-                    &ConvexPolygon<32>::FindSplitRangesLinear));
+    testing::Values(&ConvexPolygon<>::FindSplitRangesBisect,
+                    &ConvexPolygon<>::FindSplitRangesLinear));
 
 TEST(ConvexPolygon, SplitOnPlane) {
   Point3 input[] = {
@@ -1244,7 +1244,7 @@ TEST(ConvexPolygon, SplitOnPlane) {
     Point3(1, 1, 12),
   };
 
-  ConvexPolygon<32> polygon = MakeConvexPolygon(input);
+  ConvexPolygon<> polygon = MakeConvexPolygon(input);
   {
     auto info = polygon.GetSplitInfo(polygon.plane());
     EXPECT_FALSE(info.ShouldEmitNegativeChild());
@@ -1293,7 +1293,7 @@ void SplitHelper(const ConvexPolygon<>& polygon,
     EXPECT_FALSE(half_space.IsCoincident(pos_side.vertex(i)));
   }
 
-  for (const ConvexPolygon<32>* output : {&neg_side, &pos_side}) {
+  for (const ConvexPolygon<>* output : {&neg_side, &pos_side}) {
     for (size_t i = 0; i < output->vertex_count(); ++i) {
       PluckerLine expected_line(
           output->vertex(i), output->vertex((i + 1) % output->vertex_count()));
@@ -1440,8 +1440,8 @@ TEST(ConvexPolygon, SplitOnParallelPlane) {
   std::vector<Point3> cw_input(std::begin(ccw_input), std::end(ccw_input));
   std::reverse(cw_input.begin(), cw_input.end());
 
-  ConvexPolygon<32> ccw_polygon = MakeConvexPolygon(ccw_input);
-  ConvexPolygon<32> cw_polygon = MakeConvexPolygon(cw_input);
+  ConvexPolygon<> ccw_polygon = MakeConvexPolygon(ccw_input);
+  ConvexPolygon<> cw_polygon = MakeConvexPolygon(cw_input);
 
   HalfSpace3 above_up(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/11);
   EXPECT_TRUE(above_up.normal().IsSameDir(ccw_polygon.plane().normal()));
@@ -1508,7 +1508,7 @@ TEST(ConvexPolygon, SplitOnFractionalParallelPlane) {
     Point3(1, 1, 1),
   };
 
-  ConvexPolygon<32> triangle = MakeConvexPolygon(ccw_input);
+  ConvexPolygon<> triangle = MakeConvexPolygon(ccw_input);
 
   HalfSpace3 below_up(/*x=*/0, /*y=*/0, /*z=*/10, /*dist=*/9);
   {
@@ -1528,7 +1528,7 @@ TEST(ConvexPolygon, VerticesIterator) {
     Point3(1, 1, 12),
   };
 
-  ConvexPolygon<32> triangle = MakeConvexPolygon(input);
+  ConvexPolygon<> triangle = MakeConvexPolygon(input);
 
   EXPECT_EQ(&*triangle.vertices_begin(), &triangle.vertex(0));
   EXPECT_EQ(triangle.vertices_end() - triangle.vertices_begin(),

@@ -35,7 +35,6 @@ class EdgeLineConnector {
                                    EdgeTemplate
                      >::value,
                      "EdgeRep must inherit from ConnectedEdge.");
-  using NormalRep = typename PolygonRep::NormalRep;
 
   // Connects the adjacent edges in the range of ConnectedEdges.
   //
@@ -193,7 +192,7 @@ class EdgeLineConnector {
       sorted_dimension(sorted_dimension) { }
 
     Vector2 GetProjectedNormal(const EdgeRep& edge) const {
-      const NormalRep& polygon_normal = edge.polygon().normal();
+      const Vector3& polygon_normal = edge.polygon().normal();
       Vector2 result =
         polygon_normal.DropDimension(sorted_dimension);
       if (!edge.IsPositive(sorted_dimension)) {

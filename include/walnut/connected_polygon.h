@@ -246,8 +246,6 @@ class ConnectedPolygon : public ParentTemplate::template MakeParent<
   template <typename FinalPolygon, typename NewEdgeParent>
   using MakeParent = ConnectedPolygon<Parent, FinalPolygon, NewEdgeParent>;
 
-  using Parent::point3_bits;
-
   ConnectedPolygon() = default;
 
   template <typename OtherPolygon,

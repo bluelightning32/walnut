@@ -142,8 +142,7 @@ class BSPPolygonWrapper :
   static_assert(std::is_base_of<BSPEdgeInfoRep, EdgeParent>::value,
                 "The ConvexPolygon's EdgeParent must inherit from "
                 "BSPEdgeInfo.");
-  static_assert(std::is_base_of<ConvexPolygon<Parent::point3_bits, EdgeParent>,
-                                Parent>::value,
+  static_assert(std::is_base_of<ConvexPolygon<EdgeParent>, Parent>::value,
       "The OutputPolygonParentTemplate must inherit from ConvexPolygon.");
 
   BSPPolygonWrapper() = default;

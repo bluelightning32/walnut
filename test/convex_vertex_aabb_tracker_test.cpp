@@ -8,7 +8,7 @@
 namespace walnut {
 
 template<typename Container>
-MutableConvexPolygon<32> MakeUnsortedConvexPolygon(const Container& vertices) {
+MutableConvexPolygon<> MakeUnsortedConvexPolygon(const Container& vertices) {
   using Iterator = decltype(std::begin(vertices));
   using Point3Rep = typename std::iterator_traits<Iterator>::value_type;
   using Factory = ConvexPolygonFactory<Point3Rep>;
@@ -41,7 +41,7 @@ MutableConvexPolygon<32> MakeUnsortedConvexPolygon(const Container& vertices) {
 }
 
 template<typename Container>
-MutableConvexPolygon<32> MakeConvexPolygon(const Container& vertices) {
+MutableConvexPolygon<> MakeConvexPolygon(const Container& vertices) {
   auto result = MakeUnsortedConvexPolygon(vertices);
   result.SortVertices();
   return result;
@@ -124,7 +124,7 @@ TEST(ConvexVertexAABBTracker, SplitAtExistingVertices) {
     Point3(1, 1, 13),
   };
 
-  ConvexPolygon<32> square = MakeConvexPolygon(p);
+  ConvexPolygon<> square = MakeConvexPolygon(p);
 
   ConvexVertexAABBTracker<> tracker(square.vertices_begin(),
                                     square.vertices_end());
@@ -178,7 +178,7 @@ TEST(ConvexVertexAABBTracker, SplitBetweenVertices) {
     Point3(1, 1, 13),
   };
 
-  ConvexPolygon<32> square = MakeConvexPolygon(p);
+  ConvexPolygon<> square = MakeConvexPolygon(p);
 
   ConvexVertexAABBTracker<> tracker(square.vertices_begin(),
                                     square.vertices_end());

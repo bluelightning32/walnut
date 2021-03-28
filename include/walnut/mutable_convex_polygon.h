@@ -7,12 +7,10 @@ namespace walnut {
 
 // This derived class exposes some functions from `ConvexPolygon` to do minor
 // mutations.
-template <size_t point3_bits_template = 32,
-          typename EdgeParent = EdgeInfoRoot>
-class MutableConvexPolygon : public ConvexPolygon<point3_bits_template,
-                                                  EdgeParent> {
+template <typename EdgeParent = EdgeInfoRoot>
+class MutableConvexPolygon : public ConvexPolygon<EdgeParent> {
  public:
-  using Parent = ConvexPolygon<point3_bits_template, EdgeParent>;
+  using Parent = ConvexPolygon<EdgeParent>;
 
   using Parent::Parent;
 

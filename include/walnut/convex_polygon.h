@@ -27,8 +27,7 @@ namespace walnut {
 // instatiated directly and used as an immutable convex polygon, or a derived
 // class such as `MutableConvexPolygon` can be used which exposes the mutating
 // functions.
-template <size_t point3_bits_template = 32,
-          typename EdgeParentTemplate = EdgeInfoRoot>
+template <typename EdgeParentTemplate = EdgeInfoRoot>
 class ConvexPolygon {
  public:
   static_assert(std::is_base_of<EdgeInfoRoot, EdgeParentTemplate>::value,
@@ -36,7 +35,6 @@ class ConvexPolygon {
 
   using EdgeParent = EdgeParentTemplate;
   using EdgeRep = ConvexPolygonEdge<EdgeParent>;
-  using NormalRep = Vector3;
   using EdgeVector = std::vector<AssignableWrapper<EdgeRep>>;
   using ConstVertexIterator =
     ConvexPolygonVertexIterator<typename EdgeVector::const_iterator>;
@@ -44,18 +42,13 @@ class ConvexPolygon {
   // Subclasses can inherit from this. `NewEdgeParent` should be the subclass's
   // class's EdgeInfo type.
   template <typename FinalPolygon, typename NewEdgeParent>
-  using MakeParent = ConvexPolygon<point3_bits_template, NewEdgeParent>;
-
-  // The minimum number of bits to support for each component of the vertex3's
-  // that the polygon is built from.
-  static constexpr size_t point3_bits = point3_bits_template;
+  using MakeParent = ConvexPolygon<NewEdgeParent>;
 
   ConvexPolygon() : plane_(HalfSpace3::Zero()), drop_dimension_(-1) { }
 
   // `EdgeParent` must be constructible from `OtherEdgeParent`.
-  template <size_t other_point3_bits, typename OtherEdgeParent>
-  explicit ConvexPolygon(const ConvexPolygon<other_point3_bits,
-                                             OtherEdgeParent>& other) :
+  template <typename OtherEdgeParent>
+  explicit ConvexPolygon(const ConvexPolygon<OtherEdgeParent>& other) :
     plane_(other.plane()), drop_dimension_(other.drop_dimension()),
     edges_(other.edges().begin(), other.edges().end()) { }
 
@@ -148,7 +141,7 @@ class ConvexPolygon {
 
   const HalfSpace3& plane() const { return plane_; }
 
-  const NormalRep& normal() const { return plane().normal(); }
+  const Vector3& normal() const { return plane().normal(); }
 
   // When this dimension is projected to 0, 'dropped', the vertices will not
   // become collinear (assuming they were not already collinear).
@@ -175,9 +168,8 @@ class ConvexPolygon {
   //      different indices.
   //    - it's okay of the homogenous vertices have a different scale.
   // 3. The EdgeParent matches for each vertex.
-  template <size_t other_point3_bits, typename OtherEdgeParent>
-  bool operator==(const ConvexPolygon<other_point3_bits,
-                                      OtherEdgeParent>& other) const;
+  template <typename OtherEdgeParent>
+  bool operator==(const ConvexPolygon<OtherEdgeParent>& other) const;
 
   // Returns false if the other polygon is the same as this.
   //
@@ -189,9 +181,8 @@ class ConvexPolygon {
   //      different indices.
   //    - it's okay of the homogenous vertices have a different scale.
   // 3. The EdgeParent matches for each vertex.
-  template <size_t other_point3_bits, typename OtherEdgeParent>
-  bool operator!=(const ConvexPolygon<other_point3_bits,
-                                      OtherEdgeParent>& other) const {
+  template <typename OtherEdgeParent>
+  bool operator!=(const ConvexPolygon<OtherEdgeParent>& other) const {
     return !(*this == other);
   }
 
@@ -509,9 +500,8 @@ class ConvexPolygon {
   }
 
   // `EdgeParent` must be assignable from `OtherEdgeParent`.
-  template <size_t other_point3_bits, typename OtherEdgeParent>
-  ConvexPolygon& operator=(const ConvexPolygon<other_point3_bits,
-                                               OtherEdgeParent>& other) {
+  template <typename OtherEdgeParent>
+  ConvexPolygon& operator=(const ConvexPolygon<OtherEdgeParent>& other) {
     plane_ = other.plane();
     drop_dimension_ = other.drop_dimension();
     edges_.assign(other.edges().begin(), other.edges().end());
@@ -591,10 +581,10 @@ class ConvexPolygon {
   EdgeVector edges_;
 };
 
-template <size_t point3_bits, typename EdgeParent>
-template <size_t other_point3_bits, typename OtherEdgeParent>
-bool ConvexPolygon<point3_bits, EdgeParent>::operator==(
-    const ConvexPolygon<other_point3_bits, OtherEdgeParent>& other) const {
+template <typename EdgeParent>
+template <typename OtherEdgeParent>
+bool ConvexPolygon<EdgeParent>::operator==(
+    const ConvexPolygon<OtherEdgeParent>& other) const {
   if (plane_ != other.plane()) {
     return false;
   }
@@ -626,9 +616,9 @@ bool ConvexPolygon<point3_bits, EdgeParent>::operator==(
   return true;
 }
 
-template <size_t point3_bits, typename EdgeParent>
+template <typename EdgeParent>
 std::pair<size_t, size_t>
-ConvexPolygon<point3_bits, EdgeParent>::GetOppositeEdgeIndicesBisect(
+ConvexPolygon<EdgeParent>::GetOppositeEdgeIndicesBisect(
     const Vector2& v, int drop_dimension) const {
   BigIntWord initial_dir_sign =
     edge(0).line().d().DropDimension(drop_dimension).Dot(v).GetSign();
@@ -698,8 +688,8 @@ ConvexPolygon<point3_bits, EdgeParent>::GetOppositeEdgeIndicesBisect(
   }
 }
 
-template <size_t point3_bits, typename EdgeParent>
-size_t ConvexPolygon<point3_bits, EdgeParent>::GetExtremeIndexBisect(
+template <typename EdgeParent>
+size_t ConvexPolygon<EdgeParent>::GetExtremeIndexBisect(
     const Vector2& v, int drop_dimension) const {
   if (v.IsZero()) return -1;
 
@@ -728,9 +718,8 @@ size_t ConvexPolygon<point3_bits, EdgeParent>::GetExtremeIndexBisect(
   return end % vertex_count();
 }
 
-template <size_t point3_bits, typename EdgeParent>
-std::pair<int, size_t>
-ConvexPolygon<point3_bits, EdgeParent>::GetPosSideVertex(
+template <typename EdgeParent>
+std::pair<int, size_t> ConvexPolygon<EdgeParent>::GetPosSideVertex(
     const HalfSpace2& half_space, int drop_dimension,
     size_t same_dir_index, size_t opp_dir_index) const {
   // Current range being considered by the binary search. The range excludes
@@ -761,9 +750,8 @@ ConvexPolygon<point3_bits, EdgeParent>::GetPosSideVertex(
       half_space.Compare(vertex(end).DropDimension(drop_dimension)), end);
 }
 
-template <size_t point3_bits, typename EdgeParent>
-std::pair<int, size_t>
-ConvexPolygon<point3_bits, EdgeParent>::GetNegSideVertex(
+template <typename EdgeParent>
+std::pair<int, size_t> ConvexPolygon<EdgeParent>::GetNegSideVertex(
     const HalfSpace2& half_space, int drop_dimension,
     size_t same_dir_index, size_t opp_dir_index) const {
   const auto opp_result = GetPosSideVertex(-half_space, drop_dimension,
@@ -771,9 +759,8 @@ ConvexPolygon<point3_bits, EdgeParent>::GetNegSideVertex(
   return std::make_pair(-opp_result.first, opp_result.second);
 }
 
-template <size_t point3_bits, typename EdgeParent>
-std::pair<int, size_t>
-ConvexPolygon<point3_bits, EdgeParent>::GetLastNegSideVertex(
+template <typename EdgeParent>
+std::pair<int, size_t> ConvexPolygon<EdgeParent>::GetLastNegSideVertex(
     const HalfSpace2& half_space, int drop_dimension,
     size_t neg_side_index, int neg_side_type, size_t pos_side_index) const {
   // Current range being considered by the binary search. The range includes
@@ -802,9 +789,9 @@ ConvexPolygon<point3_bits, EdgeParent>::GetLastNegSideVertex(
   return std::make_pair(begin_type, begin % vertex_count());
 }
 
-template <size_t point3_bits, typename EdgeParent>
+template <typename EdgeParent>
 template <typename ParentRef, typename SplitInfoRef>
-void ConvexPolygon<point3_bits, EdgeParent>::FillInSplitChildren(
+void ConvexPolygon<EdgeParent>::FillInSplitChildren(
     ParentRef&& parent, SplitInfoRef&& split,
     ConvexPolygon& neg_child, ConvexPolygon& pos_child) {
   assert(split.ShouldEmitNegativeChild() && split.ShouldEmitPositiveChild());
@@ -878,8 +865,8 @@ void ConvexPolygon<point3_bits, EdgeParent>::FillInSplitChildren(
   }
 }
 
-template <size_t point3_bits, typename EdgeParent>
-ConvexPolygonSplitInfo ConvexPolygon<point3_bits, EdgeParent>::GetSplitInfo(
+template <typename EdgeParent>
+ConvexPolygonSplitInfo ConvexPolygon<EdgeParent>::GetSplitInfo(
     const HalfSpace3& half_space) const {
   int flip = normal().components()[drop_dimension()].GetAbsMult();
   PluckerLine line(HalfSpace3(half_space.normal() * flip,
@@ -975,9 +962,8 @@ ConvexPolygonSplitInfo ConvexPolygon<point3_bits, EdgeParent>::GetSplitInfo(
   return result;
 }
 
-template <size_t point3_bits, typename EdgeParent>
-ConvexPolygonSplitRanges
-ConvexPolygon<point3_bits, EdgeParent>::FindSplitRangesBisect(
+template <typename EdgeParent>
+ConvexPolygonSplitRanges ConvexPolygon<EdgeParent>::FindSplitRangesBisect(
     const HalfSpace2& half_space2,
     int drop_dimension) const {
   assert(!normal().components()[drop_dimension].IsZero());
@@ -1059,9 +1045,8 @@ ConvexPolygon<point3_bits, EdgeParent>::FindSplitRangesBisect(
   return indices;
 }
 
-template <size_t point3_bits, typename EdgeParent>
-ConvexPolygonSplitRanges
-ConvexPolygon<point3_bits, EdgeParent>::FindSplitRangesLinear(
+template <typename EdgeParent>
+ConvexPolygonSplitRanges ConvexPolygon<EdgeParent>::FindSplitRangesLinear(
     const HalfSpace2& half_space2,
     int drop_dimension) const {
   assert(!normal().components()[drop_dimension].IsZero());
@@ -1228,8 +1213,8 @@ ConvexPolygon<point3_bits, EdgeParent>::FindSplitRangesLinear(
   return result;
 }
 
-template <size_t point3_bits, typename EdgeParent>
-std::string ConvexPolygon<point3_bits, EdgeParent>::Approximate() const {
+template <typename EdgeParent>
+std::string ConvexPolygon<EdgeParent>::Approximate() const {
   std::ostringstream out;
   out << "[";
   bool first = true;
@@ -1242,8 +1227,8 @@ std::string ConvexPolygon<point3_bits, EdgeParent>::Approximate() const {
   return out.str();
 }
 
-template <size_t point3_bits, typename EdgeParent>
-std::string ConvexPolygon<point3_bits, EdgeParent>::ApproximateNoData() const {
+template <typename EdgeParent>
+std::string ConvexPolygon<EdgeParent>::ApproximateNoData() const {
   std::ostringstream out;
   out << "[";
   bool first = true;
@@ -1256,10 +1241,9 @@ std::string ConvexPolygon<point3_bits, EdgeParent>::ApproximateNoData() const {
   return out.str();
 }
 
-template <size_t point3_bits, typename EdgeParent>
-std::ostream& operator<<(
-    std::ostream& out,
-    const ConvexPolygon<point3_bits, EdgeParent>& polygon) {
+template <typename EdgeParent>
+std::ostream& operator<<(std::ostream& out,
+                         const ConvexPolygon<EdgeParent>& polygon) {
   out << "[";
   bool first = true;
   for (const auto& edge : polygon.edges()) {

@@ -110,7 +110,7 @@ class AABB {
 
   // Returns a ConvexPolygon for the intersection of this rectangular prism and
   // a plane (represented as a HalfSpace3).
-  template <typename ConvexPolygonRep = MutableConvexPolygon<num_bits>>
+  template <typename ConvexPolygonRep = MutableConvexPolygon<>>
   ConvexPolygonRep IntersectPlane(const HalfSpace3& plane) const;
 
   // Determines which sides of the plane the AABB is present on.
@@ -129,7 +129,7 @@ class AABB {
   int GetPlaneSide(const HalfSpace3& plane) const;
 
   // Returns all 6 sides of the prism.
-  std::vector<ConvexPolygon<num_bits>> GetWalls() const;
+  std::vector<ConvexPolygon<>> GetWalls() const;
 
   HomoPoint3 min_point() const {
     return HomoPoint3(min_point_num_, denom_);
@@ -250,7 +250,7 @@ ConvexPolygonRep AABB<num_bits, denom_bits>::IntersectPlane(
 }
 
 template <size_t num_bits, size_t denom_bits>
-std::vector<ConvexPolygon<AABB<num_bits, denom_bits>::num_bits>>
+std::vector<ConvexPolygon<>>
 AABB<num_bits, denom_bits>::GetWalls() const {
   HomoPoint3 p[] = {
     HomoPoint3(min_point_num_.x(), min_point_num_.y(), min_point_num_.z(),
@@ -289,7 +289,7 @@ AABB<num_bits, denom_bits>::GetWalls() const {
     {2, {4, 5, 6, 7}},
   };
 
-  std::vector<ConvexPolygon<num_bits>> result;
+  std::vector<ConvexPolygon<>> result;
   std::vector<HomoPoint3> vertices;
   vertices.reserve(4);
   for (int side = 0; side < 6; ++side) {

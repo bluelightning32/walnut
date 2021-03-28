@@ -58,8 +58,6 @@ class BSPTree {
     const BSPNodeRep* original_ = nullptr;
   };
 
-  static constexpr int point3_bits = OutputPolygonParent::point3_bits;
-
   // Add a new polygon to this node.
   //
   // For an interior node, the contents will be pushed to the children.
@@ -102,7 +100,7 @@ class BSPTree {
   //
   // In case the BSPNode border is unbounded, `bounding_box` provides an upper
   // bound for how far the ConvexPolygons will extend.
-  template<typename Iterator>
+  template<size_t point3_bits, typename Iterator>
   MappedBSPNode* GetNodeBorder(
       Iterator node_path_begin, Iterator node_path_end,
       const AABB<point3_bits>& bounding_box, MappedBSPNode& mapped_root) const;
@@ -122,7 +120,7 @@ class BSPTree {
 };
 
 template <typename ConvexPolygonTemplate>
-template <typename Iterator>
+template <size_t point3_bits, typename Iterator>
 typename BSPTree<ConvexPolygonTemplate>::MappedBSPNode*
 BSPTree<ConvexPolygonTemplate>::GetNodeBorder(
     Iterator node_path_begin, Iterator node_path_end,
