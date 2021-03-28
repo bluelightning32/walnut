@@ -57,9 +57,9 @@ TEST(PluckerLine, IsCoincidentHalfSpace3) {
   PluckerLine<> line(p1, p2);
 
   const Point3 p3(6, 8, 14);
-  HalfSpace3<> a(p1, p2, p3);
+  HalfSpace3 a(p1, p2, p3);
   const Point3 p4(7, 9, 15);
-  HalfSpace3<> b(p1, p3, p4);
+  HalfSpace3 b(p1, p3, p4);
 
   EXPECT_TRUE(line.IsCoincident(a));
   EXPECT_FALSE(line.IsCoincident(b));
@@ -116,8 +116,8 @@ TEST(PluckerLine, ConstructFromPlanes) {
   const Point3 p3(5, 7, 12);
   const Point3 p4(6, 7, 11);
 
-  HalfSpace3<> a(p1, p2, p3);
-  HalfSpace3<> b(p1, p2, p4);
+  HalfSpace3 a(p1, p2, p3);
+  HalfSpace3 b(p1, p2, p4);
   const PluckerLine<> line_from_planes(a, b);
 
   EXPECT_EQ(line_from_planes, line_from_points);
@@ -132,10 +132,10 @@ TEST(PluckerLine, ConstructFromPlanesOrientation) {
   const Point3 p3(5, 7, 12);
   const Point3 p4(6, 7, 11);
 
-  HalfSpace3<> a(p1, p2, p3);
-  HalfSpace3<> b(p1, p2, p4);
-  HalfSpace3<> neg_a(a);
-  HalfSpace3<> neg_b(b);
+  HalfSpace3 a(p1, p2, p3);
+  HalfSpace3 b(p1, p2, p4);
+  HalfSpace3 neg_a(a);
+  HalfSpace3 neg_b(b);
   neg_a.Negate();
   neg_b.Negate();
 
@@ -189,8 +189,8 @@ TEST(PluckerLine, FromPlanesDirection) {
   const Point3 p3(5, 7, 12);
   const Point3 p4(6, 7, 11);
 
-  HalfSpace3<> a(p1, p2, p3);
-  HalfSpace3<> b(p1, p2, p4);
+  HalfSpace3 a(p1, p2, p3);
+  HalfSpace3 b(p1, p2, p4);
   const PluckerLine<> line(a, b);
 
   EXPECT_GT((p2 - p1).Dot(line.d()), 0);
@@ -209,7 +209,7 @@ TEST(PluckerLine, IntersectPlane) {
   EXPECT_FALSE(line.IsCoincident(p3));
   EXPECT_FALSE(line.IsCoincident(p4));
 
-  HalfSpace3<> plane(p2, p3, p4);
+  HalfSpace3 plane(p2, p3, p4);
 
   auto intersect_point = line.Intersect(plane);
   EXPECT_EQ(intersect_point, HomoPoint3<>(p2));
@@ -228,13 +228,11 @@ void TestIntersectPlanes() {
     Point3{min_int, min_int, max_int},
   };
 
-  using HalfSpace3Builder = HalfSpace3FromPoint3Builder<point3_bits>;
-  using HalfSpace3Rep = typename HalfSpace3Builder::HalfSpace3Rep;
-  HalfSpace3Rep plane1(plane1_points[0], plane1_points[1], plane1_points[2]);
+  HalfSpace3 plane1(plane1_points[0], plane1_points[1], plane1_points[2]);
 
-  HalfSpace3Rep plane2(Vector3(0, 1, 0), max_int);
+  HalfSpace3 plane2(Vector3(0, 1, 0), max_int);
 
-  HalfSpace3Rep plane3(Vector3(0, 0, 1), max_int);
+  HalfSpace3 plane3(Vector3(0, 0, 1), max_int);
 
   using PluckerLineBuilder =
     PluckerLineFromPlanesFromPoint3sBuilder<point3_bits>;

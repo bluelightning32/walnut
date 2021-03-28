@@ -245,7 +245,6 @@ class ConnectedPolygon : public ParentTemplate::template MakeParent<
                                                  ConnectedEdgeRep>;
   using typename Parent::EdgeRep;
   using typename Parent::SplitInfoRep;
-  using typename Parent::HalfSpace3Rep;
 
   // Subclasses can inherit from this. `NewEdgeParent` should be the subclass's
   // EdgeInfo type.
@@ -274,7 +273,7 @@ class ConnectedPolygon : public ParentTemplate::template MakeParent<
   }
 
   template <size_t num_bits, size_t denom_bits>
-  ConnectedPolygon(const HalfSpace3Rep& plane, int drop_dimension,
+  ConnectedPolygon(const HalfSpace3& plane, int drop_dimension,
                    const std::vector<HomoPoint3<num_bits,
                                                 denom_bits>>& vertices) :
       Parent(plane, drop_dimension, vertices) {

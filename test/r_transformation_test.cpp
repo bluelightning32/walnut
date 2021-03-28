@@ -25,12 +25,12 @@ TEST(RXYCompareBivector, DiagonalPlanes) {
     HomoPoint3<>(0, 2, 6, 1),
   };
 
-  HalfSpace3<> h1(p[0], p[1], p[2]);
+  HalfSpace3 h1(p[0], p[1], p[2]);
   EXPECT_GT(h1.x(), 0);
   EXPECT_LT(h1.y(), 0);
   EXPECT_EQ(h1.z(), 0);
 
-  HalfSpace3<> h2(p[0], p[3], p[4]);
+  HalfSpace3 h2(p[0], p[3], p[4]);
   EXPECT_GT(h2.x(), 0);
   EXPECT_GT(h2.y(), 0);
   EXPECT_EQ(h2.z(), 0);
@@ -43,9 +43,9 @@ TEST(RXYCompareBivector, DiagonalPlanes) {
     p_transformed[i] = RTransform(p[i], HomoPoint3<>::DenomInt(10));
   }
 
-  HalfSpace3<> h1_transformed(p_transformed[0], p_transformed[1],
+  HalfSpace3 h1_transformed(p_transformed[0], p_transformed[1],
                               p_transformed[2]);
-  HalfSpace3<> h2_transformed(p_transformed[0], p_transformed[3],
+  HalfSpace3 h2_transformed(p_transformed[0], p_transformed[3],
                               p_transformed[4]);
 
   EXPECT_GT(h1_transformed.normal().DropDimension(2).Cross(
@@ -70,12 +70,12 @@ TEST(RXYCompareBivector, Y0Normal) {
     HomoPoint3<>(-1, 2, 6, 1),
   };
 
-  HalfSpace3<> h1(p[0], p[1], p[2]);
+  HalfSpace3 h1(p[0], p[1], p[2]);
   EXPECT_GT(h1.x(), 0);
   EXPECT_EQ(h1.y(), 0);
   EXPECT_GT(h1.z(), 0);
 
-  HalfSpace3<> h2(p[0], p[1], p[3]);
+  HalfSpace3 h2(p[0], p[1], p[3]);
   EXPECT_GT(h2.x(), 0);
   EXPECT_EQ(h2.y(), 0);
   EXPECT_GT(h2.z(), 0);
@@ -88,9 +88,9 @@ TEST(RXYCompareBivector, Y0Normal) {
     p_transformed[i] = RTransform(p[i], HomoPoint3<>::DenomInt(10));
   }
 
-  HalfSpace3<> h1_transformed(p_transformed[0], p_transformed[1],
+  HalfSpace3 h1_transformed(p_transformed[0], p_transformed[1],
                               p_transformed[2]);
-  HalfSpace3<> h2_transformed(p_transformed[0], p_transformed[1],
+  HalfSpace3 h2_transformed(p_transformed[0], p_transformed[1],
                               p_transformed[3]);
 
   EXPECT_LT(h1_transformed.normal().DropDimension(2).Cross(
@@ -120,12 +120,12 @@ TEST(RXYCompareBivector, X0Normal) {
     HomoPoint3<>(0, -2, 6, 1),
   };
 
-  HalfSpace3<> h1(p[0], p[1], p[2]);
+  HalfSpace3 h1(p[0], p[1], p[2]);
   EXPECT_EQ(h1.x(), 0);
   EXPECT_GT(h1.y(), 0);
   EXPECT_GT(h1.z(), 0);
 
-  HalfSpace3<> h2(p[0], p[1], p[3]);
+  HalfSpace3 h2(p[0], p[1], p[3]);
   EXPECT_EQ(h2.x(), 0);
   EXPECT_GT(h2.y(), 0);
   EXPECT_GT(h2.z(), 0);
@@ -138,9 +138,9 @@ TEST(RXYCompareBivector, X0Normal) {
     p_transformed[i] = RTransform(p[i], HomoPoint3<>::DenomInt(10));
   }
 
-  HalfSpace3<> h1_transformed(p_transformed[0], p_transformed[1],
+  HalfSpace3 h1_transformed(p_transformed[0], p_transformed[1],
                               p_transformed[2]);
-  HalfSpace3<> h2_transformed(p_transformed[0], p_transformed[1],
+  HalfSpace3 h2_transformed(p_transformed[0], p_transformed[1],
                               p_transformed[3]);
 
   EXPECT_GT(h1_transformed.normal().DropDimension(2).Cross(

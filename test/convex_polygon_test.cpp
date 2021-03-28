@@ -61,7 +61,7 @@ TEST(ConvexPolygon, TrianglePlane) {
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
   EXPECT_EQ(polygon.plane(),
-            HalfSpace3<>(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10));
+            HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10));
 
   EXPECT_FALSE(polygon.plane().normal().IsZero());
   EXPECT_GT(polygon.plane().normal().z(), 0);
@@ -81,7 +81,7 @@ TEST(ConvexPolygon, Triangle0DistPlane) {
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
   EXPECT_EQ(polygon.plane(),
-            HalfSpace3<>(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/0));
+            HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/0));
 
   EXPECT_EQ(polygon.drop_dimension(), 2);
 
@@ -99,7 +99,7 @@ TEST(ConvexPolygon, TriangleXZPlane) {
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
   EXPECT_EQ(polygon.plane(),
-            HalfSpace3<>(/*x=*/-1, /*y=*/0, /*z=*/1, /*dist=*/10));
+            HalfSpace3(/*x=*/-1, /*y=*/0, /*z=*/1, /*dist=*/10));
 
   for (const Point3& v : input) {
     EXPECT_TRUE(polygon.plane().IsCoincident(v));
@@ -115,7 +115,7 @@ TEST(ConvexPolygon, ClockwiseTrianglePlane) {
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
   EXPECT_EQ(polygon.plane(),
-            HalfSpace3<>(/*x=*/0, /*y=*/0, /*z=*/-1, /*dist=*/-10));
+            HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/-1, /*dist=*/-10));
 
   EXPECT_FALSE(polygon.plane().normal().IsZero());
   EXPECT_LT(polygon.plane().normal().z(), 0);
@@ -135,7 +135,7 @@ TEST(ConvexPolygon, ClockwiseTriangleXZPlane) {
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
   EXPECT_EQ(polygon.plane(),
-            HalfSpace3<>(/*x=*/1, /*y=*/0, /*z=*/-1, /*dist=*/-10));
+            HalfSpace3(/*x=*/1, /*y=*/0, /*z=*/-1, /*dist=*/-10));
 
   EXPECT_FALSE(polygon.plane().normal().IsZero());
   EXPECT_LT(polygon.plane().normal().z(), 0);
@@ -155,7 +155,7 @@ TEST(ConvexPolygon, ClockwiseSquareYZPlane) {
 
   ConvexPolygon<32> polygon = MakeConvexPolygon(input);
   EXPECT_EQ(polygon.plane(),
-            HalfSpace3<>(/*x=*/0, /*y=*/1, /*z=*/-10, /*dist=*/0));
+            HalfSpace3(/*x=*/0, /*y=*/1, /*z=*/-10, /*dist=*/0));
 
   EXPECT_FALSE(polygon.plane().normal().IsZero());
 
@@ -515,7 +515,7 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesLargeInts) {
     HomoPoint3<>(281623200000, 361828700000, -421395600000, -140465200000),
   };
 
-  HalfSpace3<> plane(0, 0, 10000, 30000);
+  HalfSpace3 plane(0, 0, 10000, 30000);
   {
     ConvexPolygon<32> polygon(plane, 2, p);
 
@@ -565,7 +565,7 @@ TEST(ConvexPolygon, GetOppositeEdgeIndicesDenom) {
     HomoPoint3<32>(100, 100, 0, 1),
   };
 
-  HalfSpace3<> plane(0, 0, 1, 0);
+  HalfSpace3 plane(0, 0, 1, 0);
 
   for (size_t i = 0; i < p.size(); ++i) {
     for (int multiple : {-1, 1000, -1000}) {
@@ -1216,7 +1216,7 @@ TEST_P(ConvexPolygonFindSplitRanges, AtNewVerticesXPlane) {
   };
 
   ConvexPolygon<> polygon = MakeConvexPolygon(p);
-  HalfSpace3<> half_space(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
+  HalfSpace3 half_space(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
   PluckerLine<> line(half_space, polygon.plane());
 
   ConvexPolygonSplitRanges indices =
@@ -1262,7 +1262,7 @@ TEST(ConvexPolygon, SplitOnPlane) {
 
 // Helper for a polygon that is expected to split into 2 pieces
 void SplitHelper(const ConvexPolygon<>& polygon,
-                 const HalfSpace3<>& half_space,
+                 const HalfSpace3& half_space,
                  ConvexPolygon<>& neg_side,
                  ConvexPolygon<>& pos_side) {
   auto info = polygon.GetSplitInfo(half_space);
@@ -1323,7 +1323,7 @@ TEST(ConvexPolygon, SplitAtExistingVertices) {
   Point3 pos_side_p[] = { p[0], p[2], p[3] };
 
   Point3 above(0, 0, 11);
-  HalfSpace3<> half_space(p[0], above, p[2]);
+  HalfSpace3 half_space(p[0], above, p[2]);
 
   MutableConvexPolygon<> polygon(MakeConvexPolygon(p));
   ConvexPolygon<> expected_neg_side(MakeConvexPolygon(neg_side_p));
@@ -1340,7 +1340,7 @@ TEST(ConvexPolygon, SplitAtExistingVertices) {
   EXPECT_EQ(pos_side, expected_pos_side);
 
   {
-    ConvexPolygon<>::HalfSpace3Rep polygon_plane =  polygon.plane();
+    HalfSpace3 polygon_plane =  polygon.plane();
     ConvexPolygonSplitInfo<> info = polygon.GetSplitInfo(-half_space);
     std::pair<ConvexPolygon<>, ConvexPolygon<>> children =
       std::move(polygon).CreateSplitChildren(std::move(info));
@@ -1368,7 +1368,7 @@ TEST(ConvexPolygon, SplitAtExistingVerticesCW) {
   Point3 pos_side_p[] = { p[0], p[1], p[2] };
 
   Point3 above(0, 0, 11);
-  HalfSpace3<> half_space(p[0], above, p[2]);
+  HalfSpace3 half_space(p[0], above, p[2]);
 
   ConvexPolygon<> polygon(MakeConvexPolygon(p));
   ConvexPolygon<> expected_neg_side(MakeConvexPolygon(neg_side_p));
@@ -1413,7 +1413,7 @@ TEST(ConvexPolygon, SplitAtNewVertices) {
     Point3(1, 1, 10), 
   };
 
-  HalfSpace3<> half_space(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
+  HalfSpace3 half_space(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
 
   ConvexPolygon<> polygon(MakeConvexPolygon(p));
   ConvexPolygon<> expected_neg_side(MakeConvexPolygon(neg_side_p));
@@ -1443,7 +1443,7 @@ TEST(ConvexPolygon, SplitOnParallelPlane) {
   ConvexPolygon<32> ccw_polygon = MakeConvexPolygon(ccw_input);
   ConvexPolygon<32> cw_polygon = MakeConvexPolygon(cw_input);
 
-  HalfSpace3<> above_up(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/11);
+  HalfSpace3 above_up(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/11);
   EXPECT_TRUE(above_up.normal().IsSameDir(ccw_polygon.plane().normal()));
   {
     auto info = ccw_polygon.GetSplitInfo(above_up);
@@ -1462,7 +1462,7 @@ TEST(ConvexPolygon, SplitOnParallelPlane) {
     EXPECT_EQ(info.neg_range().second, cw_polygon.vertex_count());
   }
 
-  HalfSpace3<> above_down(/*x=*/0, /*y=*/0, /*z=*/-1, /*dist=*/-11);
+  HalfSpace3 above_down(/*x=*/0, /*y=*/0, /*z=*/-1, /*dist=*/-11);
   EXPECT_TRUE(above_down.normal().IsSameDir(-above_up.normal()));
 
   {
@@ -1482,7 +1482,7 @@ TEST(ConvexPolygon, SplitOnParallelPlane) {
     EXPECT_EQ(info.pos_range().second, cw_polygon.vertex_count());
   }
 
-  HalfSpace3<> below_up(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/9);
+  HalfSpace3 below_up(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/9);
   {
     auto info = ccw_polygon.GetSplitInfo(below_up);
     EXPECT_FALSE(info.ShouldEmitNegativeChild());
@@ -1510,7 +1510,7 @@ TEST(ConvexPolygon, SplitOnFractionalParallelPlane) {
 
   ConvexPolygon<32> triangle = MakeConvexPolygon(ccw_input);
 
-  HalfSpace3<> below_up(/*x=*/0, /*y=*/0, /*z=*/10, /*dist=*/9);
+  HalfSpace3 below_up(/*x=*/0, /*y=*/0, /*z=*/10, /*dist=*/9);
   {
     auto info = triangle.GetSplitInfo(below_up);
     EXPECT_FALSE(info.ShouldEmitNegativeChild());

@@ -85,9 +85,7 @@ class PluckerLine {
   //
   // Both `a` and `b` must be valid (have non-zero normals), and they must be
   // non-equal, otherwise `IsValid` will return false on the constructed line.
-  template <size_t vector_bits, size_t dist_bits>
-  PluckerLine(const HalfSpace3<vector_bits, dist_bits>& a,
-              const HalfSpace3<vector_bits, dist_bits>& b) :
+  PluckerLine(const HalfSpace3& a, const HalfSpace3& b) :
     // d = a_xyz x b_xyz = (p^23, p^31, p^12)
     //
     // p^23 = | a.y  a.z |
@@ -136,8 +134,7 @@ class PluckerLine {
   }
 
   // Returns true if the line is on the plane.
-  template <size_t vector_bits, size_t dist_bits>
-  bool IsCoincident(const HalfSpace3<vector_bits, dist_bits>& p) const {
+  bool IsCoincident(const HalfSpace3& p) const {
     return d().Dot(p.normal()).IsZero();
   }
 
@@ -180,14 +177,11 @@ class PluckerLine {
   }
 
   // Calculate the intersection between this line and a plane.
-  template <size_t vector_bits, size_t dist_bits>
-  HomoPoint3<std::max(vector_bits + m_bits, d_bits + dist_bits) + 1,
-          vector_bits + d_bits + 1>
-  Intersect(const HalfSpace3<vector_bits, dist_bits>& p) const {
+  HomoPoint3<std::max(m_bits, d_bits) + 1, d_bits + 1>
+  Intersect(const HalfSpace3& p) const {
     auto vector = p.normal().Cross(m()) + d().Scale(p.d());
     auto w = p.normal().Dot(d());
-    using Result = HomoPoint3<std::max(vector_bits + m_bits, d_bits + dist_bits) + 1,
-          vector_bits + d_bits + 1>;
+    using Result = HomoPoint3<std::max(m_bits, d_bits) + 1, d_bits + 1>;
     return Result(vector, w);
   }
 
@@ -277,14 +271,12 @@ class PluckerLineFromPlanesFromPoint3sBuilder {
  public:
   static_assert(point3_bits_template >= 3,
       "The bit formulas are only correct for point3_bits_template >= 3");
-  using HalfSpace3Builder = HalfSpace3FromPoint3Builder<point3_bits_template>;
-  using HalfSpace3Rep = typename HalfSpace3Builder::HalfSpace3Rep;
   using PluckerLineRep = PluckerLine<(point3_bits_template - 1)*4 + 6,
                                      (point3_bits_template - 1)*5 + 6>;
   using DInt = BigIntImpl;
   using MInt = BigIntImpl;
 
-  static PluckerLineRep Build(const HalfSpace3Rep& p1, const HalfSpace3Rep& p2) {
+  static PluckerLineRep Build(const HalfSpace3& p1, const HalfSpace3& p2) {
     return PluckerLineRep(p1, p2);
   }
 };

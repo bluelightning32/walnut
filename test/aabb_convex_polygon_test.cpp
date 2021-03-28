@@ -25,8 +25,7 @@ TEST(AABBConvexPolygon, SquareBounds) {
     Point3(2, 1, 10),
     Point3(0, 1, 10),
   };
-  AABBConvexPolygon<>::HalfSpace3Rep plane(/*x=*/0, /*y=*/0, /*z=*/1,
-                                           /*dist=*/10);
+  HalfSpace3 plane(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10);
   AABBConvexPolygon<> polygon(plane, /*drop_dimension=*/2, p);
   EXPECT_TRUE(polygon.IsValidState());
   EXPECT_EQ(polygon.aabb(), AABB<>(/*min_x=*/0, /*min_y=*/0, /*min_z=*/10,
@@ -46,8 +45,7 @@ TEST(AABBConvexPolygon, CopyConstruct) {
     Point3(2, 1, 10),
     Point3(0, 1, 10),
   };
-  AABBConvexPolygon<>::HalfSpace3Rep plane(/*x=*/0, /*y=*/0, /*z=*/1,
-                                           /*dist=*/10);
+  HalfSpace3 plane(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10);
   AABBConvexPolygon<> polygon(plane, /*drop_dimension=*/2, p);
 
   AABBConvexPolygon<> polygon2(polygon);
@@ -67,8 +65,7 @@ TEST(AABBConvexPolygon, MoveConstruct) {
     Point3(2, 1, 10),
     Point3(0, 1, 10),
   };
-  AABBConvexPolygon<>::HalfSpace3Rep plane(/*x=*/0, /*y=*/0, /*z=*/1,
-                                           /*dist=*/10);
+  HalfSpace3 plane(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10);
   AABBConvexPolygon<> polygon(plane, /*drop_dimension=*/2, p);
 
   AABBConvexPolygon<> polygon2(polygon);
@@ -90,11 +87,10 @@ TEST(AABBConvexPolygon, SplitOnNegativeSide) {
     Point3(2, 1, 10),
     Point3(0, 1, 10),
   };
-  AABBConvexPolygon<>::HalfSpace3Rep plane(/*x=*/0, /*y=*/0, /*z=*/1,
-                                           /*dist=*/10);
+  HalfSpace3 plane(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10);
   AABBConvexPolygon<> polygon(plane, /*drop_dimension=*/2, p);
 
-  HalfSpace3<> split(/*x=*/-1, /*y=*/0, /*z=*/0, /*dist=*/1);
+  HalfSpace3 split(/*x=*/-1, /*y=*/0, /*z=*/0, /*dist=*/1);
   AABBConvexPolygon<>::SplitInfoRep split_info = polygon.GetSplitInfo(split);
   EXPECT_TRUE(split_info.IsValid(p.size()));
   EXPECT_TRUE(split_info.ShouldEmitNegativeChild());
@@ -113,11 +109,10 @@ TEST(AABBConvexPolygon, SplitOnPositiveSide) {
     Point3(2, 1, 10),
     Point3(0, 1, 10),
   };
-  AABBConvexPolygon<>::HalfSpace3Rep plane(/*x=*/0, /*y=*/0, /*z=*/1,
-                                           /*dist=*/10);
+  HalfSpace3 plane(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10);
   AABBConvexPolygon<> polygon(plane, /*drop_dimension=*/2, p);
 
-  HalfSpace3<> split(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/-1);
+  HalfSpace3 split(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/-1);
   AABBConvexPolygon<>::SplitInfoRep split_info = polygon.GetSplitInfo(split);
   EXPECT_TRUE(split_info.IsValid(p.size()));
   EXPECT_FALSE(split_info.ShouldEmitNegativeChild());
@@ -140,11 +135,10 @@ TEST(AABBConvexPolygon, SplitInMiddle) {
     Point3(2, 1, 10),
     Point3(0, 1, 10),
   };
-  AABBConvexPolygon<>::HalfSpace3Rep plane(/*x=*/0, /*y=*/0, /*z=*/1,
-                                           /*dist=*/10);
+  HalfSpace3 plane(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10);
   AABBConvexPolygon<> polygon(plane, /*drop_dimension=*/2, p);
 
-  HalfSpace3<> split(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
+  HalfSpace3 split(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
   AABBConvexPolygon<>::SplitInfoRep split_info = polygon.GetSplitInfo(split);
   EXPECT_TRUE(split_info.IsValid(p.size()));
   EXPECT_TRUE(split_info.ShouldEmitNegativeChild());

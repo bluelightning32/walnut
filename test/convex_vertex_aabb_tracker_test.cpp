@@ -133,7 +133,7 @@ TEST(ConvexVertexAABBTracker, SplitAtExistingVertices) {
   EXPECT_EQ(tracker.max_indices(), (std::array<size_t, 3>{2, 3, 3}));
 
   for (size_t i = 0; i < 4; ++i) {
-    HalfSpace3<> split(p[i], p[(i + 2) % square.vertex_count()],
+    HalfSpace3 split(p[i], p[(i + 2) % square.vertex_count()],
                        Point3(0, 0, 0));
 
     ConvexPolygon<>::SplitInfoRep split_info = square.GetSplitInfo(split);
@@ -195,7 +195,7 @@ TEST(ConvexVertexAABBTracker, SplitBetweenVertices) {
         p[(i + 2) % square.vertex_count()].vector_from_origin() +
         p[(i + 3) % square.vertex_count()].vector_from_origin(),
         /*w=*/BigInt<32>(2));
-    HalfSpace3<> split(split_start, split_end, HomoPoint3<>(0, 0, 0, 1));
+    HalfSpace3 split(split_start, split_end, HomoPoint3<>(0, 0, 0, 1));
 
     ConvexPolygon<>::SplitInfoRep split_info = square.GetSplitInfo(split);
     ASSERT_TRUE(split_info.ShouldEmitNegativeChild());

@@ -82,7 +82,7 @@ const Point3* cube_peripheral_points[6] = {
 };
 
 TEST(TitltedCube, NorthEastSide) {
-  HalfSpace3<> side(cube_top, cube_south_east, cube_north_east);
+  HalfSpace3 side(cube_top, cube_south_east, cube_north_east);
   EXPECT_TRUE(side.IsCoincident(cube_top));
   EXPECT_TRUE(side.IsCoincident(cube_south_east));
   EXPECT_TRUE(side.IsCoincident(cube_north_east));
@@ -90,7 +90,7 @@ TEST(TitltedCube, NorthEastSide) {
 }
 
 TEST(TitltedCube, NorthSide) {
-  HalfSpace3<> side(cube_bottom, cube_north_west, cube_north);
+  HalfSpace3 side(cube_bottom, cube_north_west, cube_north);
   EXPECT_TRUE(side.IsCoincident(cube_bottom));
   EXPECT_TRUE(side.IsCoincident(cube_north_west));
   EXPECT_TRUE(side.IsCoincident(cube_north));
@@ -98,7 +98,7 @@ TEST(TitltedCube, NorthSide) {
 }
 
 TEST(TitltedCube, NorthWestSide) {
-  HalfSpace3<> side(cube_top, cube_north, cube_north_west);
+  HalfSpace3 side(cube_top, cube_north, cube_north_west);
   EXPECT_TRUE(side.IsCoincident(cube_top));
   EXPECT_TRUE(side.IsCoincident(cube_north));
   EXPECT_TRUE(side.IsCoincident(cube_north_west));
@@ -106,7 +106,7 @@ TEST(TitltedCube, NorthWestSide) {
 }
 
 TEST(TitltedCube, SouthWestSide) {
-  HalfSpace3<> side(cube_bottom, cube_south, cube_south_west);
+  HalfSpace3 side(cube_bottom, cube_south, cube_south_west);
   EXPECT_TRUE(side.IsCoincident(cube_bottom));
   EXPECT_TRUE(side.IsCoincident(cube_south));
   EXPECT_TRUE(side.IsCoincident(cube_south_west));
@@ -114,7 +114,7 @@ TEST(TitltedCube, SouthWestSide) {
 }
 
 TEST(TitltedCube, SouthSide) {
-  HalfSpace3<> side(cube_top, cube_south_west, cube_south);
+  HalfSpace3 side(cube_top, cube_south_west, cube_south);
   EXPECT_TRUE(side.IsCoincident(cube_top));
   EXPECT_TRUE(side.IsCoincident(cube_south_west));
   EXPECT_TRUE(side.IsCoincident(cube_south));
@@ -122,7 +122,7 @@ TEST(TitltedCube, SouthSide) {
 }
 
 TEST(TitltedCube, SouthEastSide) {
-  HalfSpace3<> side(cube_bottom, cube_north_east, cube_south_east);
+  HalfSpace3 side(cube_bottom, cube_north_east, cube_south_east);
   EXPECT_TRUE(side.IsCoincident(cube_bottom));
   EXPECT_TRUE(side.IsCoincident(cube_north_east));
   EXPECT_TRUE(side.IsCoincident(cube_south_east));
@@ -147,7 +147,7 @@ class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
   BSPNode<>* SplitToCube() {
     EXPECT_TRUE(tree_.root.IsLeaf());
 
-    std::vector<BSPNode<>::HalfSpace3Rep> split_planes;
+    std::vector<HalfSpace3> split_planes;
     for (int i = 0; i < 6; i += 2) {
       const Point3* this_point = cube_peripheral_points[i];
       const Point3* next_point = cube_peripheral_points[(i + 2)%6];
@@ -170,7 +170,7 @@ class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
     // 4. south-west facet
     // 5. south-east facet
     // 6. north facet
-    for (BSPNode<>::HalfSpace3Rep& split_plane : split_planes) {
+    for (HalfSpace3& split_plane : split_planes) {
       pos->Split(split_plane);
       pos = pos->negative_child();
     }
@@ -184,7 +184,7 @@ class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
   // compensate. So the output parameter `neg_side_of_split` still reflects the
   // negative side of the input `split`, even though it may be the positive
   // child of the actual split plane.
-  void Split(BSPNode<>* parent, HalfSpace3<> split,
+  void Split(BSPNode<>* parent, HalfSpace3 split,
              BSPNode<>*& neg_side_of_split, BSPNode<>*& pos_side_of_split) {
     EXPECT_TRUE(parent->IsLeaf());
 
@@ -240,7 +240,7 @@ class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
                                         double(edge_vector.z()) * edge_dist);
     BSPNode<>* return_child;
     BSPNode<>* other_child;
-    HalfSpace3<> split(normal, BigIntImpl(long(dist)));
+    HalfSpace3 split(normal, BigIntImpl(long(dist)));
     Split(parent, split, return_child, other_child);
     for (BSPPolygonId id = 0; id < tree_.next_id(); ++id) {
       EXPECT_EQ(other_child->GetPWNForId(id), parent->GetPWNForId(id))
@@ -351,11 +351,11 @@ TEST_P(BSPTreePWN, SimpleCrossing) {
 
   // To make this test case simpler, only split the tree with the top left and
   // top right sides of the cube.
-  std::vector<BSPNode<>::HalfSpace3Rep> split_planes;
+  std::vector<HalfSpace3> split_planes;
   split_planes.emplace_back(cube_top, cube_north, cube_north_west);
   split_planes.emplace_back(cube_north_east, cube_north, cube_top);
   BSPNode<>* inside = &tree_.root;
-  for (BSPNode<>::HalfSpace3Rep& split_plane : split_planes) {
+  for (HalfSpace3& split_plane : split_planes) {
     inside->Split(split_plane);
     inside = inside->negative_child();
   }
@@ -510,7 +510,7 @@ TEST_P(BSPTreePWN, SkipEdgesAlongIPath) {
   walnut::BSPTree<> slice_top_tree;
   const Point3 cube_north_west_down(cube_north_west.x(), cube_north_west.y(),
       BigIntImpl(cube_north_west.z() - 1));
-  walnut::HalfSpace3<> slice_top_plane(cube_top, cube_north,
+  walnut::HalfSpace3 slice_top_plane(cube_top, cube_north,
                                        cube_north_west_down);
   slice_top_tree.root.Split(slice_top_plane);
   // Use the negative half of slice_top_plane.
@@ -685,11 +685,11 @@ TEST_P(BSPTreePWN, SplitTwice) {
 
   // To make this test case simpler, only split the tree with the top left and
   // top right sides of the cube.
-  std::vector<BSPNode<>::HalfSpace3Rep> split_planes;
+  std::vector<HalfSpace3> split_planes;
   split_planes.emplace_back(cube_top, cube_north, cube_north_west);
   split_planes.emplace_back(cube_north_east, cube_north, cube_top);
   BSPNode<>* inside = &tree_.root;
-  for (BSPNode<>::HalfSpace3Rep& split_plane : split_planes) {
+  for (HalfSpace3& split_plane : split_planes) {
     inside->Split(split_plane);
     inside = inside->negative_child();
   }
@@ -848,7 +848,7 @@ TEST_P(BSPTreePWN, SplitAgainThroughMvalue) {
   EXPECT_EQ(inside_cube->GetPWNForId(r4_id), 0);
 
   const Vector3 down_one(0, 0, 1);
-  HalfSpace3<> fourth_split_plane(cube_top,
+  HalfSpace3 fourth_split_plane(cube_top,
                                   Point3(cube_south_west - down_one),
                                   Point3(cube_south_east - down_one));
   BSPNode<>* neg_fourth_split;

@@ -27,7 +27,7 @@ ConvexPolygon<> MakeRectangle() {
     Point3(2, 1, 10),
     Point3(0, 1, 10),
   };
-  ConvexPolygon<>::HalfSpace3Rep plane(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10);
+  HalfSpace3 plane(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10);
   return ConvexPolygon<>(plane, /*drop_dimension=*/2, p);
 }
 
@@ -80,7 +80,7 @@ TEST(ConnectedPolygon, SplitInMiddle) {
 
   ConnectedPolygon<> polygon(MakeRectangle());
 
-  HalfSpace3<> split(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
+  HalfSpace3 split(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
   ConnectedPolygon<>::SplitInfoRep split_info = polygon.GetSplitInfo(split);
   EXPECT_TRUE(split_info.IsValid(polygon.vertex_count()));
   EXPECT_TRUE(split_info.ShouldEmitNegativeChild());

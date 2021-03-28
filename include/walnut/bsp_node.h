@@ -240,8 +240,6 @@ class BSPNode {
   using BSPEdgeInfoRep = typename PolygonRep::BSPEdgeInfoRep;
   using BSPNodeSideRep = typename BSPEdgeInfoRep::BSPNodeSideRep;
 
-  using HalfSpace3Rep = typename HalfSpace3FromPoint3Builder<
-    OutputPolygonParent::point3_bits>::HalfSpace3Rep;
   friend class BSPTree<OutputPolygonParent>;
 
   static constexpr int point3_bits = OutputPolygonParent::point3_bits;
@@ -258,7 +256,7 @@ class BSPNode {
   // that ancestor nodes were split on.
   //
   // The contents of this node will be pushed into the new child nodes.
-  void Split(const HalfSpace3Rep& half_space) {
+  void Split(const HalfSpace3& half_space) {
     assert(half_space.IsValid());
     MakeInterior(half_space, new BSPNode(pwn_by_id_), new BSPNode(pwn_by_id_));
     PushContentsToChildren();
@@ -268,7 +266,7 @@ class BSPNode {
     return !split().IsValid();
   }
 
-  const HalfSpace3Rep& split() const {
+  const HalfSpace3& split() const {
     return split_;
   }
 
@@ -307,7 +305,7 @@ class BSPNode {
   // This may only be called on an interior node.
   void PushContentsToChildren();
 
-  void MakeInterior(const HalfSpace3Rep& half_space,
+  void MakeInterior(const HalfSpace3& half_space,
                     BSPNode* negative_child,
                     BSPNode* positive_child) {
     assert(IsLeaf());
@@ -319,7 +317,7 @@ class BSPNode {
   void Reset() {
     contents_.clear();
     border_contents_.clear();
-    split_ = HalfSpace3Rep();
+    split_ = HalfSpace3();
     negative_child_.reset();
     positive_child_.reset();
     pwn_by_id_.clear();
@@ -383,7 +381,7 @@ class BSPNode {
   // The plane that splits an interior node.
   //
   // For a leaf node, !split_.IsValid().
-  HalfSpace3Rep split_;
+  HalfSpace3 split_;
 
   std::unique_ptr<BSPNode> negative_child_;
   std::unique_ptr<BSPNode> positive_child_;

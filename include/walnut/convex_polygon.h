@@ -38,8 +38,6 @@ class ConvexPolygon {
   using EdgeRep = ConvexPolygonEdge<point3_bits_template, EdgeParent>;
   using SplitInfoRep = ConvexPolygonSplitInfo<point3_bits_template>;
   using HomoPoint3Rep = typename EdgeRep::HomoPoint3Rep;
-  using HalfSpace3Rep =
-    typename HalfSpace3FromPoint3Builder<point3_bits_template>::HalfSpace3Rep;
   using NormalRep = Vector3;
   using LineRep = typename EdgeRep::LineRep;
   using EdgeVector = std::vector<AssignableWrapper<EdgeRep>>;
@@ -57,13 +55,13 @@ class ConvexPolygon {
 
   // The minimum number of bits to support for each of the x, y, and z
   // components for each vertex, after an arbitrary number of splits from
-  // planes of the type HalfSpace3Rep.
+  // planes of the type HalfSpace3.
   static constexpr int homo_point3_num_bits = HomoPoint3Rep::num_bits;
   // The minimum number of bits to support the w component for each vertex,
-  // after an arbitrary number of splits from planes of the type HalfSpace3Rep.
+  // after an arbitrary number of splits from planes of the type HalfSpace3.
   static constexpr int homo_point3_denom_bits = HomoPoint3Rep::denom_bits;
 
-  ConvexPolygon() : plane_(HalfSpace3Rep::Zero()), drop_dimension_(-1) { }
+  ConvexPolygon() : plane_(HalfSpace3::Zero()), drop_dimension_(-1) { }
 
   // `EdgeParent` must be constructible from `OtherEdgeParent`.
   template <size_t other_point3_bits, typename OtherEdgeParent>
@@ -72,14 +70,14 @@ class ConvexPolygon {
     plane_(other.plane()), drop_dimension_(other.drop_dimension()),
     edges_(other.edges().begin(), other.edges().end()) { }
 
-  ConvexPolygon(const HalfSpace3Rep& plane, int drop_dimension,
+  ConvexPolygon(const HalfSpace3& plane, int drop_dimension,
                 EdgeVector edges) :
       plane_(plane), drop_dimension_(drop_dimension),
       edges_(std::move(edges)) {
     assert(IsValidState());
   }
 
-  ConvexPolygon(const HalfSpace3Rep& plane, int drop_dimension,
+  ConvexPolygon(const HalfSpace3& plane, int drop_dimension,
                 const std::vector<Point3>& vertices) :
       plane_(plane), drop_dimension_(drop_dimension) {
     edges_.reserve(vertices.size());
@@ -92,7 +90,7 @@ class ConvexPolygon {
   }
 
   template <size_t num_bits, size_t denom_bits>
-  ConvexPolygon(const HalfSpace3Rep& plane, int drop_dimension,
+  ConvexPolygon(const HalfSpace3& plane, int drop_dimension,
                 const std::vector<HomoPoint3<num_bits,
                                              denom_bits>>& vertices) :
       plane_(plane), drop_dimension_(drop_dimension) {
@@ -162,7 +160,7 @@ class ConvexPolygon {
     return ConstVertexIterator(edges_.end());
   }
 
-  const HalfSpace3Rep& plane() const { return plane_; }
+  const HalfSpace3& plane() const { return plane_; }
 
   const NormalRep& normal() const { return plane().normal(); }
 
@@ -455,9 +453,7 @@ class ConvexPolygon {
   // Otherwise if `ShouldEmitNegativeChild` and `ShouldEmitPositiveChild` both
   // return true, the info should be passed to `CreateSplitChildren` to create
   // both children.
-  template <size_t vector_bits, size_t dist_bits>
-  SplitInfoRep GetSplitInfo(
-      const HalfSpace3<vector_bits, dist_bits>& half_space) const;
+  SplitInfoRep GetSplitInfo(const HalfSpace3& half_space) const;
 
   // Returns the vertex indices for the positive and negative sides of a
   // ConvexPolygon split by a 2D half-space.
@@ -600,7 +596,7 @@ class ConvexPolygon {
 
  private:
   // The plane that all of the vertices are in.
-  HalfSpace3Rep plane_;
+  HalfSpace3 plane_;
   // When this dimension is projected to 0, 'dropped', the vertices will not
   // become collinear (assuming they were not already collinear).
   int drop_dimension_;
@@ -898,18 +894,17 @@ void ConvexPolygon<point3_bits, EdgeParent>::FillInSplitChildren(
 }
 
 template <size_t point3_bits, typename EdgeParent>
-template <size_t vector_bits, size_t dist_bits>
 typename ConvexPolygon<point3_bits, EdgeParent>::SplitInfoRep
 ConvexPolygon<point3_bits, EdgeParent>::GetSplitInfo(
-    const HalfSpace3<vector_bits, dist_bits>& half_space) const {
+    const HalfSpace3& half_space) const {
   using PluckerLineBuilder =
     PluckerLineFromPlanesFromPoint3sBuilder<point3_bits>;
   using PluckerLineRep = typename PluckerLineBuilder::PluckerLineRep;
 
   int flip = normal().components()[drop_dimension()].GetAbsMult();
-  PluckerLineRep line = PluckerLineBuilder::Build(
-      HalfSpace3<vector_bits, dist_bits>(half_space.normal() * flip,
-                                         half_space.d() * flip), plane_);
+  PluckerLineRep line = PluckerLineBuilder::Build(HalfSpace3(half_space.normal() * flip,
+                                                             half_space.d() * flip),
+                                                  plane_);
 
   if (!line.IsValid()) {
     // half_space is parallel to plane_.

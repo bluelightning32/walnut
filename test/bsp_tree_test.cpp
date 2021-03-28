@@ -120,8 +120,8 @@ TEST(BSPTree, SplitTo1Child) {
   for (const Point3& p : triangle) {
     above_points.emplace_back(p.x(), p.y(), BigInt<32>(p.z() + BigInt<32>(1)));
   }
-  HalfSpace3<> above_up(above_points[0], above_points[1], above_points[2]);
-  HalfSpace3<> above_down = -above_up;
+  HalfSpace3 above_up(above_points[0], above_points[1], above_points[2]);
+  HalfSpace3 above_down = -above_up;
 
   {
     BSPTree<> tree;
@@ -219,7 +219,7 @@ TEST(BSPTree, SplitTo2Children) {
   };
 
   ConvexPolygon<> polygon = MakeConvexPolygon(p);
-  HalfSpace3<> half_space(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
+  HalfSpace3 half_space(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
 
   Point3 expected_neg[4] = {
     Point3(0, 0, 10),
@@ -313,8 +313,8 @@ TEST(BSPTree, SplitTwiceVertexData) {
   Point3 q4(1, 0, 10);
 
   ConvexPolygon<> polygon = MakeConvexPolygon(p);
-  HalfSpace3<> split1(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
-  HalfSpace3<> split2(/*x=*/0, /*y=*/1, /*z=*/0, /*dist=*/1);
+  HalfSpace3 split1(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
+  HalfSpace3 split2(/*x=*/0, /*y=*/1, /*z=*/0, /*dist=*/1);
 
   BSPTree<> tree;
   auto leaf_added = [&](BSPNode<>& leaf) {};
@@ -429,8 +429,8 @@ TEST(BSPTree, SplitVertThenDiagVertexData) {
   Point3 q2(1, 0, 10);
 
   ConvexPolygon<> polygon = MakeConvexPolygon(p);
-  HalfSpace3<> split1(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
-  HalfSpace3<> split2(/*x=*/1, /*y=*/-1, /*z=*/0,
+  HalfSpace3 split1(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
+  HalfSpace3 split2(/*x=*/1, /*y=*/-1, /*z=*/0,
                       /*dist=*/q1.x().ToInt() - q2.y().ToInt());
 
   BSPTree<> tree;
@@ -512,7 +512,7 @@ TEST(BSPTree, SplitBorderTo2Children) {
   };
 
   ConvexPolygon<> polygon = MakeConvexPolygon(p);
-  HalfSpace3<> half_space(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
+  HalfSpace3 half_space(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
 
   Point3 expected_neg[4] = {
     Point3(0, 0, 10),
@@ -659,7 +659,7 @@ TEST(BSPTree, GetNodeBorder1Split) {
 
   for (bool pos_side : {false, true}) {
     BSPTree<> tree;
-    HalfSpace3<> split(p[1], p[3], p[4]);
+    HalfSpace3 split(p[1], p[3], p[4]);
     tree.root.Split(pos_side ? -split : split);
     std::vector<bool> node_path = {pos_side};
     AABB<> bounding_box(Point3(-1, -1, -1), Point3(2, 2, 2));

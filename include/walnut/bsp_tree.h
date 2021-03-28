@@ -22,7 +22,6 @@ class BSPTree {
   class MappedBSPNode : public BSPNodeRep {
    public:
     using Parent = BSPNodeRep;
-    using typename Parent::HalfSpace3Rep;
 
     MappedBSPNode() = default;
 
@@ -35,7 +34,7 @@ class BSPTree {
 
     // Note that this overload hides the `Parent::Split` method that only takes
     // 1 argument.
-    void Split(const HalfSpace3Rep& half_space,
+    void Split(const HalfSpace3& half_space,
                const BSPNodeRep* original_neg_child,
                const BSPNodeRep* original_pos_child) {
       Parent::MakeInterior(half_space, new MappedBSPNode(original_neg_child),

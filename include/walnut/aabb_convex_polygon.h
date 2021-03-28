@@ -21,7 +21,6 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
                 "AABBConvexPolygon should not wrap another "
                 "AABBConvexPolygon.");
   using Parent = ParentTemplate;
-  using typename Parent::HalfSpace3Rep;
   using typename Parent::EdgeRep;
   using typename Parent::SplitInfoRep;
   using AABBRep =
@@ -52,18 +51,18 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
       Parent(other),
       aabb_tracker_(Parent::vertices_begin(), Parent::vertices_end()) { }
 
-  AABBConvexPolygon(const HalfSpace3Rep& plane, int drop_dimension,
+  AABBConvexPolygon(const HalfSpace3& plane, int drop_dimension,
                     std::vector<EdgeRep> edges) :
       Parent(plane, drop_dimension, std::move(edges)),
       aabb_tracker_(Parent::vertices_begin(), Parent::vertices_end()) { }
 
-  AABBConvexPolygon(const HalfSpace3Rep& plane, int drop_dimension,
+  AABBConvexPolygon(const HalfSpace3& plane, int drop_dimension,
                     const std::vector<Point3>& vertices) :
       Parent(plane, drop_dimension, vertices),
       aabb_tracker_(Parent::vertices_begin(), Parent::vertices_end()) { }
 
   template <size_t num_bits, size_t denom_bits>
-  AABBConvexPolygon(const HalfSpace3Rep& plane, int drop_dimension,
+  AABBConvexPolygon(const HalfSpace3& plane, int drop_dimension,
                     const std::vector<HomoPoint3<num_bits,
                                                  denom_bits>>& vertices) :
       Parent(plane, drop_dimension, vertices),
@@ -104,9 +103,7 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
   }
 
   // Overrides the non-virtual function from ConvexPolygon.
-  template <size_t vector_bits, size_t dist_bits>
-  SplitInfoRep GetSplitInfo(
-      const HalfSpace3<vector_bits, dist_bits>& half_space) const {
+  SplitInfoRep GetSplitInfo(const HalfSpace3& half_space) const {
     switch (aabb().GetPlaneSide(half_space)) {
       case -1:
         // All on the negative side.

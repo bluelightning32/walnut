@@ -10,15 +10,59 @@ namespace walnut {
 // Sometimes this class is used just to represent a plane in R^3. Other times
 // it is used to represent the positive half-space created by dividing R^3 in
 // half at that plane.
-template <size_t vector_bits_template = 31*2 + 3,
-          size_t dist_bits_template = 31*3 + 3>
 class HalfSpace3 {
  public:
-  // The minimum number of bits to support for each of the x, y, and z
-  // components.
-  static constexpr size_t vector_bits = vector_bits_template;
-  // The minimum number of bits to support for the d component.
-  static constexpr size_t dist_bits = dist_bits_template;
+  // Leaves the components in an undefined state
+  HalfSpace3() = default;
+
+  // Constructs a half-space a the normal and distance from the origin along
+  // that normal.
+  //
+  // normal * dist a vector that goes from the origin to a point on the plane.
+  // From that point, everything in the normal direction is considered in the
+  // positive half-space and everything opposite to the normal direction is
+  // considered in the negative half-space.
+  HalfSpace3(const Vector3& normal, const BigIntImpl& dist) :
+    normal_(normal), dist_(dist) { }
+
+  // Constructs a half-space from a normal in component form and distance from
+  // the origin along that normal.
+  //
+  // normal * dist a vector that goes from the origin to a point on the plane.
+  // From that point, everything in the normal direction is considered in the
+  // positive half-space and everything opposite to the normal direction is
+  // considered in the negative half-space.
+  HalfSpace3(const BigIntImpl& x, const BigIntImpl& y, const BigIntImpl& z,
+             const BigIntImpl& dist) :
+    normal_(x, y, z), dist_(dist) { }
+
+  HalfSpace3(int x, int y, int z, int dist) : normal_(x, y, z), dist_(dist) { }
+
+  HalfSpace3(const HalfSpace3& other) :
+    HalfSpace3(other.normal(), other.d()) { }
+
+  HalfSpace3(const Point3& p1, const Point3& p2, const Point3& p3) :
+    // Use p2 as the center point, because if p1, p2, and p3 are from a polygon
+    // with more than 3 points, (p3 - p2) and (p1 - p2) are likely to be
+    // shorter than (p2 - p1) and (p3 - p1).
+    normal_((p3 - p2).Cross(p1 - p2)),
+    dist_(normal_.Dot(p2.vector_from_origin())) { }
+
+  template <size_t num_bits, size_t denom_bits>
+  HalfSpace3(const HomoPoint3<num_bits, denom_bits>& p1,
+             const HomoPoint3<num_bits, denom_bits>& p2,
+             const HomoPoint3<num_bits, denom_bits>& p3) {
+    // Use p2 as the center point, because if p1, p2, and p3 are from a polygon
+    // with more than 3 points, (p3 - p2) and (p1 - p2) are likely to be
+    // shorter than (p2 - p1) and (p3 - p1).
+    Vector3 unscaled_normal((p3.vector_from_origin()*p2.w() -
+                             p2.vector_from_origin()*p3.w())
+                            .Cross((p1.vector_from_origin()*p2.w() -
+                                    p2.vector_from_origin()*p1.w()))
+                            .Scale(p1.w().GetAbsMult(p3.w())));
+    dist_ = unscaled_normal.Dot(p2.vector_from_origin()) * p2.w().GetAbsMult();
+    normal_ = unscaled_normal.Scale(p2.w().abs());
+  }
 
   const BigIntImpl& x() const {
     return normal_.x();
@@ -46,59 +90,6 @@ class HalfSpace3 {
 
   bool IsValid() const {
     return !normal_.IsZero();
-  }
-
-  // Leaves the components in an undefined state
-  HalfSpace3() = default;
-
-  // Constructs a half-space a the normal and distance from the origin along
-  // that normal.
-  //
-  // normal * dist a vector that goes from the origin to a point on the plane.
-  // From that point, everything in the normal direction is considered in the
-  // positive half-space and everything opposite to the normal direction is
-  // considered in the negative half-space.
-  HalfSpace3(const Vector3& normal, const BigIntImpl& dist) :
-    normal_(normal), dist_(dist) { }
-
-  // Constructs a half-space from a normal in component form and distance from
-  // the origin along that normal.
-  //
-  // normal * dist a vector that goes from the origin to a point on the plane.
-  // From that point, everything in the normal direction is considered in the
-  // positive half-space and everything opposite to the normal direction is
-  // considered in the negative half-space.
-  HalfSpace3(const BigIntImpl& x, const BigIntImpl& y, const BigIntImpl& z,
-             const BigIntImpl& dist) :
-    normal_(x, y, z), dist_(dist) { }
-
-  HalfSpace3(int x, int y, int z, int dist) : normal_(x, y, z), dist_(dist) { }
-
-  template <size_t other_vector_bits, size_t other_dist_bits>
-  HalfSpace3(const HalfSpace3<other_vector_bits, other_dist_bits>& other) :
-    HalfSpace3(other.normal(), other.d()) { }
-
-  HalfSpace3(const Point3& p1, const Point3& p2, const Point3& p3) :
-    // Use p2 as the center point, because if p1, p2, and p3 are from a polygon
-    // with more than 3 points, (p3 - p2) and (p1 - p2) are likely to be
-    // shorter than (p2 - p1) and (p3 - p1).
-    normal_((p3 - p2).Cross(p1 - p2)),
-    dist_(normal_.Dot(p2.vector_from_origin())) { }
-
-  template <size_t num_bits, size_t denom_bits>
-  HalfSpace3(const HomoPoint3<num_bits, denom_bits>& p1,
-             const HomoPoint3<num_bits, denom_bits>& p2,
-             const HomoPoint3<num_bits, denom_bits>& p3) {
-    // Use p2 as the center point, because if p1, p2, and p3 are from a polygon
-    // with more than 3 points, (p3 - p2) and (p1 - p2) are likely to be
-    // shorter than (p2 - p1) and (p3 - p1).
-    Vector3 unscaled_normal((p3.vector_from_origin()*p2.w() -
-                             p2.vector_from_origin()*p3.w())
-                            .Cross((p1.vector_from_origin()*p2.w() -
-                                    p2.vector_from_origin()*p1.w()))
-                            .Scale(p1.w().GetAbsMult(p3.w())));
-    dist_ = unscaled_normal.Dot(p2.vector_from_origin()) * p2.w().GetAbsMult();
-    normal_ = unscaled_normal.Scale(p2.w().abs());
   }
 
   // Returns >0 if `v` is in the positive half-space, 0 if `v` is coincident
@@ -137,9 +128,7 @@ class HalfSpace3 {
   //
   // The return value is undefined if `p` is not parallel to this half-space,
   // or if the normal component with index `nonzero_dimension` is zero.
-  template <size_t other_vector_bits, size_t other_dist_bits>
-  int Compare(const HalfSpace3<other_vector_bits, other_dist_bits>& p,
-              int nonzero_dimension) const {
+  int Compare(const HalfSpace3& p, int nonzero_dimension) const {
     return (d() * p.normal().components()[nonzero_dimension]).Compare(
         p.d() * normal_.components()[nonzero_dimension]) *
       p.normal().components()[nonzero_dimension].GetAbsMult();
@@ -156,11 +145,9 @@ class HalfSpace3 {
   // Note that everything equals the zero plane.
   //
   // Two HalfSpace3s are not equal if they refer to different half-spaces.
-  template <size_t other_vector_bits, size_t other_dist_bits>
-  bool operator==(
-      const HalfSpace3<other_vector_bits, other_dist_bits>& other) const {
-    BigInt<std::max(vector_bits, dist_bits)> scale_other;
-    BigInt<std::max(other_vector_bits, other_dist_bits)> scale_mine;
+  bool operator==(const HalfSpace3& other) const {
+    BigIntImpl scale_other;
+    BigIntImpl scale_mine;
     if (d() != 0) {
       scale_other = d().abs();
       scale_mine = other.d().abs();
@@ -182,9 +169,7 @@ class HalfSpace3 {
   }
 
   // Note that everything equals the zero vector.
-  template <size_t other_vector_bits, size_t other_dist_bits>
-  bool operator!=(
-      const HalfSpace3<other_vector_bits, other_dist_bits>& other) const {
+  bool operator!=(const HalfSpace3& other) const {
     return !(*this == other);
   }
 
@@ -215,24 +200,7 @@ class HalfSpace3 {
   BigIntImpl dist_;
 };
 
-// This is a wrapper around the HalfSpace3 constructor that takes 3 Point3's.
-// The only reason to use this wrapper is that it figures out how many bits are
-// necessary in the worst case for the plane numerator and denominator, given
-// the number of bits in each Point3.
-template <size_t point3_bits_template = 32>
-class HalfSpace3FromPoint3Builder {
- public:
-  using HalfSpace3Rep = HalfSpace3<(point3_bits_template - 1)*2 + 3,
-                         (point3_bits_template - 1)*3 + 3>;
-
-  static HalfSpace3Rep Build(const Point3& p1, const Point3& p2,
-                             const Point3& p3) {
-    return HalfSpace3Rep(p1, p2, p3);
-  }
-};
-
-template <size_t vector_bits, size_t dist_bits>
-void HalfSpace3<vector_bits, dist_bits>::Reduce() {
+inline void HalfSpace3::Reduce() {
   auto common_factor = normal_.components()[0];
   common_factor = common_factor.GetGreatestCommonDivisor(
       normal_.components()[1]);
@@ -251,9 +219,7 @@ void HalfSpace3<vector_bits, dist_bits>::Reduce() {
   normal_.components()[2] /= abs_factor;
 }
 
-template <size_t vector_bits, size_t dist_bits>
-std::ostream& operator<<(std::ostream& out,
-                         const HalfSpace3<vector_bits, dist_bits>& p) {
+inline std::ostream& operator<<(std::ostream& out, const HalfSpace3& p) {
   return out << "{ x*" << p.x()
              << " + y*" << p.y()
              << " + z*" << p.z()

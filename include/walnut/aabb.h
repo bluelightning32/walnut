@@ -18,8 +18,6 @@ class AABB {
   using VectorRep = typename HomoPoint3Rep::VectorRep;
   using NumInt = typename HomoPoint3Rep::NumInt;
   using DenomInt = typename HomoPoint3Rep::DenomInt;
-  using HalfSpace3Rep =
-    typename HalfSpace3FromPoint3Builder<num_bits_template>::HalfSpace3Rep;
 
   static constexpr size_t num_bits = num_bits_template;
   static constexpr size_t denom_bits = denom_bits_template;
@@ -118,7 +116,7 @@ class AABB {
   // Returns a ConvexPolygon for the intersection of this rectangular prism and
   // a plane (represented as a HalfSpace3).
   template <typename ConvexPolygonRep = MutableConvexPolygon<num_bits>>
-  ConvexPolygonRep IntersectPlane(const HalfSpace3Rep& plane) const;
+  ConvexPolygonRep IntersectPlane(const HalfSpace3& plane) const;
 
   // Determines which sides of the plane the AABB is present on.
   //
@@ -133,8 +131,7 @@ class AABB {
   // Returns 0 if the AABB is present on both sides of the plane, or one of its
   // vertices is touching the plane.
   // Returns 1 if the AABB is only present in the positive half-space.
-  template <size_t half_space_bits>
-  int GetPlaneSide(const HalfSpace3<half_space_bits>& plane) const;
+  int GetPlaneSide(const HalfSpace3& plane) const;
 
   // Returns all 6 sides of the prism.
   std::vector<ConvexPolygon<num_bits>> GetWalls() const;
@@ -188,7 +185,7 @@ class AABB {
 template <size_t num_bits, size_t denom_bits>
 template <typename ConvexPolygonRep>
 ConvexPolygonRep AABB<num_bits, denom_bits>::IntersectPlane(
-    const HalfSpace3Rep& plane) const {
+    const HalfSpace3& plane) const {
   int drop_dimension = plane.normal().GetFirstNonzeroDimension();
   if (drop_dimension == -1) {
     // The plane is invalid. So return an empty polygon.
@@ -206,20 +203,20 @@ ConvexPolygonRep AABB<num_bits, denom_bits>::IntersectPlane(
   dir1.components()[dim1] = denom_;
   dir2.components()[dim2] = denom_;
   dir3.components()[drop_dimension] = denom_;
-  HalfSpace3Rep parallelogram_planes[4] = {
-    HalfSpace3Rep(-dir1,
-                  -BigInt<num_bits + 1>(min_point_num_.components()[dim1])),
-    HalfSpace3Rep(-dir2,
-                  -BigInt<num_bits + 1>(min_point_num_.components()[dim2])),
-    HalfSpace3Rep(dir1, max_point_num_.components()[dim1]),
-    HalfSpace3Rep(dir2, max_point_num_.components()[dim2]),
+  HalfSpace3 parallelogram_planes[4] = {
+    HalfSpace3(-dir1,
+               -BigInt<num_bits + 1>(min_point_num_.components()[dim1])),
+    HalfSpace3(-dir2,
+               -BigInt<num_bits + 1>(min_point_num_.components()[dim2])),
+    HalfSpace3(dir1, max_point_num_.components()[dim1]),
+    HalfSpace3(dir2, max_point_num_.components()[dim2]),
   };
 
   typename ConvexPolygonRep::EdgeVector edges;
   edges.reserve(4);
-  const HalfSpace3Rep* prev_plane = &parallelogram_planes[(4 + -1*flip) % 4];
+  const HalfSpace3* prev_plane = &parallelogram_planes[(4 + -1*flip) % 4];
   for (int i = 0; i < 4; ++i) {
-    const HalfSpace3Rep* cur_plane = &parallelogram_planes[(4 + i*flip) % 4];
+    const HalfSpace3* cur_plane = &parallelogram_planes[(4 + i*flip) % 4];
     typename ConvexPolygonRep::LineRep line(plane, *cur_plane);
     edges.emplace_back(line.Intersect(*prev_plane), std::move(line));
     prev_plane = cur_plane;
@@ -227,7 +224,7 @@ ConvexPolygonRep AABB<num_bits, denom_bits>::IntersectPlane(
   ConvexPolygonRep result(plane, drop_dimension, std::move(edges));
 
   // Now split the parallelogram on the remaining 2 sides of the prism.
-  HalfSpace3Rep drop_top(dir3, max_point_num_.components()[drop_dimension]);
+  HalfSpace3 drop_top(dir3, max_point_num_.components()[drop_dimension]);
   auto split1 = result.GetSplitInfo(drop_top);
   if (!split1.ShouldEmitNegativeChild()) {
     if (split1.ShouldEmitOnPlane()) {
@@ -241,7 +238,7 @@ ConvexPolygonRep AABB<num_bits, denom_bits>::IntersectPlane(
     result = std::move(result).CreateSplitChildren(std::move(split1)).first;
   }
 
-  HalfSpace3Rep drop_bottom(dir3, min_point_num_.components()[drop_dimension]);
+  HalfSpace3 drop_bottom(dir3, min_point_num_.components()[drop_dimension]);
   auto split2 = result.GetSplitInfo(drop_bottom);
   if (!split2.ShouldEmitPositiveChild()) {
     if (split2.ShouldEmitOnPlane()) {
@@ -309,7 +306,7 @@ AABB<num_bits, denom_bits>::GetWalls() const {
     Vector3 normal = Vector3::Zero();
     normal.components()[facet_info.normal_dimension] =
       side < 3 ? -denom_ : denom_;
-    HalfSpace3Rep plane(normal, /*dist=*/side < 3 ?
+    HalfSpace3 plane(normal, /*dist=*/side < 3 ?
         -min_point_num_.components()[facet_info.normal_dimension] : 
         max_point_num_.components()[facet_info.normal_dimension]);
     result.emplace_back(plane, facet_info.normal_dimension, vertices);
@@ -318,9 +315,8 @@ AABB<num_bits, denom_bits>::GetWalls() const {
 }
 
 template <size_t num_bits, size_t denom_bits>
-template <size_t half_space_bits>
 int AABB<num_bits, denom_bits>::GetPlaneSide(
-    const HalfSpace3<half_space_bits>& plane) const {
+    const HalfSpace3& plane) const {
   const bool x_pos = plane.x().GetSign() > 0;
   const bool y_pos = plane.y().GetSign() > 0;
   const bool z_pos = plane.z().GetSign() > 0;

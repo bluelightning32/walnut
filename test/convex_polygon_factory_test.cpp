@@ -13,7 +13,6 @@ class ResultCollector : public Factory {
  public:
   using ConvexPolygonRep = typename Factory::ConvexPolygonRep;
   using HomoPoint3Rep = typename ConvexPolygonRep::HomoPoint3Rep;
-  using HalfSpace3Rep = typename ConvexPolygonRep::HalfSpace3Rep;
 
   std::vector<ConvexPolygonRep> GetSortedPolygonResult() {
     for (ConvexPolygonRep& polygon : result_) {
@@ -50,7 +49,7 @@ class ResultCollector : public Factory {
   // Check that every vertex in every convex polygon really is a convex vertex.
   void VerifyAllConvexVertices() const {
     for (const ConvexPolygonRep& polygon : result_) {
-      typename HalfSpace3Rep::VectorInt drop_dim_value =
+      BigIntImpl drop_dim_value =
         polygon.plane().normal().components()[polygon.drop_dimension()];
       ASSERT_NE(drop_dim_value, 0);
       const int orientation = drop_dim_value.GetSign();
@@ -101,8 +100,7 @@ TEST(ConvexPolygonFactory, Triangle) {
         std::vector<Point3>{input[0], input[1], input[2]}
         ));
   EXPECT_EQ(collector.GetSortedPolygonResult()[0].plane(),
-            ResultCollector<>::HalfSpace3Rep(/*x=*/0, /*y=*/0, /*z=*/1,
-                                             /*dist=*/10));
+            HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10));
 }
 
 TEST(ConvexPolygonFactory, Collinear3Points) {
@@ -130,8 +128,7 @@ TEST(ConvexPolygonFactory, CWTriangle) {
         std::vector<Point3>{input[0], input[1], input[2]}
         ));
   EXPECT_EQ(collector.GetSortedPolygonResult()[0].plane(),
-            ResultCollector<>::HalfSpace3Rep(/*x=*/0, /*y=*/0, /*z=*/-1,
-                                             /*dist=*/-10));
+            HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/-1, /*dist=*/-10));
 }
 
 TEST(ConvexPolygonFactory, Square) {
@@ -148,8 +145,7 @@ TEST(ConvexPolygonFactory, Square) {
         std::vector<Point3>{input[0], input[1], input[2], input[3]}
         ));
   EXPECT_EQ(collector.GetSortedPolygonResult()[0].plane(),
-            ResultCollector<>::HalfSpace3Rep(/*x=*/0, /*y=*/0, /*z=*/1,
-                                             /*dist=*/10));
+            HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10));
 }
 
 TEST(ConvexPolygonFactory, SplitSquareAtPlaneBreak) {
@@ -230,14 +226,11 @@ TEST(ConvexPolygonFactory, SelfIntersecting) {
           std::vector<Point3>{input[3], input[1], input[2]}
         ));
     EXPECT_EQ(collector.GetSortedPolygonResult()[0].plane(),
-              ResultCollector<>::HalfSpace3Rep(/*x=*/0, /*y=*/0, /*z=*/1,
-                                               /*dist=*/10));
+              HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10));
     EXPECT_EQ(collector.GetSortedPolygonResult()[1].plane(),
-              ResultCollector<>::HalfSpace3Rep(/*x=*/0, /*y=*/0, /*z=*/-1,
-                                               /*dist=*/-10));
+              HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/-1, /*dist=*/-10));
     EXPECT_EQ(collector.GetSortedPolygonResult()[2].plane(),
-              ResultCollector<>::HalfSpace3Rep(/*x=*/0, /*y=*/0, /*z=*/1,
-                                               /*dist=*/10));
+              HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10));
   } else {
     ASSERT_THAT(collector.GetSortedPolygonVertices(),
         ElementsAre(
@@ -245,11 +238,9 @@ TEST(ConvexPolygonFactory, SelfIntersecting) {
           std::vector<Point3>{input[4], input[2], input[3]}
         ));
     EXPECT_EQ(collector.GetSortedPolygonResult()[0].plane(),
-              ResultCollector<>::HalfSpace3Rep(/*x=*/0, /*y=*/0, /*z=*/1,
-                                               /*dist=*/10));
+              HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10));
     EXPECT_EQ(collector.GetSortedPolygonResult()[1].plane(),
-              ResultCollector<>::HalfSpace3Rep(/*x=*/0, /*y=*/0, /*z=*/-1,
-                                               /*dist=*/-10));
+              HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/-1, /*dist=*/-10));
   }
 }
 
@@ -281,14 +272,11 @@ TEST(ConvexPolygonFactory, SelfIntersectingStartAtReflex) {
                                   input[(2 + 2)%5]}
           ));
     EXPECT_EQ(collector.GetSortedPolygonResult()[0].plane(),
-              ResultCollector<>::HalfSpace3Rep(/*x=*/0, /*y=*/0, /*z=*/1,
-                                               /*dist=*/10));
+              HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10));
     EXPECT_EQ(collector.GetSortedPolygonResult()[1].plane(),
-              ResultCollector<>::HalfSpace3Rep(/*x=*/0, /*y=*/0, /*z=*/-1,
-                                               /*dist=*/-10));
+              HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/-1, /*dist=*/-10));
     EXPECT_EQ(collector.GetSortedPolygonResult()[2].plane(),
-              ResultCollector<>::HalfSpace3Rep(/*x=*/0, /*y=*/0, /*z=*/1,
-                                               /*dist=*/10));
+              HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10));
   } else {
     ASSERT_THAT(collector.GetSortedPolygonVertices(), ElementsAre(
           std::vector<Point3>{input[(0 + 2)%5], input[(1 + 2)%5],
@@ -297,11 +285,9 @@ TEST(ConvexPolygonFactory, SelfIntersectingStartAtReflex) {
                                   input[(3 + 2)%5]}
           ));
     EXPECT_EQ(collector.GetSortedPolygonResult()[0].plane(),
-              ResultCollector<>::HalfSpace3Rep(/*x=*/0, /*y=*/0, /*z=*/1,
-                                               /*dist=*/10));
+              HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10));
     EXPECT_EQ(collector.GetSortedPolygonResult()[1].plane(),
-              ResultCollector<>::HalfSpace3Rep(/*x=*/0, /*y=*/0, /*z=*/-1,
-                                               /*dist=*/-10));
+              HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/-1, /*dist=*/-10));
   }
 }
 
@@ -346,7 +332,7 @@ TEST(ConvexPolygonFactory, GetPlaneOrientationAfterProjection) {
   };
 
   for (int drop_dimension = 0; drop_dimension < 3; ++drop_dimension) {
-    auto cross = HalfSpace3<>(p[0], p[1], p[2]).normal();
+    auto cross = HalfSpace3(p[0], p[1], p[2]).normal();
 
     EXPECT_NE(cross.components()[drop_dimension], 0);
     int orientation =

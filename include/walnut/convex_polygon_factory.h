@@ -18,7 +18,6 @@ class ConvexPolygonFactory :
  public:
   using InputPoint3 = InputPoint3Template;
   using ConvexPolygonRep = ConvexPolygonTemplate;
-  using HalfSpace3Rep = typename ConvexPolygonRep::HalfSpace3Rep;
 
   // `Point3Iterator` should produce Point3Reps.
   template <typename Point3Iterator>
@@ -130,14 +129,14 @@ class ConvexPolygonFactory :
     // counter-clockwise polygon. If both are -1, then plane_ is already
     // correct, and they should cancel out.
     const int flip_orientation = (orientation ^ plane_orientation_) | 1;
-    Emit(ConvexPolygonRep(HalfSpace3Rep(plane_.normal() * flip_orientation,
-                                        plane_.d() * flip_orientation),
+    Emit(ConvexPolygonRep(HalfSpace3(plane_.normal() * flip_orientation,
+                                     plane_.d() * flip_orientation),
                           drop_dimension_,
                           std::move(edges)));
   }
 
   int drop_dimension_;
-  HalfSpace3Rep plane_;
+  HalfSpace3 plane_;
   // This is -1 if plane_ already represents the normal of a counter-clockwise
   // polygon, or 1 if plane_ represents the normal of a clockwise polygon.
   int plane_orientation_;

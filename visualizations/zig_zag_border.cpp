@@ -43,7 +43,7 @@ std::vector<walnut::BSPTree<>::OutputPolygon> CreateCellBorder(
       double y = y_rotation[j][1] * kDenom;
       double z = y_rotation[j][0] * sin(angle) * kDenom;
 
-      walnut::HalfSpace3<> split(x, y, z, /*w=*/kDist * kDenom);
+      walnut::HalfSpace3 split(x, y, z, /*w=*/kDist * kDenom);
       leaf->Split(split);
       // Include the side of the cell away from split's normal. That is the
       // side closer to the origin.
@@ -53,10 +53,9 @@ std::vector<walnut::BSPTree<>::OutputPolygon> CreateCellBorder(
   }
 
   // Cut the top off of the cell.
-  walnut::HalfSpace3<> split(kDenom * 1 * sin(vert_angle * pi/2),
-                             0,
-                             kDenom / 1 * cos(vert_angle * pi/2),
-                             /*w=*/top * kDenom);
+  walnut::HalfSpace3 split(kDenom * 1 * sin(vert_angle * pi/2), 0,
+                           kDenom / 1 * cos(vert_angle * pi/2),
+                           /*w=*/top * kDenom);
   leaf->Split(split);
   // Include the side of the cell away from split's normal. That is the
   // side closer to the origin.

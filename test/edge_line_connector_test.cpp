@@ -34,7 +34,7 @@ ConnectedPolygon<> MakeTriangle(int start, int end, int extra, double angle) {
                   10 * std::sin(angle), 10),
     HomoPoint3Rep(start, -start, 0, 1),
   };
-  ConnectedPolygon<>::HalfSpace3Rep plane(p[0], p[1], p[2]);
+  HalfSpace3 plane(p[0], p[1], p[2]);
   const int drop_dimension = plane.normal().GetFirstNonzeroDimension();
   ConnectedPolygon<> result(plane, drop_dimension, p);
   assert(result.IsValidState());
@@ -55,7 +55,7 @@ ConnectedPolygon<> MakeTriangle(const HomoPoint2& p1, const HomoPoint2& p2) {
     HomoPoint3Rep(p2.x(), p2.y(), BigIntImpl(1), p2.w()),
     HomoPoint3Rep(p1.x(), p1.y(), BigIntImpl(0), p1.w()),
   };
-  ConnectedPolygon<>::HalfSpace3Rep plane(p[0], p[1], p[2]);
+  HalfSpace3 plane(p[0], p[1], p[2]);
   const int drop_dimension = plane.normal().GetFirstNonzeroDimension();
   ConnectedPolygon<> result(plane, drop_dimension, p);
   assert(result.IsValidState());
