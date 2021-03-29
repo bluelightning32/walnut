@@ -98,8 +98,7 @@ class BSPPolygon :
   }
 
  private:
-  template <typename OutputPolygonParentTemplate>
-  friend class BSPTree;
+  friend BSPNodeTemplate;
 
   void ResetBSPInfo() {
     for (size_t i = 0; i < Parent::vertex_count(); ++i) {

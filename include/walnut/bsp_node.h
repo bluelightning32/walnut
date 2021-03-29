@@ -116,6 +116,23 @@ class BSPNode {
     pwn_by_id_.clear();
   }
 
+  // Adds a polygon to a root node.
+  //
+  // Even if the node is an interior node, the polygon is not pushed to the
+  // child nodes. PushContentsToChildren should be called afterwards if
+  // necessary to do so.
+  template <typename InputConvexPolygon>
+  void AddRootContent(BSPContentId id, InputConvexPolygon&& polygon) {
+    contents_.emplace_back(id, /*on_node_plane=*/nullptr, /*pos_side=*/false,
+                           std::forward<InputConvexPolygon>(polygon));
+    using InputConvexPolygonNoRef =
+      typename std::remove_reference<InputConvexPolygon>::type;
+    using InputEdgeParent = typename InputConvexPolygonNoRef::EdgeParent;
+    if (std::is_base_of<EdgeParent, InputEdgeParent>::value) {
+      contents_.back().ResetBSPInfo();
+    }
+  }
+
  private:
   template <typename OutputPolygonParent>
   friend class BSPTree;
