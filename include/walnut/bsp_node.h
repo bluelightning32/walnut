@@ -15,6 +15,15 @@
 
 namespace walnut {
 
+struct BSPContentInfo {
+  // Set to true if this BSPNode or a descendant BSPNode has polygons belonging
+  // to this content id, either in the interior of the cell border or on the
+  // cell border.
+  bool has_polygons = false;
+  // PWN for this content at the M-value of the BSPNode.
+  int64_t pwn = 0;
+};
+
 // This is a node within a binary space partition tree.
 //
 // `OutputPolygonParentTemplate` must inherit from ConvexPolygon.
@@ -73,12 +82,16 @@ class BSPNode {
     return border_contents_;
   }
 
-  int64_t GetPWNForId(BSPContentId id) const {
-    if (id < pwn_by_id_.size()) {
-      return pwn_by_id_[id];
+  BSPContentInfo GetContentInfoForId(BSPContentId id) const {
+    if (id < content_info_by_id_.size()) {
+      return content_info_by_id_[id];
     } else {
-      return 0;
+      return BSPContentInfo{};
     }
+  }
+
+  int64_t GetPWNForId(BSPContentId id) const {
+    return GetContentInfoForId(id).pwn;
   }
 
   // Push the contents of an interior node to the children.
@@ -95,16 +108,15 @@ class BSPNode {
   void PushContentsToLeaves(LeafCallback leaf_callback);
 
  protected:
-  void MakeInterior(const HalfSpace3& half_space,
-                    BSPNode* negative_child,
+  void MakeInterior(const HalfSpace3& half_space, BSPNode* negative_child,
                     BSPNode* positive_child) {
     assert(IsLeaf());
     split_ = half_space;
     negative_child_ = std::unique_ptr<BSPNode>(negative_child);
     positive_child_ = std::unique_ptr<BSPNode>(positive_child);
 
-    negative_child->SetPWN(pwn_by_id_);
-    positive_child->SetPWN(pwn_by_id_);
+    negative_child->SetPWN(content_info_by_id_);
+    positive_child->SetPWN(content_info_by_id_);
   }
 
   void Reset() {
@@ -113,7 +125,7 @@ class BSPNode {
     split_ = HalfSpace3();
     negative_child_.reset();
     positive_child_.reset();
-    pwn_by_id_.clear();
+    content_info_by_id_.clear();
   }
 
   // Adds a polygon to a root node.
@@ -131,14 +143,25 @@ class BSPNode {
     if (std::is_base_of<EdgeParent, InputEdgeParent>::value) {
       contents_.back().ResetBSPInfo();
     }
+
+    if (id >= content_info_by_id_.size()) {
+      content_info_by_id_.resize(id + 1);
+    }
+    content_info_by_id_[id].has_polygons = true;
   }
 
  private:
   template <typename OutputPolygonParent>
   friend class BSPTree;
 
-  void SetPWN(const std::vector<int64_t>& pwn_by_id) {
-    pwn_by_id_ = pwn_by_id;
+  // Copies only the `pwn` field from `content_info_by_id`, and clears
+  // `has_polygons`.
+  void SetPWN(const std::vector<BSPContentInfo>& content_info_by_id) {
+    content_info_by_id_.resize(content_info_by_id.size());
+    for (size_t i = 0; i < content_info_by_id.size(); ++i) {
+      content_info_by_id_[i].has_polygons = false;
+      content_info_by_id_[i].pwn = content_info_by_id[i].pwn;
+    }
   }
 
   // Update the negative and positive child for the crossing (if any) that
@@ -195,7 +218,7 @@ class BSPNode {
   std::unique_ptr<BSPNode> negative_child_;
   std::unique_ptr<BSPNode> positive_child_;
 
-  std::vector<int64_t> pwn_by_id_;
+  std::vector<BSPContentInfo> content_info_by_id_;
 };
 
 template <typename OutputPolygonParent>
@@ -276,10 +299,8 @@ void BSPNode<OutputPolygonParent>::PushVertexPWNToChildren(
       // = min_max_comparison ^ vertex_comparison
       if ((min_max_comparison ^ vertex_comparison ^
            vertex_edge_side_mult) >= 0) {
-        if (push_to_child->pwn_by_id_.size() <= polygon_id) {
-          push_to_child->pwn_by_id_.resize(polygon_id + 1);
-        }
-        push_to_child->pwn_by_id_[polygon_id] +=
+        assert(push_to_child->content_info_by_id_.size() >= polygon_id);
+        push_to_child->content_info_by_id_[polygon_id].pwn +=
           vertex_to_edge * crossing_flip;
       }
     }
@@ -374,18 +395,22 @@ void BSPNode<OutputPolygonParent>::PushContentsToChildren() {
                             children.second.vertex_count() - 1,
                             children.second.vertex_count() + 1);
 
+        negative_child_->content_info_by_id_[polygon.id].has_polygons = true;
         negative_child_->contents_.push_back(std::move(children.first));
+        positive_child_->content_info_by_id_[polygon.id].has_polygons = true;
         positive_child_->contents_.push_back(std::move(children.second));
       } else {
         UpdateBoundaryAngles(/*pos_child=*/false, polygon,
                             info.neg_range().second,
                             polygon.vertex_count() + info.neg_range().first);
+        negative_child_->content_info_by_id_[polygon.id].has_polygons = true;
         negative_child_->contents_.push_back(std::move(polygon));
       }
     } else if (info.ShouldEmitPositiveChild()) {
       UpdateBoundaryAngles(/*pos_child=*/true, polygon,
                           info.pos_range().second,
                           polygon.vertex_count() + info.pos_range().first);
+      positive_child_->content_info_by_id_[polygon.id].has_polygons = true;
       positive_child_->contents_.push_back(std::move(polygon));
     } else {
       assert(info.ShouldEmitOnPlane());
@@ -398,9 +423,11 @@ void BSPNode<OutputPolygonParent>::PushContentsToChildren() {
       UpdateBoundaryAngles(pos_child, polygon, /*coincident_begin=*/0,
                            /*coincident_end=*/polygon.vertex_count() + 1);
       if (pos_child) {
+        positive_child_->content_info_by_id_[polygon.id].has_polygons = true;
         positive_child_->border_contents_.emplace_back(this, /*pos_side=*/true,
                                                        std::move(polygon));
       } else {
+        negative_child_->content_info_by_id_[polygon.id].has_polygons = true;
         negative_child_->border_contents_.emplace_back(this,
                                                        /*pos_side=*/false,
                                                        std::move(polygon));
@@ -425,13 +452,17 @@ void BSPNode<OutputPolygonParent>::PushContentsToChildren() {
         UpdateBoundaryAngles(/*pos_child=*/true, children.second,
                             children.second.vertex_count() - 1,
                             children.second.vertex_count() + 1);
+        negative_child_->content_info_by_id_[polygon.id].has_polygons = true;
         negative_child_->border_contents_.push_back(std::move(children.first));
+        positive_child_->content_info_by_id_[polygon.id].has_polygons = true;
         positive_child_->border_contents_.push_back(
             std::move(children.second));
       } else {
+        negative_child_->content_info_by_id_[polygon.id].has_polygons = true;
         negative_child_->border_contents_.push_back(std::move(polygon));
       }
     } else if (info.ShouldEmitPositiveChild()) {
+      positive_child_->content_info_by_id_[polygon.id].has_polygons = true;
       positive_child_->border_contents_.push_back(std::move(polygon));
     } else {
       assert(info.ShouldEmitOnPlane());
@@ -447,8 +478,10 @@ void BSPNode<OutputPolygonParent>::PushContentsToChildren() {
       UpdateBoundaryAngles(pos_child, polygon, /*coincident_begin=*/0,
                            /*coincident_end=*/polygon.vertex_count() + 1);
       if (pos_child) {
+        positive_child_->content_info_by_id_[polygon.id].has_polygons = true;
         positive_child_->border_contents_.push_back(std::move(polygon));
       } else {
+        negative_child_->content_info_by_id_[polygon.id].has_polygons = true;
         negative_child_->border_contents_.push_back(std::move(polygon));
       }
     }

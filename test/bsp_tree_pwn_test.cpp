@@ -288,9 +288,11 @@ TEST_P(BSPTreePWN, EmptyCube) {
 
   BSPNode<>* inside_cube = SplitToCube();
   EXPECT_EQ(inside_cube->GetPWNForId(id), 0);
+  EXPECT_FALSE(inside_cube->GetContentInfoForId(id).has_polygons);
 
   BSPNode<>* child = SplitNorthWest(inside_cube, cube_top, cube_north, 0.75);
   EXPECT_EQ(child->GetPWNForId(id), 0);
+  EXPECT_FALSE(child->GetContentInfoForId(id).has_polygons);
 }
 
 TEST_P(BSPTreePWN, BeforeCrossing) {
@@ -316,6 +318,7 @@ TEST_P(BSPTreePWN, BeforeCrossing) {
 
   BSPNode<>* inside_cube = SplitToCube();
   EXPECT_EQ(inside_cube->GetPWNForId(id), 0);
+  EXPECT_TRUE(inside_cube->GetContentInfoForId(id).has_polygons);
   EXPECT_TRUE(inside_cube->IsLeaf());
   EXPECT_THAT(inside_cube->border_contents(), IsEmpty());
   EXPECT_THAT(inside_cube->contents(), SizeIs(1));
@@ -325,6 +328,8 @@ TEST_P(BSPTreePWN, BeforeCrossing) {
   EXPECT_THAT(child->border_contents(), IsEmpty());
   EXPECT_THAT(child->contents(), SizeIs(1));
   EXPECT_EQ(child->GetPWNForId(id), 0);
+  EXPECT_TRUE(inside_cube->GetContentInfoForId(id).has_polygons);
+  EXPECT_TRUE(child->GetContentInfoForId(id).has_polygons);
 }
 
 TEST_P(BSPTreePWN, SimpleCrossing) {
@@ -360,6 +365,7 @@ TEST_P(BSPTreePWN, SimpleCrossing) {
   }
 
   EXPECT_EQ(inside->GetPWNForId(id), 0);
+  EXPECT_TRUE(inside->GetContentInfoForId(id).has_polygons);
   EXPECT_TRUE(inside->IsLeaf());
   EXPECT_THAT(inside->border_contents(), IsEmpty());
   EXPECT_THAT(inside->contents(), SizeIs(1));
@@ -369,6 +375,8 @@ TEST_P(BSPTreePWN, SimpleCrossing) {
   EXPECT_THAT(child->border_contents(), IsEmpty());
   EXPECT_THAT(child->contents(), SizeIs(1));
   EXPECT_EQ(child->GetPWNForId(id), 1 * GetPWNFlip());
+  EXPECT_TRUE(inside->GetContentInfoForId(id).has_polygons);
+  EXPECT_TRUE(child->GetContentInfoForId(id).has_polygons);
 }
 
 TEST_P(BSPTreePWN, SimpleCrossing2) {
@@ -396,6 +404,7 @@ TEST_P(BSPTreePWN, SimpleCrossing2) {
   EXPECT_TRUE(inside_cube->IsLeaf());
   EXPECT_THAT(inside_cube->border_contents(), IsEmpty());
   EXPECT_THAT(inside_cube->contents(), SizeIs(1));
+  EXPECT_TRUE(inside_cube->GetContentInfoForId(id).has_polygons);
 
   BSPNode<>* child = SplitNorthWest(inside_cube, cube_north_west, cube_north,
                                     0.75);
@@ -403,6 +412,8 @@ TEST_P(BSPTreePWN, SimpleCrossing2) {
   EXPECT_THAT(child->border_contents(), IsEmpty());
   EXPECT_THAT(child->contents(), SizeIs(1));
   EXPECT_EQ(child->GetPWNForId(id), 1 * GetPWNFlip());
+  EXPECT_TRUE(inside_cube->GetContentInfoForId(id).has_polygons);
+  EXPECT_TRUE(child->GetContentInfoForId(id).has_polygons);
 }
 
 TEST_P(BSPTreePWN, MinimumExcluded) {
@@ -427,6 +438,7 @@ TEST_P(BSPTreePWN, MinimumExcluded) {
   EXPECT_TRUE(inside_cube->IsLeaf());
   EXPECT_THAT(inside_cube->border_contents(), IsEmpty());
   EXPECT_THAT(inside_cube->contents(), SizeIs(1));
+  EXPECT_TRUE(inside_cube->GetContentInfoForId(id).has_polygons);
 
   BSPNode<>* child = SplitNorthWest(inside_cube, cube_top, cube_south_east,
                                     0.75);
@@ -434,6 +446,8 @@ TEST_P(BSPTreePWN, MinimumExcluded) {
   EXPECT_THAT(child->border_contents(), IsEmpty());
   EXPECT_THAT(inside_cube->contents(), SizeIs(1));
   EXPECT_EQ(child->GetPWNForId(id), 0);
+  EXPECT_TRUE(inside_cube->GetContentInfoForId(id).has_polygons);
+  EXPECT_TRUE(child->GetContentInfoForId(id).has_polygons);
 }
 
 TEST_P(BSPTreePWN, MPathBends) {
@@ -478,6 +492,8 @@ TEST_P(BSPTreePWN, MPathBends) {
   EXPECT_TRUE(inside_cube->IsLeaf());
   EXPECT_THAT(inside_cube->border_contents(), IsEmpty());
   EXPECT_THAT(inside_cube->contents(), SizeIs(2));
+  EXPECT_TRUE(inside_cube->GetContentInfoForId(prism1_id).has_polygons);
+  EXPECT_TRUE(inside_cube->GetContentInfoForId(prism2_id).has_polygons);
 
   BSPNode<>* inside_prism1 = SplitNorthWest(inside_cube, cube_north_west,
                                             cube_north, 2.0/5);
@@ -486,6 +502,10 @@ TEST_P(BSPTreePWN, MPathBends) {
   EXPECT_THAT(inside_prism1->contents(), SizeIs(1));
   EXPECT_EQ(inside_prism1->GetPWNForId(prism1_id), 1 * GetPWNFlip());
   EXPECT_EQ(inside_prism1->GetPWNForId(prism2_id), 0);
+  EXPECT_TRUE(inside_prism1->GetContentInfoForId(prism1_id).has_polygons);
+  EXPECT_FALSE(inside_prism1->GetContentInfoForId(prism2_id).has_polygons);
+  EXPECT_TRUE(inside_cube->GetContentInfoForId(prism1_id).has_polygons);
+  EXPECT_TRUE(inside_cube->GetContentInfoForId(prism2_id).has_polygons);
 }
 
 TEST_P(BSPTreePWN, SkipEdgesAlongIPath) {
