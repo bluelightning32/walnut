@@ -286,8 +286,8 @@ class EdgeLineConnector {
     int sorted_dimension;
   };
 
-  // Points from an EdgeRep to a its current pointer, or nullptr if the edge
-  // does not have a pointer yet.
+  // Points from an EdgeRep to its current partner, or nullptr if the edge
+  // does not have a partner yet.
   //
   // If the edge points back to itself, that special value indicates that the
   // edge is marked for removal.
