@@ -77,12 +77,10 @@ TEST(EdgeLineConnector, PairAdjacentFlat) {
   ConnectedPolygon<> t2 = MakeTriangle(/*start=*/q, /*end=*/p, /*extra=*/2,
                                        /*angle=*/pi);
 
-  using EdgeVector =
-    std::vector<std::reference_wrapper<ConnectedPolygon<>::EdgeRep>>;
-  EdgeVector connect_edges{
-    t1.edge(0),
-    t2.edge(0),
-  };
+  using EdgeVector = std::vector<Deed<ConnectedPolygon<>::EdgeRep>>;
+  EdgeVector connect_edges;
+  connect_edges.emplace_back(&t1.edge(0));
+  connect_edges.emplace_back(&t2.edge(0));
   EdgeLineConnector<> connector;
   bool errored = false;
   auto error_handler = [&errored](const std::string& message) {
@@ -117,13 +115,11 @@ TEST(EdgeLineConnector, SplitPairAdjacentFlat) {
   ConnectedPolygon<> t2_b = MakeTriangle(/*start=*/q, /*end=*/p, /*extra=*/2,
                                          /*angle=*/pi);
 
-  using EdgeVector =
-    std::vector<std::reference_wrapper<ConnectedPolygon<>::EdgeRep>>;
-  EdgeVector connect_edges{
-    t1.edge(0),
-    t2_b.edge(0),
-    t2_a.edge(0),
-  };
+  using EdgeVector = std::vector<Deed<ConnectedPolygon<>::EdgeRep>>;
+  EdgeVector connect_edges;
+  connect_edges.emplace_back(&t1.edge(0));
+  connect_edges.emplace_back(&t2_b.edge(0));
+  connect_edges.emplace_back(&t2_a.edge(0));
   EdgeLineConnector<> connector;
   bool errored = false;
   auto error_handler = [&errored](const std::string& message) {
@@ -195,18 +191,16 @@ TEST(EdgeLineConnector, EightShareEdge) {
   ConnectedPolygon<> t8 = MakeTriangle(/*start=*/q, /*end=*/p, /*extra=*/4,
                                        /*angle=*/7*pi/4);
 
-  using EdgeVector =
-    std::vector<std::reference_wrapper<ConnectedPolygon<>::EdgeRep>>;
-  EdgeVector connect_edges{
-    t1.edge(0),
-    t2.edge(0),
-    t3.edge(0),
-    t4.edge(0),
-    t5.edge(0),
-    t6.edge(0),
-    t7.edge(0),
-    t8.edge(0),
-  };
+  using EdgeVector = std::vector<Deed<ConnectedPolygon<>::EdgeRep>>;
+  EdgeVector connect_edges;
+  connect_edges.emplace_back(&t1.edge(0));
+  connect_edges.emplace_back(&t2.edge(0));
+  connect_edges.emplace_back(&t3.edge(0));
+  connect_edges.emplace_back(&t4.edge(0));
+  connect_edges.emplace_back(&t5.edge(0));
+  connect_edges.emplace_back(&t6.edge(0));
+  connect_edges.emplace_back(&t7.edge(0));
+  connect_edges.emplace_back(&t8.edge(0));
   EdgeLineConnector<> connector;
   bool errored = false;
   auto error_handler = [&errored](const std::string& message) {
@@ -269,14 +263,12 @@ TEST(EdgeLineConnector, TwoCoplanarPolygons) {
   ConnectedPolygon<> t4 = MakeTriangle(/*start=*/p, /*end=*/q, /*extra=*/4,
                                        /*angle=*/3*pi/4);
 
-  using EdgeVector =
-    std::vector<std::reference_wrapper<ConnectedPolygon<>::EdgeRep>>;
-  EdgeVector connect_edges{
-    t1.edge(0),
-    t2.edge(0),
-    t3.edge(0),
-    t4.edge(0),
-  };
+  using EdgeVector = std::vector<Deed<ConnectedPolygon<>::EdgeRep>>;
+  EdgeVector connect_edges;
+  connect_edges.emplace_back(&t1.edge(0));
+  connect_edges.emplace_back(&t2.edge(0));
+  connect_edges.emplace_back(&t3.edge(0));
+  connect_edges.emplace_back(&t4.edge(0));
   EdgeLineConnector<> connector;
   bool errored = false;
   auto error_handler = [&errored](const std::string& message) {
@@ -335,16 +327,14 @@ TEST(EdgeLineConnector, SplitCoplanarPolygons) {
   ConnectedPolygon<> t4 = MakeTriangle(/*start=*/p, /*end=*/s, /*extra=*/4,
                                        /*angle=*/3*pi/4);
 
-  using EdgeVector =
-    std::vector<std::reference_wrapper<ConnectedPolygon<>::EdgeRep>>;
-  EdgeVector connect_edges{
-    t1.edge(0),
-    t2_a.edge(0),
-    t3_b.edge(0),
-    t4.edge(0),
-    t2_b.edge(0),
-    t3_a.edge(0),
-  };
+  using EdgeVector = std::vector<Deed<ConnectedPolygon<>::EdgeRep>>;
+  EdgeVector connect_edges;
+  connect_edges.emplace_back(&t1.edge(0));
+  connect_edges.emplace_back(&t2_a.edge(0));
+  connect_edges.emplace_back(&t3_b.edge(0));
+  connect_edges.emplace_back(&t4.edge(0));
+  connect_edges.emplace_back(&t2_b.edge(0));
+  connect_edges.emplace_back(&t3_a.edge(0));
   EdgeLineConnector<> connector;
   bool errored = false;
   auto error_handler = [&errored](const std::string& message) {
@@ -377,30 +367,29 @@ TEST(EdgeLineConnector, SplitCoplanarPolygons) {
 }
 
 // Sorts and validates the sort of a vector of edges.
-void SortEdges(
-    std::vector<std::reference_wrapper<ConnectedPolygon<>::EdgeRep>> &edges) {
+void SortEdges(std::vector<Deed<ConnectedPolygon<>::EdgeRep>> &edges) {
   EdgeLineConnector<>::SortEdgesInPlane(edges.begin(), edges.end(),
                                         /*drop_dimension=*/2);
 
   const PluckerLine* prev_line = nullptr;
   std::set<std::array<int, 3>> seen_lines;
   const ConnectedPolygon<>::EdgeRep* prev_edge = nullptr;
-  using EdgeRef = std::reference_wrapper<ConnectedPolygon<>::EdgeRep>;
-  for (const EdgeRef& edge : edges) {
+  using EdgeDeed = Deed<ConnectedPolygon<>::EdgeRep>;
+  for (const EdgeDeed& edge : edges) {
     int sorted_dimension;
-    if (!edge.get().line().d().x().IsZero()) {
+    if (!edge->line().d().x().IsZero()) {
       sorted_dimension = 0;
     } else {
       sorted_dimension = 1;
     }
-    if (prev_line == nullptr || (edge.get().line() != *prev_line &&
-                                 edge.get().line() != -*prev_line)) {
-      prev_line = &edge.get().line();
+    if (prev_line == nullptr || (edge->line() != *prev_line &&
+                                 edge->line() != -*prev_line)) {
+      prev_line = &edge->line();
       PluckerLine reduced;
-      if (edge.get().line().d().components()[sorted_dimension] < 0) {
-        reduced = -edge.get().line();
+      if (edge->line().d().components()[sorted_dimension] < 0) {
+        reduced = -edge->line();
       } else {
-        reduced = edge.get().line();
+        reduced = edge->line();
       }
       reduced.Reduce();
       auto projected = reduced.Project2D(/*drop_dimension=*/2);
@@ -411,24 +400,24 @@ void SortEdges(
       ASSERT_TRUE(added.second);
     } else {
       if (prev_edge->GetBeginLocation(sorted_dimension) !=
-          edge.get().GetBeginLocation(sorted_dimension)) {
+          edge->GetBeginLocation(sorted_dimension)) {
         ASSERT_TRUE(
             EdgeLineConnector<>::IsLocationLessThan(
               prev_edge->GetBeginLocation(sorted_dimension),
-              edge.get().GetBeginLocation(sorted_dimension),
+              edge->GetBeginLocation(sorted_dimension),
               sorted_dimension));
       }
     }
-    prev_edge = &edge.get();
+    prev_edge = &*edge;
   }
 }
 
 void ShuffleAndSortEdges(std::vector<ConnectedPolygon<>>& triangles) {
-  using EdgeRef = std::reference_wrapper<ConnectedPolygon<>::EdgeRep>;
-  std::vector<EdgeRef> edges;
+  using EdgeDeed = Deed<ConnectedPolygon<>::EdgeRep>;
+  std::vector<EdgeDeed> edges;
   for (ConnectedPolygon<>& triangle : triangles) {
     ASSERT_TRUE(triangle.IsValidState());
-    edges.push_back(triangle.edge(0));
+    edges.push_back(&triangle.edge(0));
   }
   std::mt19937 g(0);
   std::shuffle(edges.begin(), edges.end(), g);
@@ -443,12 +432,11 @@ TEST(EdgeLineConnector, DifferentDistInMiddle) {
     MakeTriangle(HomoPoint2(0, 0, 1), HomoPoint2(1, 0, 1)),
   };
 
-  using EdgeRef = std::reference_wrapper<ConnectedPolygon<>::EdgeRep>;
-  std::vector<EdgeRef> edges{
-    triangles[0].edge(0),
-    triangles[1].edge(0),
-    triangles[2].edge(0),
-  };
+  using EdgeDeed = Deed<ConnectedPolygon<>::EdgeRep>;
+  std::vector<EdgeDeed> edges;
+  edges.emplace_back(&triangles[0].edge(0));
+  edges.emplace_back(&triangles[1].edge(0));
+  edges.emplace_back(&triangles[2].edge(0));
   SortEdges(edges);
 }
 
@@ -459,12 +447,11 @@ TEST(EdgeLineConnector, DifferentDirectionInMiddle) {
     MakeTriangle(HomoPoint2(0, 0, 1), HomoPoint2(1, 0, 1)),
   };
 
-  using EdgeRef = std::reference_wrapper<ConnectedPolygon<>::EdgeRep>;
-  std::vector<EdgeRef> edges{
-    triangles[0].edge(0),
-    triangles[1].edge(0),
-    triangles[2].edge(0),
-  };
+  using EdgeDeed = Deed<ConnectedPolygon<>::EdgeRep>;
+  std::vector<EdgeDeed> edges;
+  edges.emplace_back(&triangles[0].edge(0));
+  edges.emplace_back(&triangles[1].edge(0));
+  edges.emplace_back(&triangles[2].edge(0));
   SortEdges(edges);
 }
 
@@ -533,18 +520,17 @@ TEST(EdgeLineConnector, FindNextLineStart) {
   ConnectedPolygon<> s1 = MakeTriangle(q1, q2);
   ConnectedPolygon<> s2 = MakeTriangle(q2, q1);
 
-  using EdgeRef = std::reference_wrapper<ConnectedPolygon<>::EdgeRep>;
-  std::vector<EdgeRef> edges {
-    t1.edge(0),
-    t2.edge(0),
-    t3.edge(0),
-    t4.edge(0),
+  using EdgeDeed = Deed<ConnectedPolygon<>::EdgeRep>;
+  std::vector<EdgeDeed> edges;
+  edges.emplace_back(&t1.edge(0));
+  edges.emplace_back(&t2.edge(0));
+  edges.emplace_back(&t3.edge(0));
+  edges.emplace_back(&t4.edge(0));
 
-    s1.edge(0),
-    s2.edge(0),
-  };
+  edges.emplace_back(&s1.edge(0));
+  edges.emplace_back(&s2.edge(0));
 
-  using Iterator = std::vector<EdgeRef>::iterator;
+  using Iterator = std::vector<EdgeDeed>::iterator;
   std::pair<Iterator, int> subrange;
   subrange = EdgeLineConnector<>::FindNextLineStart(edges.begin(), edges.end(),
                                                     /*drop_dimension=*/2);
@@ -571,13 +557,12 @@ TEST(EdgeLineConnector, ConnectUnsorted) {
   ConnectedPolygon<> s1 = MakeTriangle(q1, q2);
   ConnectedPolygon<> s2 = MakeTriangle(q2, q1);
 
-  using EdgeRef = std::reference_wrapper<ConnectedPolygon<>::EdgeRep>;
-  std::vector<EdgeRef> edges {
-    s1.edge(0),
-    t1.edge(0),
-    t2.edge(0),
-    s2.edge(0),
-  };
+  using EdgeDeed = Deed<ConnectedPolygon<>::EdgeRep>;
+  std::vector<EdgeDeed> edges;
+  edges.emplace_back(&s1.edge(0));
+  edges.emplace_back(&t1.edge(0));
+  edges.emplace_back(&t2.edge(0));
+  edges.emplace_back(&s2.edge(0));
 
   EdgeLineConnector<> connector;
   bool errored = false;

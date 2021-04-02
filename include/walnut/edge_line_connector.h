@@ -15,8 +15,8 @@
 
 namespace walnut {
 
-// Given a sorted range of std::reference_wrapper<ConnectedEdge>s all on the
-// same line, this in place algorithm connects the half-edges together.
+// Given a sorted range of Deed<EdgeRep>s all on the same line, this in place
+// algorithm connects the half-edges together.
 //
 // Typically one instantiates the class, calls `SortEdgesInPlane` to sort a
 // range of edges, splits up the edges based on the lines, then calls `Connect`
@@ -39,9 +39,8 @@ class EdgeLineConnector {
   // Connects the adjacent edges in the range of ConnectedEdges.
   //
   // From `edges_begin` up to `edges_end` defines a range of
-  // std::reference_wrapper<ConnectedEdge>s. All edges must lie in a common
-  // plane. `drop_dimension` indicates which component of the normal of that
-  // plane is non-zero.
+  // Deed<EdgeRep>s. All edges must lie in a common plane. `drop_dimension`
+  // indicates which component of the normal of that plane is non-zero.
   //
   // Two half-edges are only connected if their line segments overlap. When
   // there are more than two half-edges overlapping the same line segment, then
@@ -71,7 +70,7 @@ class EdgeLineConnector {
   // Connects the adjacent edges in the range of ConnectedEdges.
   //
   // From `edges_begin` up to `edges_end` defines a range of
-  // std::reference_wrapper<ConnectedEdge>s.
+  // Deed<EdgeRep>s.
   //
   // All of the half-edges in the range must be coincident with the same line.
   // The `sorted_dimension` component of that line must be positive. Half-edges
@@ -110,11 +109,11 @@ class EdgeLineConnector {
       const HomoPoint3* current_location;
       if (end_events_.empty() ||
           IsLocationLessThan(
-            edges_begin->get().GetBeginLocation(sorted_dimension),
+            edges_begin->get()->GetBeginLocation(sorted_dimension),
             end_events_.front()->first->GetEndLocation(sorted_dimension),
             sorted_dimension)) {
         current_location =
-          &edges_begin->get().GetBeginLocation(sorted_dimension);
+          &edges_begin->get()->GetBeginLocation(sorted_dimension);
       } else {
         current_location =
           &end_events_.front()->first->GetEndLocation(sorted_dimension);
@@ -127,9 +126,9 @@ class EdgeLineConnector {
       prev_location = current_location;
 
       while (edges_begin != edges_end &&
-             edges_begin->get().GetBeginLocation(sorted_dimension) ==
+             edges_begin->get()->GetBeginLocation(sorted_dimension) ==
                *current_location) {
-        auto add_info = active_edges.emplace(&edges_begin->get(), nullptr);
+        auto add_info = active_edges.emplace(edges_begin->get(), nullptr);
         assert(add_info.second);
         ++edges_begin;
         add_info.first->first->ResetPartners();
@@ -160,19 +159,17 @@ class EdgeLineConnector {
   // safe to group by line and then pass to `operator()`.
   //
   // From `edges_begin` up to `edges_end` defines a range of
-  // std::reference_wrapper<ConnectedEdge>s. All of those edges must be
-  // coincident with the same plane. The `drop_dimension` component of that
-  // plane's normal must be non-zero.
+  // Deed<EdgeRep>s. All of those edges must be coincident with the same plane.
+  // The `drop_dimension` component of that plane's normal must be non-zero.
   template <typename Iterator>
   static void SortEdgesInPlane(const Iterator& edges_begin,
                                const Iterator& edges_end, int drop_dimension) {
     struct EdgeCompare {
       EdgeCompare(int drop_dimension) : drop_dimension(drop_dimension) { }
 
-      bool operator()(std::reference_wrapper<const EdgeRep> e1,
-                      std::reference_wrapper<const EdgeRep> e2) const {
-        const PluckerLine& e1_line = e1.get().line();
-        const PluckerLine& e2_line = e2.get().line();
+      bool operator()(const Deed<EdgeRep> &e1, const Deed<EdgeRep> &e2) const {
+        const PluckerLine& e1_line = e1->line();
+        const PluckerLine& e2_line = e2->line();
         const auto e1_2dline = e1_line.d().DropDimension(drop_dimension);
         const auto e2_2dline = e2_line.d().DropDimension(drop_dimension);
         if (!e1_2dline.IsSameOrOppositeDir(e2_2dline)) {
@@ -193,8 +190,8 @@ class EdgeLineConnector {
                        (e1_line.d().components()[sorted_dimension] < 0),
               scaled_e2_dist);
         }
-        return IsLocationLessThan(e1.get().GetBeginLocation(sorted_dimension),
-                                  e2.get().GetBeginLocation(sorted_dimension),
+        return IsLocationLessThan(e1->GetBeginLocation(sorted_dimension),
+                                  e2->GetBeginLocation(sorted_dimension),
                                   sorted_dimension);
       }
 
@@ -217,23 +214,22 @@ class EdgeLineConnector {
   // returned.
   //
   // From `edges_begin` up to `edges_end` defines a range of
-  // std::reference_wrapper<ConnectedEdge>s. All of those edges must be
-  // coincident with the same plane. The `drop_dimension` component of that
-  // plane's normal must be non-zero.
+  // Deed<EdgeRep>s. All of those edges must be coincident with the same plane.
+  // The `drop_dimension` component of that plane's normal must be non-zero.
   template <typename Iterator>
   static std::pair<Iterator, int> FindNextLineStart(
       const Iterator& edges_begin, const Iterator& edges_end,
       int drop_dimension) {
     assert (edges_begin != edges_end);
-    HalfSpace2 line = edges_begin->get().line().Project2D(drop_dimension);
+    HalfSpace2 line = edges_begin->get()->line().Project2D(drop_dimension);
     int sorted_dimension =
-      (edges_begin->get().line().d().components()[
+      (edges_begin->get()->line().d().components()[
        (drop_dimension + 1) % 3].IsZero() ?
        drop_dimension + 2 : drop_dimension + 1) % 3;
     Iterator pos = edges_begin;
     ++pos;
     while (pos != edges_end) {
-      if (!pos->get().line().Project2D(drop_dimension).HasSameLine(line)) {
+      if (!pos->get()->line().Project2D(drop_dimension).HasSameLine(line)) {
         return std::make_pair(pos, sorted_dimension);
       }
       ++pos;

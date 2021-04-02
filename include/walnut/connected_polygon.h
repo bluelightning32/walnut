@@ -3,6 +3,7 @@
 
 #include "gtest/gtest_prod.h"
 #include "walnut/convex_polygon.h"
+#include "walnut/deed.h"
 
 namespace walnut {
 
@@ -14,9 +15,12 @@ namespace walnut {
 // edges in the parent polygon must remain stable during the connection
 // process, because inserting new edges would break existing EdgeConnections.
 // So instead the extra connections are stored in `extra_partners_`.
+//
+// The DeedObject is used to keep a pointer to the edges while sorting and
+// connecting them.
 template <typename FinalPolygonTemplate,
           typename ParentTemplate>
-struct ConnectedEdge : public ParentTemplate {
+struct ConnectedEdge : public ParentTemplate, public DeedObject {
   using FinalPolygon = FinalPolygonTemplate;
   using Parent = ParentTemplate;
   using ConnectedEdgeRep = ConnectedEdge;

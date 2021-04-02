@@ -117,7 +117,7 @@ struct ConvexPolygonEdge : public ParentTemplate {
   // assignment operator. So to give the vector access, wrap the edge with an
   // `AssignableWrapper`.
 
-  ConvexPolygonEdge(ConvexPolygonEdge&&) = default;
+  ConvexPolygonEdge(ConvexPolygonEdge&&) noexcept = default;
 
   ConvexPolygonEdge& operator=(const ConvexPolygonEdge&) = default;
   ConvexPolygonEdge& operator=(ConvexPolygonEdge&&) = default;
