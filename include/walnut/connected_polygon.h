@@ -145,10 +145,67 @@ struct ConnectedEdge : public ParentTemplate, public DeedObject {
   }
 
  protected:
-  ConnectedEdge(ConnectedEdge&&) = default;
+  ConnectedEdge(ConnectedEdge&& other) :
+      Parent(std::move(other)), polygon_(other.polygon_),
+      partner_(other.partner_),
+      extra_partners_(std::move(other.extra_partners_)) {
+    if (partner_ != nullptr) {
+      partner_->partner_ = this;
+      other.partner_ = nullptr;
+    }
+    for (ExtraConnection& extra : extra_partners_) {
+      if (extra.partner != nullptr) {
+        if (extra.partner->partner_ == &other) {
+          extra.partner->partner_ = this;
+        }
+        for (ExtraConnection& partner_extra : extra.partner->extra_partners_) {
+          if (partner_extra.partner == &other) {
+            partner_extra.partner = this;
+          }
+        }
+      }
+    }
+  }
 
   ConnectedEdge& operator=(const ConnectedEdge&) = default;
-  ConnectedEdge& operator=(ConnectedEdge&&) = default;
+
+  ConnectedEdge& operator=(ConnectedEdge&& other) {
+    std::swap(partner_, other.partner_);
+    polygon_ = other.polygon_;
+    extra_partners_ = std::move(other.extra_partners_);
+    if (partner_ != nullptr) {
+      partner_->partner_ = this;
+    }
+    if (other.partner_ != nullptr) {
+      other.partner_->partner_ = &other;
+    }
+    for (ExtraConnection& extra : extra_partners_) {
+      if (extra.partner != nullptr) {
+        if (extra.partner->partner_ == &other) {
+          extra.partner->partner_ = this;
+        }
+        for (ExtraConnection& partner_extra : extra.partner->extra_partners_) {
+          if (partner_extra.partner == &other) {
+            partner_extra.partner = this;
+          }
+        }
+      }
+    }
+    for (ExtraConnection& extra : other.extra_partners_) {
+      if (extra.partner != nullptr) {
+        if (extra.partner->partner_ == this) {
+          extra.partner->partner_ = &other;
+        }
+        for (ExtraConnection& partner_extra : extra.partner->extra_partners_) {
+          if (partner_extra.partner == this) {
+            partner_extra.partner = &other;
+          }
+        }
+      }
+    }
+
+    return *this;
+  }
 
  private:
   template <typename ParentPolygon, typename FinalPolygon, typename EdgeParent>
@@ -156,6 +213,8 @@ struct ConnectedEdge : public ParentTemplate, public DeedObject {
   template <typename EdgeTemplate>
   friend class EdgeLineConnector;
 
+  FRIEND_TEST(ConnectedEdge, MoveAssign);
+  FRIEND_TEST(ConnectedEdge, MoveConstruct);
   FRIEND_TEST(ConnectedEdge, ReversePartnerList);
 
   using ExtraConnectionIterator =

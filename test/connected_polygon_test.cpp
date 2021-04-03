@@ -137,4 +137,59 @@ TEST(ConnectedEdge, ReversePartnerList) {
   EXPECT_EQ(polygon.edge(3).extra_partner_start(1), HomoPoint3(1, 0, 0, 1));
 }
 
+// Validates that the partner links are updated when a ConnectedEdge is move
+// constructed to a new location.
+TEST(ConnectedEdge, MoveConstruct) {
+  ConnectedPolygon<> polygon(MakeRectangle());
+
+  using EdgeRep = AssignableWrapper<ConnectedPolygon<>::EdgeRep>;
+  EdgeRep e1(polygon.edge(0));
+  EdgeRep e2(polygon.edge(1));
+
+  e1.partner_ = &e2;
+  e2.partner_ = &e1;
+
+  EdgeRep e1_move(std::move(e1));
+  EdgeRep e2_move(std::move(e2));
+
+  EXPECT_EQ(e1_move.partner_, &e2_move);
+  EXPECT_EQ(e2_move.partner_, &e1_move);
+
+  EXPECT_EQ(&e1_move.polygon(), &polygon);
+  EXPECT_EQ(&e2_move.polygon(), &polygon);
+}
+
+// Validates that the partner links are updated when a ConnectedEdge is move
+// assigned to a new location.
+TEST(ConnectedEdge, MoveAssign) {
+  ConnectedPolygon<> polygon(MakeRectangle());
+
+  using EdgeRep = AssignableWrapper<ConnectedPolygon<>::EdgeRep>;
+  EdgeRep e1(polygon.edge(0));
+  EdgeRep e2(polygon.edge(1));
+
+  e1.partner_ = &e2;
+  e2.partner_ = &e1;
+
+  EdgeRep e1_move(polygon.edge(1));
+  e1_move = std::move(std::move(e1));
+  EdgeRep e2_move(polygon.edge(0));
+  e2_move = std::move(std::move(e2));
+
+  EXPECT_EQ(e1_move.partner_, &e2_move);
+  EXPECT_EQ(e2_move.partner_, &e1_move);
+
+  EXPECT_EQ(&e1_move.polygon(), &polygon);
+  EXPECT_EQ(&e2_move.polygon(), &polygon);
+
+  // Moving the already moved from e1 and e2 should not affect e1_move and
+  // e2_move.
+  EdgeRep e1_move2(polygon.edge(1));
+  e1_move2 = std::move(std::move(e1));
+  EdgeRep e2_move2(polygon.edge(0));
+  e2_move2 = std::move(std::move(e2));
+  EXPECT_EQ(e1_move.partner_, &e2_move);
+  EXPECT_EQ(e2_move.partner_, &e1_move);
+}
+
 }  // walnut
