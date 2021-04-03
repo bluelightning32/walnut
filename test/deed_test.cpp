@@ -91,6 +91,9 @@ TEST(Deed, Move) {
   Deed<TestObject> deed1(&o1);
   Deed<TestObject> deed2(std::move(deed1));
   EXPECT_EQ(deed2.get(), &o1);
+  TestObject o2(std::move(o1));
+  EXPECT_EQ(deed2.get(), &o2);
+  deed2.Return();
 }
 
 TEST(Deed, MoveNull) {

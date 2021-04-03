@@ -72,6 +72,9 @@ class GenericDeed {
     assert(!other.is_lender());
     other.object_ = nullptr;
     other.lender_ = nullptr;
+    if (object_) {
+      object_->owner_ = this;
+    }
   }
 
   ~GenericDeed() {
