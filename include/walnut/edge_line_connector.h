@@ -128,7 +128,9 @@ class EdgeLineConnector {
       while (edges_begin != edges_end &&
              edges_begin->get()->GetBeginLocation(sorted_dimension) ==
                *current_location) {
-        auto add_info = active_edges.emplace(edges_begin->get(), nullptr);
+        auto add_info =
+          active_edges.emplace(edges_begin->get(),
+                               ActiveEdgeInfo{active_edges.end()});
         assert(add_info.second);
         ++edges_begin;
         add_info.first->first->ResetPartners();
@@ -286,6 +288,18 @@ class EdgeLineConnector {
     int sorted_dimension;
   };
 
+  struct ActiveEdgeInfo {
+    using ActiveEdge = typename std::map<Deed<EdgeRep>, ActiveEdgeInfo,
+                                         RotationCompare>::iterator;
+
+    // Points to the partner for this active edge, or map::end if the edge
+    // does not currently have a partner.
+    //
+    // If the edge points back to itself, that special value indicates that the
+    // edge is marked for removal.
+    ActiveEdge partner;
+  };
+
   // Points from an EdgeRep to its current partner, or nullptr if the edge
   // does not have a partner yet.
   //
@@ -295,7 +309,7 @@ class EdgeLineConnector {
   // Only one deed can be active per object at any given point. The key of the
   // map is used to hold the Deed, since the key is always non-null. The value
   // points to the deed from the key of some entry in the map.
-  using ActiveEdgeMap = std::map<Deed<EdgeRep>, const Deed<EdgeRep>*,
+  using ActiveEdgeMap = std::map<Deed<EdgeRep>, ActiveEdgeInfo,
                                  RotationCompare>;
   using ActiveEdge = typename ActiveEdgeMap::iterator;
 
@@ -341,16 +355,16 @@ class EdgeLineConnector {
       // Typically that partner will itself be marked for removal shortly
       // afterwards. That case is handled by
       // RemoveFinishedEdgesFromNeedPartners below.
-      if (remove->second != nullptr) {
-        ActiveEdge found = active_edges.find(*remove->second);
-        assert(found != active_edges.end());
-        assert(found->second == &remove->first);
-        found->second = nullptr;
-        need_partners_.push_back(found);
+      if (remove->second.partner != active_edges.end()) {
+        ActiveEdge partner = remove->second.partner;
+        assert(partner->second.partner == remove);
+        need_partners_.push_back(partner);
+        partner->second.partner = active_edges.end();
+        need_partners_.push_back(partner);
       }
       // Set the active edge to point to itself as a way to mark it for
       // removal.
-      remove->second = &remove->first;
+      remove->second.partner = remove;
       std::pop_heap(end_events_.begin(), heap_end, compare);
       --heap_end;
     }
@@ -369,7 +383,7 @@ class EdgeLineConnector {
         // partner list to put it in the proper order.
         end_events_.back()->first->ReversePartnerList();
       }
-      assert(&end_events_.back()->first == end_events_.back()->second);
+      assert(end_events_.back()->second.partner == end_events_.back());
       active_edges.erase(end_events_.back());
       end_events_.pop_back();
     }
@@ -402,17 +416,16 @@ class EdgeLineConnector {
       }
       assert(new_partner != active_edges.end());
       assert(new_partner->first != nullptr);
-      if (needs_partner->second == &new_partner->first) {
+      if (needs_partner->second.partner == new_partner) {
         // needs_partner already points to its new target.
         continue;
       }
-      if (needs_partner->second != nullptr) {
-        assert(needs_partner->second != &needs_partner->first);
-        ActiveEdge old_target = active_edges.find(*needs_partner->second);
-        assert(old_target != active_edges.end());
+      if (needs_partner->second.partner != active_edges.end()) {
+        ActiveEdge old_target = needs_partner->second.partner;
+        assert(old_target != needs_partner);
         assert(old_target != new_partner);
         need_partners_.push_back(old_target);
-        needs_partner->second = nullptr;
+        needs_partner->second.partner = active_edges.end();
       }
       bool partner_pos_edge = new_partner->first->IsPositive(sorted_dimension);
       if (pos_edge == partner_pos_edge) {
@@ -436,10 +449,10 @@ class EdgeLineConnector {
   // target.
   void Repartner(int sorted_dimension, ActiveEdge source, bool source_pos,
                  const HomoPoint3& location, ActiveEdge target) {
-    if (target->second != &source->first) {
+    if (target->second.partner != source) {
       need_partners_.push_back(target);
     }
-    source->second = &target->first;
+    source->second.partner = target;
     AddPartner(sorted_dimension, *source->first, source_pos, location,
                target->first.get());
   }
@@ -474,7 +487,7 @@ class EdgeLineConnector {
   void RemoveFinishedEdgesFromNeedPartners() {
     auto new_end = std::remove_if(need_partners_.begin(), need_partners_.end(),
                                   [](ActiveEdge edge) {
-                                    return edge->second == &edge->first;
+                                    return edge->second.partner == edge;
                                   });
     need_partners_.erase(new_end, need_partners_.end());
   }
