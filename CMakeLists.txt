@@ -88,6 +88,7 @@ endif()
 
 package_add_test(aabb_convex_polygon_test test/aabb_convex_polygon_test.cpp)
 package_add_test(aabb_test test/aabb_test.cpp)
+package_add_test(assignable_wrapper_test test/assignable_wrapper_test.cpp)
 package_add_test(big_int_test test/big_int_test.cpp)
 package_add_test(big_int_words_test test/big_int_words_test.cpp)
 package_add_test(big_uint_word_test test/big_uint_word_test.cpp)
