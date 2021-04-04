@@ -131,13 +131,21 @@ class EdgeLineConnector {
         auto add_info =
           active_edges.emplace(ActiveEdgeKey{edges_begin->get()},
                                ActiveEdgeValue{active_edges.end()});
-        assert(add_info.second);
+        if (add_info.second) {
+          add_info.first->first.deed->ResetPartners();
+          end_events_.push_back(add_info.first);
+          std::push_heap(end_events_.begin(), end_events_.end(),
+                         end_events_compare);
+          need_partners_.push_back(add_info.first);
+        } else {
+          std::ostringstream out;
+          out << "Two active edges have the same polygon normal and polarity"
+              << ", normal=" << edges_begin->get()->polygon().normal()
+              << ", new_edge=" << edges_begin->get()
+              << ", existing_edge=" << add_info.first->first.deed.get();
+          error(out.str());
+        }
         ++edges_begin;
-        add_info.first->first.deed->ResetPartners();
-        end_events_.push_back(add_info.first);
-        std::push_heap(end_events_.begin(), end_events_.end(),
-                       end_events_compare);
-        need_partners_.push_back(add_info.first);
       }
 
       ProcessNeedPartners(sorted_dimension, active_edges, *current_location,
@@ -263,11 +271,12 @@ class EdgeLineConnector {
     RotationCompare(int sorted_dimension) :
       sorted_dimension(sorted_dimension) { }
 
-    Vector2 GetProjectedNormal(const EdgeRep& edge) const {
-      const Vector3& polygon_normal = edge.polygon().normal();
+    Vector2 GetProjectedNormal(const PolygonRep& polygon,
+                               bool pos_edge) const {
+      const Vector3& polygon_normal = polygon.normal();
       Vector2 result =
         polygon_normal.DropDimension(sorted_dimension);
-      if (!edge.IsPositive(sorted_dimension)) {
+      if (!pos_edge) {
         // This is a negative edge.
         result.Negate();
       }
@@ -275,18 +284,18 @@ class EdgeLineConnector {
     }
 
     bool operator()(const ActiveEdgeKey &e1, const ActiveEdgeKey& e2) const {
-      Vector2 e1_normal = GetProjectedNormal(*e1.deed);
-      Vector2 e2_normal = GetProjectedNormal(*e2.deed);
+      bool e1_pos = e1.deed->IsPositive(sorted_dimension);
+      bool e2_pos = e2.deed->IsPositive(sorted_dimension);
+      Vector2 e1_normal = GetProjectedNormal(e1.deed->polygon(), e1_pos);
+      Vector2 e2_normal = GetProjectedNormal(e2.deed->polygon(), e2_pos);
       if (!e1_normal.IsSameDir(e2_normal)) {
         return e1_normal.IsRotationLessThan(e2_normal);
       }
-      bool e1_pos = e1.deed->IsPositive(sorted_dimension);
-      bool e2_pos = e2.deed->IsPositive(sorted_dimension);
       if (e1_pos != e2_pos) {
         // Positive edges come before negative edges.
         return e2_pos < e1_pos;
       }
-      return e1.deed.get() < e2.deed.get();
+      return false;
     }
 
     int sorted_dimension;
