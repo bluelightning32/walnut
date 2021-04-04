@@ -9,13 +9,6 @@ namespace walnut {
 
 // A half edge of a ConnectedPolygon
 //
-// Usually a half edge will only connect with one other half edge. However,
-// during the process of connecting the half edge, it may be discovered that
-// the half-edge connects to more half edges due to T-junctions. The vector of
-// edges in the parent polygon must remain stable during the connection
-// process, because inserting new edges would break existing EdgeConnections.
-// So instead the extra connections are stored in `extra_partners_`.
-//
 // The DeedObject is used to keep a pointer to the edges while sorting and
 // connecting them.
 template <typename FinalPolygonTemplate,
@@ -24,22 +17,6 @@ struct ConnectedEdge : public ParentTemplate, public DeedObject {
   using FinalPolygon = FinalPolygonTemplate;
   using Parent = ParentTemplate;
   using ConnectedEdgeRep = ConnectedEdge;
-
-  struct ExtraConnection {
-    ExtraConnection() = default;
-    ExtraConnection(const ExtraConnection&) = default;
-    ExtraConnection(ExtraConnection&&) = default;
-
-    ExtraConnection(const HomoPoint3& start, ConnectedEdge* partner) :
-      start(start), partner(partner) { }
-
-    bool operator==(const ExtraConnection& other) const {
-      return partner == other.partner && start == other.start;
-    }
-
-    HomoPoint3 start;
-    ConnectedEdge* partner = nullptr;
-  };
 
   ConnectedEdge() = default;
 
@@ -56,7 +33,6 @@ struct ConnectedEdge : public ParentTemplate, public DeedObject {
   bool operator==(const ConnectedEdge& other) const {
     if (!Parent::operator==(other)) return false;
 
-    if (extra_partners_ != other.extra_partners_) return false;
     return partner_ == other.partner_;
   }
 
@@ -78,26 +54,6 @@ struct ConnectedEdge : public ParentTemplate, public DeedObject {
 
   ConnectedEdge* partner() {
     return partner_;
-  }
-
-  size_t extra_partner_count() const {
-    return extra_partners_.size();
-  }
-
-  const std::vector<ExtraConnection>& extra_partners() const {
-    return extra_partners_;
-  }
-
-  const HomoPoint3& extra_partner_start(size_t i) const {
-    return extra_partners_[i].start;
-  }
-
-  const ConnectedEdge* extra_partner(size_t i) const {
-    return extra_partners_[i].partner;
-  }
-
-  ConnectedEdge* extra_partner(size_t i) {
-    return extra_partners_[i].partner;
   }
 
   size_t edge_index() const {
@@ -151,23 +107,10 @@ struct ConnectedEdge : public ParentTemplate, public DeedObject {
  protected:
   ConnectedEdge(ConnectedEdge&& other) :
       Parent(std::move(other)), DeedObject(std::move(other)),
-      polygon_(other.polygon_), partner_(other.partner_),
-      extra_partners_(std::move(other.extra_partners_)) {
+      polygon_(other.polygon_), partner_(other.partner_) {
     if (partner_ != nullptr) {
       partner_->partner_ = this;
       other.partner_ = nullptr;
-    }
-    for (ExtraConnection& extra : extra_partners_) {
-      if (extra.partner != nullptr) {
-        if (extra.partner->partner_ == &other) {
-          extra.partner->partner_ = this;
-        }
-        for (ExtraConnection& partner_extra : extra.partner->extra_partners_) {
-          if (partner_extra.partner == &other) {
-            partner_extra.partner = this;
-          }
-        }
-      }
     }
   }
 
@@ -179,38 +122,12 @@ struct ConnectedEdge : public ParentTemplate, public DeedObject {
 
     std::swap(partner_, other.partner_);
     polygon_ = other.polygon_;
-    extra_partners_ = std::move(other.extra_partners_);
     if (partner_ != nullptr) {
       partner_->partner_ = this;
     }
     if (other.partner_ != nullptr) {
       other.partner_->partner_ = &other;
     }
-    for (ExtraConnection& extra : extra_partners_) {
-      if (extra.partner != nullptr) {
-        if (extra.partner->partner_ == &other) {
-          extra.partner->partner_ = this;
-        }
-        for (ExtraConnection& partner_extra : extra.partner->extra_partners_) {
-          if (partner_extra.partner == &other) {
-            partner_extra.partner = this;
-          }
-        }
-      }
-    }
-    for (ExtraConnection& extra : other.extra_partners_) {
-      if (extra.partner != nullptr) {
-        if (extra.partner->partner_ == this) {
-          extra.partner->partner_ = &other;
-        }
-        for (ExtraConnection& partner_extra : extra.partner->extra_partners_) {
-          if (partner_extra.partner == this) {
-            partner_extra.partner = &other;
-          }
-        }
-      }
-    }
-
     return *this;
   }
 
@@ -222,42 +139,10 @@ struct ConnectedEdge : public ParentTemplate, public DeedObject {
 
   FRIEND_TEST(ConnectedEdge, MoveAssign);
   FRIEND_TEST(ConnectedEdge, MoveConstruct);
-  FRIEND_TEST(ConnectedEdge, ReversePartnerList);
   FRIEND_TEST(ConnectedPolygon, SplitEdge);
-
-  using ExtraConnectionIterator =
-    typename std::vector<ExtraConnection>::iterator;
 
   void ResetPartners() {
     partner_ = nullptr;
-    extra_partners_.clear();
-  }
-
-  void ReversePartnerList() {
-    if (!extra_partners_.empty()) {
-      // First reverse the partner pointers.
-      using std::swap;
-      ExtraConnectionIterator begin = extra_partners_.begin();
-      ExtraConnectionIterator end = extra_partners_.end();
-      --end;
-      swap(partner_, end->partner);
-      while (begin != end) {
-        --end;
-        swap(begin->partner, end->partner);
-        if (begin == end) break;
-        ++begin;
-      }
-
-      // Now reverse the locations.
-      begin = extra_partners_.begin();
-      end = extra_partners_.end();
-      while (begin != end) {
-        --end;
-        swap(begin->start, end->start);
-        if (begin == end) break;
-        ++begin;
-      }
-    }
   }
 
   // Through the friend statement, this field is be modified by
@@ -265,7 +150,6 @@ struct ConnectedEdge : public ParentTemplate, public DeedObject {
   FinalPolygon* polygon_ = nullptr;
 
   ConnectedEdge* partner_ = nullptr;
-  std::vector<ExtraConnection> extra_partners_;
 };
 
 
@@ -413,14 +297,6 @@ inline std::ostream& operator<<(std::ostream& out,
                                 const ConnectedEdge<FinalPolygon,
                                                     Parent>& edge) {
   out << "polygon=" << &edge.polygon() << " partner=" << edge.partner();
-  if (edge.extra_partner_count()) {
-    out << " [ ";
-    for (size_t i = 0; i < edge.extra_partner_count(); ++i) {
-      if (i > 0) out << ", ";
-      out << edge.extra_partner_start(i) << "=" << edge.extra_partner(i);
-    }
-    out << " ]";
-  }
   return out;
 }
 

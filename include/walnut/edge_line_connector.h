@@ -393,12 +393,6 @@ class EdgeLineConnector {
     // Look at all the entries in end_events_ at or after heap_end, and remove
     // them from active_events and end_events_.
     while (end_events_.end() != heap_end) {
-      if (!end_events_.back()->first.pos_edge) {
-        // The partner list is built in reverse order for negative half-edges.
-        // Now that this negative half-edge is no longer active, reverse the
-        // partner list to put it in the proper order.
-        end_events_.back()->second.edge->ReversePartnerList();
-      }
       assert(end_events_.back()->second.partner == end_events_.back());
       active_edges.erase(end_events_.back());
       end_events_.pop_back();
@@ -451,7 +445,8 @@ class EdgeLineConnector {
             << ", closest=" << *new_partner->second.edge
             << " pos_edge=" << partner_pos_edge << ".";
         error(out.str());
-        AddPartner(needs_partner, location, nullptr);
+        MaybeSplitEdge(needs_partner, location);
+        assert(needs_partner->second.edge->partner_ == nullptr);
         continue;
       }
       if (new_partner->second.partner != active_edges.end()) {
@@ -462,29 +457,34 @@ class EdgeLineConnector {
         new_partner->second.partner = active_edges.end();
       }
       needs_partner->second.partner = new_partner;
-      AddPartner(needs_partner, location, new_partner->second.edge.get());
       new_partner->second.partner = needs_partner;
-      AddPartner(new_partner, location, needs_partner->second.edge.get());
+      MaybeSplitEdge(needs_partner, location);
+      MaybeSplitEdge(new_partner, location);
+      assert(needs_partner->second.edge->partner_ == nullptr);
+      assert(new_partner->second.edge->partner_ == nullptr);
+      needs_partner->second.edge->partner_ = new_partner->second.edge.get();
+      new_partner->second.edge->partner_ = needs_partner->second.edge.get();
     }
   }
 
-  // Adds `target` as a new partner on `edge`.
-  //
-  // If `location` refers to the begin location (for postive edges) or the end
-  // location (for negative edges), then this is the first partner for `edge`,
-  // and edge.partner_ is set to `target`. Otherwise, `target` is added to
-  // edge.extra_partners_.
-  //
-  // Note that the location check is necessary because with malformed input,
-  // the first partner could be nullptr, followed by a non-null partner.
-  void AddPartner(const ActiveEdge& active_edge, const HomoPoint3& location,
-                  EdgeRep* target) {
-    EdgeRep& edge = *active_edge->second.edge;
-    if (active_edge->second.current_endpoint) {
-      assert(edge.partner_ == nullptr);
-      edge.partner_ = target;
+  void MaybeSplitEdge(ActiveEdge active_edge, const HomoPoint3& location) {
+    if (active_edge->second.current_endpoint) return;
+
+    EdgeRep& old_edge = *active_edge->second.edge;
+    PolygonRep& polygon = old_edge.polygon();
+    size_t edge_index = old_edge.edge_index();
+    polygon.SplitEdge(edge_index, location);
+    if (active_edge->first.pos_edge) {
+      EdgeRep& after_edge = polygon.edge(edge_index + 1);
+      active_edge->second.edge = &after_edge;
     } else {
-      edge.extra_partners_.emplace_back(location, target);
+      EdgeRep& after_edge = *active_edge->second.edge;
+      EdgeRep& new_edge = polygon.edge(edge_index + 1);
+      new_edge.partner_ = after_edge.partner_;
+      after_edge.partner_ = nullptr;
+      if (new_edge.partner_ != nullptr) {
+        new_edge.partner_->partner_ = &new_edge;
+      }
     }
   }
 

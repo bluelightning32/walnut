@@ -90,21 +90,24 @@ TEST(EdgeLineConnector, PairAdjacentFlat) {
   connector.ConnectSorted(connect_edges.begin(), connect_edges.end(),
                           /*sorted_dimension=*/0, error_handler);
   EXPECT_FALSE(errored);
-  EXPECT_EQ(t1.edge(0).extra_partner_count(), 0);
   EXPECT_EQ(t1.edge(0).partner(), &t2.edge(0));
-  EXPECT_EQ(t2.edge(0).extra_partner_count(), 0);
   EXPECT_EQ(t2.edge(0).partner(), &t1.edge(0));
 }
 
 TEST(EdgeLineConnector, SplitPairAdjacentFlat) {
-  //
-  //     p <- t1(+)    |
-  //      \            |
-  //     ^ \  ^        |
-  //     |  \ |        |
-  //     |   \         |
-  // t2(-) <- q        |
-  //
+  //                             |
+  //         p <----- t1(+)      |
+  //          \       ^          |
+  //         ^ \      |          |
+  //         |  \     |          |
+  //         |   \q   |          |
+  // t2_b(-) |   /\   |          |
+  //         |  /  \  |          |
+  //         | /    \ |          |
+  //         |/      \           |
+  //         /<------ r          |
+  //           t2_a(-)           |
+  //                             |
   int p = 1;
   int q = 3;
   int r = 7;
@@ -129,15 +132,11 @@ TEST(EdgeLineConnector, SplitPairAdjacentFlat) {
   connector.ConnectSorted(connect_edges.begin(), connect_edges.end(),
                           /*sorted_dimension=*/0, error_handler);
   EXPECT_FALSE(errored);
-  using ExtraConnection = ConnectedPolygon<>::EdgeRep::ExtraConnection;
   EXPECT_EQ(t1.edge(0).partner(), &t2_b.edge(0));
-  EXPECT_THAT(t1.edge(0).extra_partners(),
-              ElementsAre(ExtraConnection(t2_b.vertex(0), &t2_a.edge(0))));
+  EXPECT_EQ(t1.vertex(1), t2_b.vertex(0));
+  EXPECT_EQ(t1.edge(1).partner(), &t2_a.edge(0));
 
-  EXPECT_EQ(t2_a.edge(0).extra_partner_count(), 0);
-  EXPECT_EQ(t2_a.edge(0).partner(), &t1.edge(0));
-
-  EXPECT_EQ(t2_b.edge(0).extra_partner_count(), 0);
+  EXPECT_EQ(t2_a.edge(0).partner(), &t1.edge(1));
   EXPECT_EQ(t2_b.edge(0).partner(), &t1.edge(0));
 }
 
@@ -211,28 +210,13 @@ TEST(EdgeLineConnector, EightShareEdge) {
                           /*sorted_dimension=*/0, error_handler);
   EXPECT_FALSE(errored);
   EXPECT_EQ(t1.edge(0).partner(), &t8.edge(0));
-  EXPECT_EQ(t1.edge(0).extra_partner_count(), 0);
-
   EXPECT_EQ(t2.edge(0).partner(), &t3.edge(0));
-  EXPECT_EQ(t2.edge(0).extra_partner_count(), 0);
-
   EXPECT_EQ(t3.edge(0).partner(), &t2.edge(0));
-  EXPECT_EQ(t3.edge(0).extra_partner_count(), 0);
-
   EXPECT_EQ(t4.edge(0).partner(), &t5.edge(0));
-  EXPECT_EQ(t4.edge(0).extra_partner_count(), 0);
-
   EXPECT_EQ(t5.edge(0).partner(), &t4.edge(0));
-  EXPECT_EQ(t5.edge(0).extra_partner_count(), 0);
-
   EXPECT_EQ(t6.edge(0).partner(), &t7.edge(0));
-  EXPECT_EQ(t6.edge(0).extra_partner_count(), 0);
-
   EXPECT_EQ(t7.edge(0).partner(), &t6.edge(0));
-  EXPECT_EQ(t7.edge(0).extra_partner_count(), 0);
-
   EXPECT_EQ(t8.edge(0).partner(), &t1.edge(0));
-  EXPECT_EQ(t8.edge(0).extra_partner_count(), 0);
 }
 
 TEST(EdgeLineConnector, TwoCoplanarPolygons) {
@@ -279,16 +263,9 @@ TEST(EdgeLineConnector, TwoCoplanarPolygons) {
                           /*sorted_dimension=*/0, error_handler);
   EXPECT_FALSE(errored);
   EXPECT_EQ(t1.edge(0).partner(), &t2.edge(0));
-  EXPECT_EQ(t1.edge(0).extra_partner_count(), 0);
-
   EXPECT_EQ(t2.edge(0).partner(), &t1.edge(0));
-  EXPECT_EQ(t2.edge(0).extra_partner_count(), 0);
-
   EXPECT_EQ(t3.edge(0).partner(), &t4.edge(0));
-  EXPECT_EQ(t3.edge(0).extra_partner_count(), 0);
-
   EXPECT_EQ(t4.edge(0).partner(), &t3.edge(0));
-  EXPECT_EQ(t4.edge(0).extra_partner_count(), 0);
 }
 
 TEST(EdgeLineConnector, SplitCoplanarPolygons) {
@@ -344,26 +321,19 @@ TEST(EdgeLineConnector, SplitCoplanarPolygons) {
   connector.ConnectSorted(connect_edges.begin(), connect_edges.end(),
                           /*sorted_dimension=*/0, error_handler);
   EXPECT_FALSE(errored);
-  using ExtraConnection = ConnectedPolygon<>::EdgeRep::ExtraConnection;
   EXPECT_EQ(t1.edge(0).partner(), &t2_b.edge(0));
-  EXPECT_THAT(t1.edge(0).extra_partners(),
-              ElementsAre(ExtraConnection(t2_b.vertex(0), &t2_a.edge(0))));
+  EXPECT_EQ(t1.vertex(1), t2_b.vertex(0));
+  EXPECT_EQ(t1.edge(1).partner(), &t2_a.edge(0));
 
-  EXPECT_EQ(t2_a.edge(0).partner(), &t1.edge(0));
-  EXPECT_EQ(t2_a.edge(0).extra_partner_count(), 0);
-
+  EXPECT_EQ(t2_a.edge(0).partner(), &t1.edge(1));
   EXPECT_EQ(t2_b.edge(0).partner(), &t1.edge(0));
-  EXPECT_EQ(t2_b.edge(0).extra_partner_count(), 0);
 
   EXPECT_EQ(t4.edge(0).partner(), &t3_b.edge(0));
-  EXPECT_THAT(t4.edge(0).extra_partners(),
-              ElementsAre(ExtraConnection(t3_b.vertex(0), &t3_a.edge(0))));
+  EXPECT_EQ(t4.vertex(1), t3_b.vertex(0));
+  EXPECT_EQ(t4.edge(1).partner(), &t3_a.edge(0));
 
-  EXPECT_EQ(t3_a.edge(0).partner(), &t4.edge(0));
-  EXPECT_EQ(t3_a.edge(0).extra_partner_count(), 0);
-
+  EXPECT_EQ(t3_a.edge(0).partner(), &t4.edge(1));
   EXPECT_EQ(t3_b.edge(0).partner(), &t4.edge(0));
-  EXPECT_EQ(t3_b.edge(0).extra_partner_count(), 0);
 }
 
 // Sorts and validates the sort of a vector of edges.
@@ -575,16 +545,9 @@ TEST(EdgeLineConnector, ConnectUnsorted) {
   EXPECT_FALSE(errored);
 
   EXPECT_EQ(t1.edge(0).partner(), &t2.edge(0));
-  EXPECT_EQ(t1.edge(0).extra_partner_count(), 0);
-
   EXPECT_EQ(t2.edge(0).partner(), &t1.edge(0));
-  EXPECT_EQ(t2.edge(0).extra_partner_count(), 0);
-
   EXPECT_EQ(s1.edge(0).partner(), &s2.edge(0));
-  EXPECT_EQ(s1.edge(0).extra_partner_count(), 0);
-
   EXPECT_EQ(s2.edge(0).partner(), &s1.edge(0));
-  EXPECT_EQ(s2.edge(0).extra_partner_count(), 0);
 }
 
 }  // walnut
