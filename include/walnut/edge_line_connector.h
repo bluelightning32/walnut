@@ -452,21 +452,20 @@ class EdgeLineConnector {
             << " pos_edge=" << partner_pos_edge << ".";
         error(out.str());
         AddPartner(needs_partner, location, nullptr);
-      } else {
-        Repartner(needs_partner, location, new_partner);
+        continue;
       }
+      if (new_partner->second.partner != active_edges.end()) {
+        ActiveEdge old_target = new_partner->second.partner;
+        assert(old_target != needs_partner);
+        assert(old_target != new_partner);
+        need_partners_.push_back(old_target);
+        new_partner->second.partner = active_edges.end();
+      }
+      needs_partner->second.partner = new_partner;
+      AddPartner(needs_partner, location, new_partner->second.edge.get());
+      new_partner->second.partner = needs_partner;
+      AddPartner(new_partner, location, needs_partner->second.edge.get());
     }
-  }
-
-  // Set source's current partner to target, unless it already points to
-  // target.
-  void Repartner(const ActiveEdge& source, const HomoPoint3& location,
-                 const ActiveEdge& target) {
-    if (target->second.partner != source) {
-      need_partners_.push_back(target);
-    }
-    source->second.partner = target;
-    AddPartner(source, location, target->second.edge.get());
   }
 
   // Adds `target` as a new partner on `edge`.
