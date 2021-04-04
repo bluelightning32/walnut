@@ -101,7 +101,7 @@ class EdgeLineConnector {
     assert(end_events_.empty());
     assert(need_partners_.empty());
 
-    ActiveEdgeMap active_edges((RotationCompare(sorted_dimension)));
+    ActiveEdgeMap active_edges;
     EndEventsCompare end_events_compare(sorted_dimension);
 
     const HomoPoint3* prev_location = nullptr;
@@ -128,8 +128,18 @@ class EdgeLineConnector {
       while (edges_begin != edges_end &&
              edges_begin->get()->GetBeginLocation(sorted_dimension) ==
                *current_location) {
+        Vector2 projected_normal =
+          edges_begin->get()->polygon().normal()
+          .DropDimension(sorted_dimension);
+        bool pos_edge = edges_begin->get()->IsPositive(sorted_dimension);
+        if (!pos_edge) {
+          // This is a negative edge.
+          projected_normal.Negate();
+        }
         auto add_info =
-          active_edges.emplace(ActiveEdgeKey{edges_begin->get()},
+          active_edges.emplace(ActiveEdgeKey{pos_edge,
+                                             std::move(projected_normal),
+                                             edges_begin->get()},
                                ActiveEdgeValue{active_edges.end()});
         if (add_info.second) {
           add_info.first->first.deed->ResetPartners();
@@ -257,53 +267,34 @@ class EdgeLineConnector {
 
  private:
   struct ActiveEdgeKey {
-    Deed<EdgeRep> deed;
-  };
-
-  // Compares EdgeRep pointers based on a 2D projection of the connected
-  // polygon's normal.
-  //
-  // The vectors are compared using Vector2::RotationCompare. That comparison
-  // has the transitivity property, which is necessary for using the Compare in
-  // an std::set. RotationCompare gets transitivity by comparing the vectors
-  // based on their counter clockwise angles from the x axis.
-  struct RotationCompare {
-    RotationCompare(int sorted_dimension) :
-      sorted_dimension(sorted_dimension) { }
-
-    Vector2 GetProjectedNormal(const PolygonRep& polygon,
-                               bool pos_edge) const {
-      const Vector3& polygon_normal = polygon.normal();
-      Vector2 result =
-        polygon_normal.DropDimension(sorted_dimension);
-      if (!pos_edge) {
-        // This is a negative edge.
-        result.Negate();
+    // Compares EdgeRep pointers based on a 2D projection of the connected
+    // polygon's normal.
+    //
+    // The vectors are compared using Vector2::RotationCompare. That comparison
+    // has the transitivity property, which is necessary for using the Compare
+    // in an std::set. RotationCompare gets transitivity by comparing the
+    // vectors based on their counter clockwise angles from the x axis.
+    bool operator<(const ActiveEdgeKey &other) const {
+      if (!projected_polygon_normal.IsSameDir(
+            other.projected_polygon_normal)) {
+        return projected_polygon_normal.IsRotationLessThan(
+            other.projected_polygon_normal);
       }
-      return result;
-    }
-
-    bool operator()(const ActiveEdgeKey &e1, const ActiveEdgeKey& e2) const {
-      bool e1_pos = e1.deed->IsPositive(sorted_dimension);
-      bool e2_pos = e2.deed->IsPositive(sorted_dimension);
-      Vector2 e1_normal = GetProjectedNormal(e1.deed->polygon(), e1_pos);
-      Vector2 e2_normal = GetProjectedNormal(e2.deed->polygon(), e2_pos);
-      if (!e1_normal.IsSameDir(e2_normal)) {
-        return e1_normal.IsRotationLessThan(e2_normal);
-      }
-      if (e1_pos != e2_pos) {
+      if (pos_edge != other.pos_edge) {
         // Positive edges come before negative edges.
-        return e2_pos < e1_pos;
+        return other.pos_edge < pos_edge;
       }
       return false;
     }
 
-    int sorted_dimension;
+    bool pos_edge;
+    Vector2 projected_polygon_normal;
+    Deed<EdgeRep> deed;
   };
 
   struct ActiveEdgeValue {
-    using ActiveEdge = typename std::map<ActiveEdgeKey, ActiveEdgeValue,
-                                         RotationCompare>::iterator;
+    using ActiveEdge = typename std::map<ActiveEdgeKey,
+                                         ActiveEdgeValue>::iterator;
 
     // Points to the partner for this active edge, or map::end if the edge
     // does not currently have a partner.
@@ -322,8 +313,7 @@ class EdgeLineConnector {
   // Only one deed can be active per object at any given point. The key of the
   // map is used to hold the Deed, since the key is always non-null. The value
   // points to the deed from the key of some entry in the map.
-  using ActiveEdgeMap = std::map<ActiveEdgeKey, ActiveEdgeValue,
-                                 RotationCompare>;
+  using ActiveEdgeMap = std::map<ActiveEdgeKey, ActiveEdgeValue>;
   using ActiveEdge = typename ActiveEdgeMap::iterator;
 
   // Compares active edges based on their end point in the sorted_dimension.
