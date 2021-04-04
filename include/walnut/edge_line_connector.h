@@ -378,7 +378,7 @@ class EdgeLineConnector {
     // Look at all the entries in end_events_ at or after heap_end, and remove
     // them from active_events and end_events_.
     while (end_events_.end() != heap_end) {
-      if (!end_events_.back()->second.edge->IsPositive(sorted_dimension)) {
+      if (!end_events_.back()->first.pos_edge) {
         // The partner list is built in reverse order for negative half-edges.
         // Now that this negative half-edge is no longer active, reverse the
         // partner list to put it in the proper order.
@@ -398,7 +398,7 @@ class EdgeLineConnector {
     while (!need_partners_.empty()) {
       ActiveEdge needs_partner = need_partners_.back();
       need_partners_.pop_back();
-      bool pos_edge = needs_partner->second.edge->IsPositive(sorted_dimension);
+      bool pos_edge = needs_partner->first.pos_edge;
       // This starts out pointing to needs_partner. It is then moved to the
       // location of the new partner.
       ActiveEdge new_partner = needs_partner;
@@ -428,8 +428,7 @@ class EdgeLineConnector {
         need_partners_.push_back(old_target);
         needs_partner->second.partner = active_edges.end();
       }
-      bool partner_pos_edge =
-        new_partner->second.edge->IsPositive(sorted_dimension);
+      bool partner_pos_edge = new_partner->first.pos_edge;
       if (pos_edge == partner_pos_edge) {
         std::ostringstream out;
         out << "The closest edge has the same polarity as its neighbor"
