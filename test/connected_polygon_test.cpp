@@ -104,6 +104,30 @@ TEST(ConnectedPolygon, edge_index) {
   }
 }
 
+TEST(ConnectedPolygon, SplitEdge) {
+  ConnectedPolygon<> polygon(MakeRectangle());
+  polygon.edge(0).partner_ = &polygon.edge(1);
+  polygon.edge(1).partner_ = &polygon.edge(0);
+
+  HomoPoint3 p0 = polygon.vertex(0);
+  HomoPoint3 p1 = polygon.vertex(1);
+
+  HomoPoint3 mid_point(p0.x()*p1.w() + p1.x()*p0.w(),
+                       p0.y()*p1.w() + p1.y()*p0.w(),
+                       p0.z()*p1.w() + p1.z()*p0.w(), p0.w()*p1.w()*2);
+
+  polygon.SplitEdge(/*split_index=*/0, mid_point);
+  EXPECT_EQ(polygon.vertex(0), p0);
+  EXPECT_EQ(polygon.vertex(1), mid_point);
+  EXPECT_EQ(polygon.vertex(2), p1);
+
+  // The moved edges should still be partnered with each other.
+  EXPECT_EQ(polygon.edge(0).partner(), &polygon.edge(2));
+  // The new edge should not be partnered.
+  EXPECT_EQ(polygon.edge(1).partner(), nullptr);
+  EXPECT_EQ(polygon.edge(2).partner(), &polygon.edge(0));
+}
+
 TEST(ConnectedEdge, ReversePartnerList) {
   ConnectedPolygon<> polygon(MakeRectangle());
 

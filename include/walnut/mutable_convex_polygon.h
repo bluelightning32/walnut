@@ -23,6 +23,7 @@ class MutableConvexPolygon : public ConvexPolygon<EdgeParent> {
   using Parent::edge;
   using Parent::SortVertices;
   using Parent::CreateSplitChildren;
+  using Parent::SplitEdge;
 };
 
 }  // walnut

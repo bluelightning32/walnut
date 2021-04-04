@@ -499,6 +499,42 @@ class ConvexPolygon {
     return edges_[index];
   }
 
+  // Splits the edge at `split_index` by adding a new edge that starts at
+  // `mid_point`.
+  //
+  // The caller must ensure that `mid_point` is on the `split_index` edge.
+  //
+  // One of the split edges will remain at `split_index`, and the other will be
+  // at (split_index + 1).
+  // This function may invalidate pointers to edges. The updated pointers can
+  // be obtained with the `edge` function.
+  void SplitEdge(size_t split_index, HomoPoint3 mid_point) {
+    const EdgeRep& original_edge = edge(split_index);
+    // Verify that `mid_point` is on the line of the original edge.
+    assert(original_edge.line().IsCoincident(mid_point));
+    // Verify that `mid_point` comes after the start vertex of the original
+    // edge.
+    assert(
+        (original_edge.line().d().Dot(original_edge.vertex()
+                                     .vector_from_origin()) *
+         mid_point.w()).LessThan(
+           /*flip=*/original_edge.vertex().w().HasDifferentSign(mid_point.w()),
+           original_edge.line().d().Dot(mid_point.vector_from_origin()) *
+           original_edge.vertex().w()));
+    // Verify that `mid_point` comes before the end vertex of the original
+    // edge.
+    assert(
+        (original_edge.line().d().Dot(mid_point.vector_from_origin()) *
+         vertex((split_index + 1) % vertex_count()).w()).LessThan(
+          /*flip=*/mid_point.w().HasDifferentSign(
+            vertex((split_index + 1) % vertex_count()).w()),
+          original_edge.line().d().Dot(edge((split_index + 1) % vertex_count()).
+                                       vertex().vector_from_origin() *
+                                       mid_point.w())));
+    edges_.insert(edges_.begin() + split_index + 1,
+                  EdgeRep(original_edge, mid_point));
+  }
+
   // `EdgeParent` must be assignable from `OtherEdgeParent`.
   template <typename OtherEdgeParent>
   ConvexPolygon& operator=(const ConvexPolygon<OtherEdgeParent>& other) {

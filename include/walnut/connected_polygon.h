@@ -216,6 +216,7 @@ struct ConnectedEdge : public ParentTemplate, public DeedObject {
   FRIEND_TEST(ConnectedEdge, MoveAssign);
   FRIEND_TEST(ConnectedEdge, MoveConstruct);
   FRIEND_TEST(ConnectedEdge, ReversePartnerList);
+  FRIEND_TEST(ConnectedPolygon, SplitEdge);
 
   using ExtraConnectionIterator =
     typename std::vector<ExtraConnection>::iterator;
@@ -368,6 +369,7 @@ class ConnectedPolygon : public ParentTemplate::template MakeParent<
   // const and non-const edge functions from the parent.
   using Parent::edge;
   using Parent::vertex_count;
+  using Parent::SplitEdge;
 
  protected:
   template <typename ParentRef, typename SplitInfoRef>
