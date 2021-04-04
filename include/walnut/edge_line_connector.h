@@ -120,9 +120,9 @@ class EdgeLineConnector {
         ProcessEndEvents(sorted_dimension, active_edges, *current_location,
                          end_events_compare);
       }
-      assert (prev_location == nullptr ||
-              IsLocationLessThan(*prev_location, *current_location,
-                                 sorted_dimension));
+      assert(prev_location == nullptr ||
+             IsLocationLessThan(*prev_location, *current_location,
+                                sorted_dimension));
       prev_location = current_location;
 
       while (edges_begin != edges_end &&
@@ -130,7 +130,7 @@ class EdgeLineConnector {
                *current_location) {
         auto add_info =
           active_edges.emplace(edges_begin->get(),
-                               ActiveEdgeInfo{active_edges.end()});
+                               ActiveEdgeValue{active_edges.end()});
         assert(add_info.second);
         ++edges_begin;
         add_info.first->first->ResetPartners();
@@ -288,8 +288,8 @@ class EdgeLineConnector {
     int sorted_dimension;
   };
 
-  struct ActiveEdgeInfo {
-    using ActiveEdge = typename std::map<Deed<EdgeRep>, ActiveEdgeInfo,
+  struct ActiveEdgeValue {
+    using ActiveEdge = typename std::map<Deed<EdgeRep>, ActiveEdgeValue,
                                          RotationCompare>::iterator;
 
     // Points to the partner for this active edge, or map::end if the edge
@@ -309,7 +309,7 @@ class EdgeLineConnector {
   // Only one deed can be active per object at any given point. The key of the
   // map is used to hold the Deed, since the key is always non-null. The value
   // points to the deed from the key of some entry in the map.
-  using ActiveEdgeMap = std::map<Deed<EdgeRep>, ActiveEdgeInfo,
+  using ActiveEdgeMap = std::map<Deed<EdgeRep>, ActiveEdgeValue,
                                  RotationCompare>;
   using ActiveEdge = typename ActiveEdgeMap::iterator;
 
