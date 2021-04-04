@@ -110,13 +110,13 @@ class EdgeLineConnector {
       if (end_events_.empty() ||
           IsLocationLessThan(
             edges_begin->get()->GetBeginLocation(sorted_dimension),
-            end_events_.front()->first->GetEndLocation(sorted_dimension),
+            end_events_.front()->first.deed->GetEndLocation(sorted_dimension),
             sorted_dimension)) {
         current_location =
           &edges_begin->get()->GetBeginLocation(sorted_dimension);
       } else {
         current_location =
-          &end_events_.front()->first->GetEndLocation(sorted_dimension);
+          &end_events_.front()->first.deed->GetEndLocation(sorted_dimension);
         ProcessEndEvents(sorted_dimension, active_edges, *current_location,
                          end_events_compare);
       }
@@ -129,11 +129,11 @@ class EdgeLineConnector {
              edges_begin->get()->GetBeginLocation(sorted_dimension) ==
                *current_location) {
         auto add_info =
-          active_edges.emplace(edges_begin->get(),
+          active_edges.emplace(ActiveEdgeKey{edges_begin->get()},
                                ActiveEdgeValue{active_edges.end()});
         assert(add_info.second);
         ++edges_begin;
-        add_info.first->first->ResetPartners();
+        add_info.first->first.deed->ResetPartners();
         end_events_.push_back(add_info.first);
         std::push_heap(end_events_.begin(), end_events_.end(),
                        end_events_compare);
@@ -146,7 +146,7 @@ class EdgeLineConnector {
 
     while (!end_events_.empty()) {
       const HomoPoint3& current_location =
-        end_events_.front()->first->GetEndLocation(sorted_dimension);
+        end_events_.front()->first.deed->GetEndLocation(sorted_dimension);
       ProcessEndEvents(sorted_dimension, active_edges, current_location,
                        end_events_compare);
       ProcessNeedPartners(sorted_dimension, active_edges, current_location,
@@ -248,6 +248,10 @@ class EdgeLineConnector {
   }
 
  private:
+  struct ActiveEdgeKey {
+    Deed<EdgeRep> deed;
+  };
+
   // Compares EdgeRep pointers based on a 2D projection of the connected
   // polygon's normal.
   //
@@ -270,26 +274,26 @@ class EdgeLineConnector {
       return result;
     }
 
-    bool operator()(const Deed<EdgeRep> &e1, const Deed<EdgeRep>& e2) const {
-      Vector2 e1_normal = GetProjectedNormal(*e1);
-      Vector2 e2_normal = GetProjectedNormal(*e2);
+    bool operator()(const ActiveEdgeKey &e1, const ActiveEdgeKey& e2) const {
+      Vector2 e1_normal = GetProjectedNormal(*e1.deed);
+      Vector2 e2_normal = GetProjectedNormal(*e2.deed);
       if (!e1_normal.IsSameDir(e2_normal)) {
         return e1_normal.IsRotationLessThan(e2_normal);
       }
-      bool e1_pos = e1->IsPositive(sorted_dimension);
-      bool e2_pos = e2->IsPositive(sorted_dimension);
+      bool e1_pos = e1.deed->IsPositive(sorted_dimension);
+      bool e2_pos = e2.deed->IsPositive(sorted_dimension);
       if (e1_pos != e2_pos) {
         // Positive edges come before negative edges.
         return e2_pos < e1_pos;
       }
-      return e1.get() < e2.get();
+      return e1.deed.get() < e2.deed.get();
     }
 
     int sorted_dimension;
   };
 
   struct ActiveEdgeValue {
-    using ActiveEdge = typename std::map<Deed<EdgeRep>, ActiveEdgeValue,
+    using ActiveEdge = typename std::map<ActiveEdgeKey, ActiveEdgeValue,
                                          RotationCompare>::iterator;
 
     // Points to the partner for this active edge, or map::end if the edge
@@ -309,7 +313,7 @@ class EdgeLineConnector {
   // Only one deed can be active per object at any given point. The key of the
   // map is used to hold the Deed, since the key is always non-null. The value
   // points to the deed from the key of some entry in the map.
-  using ActiveEdgeMap = std::map<Deed<EdgeRep>, ActiveEdgeValue,
+  using ActiveEdgeMap = std::map<ActiveEdgeKey, ActiveEdgeValue,
                                  RotationCompare>;
   using ActiveEdge = typename ActiveEdgeMap::iterator;
 
@@ -321,9 +325,9 @@ class EdgeLineConnector {
     // Returns true if the endpoint of e1 is strictly greater than the endpoint
     // of e2.
     bool operator()(const ActiveEdge& e1, const ActiveEdge& e2) const {
-      return IsLocationLessThan(e2->first->GetEndLocation(sorted_dimension),
-                                e1->first->GetEndLocation(sorted_dimension),
-                                sorted_dimension);
+      return IsLocationLessThan(
+          e2->first.deed->GetEndLocation(sorted_dimension),
+          e1->first.deed->GetEndLocation(sorted_dimension), sorted_dimension);
     }
 
     int sorted_dimension;
@@ -346,7 +350,7 @@ class EdgeLineConnector {
     // is the part of end_events_ which is not a heap.
     EndEventsIterator heap_end = end_events_.end();
     while (end_events_.begin() != heap_end &&
-           end_events_.front()->first->GetEndLocation(sorted_dimension) ==
+           end_events_.front()->first.deed->GetEndLocation(sorted_dimension) ==
              location) {
       ActiveEdge remove = end_events_.front();
       // If the active edge is still pointing to another edge, mark put that
@@ -377,11 +381,11 @@ class EdgeLineConnector {
     // Look at all the entries in end_events_ at or after heap_end, and remove
     // them from active_events and end_events_.
     while (end_events_.end() != heap_end) {
-      if (!end_events_.back()->first->IsPositive(sorted_dimension)) {
+      if (!end_events_.back()->first.deed->IsPositive(sorted_dimension)) {
         // The partner list is built in reverse order for negative half-edges.
         // Now that this negative half-edge is no longer active, reverse the
         // partner list to put it in the proper order.
-        end_events_.back()->first->ReversePartnerList();
+        end_events_.back()->first.deed->ReversePartnerList();
       }
       assert(end_events_.back()->second.partner == end_events_.back());
       active_edges.erase(end_events_.back());
@@ -397,7 +401,7 @@ class EdgeLineConnector {
     while (!need_partners_.empty()) {
       ActiveEdge needs_partner = need_partners_.back();
       need_partners_.pop_back();
-      bool pos_edge = needs_partner->first->IsPositive(sorted_dimension);
+      bool pos_edge = needs_partner->first.deed->IsPositive(sorted_dimension);
       // This starts out pointing to needs_partner. It is then moved to the
       // location of the new partner.
       ActiveEdge new_partner = needs_partner;
@@ -415,7 +419,7 @@ class EdgeLineConnector {
         }
       }
       assert(new_partner != active_edges.end());
-      assert(new_partner->first != nullptr);
+      assert(new_partner->first.deed != nullptr);
       if (needs_partner->second.partner == new_partner) {
         // needs_partner already points to its new target.
         continue;
@@ -427,17 +431,18 @@ class EdgeLineConnector {
         need_partners_.push_back(old_target);
         needs_partner->second.partner = active_edges.end();
       }
-      bool partner_pos_edge = new_partner->first->IsPositive(sorted_dimension);
+      bool partner_pos_edge =
+        new_partner->first.deed->IsPositive(sorted_dimension);
       if (pos_edge == partner_pos_edge) {
         std::ostringstream out;
         out << "The closest edge has the same polarity as its neighbor"
-            << ", needs_partner=" << *needs_partner->first
+            << ", needs_partner=" << *needs_partner->first.deed
             << ", pos_edge=" << pos_edge
-            << ", closest=" << *new_partner->first
+            << ", closest=" << *new_partner->first.deed
             << " pos_edge=" << partner_pos_edge << ".";
         error(out.str());
-        AddPartner(sorted_dimension, *needs_partner->first, pos_edge, location,
-                   nullptr);
+        AddPartner(sorted_dimension, *needs_partner->first.deed, pos_edge,
+                   location, nullptr);
       } else {
         Repartner(sorted_dimension, needs_partner, pos_edge, location,
                   new_partner);
@@ -453,8 +458,8 @@ class EdgeLineConnector {
       need_partners_.push_back(target);
     }
     source->second.partner = target;
-    AddPartner(sorted_dimension, *source->first, source_pos, location,
-               target->first.get());
+    AddPartner(sorted_dimension, *source->first.deed, source_pos, location,
+               target->first.deed.get());
   }
 
   // Adds `target` as a new partner on `edge`.
