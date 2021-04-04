@@ -125,6 +125,12 @@ class EdgeLineConnector {
                                 sorted_dimension));
       prev_location = current_location;
 
+      assert(end_events_.size() == active_edges.size());
+      // As part of processing the begin events, the following loop will add
+      // more entries to the end of `end_events_`, and those new entries will
+      // not be merged into the heap until later.
+      size_t heap_size = end_events_.size();
+
       while (edges_begin != edges_end &&
              edges_begin->get()->GetBeginLocation(sorted_dimension) ==
                *current_location) {
@@ -140,12 +146,11 @@ class EdgeLineConnector {
           active_edges.emplace(ActiveEdgeKey{pos_edge,
                                              std::move(projected_normal)},
                                ActiveEdgeValue{edges_begin->get(),
-                                               active_edges.end()});
+                                               active_edges.end(),
+                                               /*current_endpoint=*/true});
         if (add_info.second) {
           add_info.first->second.edge->ResetPartners();
           end_events_.push_back(add_info.first);
-          std::push_heap(end_events_.begin(), end_events_.end(),
-                         end_events_compare);
           need_partners_.push_back(add_info.first);
         } else {
           std::ostringstream out;
@@ -158,8 +163,14 @@ class EdgeLineConnector {
         ++edges_begin;
       }
 
-      ProcessNeedPartners(sorted_dimension, active_edges, *current_location,
-                          error);
+      ProcessNeedPartners(active_edges, *current_location, error);
+
+      EndEventsIterator heap_end = end_events_.begin() + heap_size;
+      while (heap_end != end_events_.end()) {
+        (*heap_end)->second.current_endpoint = false;
+        ++heap_end;
+        std::push_heap(end_events_.begin(), heap_end, end_events_compare);
+      }
     }
 
     while (!end_events_.empty()) {
@@ -167,8 +178,7 @@ class EdgeLineConnector {
         end_events_.front()->second.edge->GetEndLocation(sorted_dimension);
       ProcessEndEvents(sorted_dimension, active_edges, current_location,
                        end_events_compare);
-      ProcessNeedPartners(sorted_dimension, active_edges, current_location,
-                          error);
+      ProcessNeedPartners(active_edges, current_location, error);
     }
 
     assert(active_edges.empty());
@@ -302,6 +312,11 @@ class EdgeLineConnector {
     // If the edge points back to itself, that special value indicates that the
     // edge is marked for removal.
     ActiveEdge partner;
+
+    // Set to true if the edge's lower endpoint matches the current location,
+    // or false if the edge was added as part of processing a previous
+    // location.
+    bool current_endpoint;
   };
 
   // The active edges are indexed by the projected normals of their polygons.
@@ -392,8 +407,7 @@ class EdgeLineConnector {
 
   // Repartner everything in need_partners_, and clear needs_partners_.
   void ProcessNeedPartners(
-      int sorted_dimension, ActiveEdgeMap& active_edges,
-      const HomoPoint3& location,
+      ActiveEdgeMap& active_edges, const HomoPoint3& location,
       const std::function<void(const std::string&)>& error) {
     while (!need_partners_.empty()) {
       ActiveEdge needs_partner = need_partners_.back();
@@ -437,25 +451,22 @@ class EdgeLineConnector {
             << ", closest=" << *new_partner->second.edge
             << " pos_edge=" << partner_pos_edge << ".";
         error(out.str());
-        AddPartner(sorted_dimension, *needs_partner->second.edge, pos_edge,
-                   location, nullptr);
+        AddPartner(needs_partner, location, nullptr);
       } else {
-        Repartner(sorted_dimension, needs_partner, pos_edge, location,
-                  new_partner);
+        Repartner(needs_partner, location, new_partner);
       }
     }
   }
 
   // Set source's current partner to target, unless it already points to
   // target.
-  void Repartner(int sorted_dimension, ActiveEdge source, bool source_pos,
-                 const HomoPoint3& location, ActiveEdge target) {
+  void Repartner(const ActiveEdge& source, const HomoPoint3& location,
+                 const ActiveEdge& target) {
     if (target->second.partner != source) {
       need_partners_.push_back(target);
     }
     source->second.partner = target;
-    AddPartner(sorted_dimension, *source->second.edge, source_pos, location,
-               target->second.edge.get());
+    AddPartner(source, location, target->second.edge.get());
   }
 
   // Adds `target` as a new partner on `edge`.
@@ -467,15 +478,10 @@ class EdgeLineConnector {
   //
   // Note that the location check is necessary because with malformed input,
   // the first partner could be nullptr, followed by a non-null partner.
-  void AddPartner(int sorted_dimension, EdgeRep& edge, bool pos_edge,
-                  const HomoPoint3& location, EdgeRep* target) {
-    const HomoPoint3& compare_endpoint =
-      pos_edge ? edge.vertex() : edge.next_vertex();
-    if (rational::Equals(
-          location.vector_from_origin().components()[sorted_dimension],
-          location.w(),
-          compare_endpoint.vector_from_origin().components()[sorted_dimension],
-          compare_endpoint.w())) {
+  void AddPartner(const ActiveEdge& active_edge, const HomoPoint3& location,
+                  EdgeRep* target) {
+    EdgeRep& edge = *active_edge->second.edge;
+    if (active_edge->second.current_endpoint) {
       assert(edge.partner_ == nullptr);
       edge.partner_ = target;
     } else {
