@@ -133,6 +133,10 @@ TEST(ConnectedPolygon, SplitEdge) {
   // The new edge should not be partnered.
   EXPECT_EQ(polygon.edge(1).partner(), nullptr);
   EXPECT_EQ(polygon.edge(2).partner(), &polygon.edge(0));
+
+  EXPECT_EQ(&polygon.edge(0).polygon(), &polygon);
+  EXPECT_EQ(&polygon.edge(1).polygon(), &polygon);
+  EXPECT_EQ(&polygon.edge(2).polygon(), &polygon);
 }
 
 TEST(ConnectedEdge, ReversePartnerList) {

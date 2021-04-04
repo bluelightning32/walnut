@@ -47,6 +47,10 @@ struct ConnectedEdge : public ParentTemplate, public DeedObject {
 
   ConnectedEdge(const Parent& other) : Parent(other) { }
 
+  ConnectedEdge(const ConnectedEdge& parent_edge, const HomoPoint3& vertex) :
+    Parent(parent_edge, vertex),
+    polygon_(parent_edge.polygon_) { }
+
   using Parent::Parent;
 
   bool operator==(const ConnectedEdge& other) const {
