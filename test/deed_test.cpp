@@ -125,6 +125,22 @@ TEST(Deed, Return) {
   EXPECT_EQ(deed1.get(), &o1);
 }
 
+TEST(Deed, SwapLent) {
+  TestObject o1(1);
+  Deed<TestObject> deed1(&o1);
+  Deed<TestObject> deed2 = deed1.Lend();
+  EXPECT_TRUE(deed1.is_lender());
+  {
+    Deed<TestObject> deed3;
+    deed3.swap(deed2);
+    EXPECT_EQ(deed3.get(), &o1);
+    EXPECT_EQ(deed2.get(), nullptr);
+  }
+  // deed1 is restored when deed3 is destructed.
+  EXPECT_FALSE(deed1.is_lender());
+  EXPECT_EQ(deed1.get(), &o1);
+}
+
 TEST(Deed, Dereference) {
   TestObject o1(1);
   Deed<TestObject> deed1(&o1);

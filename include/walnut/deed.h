@@ -89,7 +89,7 @@ class GenericDeed {
     }
   }
 
-  GenericDeed& operator=(GenericDeed&& other) {
+  void swap(GenericDeed& other) {
     assert(!other.is_lender());
     assert(!is_lender());
     if (object_) {
@@ -100,6 +100,10 @@ class GenericDeed {
       object_->owner_ = this;
     }
     std::swap(lender_, other.lender_);
+  }
+
+  GenericDeed& operator=(GenericDeed&& other) {
+    swap(other);
     return *this;
   }
 
