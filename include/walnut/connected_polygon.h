@@ -146,8 +146,8 @@ struct ConnectedEdge : public ParentTemplate, public DeedObject {
 
  protected:
   ConnectedEdge(ConnectedEdge&& other) :
-      Parent(std::move(other)), polygon_(other.polygon_),
-      partner_(other.partner_),
+      Parent(std::move(other)), DeedObject(std::move(other)),
+      polygon_(other.polygon_), partner_(other.partner_),
       extra_partners_(std::move(other.extra_partners_)) {
     if (partner_ != nullptr) {
       partner_->partner_ = this;
@@ -170,6 +170,9 @@ struct ConnectedEdge : public ParentTemplate, public DeedObject {
   ConnectedEdge& operator=(const ConnectedEdge&) = default;
 
   ConnectedEdge& operator=(ConnectedEdge&& other) {
+    static_cast<Parent&>(*this) = std::move(other);
+    static_cast<DeedObject&>(*this) = std::move(other);
+
     std::swap(partner_, other.partner_);
     polygon_ = other.polygon_;
     extra_partners_ = std::move(other.extra_partners_);

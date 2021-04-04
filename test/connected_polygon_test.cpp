@@ -116,10 +116,17 @@ TEST(ConnectedPolygon, SplitEdge) {
                        p0.y()*p1.w() + p1.y()*p0.w(),
                        p0.z()*p1.w() + p1.z()*p0.w(), p0.w()*p1.w()*2);
 
+  using EdgeDeed = Deed<ConnectedPolygon<>::EdgeRep>;
+  EdgeDeed e0_deed(&polygon.edge(0));
+  EXPECT_EQ(e0_deed.get(), &polygon.edge(0));
+
   polygon.SplitEdge(/*split_index=*/0, mid_point);
   EXPECT_EQ(polygon.vertex(0), p0);
   EXPECT_EQ(polygon.vertex(1), mid_point);
   EXPECT_EQ(polygon.vertex(2), p1);
+
+  // The deed should stick to the lower index.
+  EXPECT_EQ(e0_deed.get(), &polygon.edge(0));
 
   // The moved edges should still be partnered with each other.
   EXPECT_EQ(polygon.edge(0).partner(), &polygon.edge(2));
