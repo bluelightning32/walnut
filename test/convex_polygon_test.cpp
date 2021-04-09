@@ -72,6 +72,24 @@ TEST(ConvexPolygon, TrianglePlane) {
   }
 }
 
+TEST(ConvexPolygon, RotateEdges) {
+  Point3 input[] = {
+    Point3(0, 0, 10),
+    Point3(1, 0, 10),
+    Point3(1, 1, 10),
+  };
+
+  MutableConvexPolygon<> polygon = MakeConvexPolygon(input);
+  EXPECT_EQ(polygon.vertex(0), input[0]);
+  EXPECT_EQ(polygon.vertex(1), input[1]);
+  EXPECT_EQ(polygon.vertex(2), input[2]);
+
+  polygon.RotateEdges(1);
+  EXPECT_EQ(polygon.vertex(0), input[1]);
+  EXPECT_EQ(polygon.vertex(1), input[2]);
+  EXPECT_EQ(polygon.vertex(2), input[0]);
+}
+
 TEST(ConvexPolygon, Triangle0DistPlane) {
   Point3 input[] = {
     Point3(0, 0, 0),

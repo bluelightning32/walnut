@@ -22,6 +22,7 @@ class MutableConvexPolygon : public ConvexPolygon<EdgeParent> {
   using Parent::operator=;
   using Parent::edge;
   using Parent::SortVertices;
+  using Parent::RotateEdges;
   using Parent::CreateSplitChildren;
   using Parent::SplitEdge;
 };

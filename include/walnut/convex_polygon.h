@@ -549,19 +549,17 @@ class ConvexPolygon {
   //
   // Sorting the vertices does not affect the shape of the polygon.
   void SortVertices() {
-    RotateVertices(GetMinimumIndex());
+    RotateEdges(GetMinimumIndex());
   }
 
-  // Rotates `edges_`, such that the lexicographically minimum vertex comes
-  // first.
+  // Rotates `edges_`, such that the edge at `offset` becomes the first.
   //
   // The caller must ensure:
   //   0 <= offset < vertex_count()
   //
   // Rotating the vertices does not affect the shape of the polygon.
-  void RotateVertices(size_t offset) {
-    std::rotate(edges_.begin(), edges_.begin() + GetMinimumIndex(),
-                edges_.end());
+  void RotateEdges(size_t offset) {
+    std::rotate(edges_.begin(), edges_.begin() + offset, edges_.end());
   }
 
   // Creates both split children.

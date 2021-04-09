@@ -83,12 +83,12 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
 
   // Overrides the non-virtual function from ConvexPolygon.
   void SortVertices() {
-    RotateVertices(Parent::GetMinimumIndex());
+    RotateEdges(Parent::GetMinimumIndex());
   }
 
   // Overrides the non-virtual function from ConvexPolygon.
-  void RotateVertices(size_t offset) {
-    Parent::RotateVertices(offset);
+  void RotateEdges(size_t offset) {
+    Parent::RotateEdges(offset);
     aabb_tracker_.RotateIndices(offset, vertex_count());
   }
 
