@@ -112,6 +112,17 @@ struct ConvexPolygonEdge : public ParentTemplate {
     return vertex_;
   }
 
+  // Returns true if this edge can be merged (removed) when `prev` is the
+  // previous edge.
+  //
+  // The caller ensures that this edge is on the same line and points the same
+  // direction as `prev.
+  bool CanMerge(const ConvexPolygonEdge& prev) const {
+    assert(line().d().IsSameDir(prev.line().d()));
+    assert(prev.line().IsCoincident(vertex_));
+    return Parent::CanMerge(prev);
+  }
+
  protected:
   // In order to make a std::vector of edges, the vector needs access to the
   // assignment operator. So to give the vector access, wrap the edge with an

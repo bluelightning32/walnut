@@ -1633,7 +1633,6 @@ TEST(ConvexPolygon, MergeConvexVertex) {
     q[2],
     p[2],
     p[3],
-    p[0],
   };
   ConvexPolygon<> expected_merged = MakeConvexPolygon(merged_points);
 
@@ -1779,10 +1778,8 @@ TEST(ConvexPolygon, MergeLastVertex) {
 
   Point3 merged_points[] = {
     p[0],
-    p[1],
     q[1],
     q[2],
-    q[3],
     p[3],
   };
   ConvexPolygon<> expected_merged = MakeConvexPolygon(merged_points);

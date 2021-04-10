@@ -31,6 +31,15 @@ struct EdgeInfoRoot {
   constexpr EdgeInfoRoot& operator=(const EdgeInfoRoot& other) {
     return *this;
   }
+
+  // Returns true if this edge can be merged (removed) when `prev` is the
+  // previous edge.
+  //
+  // The caller ensures that this edge is on the same line and points the same
+  // direction as `prev.
+  bool CanMerge(const EdgeInfoRoot& prev) const {
+    return true;
+  }
 };
 
 }  // walnut
