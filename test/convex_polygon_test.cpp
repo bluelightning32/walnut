@@ -1553,4 +1553,252 @@ TEST(ConvexPolygon, VerticesIterator) {
             triangle.vertex_count());
 }
 
+TEST(ConvexPolygon, FailMergeReflexVertex) {
+  //                          |
+  //      p[3]       p[2]     |
+  //      +-----------+       |
+  //      | polygon1 /        |
+  //      |         /         |
+  // p[0] |________/ p[1]     |
+  // q[3] |        \ q[2]     |
+  //      |         \         |
+  //      | polygon2 \        |
+  //      +-----------+       |
+  //      q[0]       q[1]     |
+  //                          |
+  Point3 p[] = {
+    Point3(0, 2, 10),
+    Point3(2, 2, 10),
+    Point3(3, 4, 10),
+    Point3(0, 4, 10),
+  };
+  MutableConvexPolygon<> polygon1 = MakeConvexPolygon(p);
+  EXPECT_EQ(polygon1.vertex(0), p[0]);
+
+  Point3 q[] = {
+    Point3(0, 0, 10),
+    Point3(3, 0, 10),
+    Point3(2, 2, 10),
+    Point3(0, 2, 10),
+  };
+  MutableConvexPolygon<> polygon2 = MakeConvexPolygon(q);
+  EXPECT_EQ(polygon2.vertex(0), q[0]);
+
+  ASSERT_FALSE(polygon1.TryMergePolygon(/*nonzero_edge_dimension=*/0,
+                                        /*my_edge_index=*/0,
+                                        /*other=*/polygon2,
+                                        /*other_edge_index=*/2));
+  ASSERT_FALSE(polygon2.TryMergePolygon(/*nonzero_edge_dimension=*/0,
+                                        /*my_edge_index=*/2,
+                                        /*other=*/polygon1,
+                                        /*other_edge_index=*/0));
+}
+
+TEST(ConvexPolygon, MergeConvexVertex) {
+  //                              |
+  //      p[3]       p[2]         |
+  //      +-----------+           |
+  //      | polygon1   \          |
+  //      |             \         |
+  // p[0] |______________\ p[1]   |
+  // q[3] |              / q[2]   |
+  //      |             /         |
+  //      | polygon2   /          |
+  //      +-----------+           |
+  //      q[0]       q[1]         |
+  //                              |
+  Point3 p[] = {
+    Point3(0, 2, 10),
+    Point3(4, 2, 10),
+    Point3(3, 4, 10),
+    Point3(0, 4, 10),
+  };
+  MutableConvexPolygon<> polygon1a = MakeConvexPolygon(p);
+  MutableConvexPolygon<> polygon1b = MakeConvexPolygon(p);
+  EXPECT_EQ(polygon1a.vertex(0), p[0]);
+
+  Point3 q[] = {
+    Point3(0, 0, 10),
+    Point3(3, 0, 10),
+    p[1],
+    p[0],
+  };
+  MutableConvexPolygon<> polygon2a = MakeConvexPolygon(q);
+  MutableConvexPolygon<> polygon2b = MakeConvexPolygon(q);
+  EXPECT_EQ(polygon2a.vertex(0), q[0]);
+
+  Point3 merged_points[] = {
+    q[0],
+    q[1],
+    q[2],
+    p[2],
+    p[3],
+    p[0],
+  };
+  ConvexPolygon<> expected_merged = MakeConvexPolygon(merged_points);
+
+  EXPECT_TRUE(polygon1a.TryMergePolygon(/*nonzero_edge_dimension=*/0,
+                                        /*my_edge_index=*/0,
+                                        /*other=*/polygon2a,
+                                        /*other_edge_index=*/2));
+  EXPECT_EQ(polygon1a, expected_merged);
+  EXPECT_EQ(polygon2a.vertex_count(), 0);
+  EXPECT_TRUE(polygon2b.TryMergePolygon(/*nonzero_edge_dimension=*/0,
+                                        /*my_edge_index=*/2,
+                                        /*other=*/polygon1b,
+                                        /*other_edge_index=*/0));
+  EXPECT_EQ(polygon2b, expected_merged);
+  EXPECT_EQ(polygon1b.vertex_count(), 0);
+}
+
+TEST(ConvexPolygon, FailMergeExtraVertex) {
+  //                          |
+  //      p[4]       p[3]     |
+  //      +-----------+       |
+  //      | polygon1 /        |
+  //      |  p[1]   /         |
+  // p[0] |____+___/ p[2]     |
+  // q[4] |  q[3]  \ q[2]     |
+  //      |         \         |
+  //      | polygon2 \        |
+  //      +-----------+       |
+  //      q[0]       q[1]     |
+  //                          |
+  Point3 p[] = {
+    Point3(0, 2, 10),
+    Point3(1, 2, 10),
+    Point3(2, 2, 10),
+    Point3(3, 4, 10),
+    Point3(0, 4, 10),
+  };
+  MutableConvexPolygon<> polygon1 = MakeConvexPolygon(p);
+  EXPECT_EQ(polygon1.vertex(0), p[0]);
+
+  Point3 q[] = {
+    Point3(0, 0, 10),
+    Point3(3, 0, 10),
+    Point3(2, 2, 10),
+    Point3(1, 2, 10),
+    Point3(0, 2, 10),
+  };
+  MutableConvexPolygon<> polygon2 = MakeConvexPolygon(q);
+  EXPECT_EQ(polygon2.vertex(0), q[0]);
+
+  ASSERT_FALSE(polygon1.TryMergePolygon(/*nonzero_edge_dimension=*/0,
+                                        /*my_edge_index=*/0,
+                                        /*other=*/polygon2,
+                                        /*other_edge_index=*/3));
+  ASSERT_FALSE(polygon1.TryMergePolygon(/*nonzero_edge_dimension=*/0,
+                                        /*my_edge_index=*/1,
+                                        /*other=*/polygon2,
+                                        /*other_edge_index=*/2));
+
+  ASSERT_FALSE(polygon2.TryMergePolygon(/*nonzero_edge_dimension=*/0,
+                                        /*my_edge_index=*/3,
+                                        /*other=*/polygon1,
+                                        /*other_edge_index=*/0));
+  ASSERT_FALSE(polygon2.TryMergePolygon(/*nonzero_edge_dimension=*/0,
+                                        /*my_edge_index=*/2,
+                                        /*other=*/polygon1,
+                                        /*other_edge_index=*/1));
+}
+
+TEST(ConvexPolygon, FailMergeDifferentNormal) {
+  //                              |
+  //      p[3]       p[2]         |
+  //      +-----------+           |
+  //      | polygon1   \          |
+  //      |             \         |
+  // p[0] |______________\ p[1]   |
+  // q[3] |              / q[2]   |
+  //      |             /         |
+  //      | polygon2   /          |
+  //      +-----------+           |
+  //      q[0]       q[1]         |
+  //                              |
+  // polygon1's normal is completely vertical. polygon2's normal points a
+  // little down.
+  Point3 p[] = {
+    Point3(0, 2, 10),
+    Point3(4, 2, 10),
+    Point3(3, 4, 10),
+    Point3(0, 4, 10),
+  };
+  MutableConvexPolygon<> polygon1 = MakeConvexPolygon(p);
+  EXPECT_EQ(polygon1.vertex(0), p[0]);
+
+  Point3 q[] = {
+    Point3(0, 0, 0),
+    Point3(3, 0, 0),
+    Point3(4, 2, 10),
+    Point3(0, 2, 10),
+  };
+  MutableConvexPolygon<> polygon2 = MakeConvexPolygon(q);
+  EXPECT_EQ(polygon2.vertex(0), q[0]);
+
+  ASSERT_FALSE(polygon1.TryMergePolygon(/*nonzero_edge_dimension=*/0,
+                                        /*my_edge_index=*/0,
+                                        /*other=*/polygon2,
+                                        /*other_edge_index=*/2));
+  ASSERT_FALSE(polygon2.TryMergePolygon(/*nonzero_edge_dimension=*/0,
+                                        /*my_edge_index=*/2,
+                                        /*other=*/polygon1,
+                                        /*other_edge_index=*/0));
+}
+
+TEST(ConvexPolygon, MergeLastVertex) {
+  //
+  // p[3]    p[2] q[3]     q[2]
+  //  +----------+----------+
+  //  |          |          |
+  //  | polygon1 | polygon2 |
+  //  |          |          |
+  //  |          |          |
+  //  +----------+----------+
+  // p[0]    p[1] q[0]     q[1]
+  //
+  Point3 p[] = {
+    Point3(0, 0, 10),
+    Point3(2, 0, 10),
+    Point3(2, 2, 10),
+    Point3(0, 2, 10),
+  };
+  MutableConvexPolygon<> polygon1a = MakeConvexPolygon(p);
+  MutableConvexPolygon<> polygon1b = MakeConvexPolygon(p);
+  EXPECT_EQ(polygon1a.vertex(0), p[0]);
+
+  Point3 q[] = {
+    p[1],
+    Point3(4, 0, 10),
+    Point3(4, 2, 10),
+    p[2],
+  };
+  MutableConvexPolygon<> polygon2a = MakeConvexPolygon(q);
+  MutableConvexPolygon<> polygon2b = MakeConvexPolygon(q);
+  EXPECT_EQ(polygon2a.vertex(0), q[0]);
+
+  Point3 merged_points[] = {
+    p[0],
+    p[1],
+    q[1],
+    q[2],
+    q[3],
+    p[3],
+  };
+  ConvexPolygon<> expected_merged = MakeConvexPolygon(merged_points);
+
+  EXPECT_TRUE(polygon1a.TryMergePolygon(/*nonzero_edge_dimension=*/1,
+                                        /*my_edge_index=*/1,
+                                        /*other=*/polygon2a,
+                                        /*other_edge_index=*/3));
+  EXPECT_EQ(polygon1a, expected_merged);
+  EXPECT_EQ(polygon2a.vertex_count(), 0);
+  EXPECT_TRUE(polygon2b.TryMergePolygon(/*nonzero_edge_dimension=*/1,
+                                        /*my_edge_index=*/3,
+                                        /*other=*/polygon1b,
+                                        /*other_edge_index=*/1));
+  EXPECT_EQ(polygon2b, expected_merged);
+  EXPECT_EQ(polygon1b.vertex_count(), 0);
+}
+
 }  // walnut

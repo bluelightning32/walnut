@@ -535,6 +535,109 @@ class ConvexPolygon {
                   EdgeRep(original_edge, mid_point));
   }
 
+  // Tries to merge `other` into `this` by joining the half edges at
+  // `my_edge_index` and `other_edge_index`. If the polygons are successfully
+  // merged, true is returned and all of the edges are removed from `other`.
+  //
+  // The caller must ensure that the endpoints of the edges match up.
+  //
+  // The caller must ensure that the `nonzero_edge_dimension` component of the
+  // edge vector is non-zero.
+  //
+  // False will be returned if the polygons cannot be merged for of any of the
+  // following reasons:
+  // * The normal vectors of the polygons point in different directions.
+  // * The merged polygon would not be convex.
+  bool TryMergePolygon(int nonzero_edge_dimension, size_t my_edge_index,
+                       ConvexPolygon& other, size_t other_edge_index) {
+    const EdgeRep& my_edge = edge(my_edge_index);
+    const EdgeRep& other_edge = other.edge(other_edge_index);
+    assert(!my_edge.line().d().components()[nonzero_edge_dimension].IsZero());
+    assert(my_edge.vertex() ==
+           other.vertex((other_edge_index + 1) % other.vertex_count()));
+    assert(other_edge.vertex() ==
+           vertex((my_edge_index + 1) % vertex_count()));
+
+    if (!normal().DropDimension(nonzero_edge_dimension).IsSameDir(
+          other.normal().DropDimension(nonzero_edge_dimension))) {
+      return false;
+    }
+
+    const EdgeRep& my_prev_edge =
+      edge((my_edge_index - 1 + vertex_count()) % vertex_count());
+    const EdgeRep& other_next_edge =
+      other.edge((other_edge_index + 1 + other.vertex_count()) %
+                 other.vertex_count());
+
+    const EdgeRep& my_next_edge =
+      edge((my_edge_index + 1 + vertex_count()) % vertex_count());
+    const EdgeRep& other_prev_edge =
+      other.edge((other_edge_index - 1 + other.vertex_count()) %
+                 other.vertex_count());
+
+    // The twist of the merged polygon at the vertex that used to be
+    // my_edge_index.
+    BigIntWord my_twist =
+      my_prev_edge.line().d().DropDimension(drop_dimension_).Cross(
+          other_next_edge.line().d().DropDimension(drop_dimension_)).GetSign();
+    BigIntWord normal_sign = normal().components()[drop_dimension_].GetSign();
+    if (my_twist == 0) {
+      if (my_prev_edge.line().d().components()[nonzero_edge_dimension]
+          .HasDifferentSign(other_next_edge.line().d()
+                            .components()[nonzero_edge_dimension])) {
+        return false;
+      }
+    } else {
+      if ((my_twist ^ normal_sign) < 0) {
+        return false;
+      }
+    }
+    // The twist of the merged polygon at the vertex that used to be
+    // other_edge_index.
+    BigIntWord other_twist =
+      other_prev_edge.line().d().DropDimension(drop_dimension_).Cross(
+          my_next_edge.line().d().DropDimension(drop_dimension_)).GetSign();
+    if (other_twist == 0) {
+      if (other_prev_edge.line().d().components()[nonzero_edge_dimension]
+          .HasDifferentSign(my_next_edge.line().d()
+                            .components()[nonzero_edge_dimension])) {
+        return false;
+      }
+    } else {
+      if ((other_twist ^ normal_sign) < 0) {
+        return false;
+      }
+    }
+
+    // All checks passed. Merge it.
+    const size_t old_size = edges_.size();
+    edges_.reserve(old_size + other.edges_.size() - 2);
+    std::move_iterator<typename EdgeVector::iterator> range1_begin(
+        other.edges_.begin() + other_edge_index + 1);
+    std::move_iterator<typename EdgeVector::iterator> range1_end(
+        other.edges_.end());
+    std::move_iterator<typename EdgeVector::iterator> range2_begin(
+        other.edges_.begin());
+    std::move_iterator<typename EdgeVector::iterator> range2_end(
+        other.edges_.begin() + other_edge_index);
+    if (range1_begin != range1_end) {
+      edges_[my_edge_index] = *range1_begin;
+      ++range1_begin;
+    } else {
+      edges_[my_edge_index] = *range2_begin;
+      ++range2_begin;
+    }
+    // First insert the remaining other.edges_ at the end of edges_.
+    edges_.insert(edges_.end(), range1_begin, range1_end);
+    edges_.insert(edges_.end(), range2_begin, range2_end);
+    // Now rotate the edges inserted from other into the correct place in the
+    // middle of edges_.
+    std::rotate(edges_.begin() + my_edge_index + 1, edges_.begin() + old_size,
+                edges_.end());
+    other.edges_.clear();
+    return true;
+  }
+
   // `EdgeParent` must be assignable from `OtherEdgeParent`.
   template <typename OtherEdgeParent>
   ConvexPolygon& operator=(const ConvexPolygon<OtherEdgeParent>& other) {

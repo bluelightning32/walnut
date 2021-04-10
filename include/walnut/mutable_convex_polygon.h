@@ -25,6 +25,7 @@ class MutableConvexPolygon : public ConvexPolygon<EdgeParent> {
   using Parent::RotateEdges;
   using Parent::CreateSplitChildren;
   using Parent::SplitEdge;
+  using Parent::TryMergePolygon;
 };
 
 }  // walnut
