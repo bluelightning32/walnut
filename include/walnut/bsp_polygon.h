@@ -28,7 +28,6 @@ class BSPPolygon :
     >;
   using typename Parent::EdgeParent;
   using BSPEdgeInfoRep = BSPEdgeInfo<BSPNodeRep>;
-  using BSPNodeSideRep = typename BSPEdgeInfoRep::BSPNodeSideRep;
 
   static_assert(std::is_base_of<ConvexPolygon<EdgeParent>, Parent>::value,
       "The OutputPolygonParentTemplate must inherit from ConvexPolygon.");
@@ -36,17 +35,17 @@ class BSPPolygon :
   BSPPolygon() = default;
 
   template <typename OtherPolygon>
-  BSPPolygon(BSPContentId id, const BSPNodeRep* on_node_plane, bool pos_side,
+  BSPPolygon(BSPContentId id, const HalfSpace3* on_node_plane, bool pos_side,
              OtherPolygon&& parent) :
     Parent(std::forward<OtherPolygon>(parent)), id(id),
     on_node_plane{on_node_plane, pos_side} { }
 
-  BSPPolygon(const BSPNodeRep* on_node_plane, bool pos_side,
+  BSPPolygon(const HalfSpace3* on_node_plane, bool pos_side,
              const BSPPolygon& parent) :
     Parent(parent), id(parent.id),
     on_node_plane{on_node_plane, pos_side} { }
 
-  BSPPolygon(const BSPNodeRep* on_node_plane, bool pos_side,
+  BSPPolygon(const HalfSpace3* on_node_plane, bool pos_side,
              BSPPolygon&& parent) :
     Parent(std::move(parent)), id(parent.id),
     on_node_plane{on_node_plane, pos_side} { }
@@ -79,7 +78,7 @@ class BSPPolygon :
   //
   // pos_side is true if this polygon is a child of the positive child of the
   // split node.
-  BSPNodeSideRep on_node_plane;
+  SplitSide on_node_plane;
 
  protected:
   // Overrides the non-virtual function from ConvexPolygon.

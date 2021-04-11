@@ -8,11 +8,8 @@
 
 namespace walnut {
 
-template <typename BSPNodeTemplate>
-struct BSPNodeSide {
-  using BSPNodeRep = BSPNodeTemplate;
-
-  const BSPNodeRep* node = nullptr;
+struct SplitSide {
+  const HalfSpace3* split = nullptr;
   bool pos_side = false;
 };
 
@@ -20,7 +17,6 @@ template <typename BSPNodeTemplate, typename ParentTemplate = EdgeInfoRoot>
 class BSPEdgeInfo : public ParentTemplate {
  public:
   using BSPNodeRep = BSPNodeTemplate;
-  using BSPNodeSideRep = BSPNodeSide<BSPNodeRep>;
 
   BSPEdgeInfo(const EdgeInfoRoot&) { }
 
@@ -56,15 +52,15 @@ class BSPEdgeInfo : public ParentTemplate {
     return false;
   }
 
-  const BSPNodeSideRep& edge_first_coincident() const {
+  const SplitSide& edge_first_coincident() const {
     return edge_first_coincident_;
   }
 
-  const BSPNodeSideRep& vertex_last_coincident() const {
+  const SplitSide& vertex_last_coincident() const {
     return vertex_last_coincident_;
   }
 
-  const BSPNodeSideRep& edge_last_coincident() const {
+  const SplitSide& edge_last_coincident() const {
     return edge_last_coincident_;
   }
 
@@ -75,9 +71,9 @@ class BSPEdgeInfo : public ParentTemplate {
 
 
   void ResetBSPInfo() {
-    edge_first_coincident_ = BSPNodeSideRep();
-    vertex_last_coincident_ = BSPNodeSideRep();
-    edge_last_coincident_ = BSPNodeSideRep();
+    edge_first_coincident_ = SplitSide();
+    vertex_last_coincident_ = SplitSide();
+    edge_last_coincident_ = SplitSide();
   }
 
   // The BSPNodeRep highest in the tree that is coincident with the entire
@@ -85,20 +81,20 @@ class BSPEdgeInfo : public ParentTemplate {
   // nodes.
   //
   // This field is updated directly by BSPNodeRep.
-  BSPNodeSideRep edge_first_coincident_;
+  SplitSide edge_first_coincident_;
 
   // The BSPNodeRep deepest in the tree that is coincident with the vertex, or
   // nullptr, if the vertex is not coincident with any of its ancestor nodes.
   //
   // This field is updated directly by BSPNodeRep.
-  BSPNodeSideRep vertex_last_coincident_;
+  SplitSide vertex_last_coincident_;
 
   // The BSPNodeRep deepest in the tree that is coincident with the entire
   // edge, or nullptr, if the edge is not coincident with any of its ancestor
   // nodes.
   //
   // This field is updated directly by BSPNodeRep.
-  BSPNodeSideRep edge_last_coincident_;
+  SplitSide edge_last_coincident_;
 };
 
 template <typename OutputPolygonParent, typename ParentTemplate>
@@ -112,10 +108,8 @@ std::ostream& operator<<(
   return out;
 }
 
-template <typename BSPNodeTemplate>
-std::ostream& operator<<(std::ostream& out,
-                         const BSPNodeSide<BSPNodeTemplate>& info) {
-  if (info.node == nullptr) {
+std::ostream& operator<<(std::ostream& out, const SplitSide& info) {
+  if (info.split == nullptr) {
     out << "none";
   } else {
     out << "[";
@@ -124,7 +118,7 @@ std::ostream& operator<<(std::ostream& out,
     } else {
       out << "neg";
     }
-    out << " " << info.node->split().normal() << "]";
+    out << " " << *info.split << "]";
   }
   return out;
 }
