@@ -17,17 +17,17 @@ template <typename BSPNodeTemplate, typename ParentTemplate = ConvexPolygon<>>
 class BSPPolygon :
   public ParentTemplate::template MakeParent<
     BSPPolygon<BSPNodeTemplate, ParentTemplate>,
-    BSPEdgeInfo<BSPNodeTemplate>
+    BSPEdgeInfo<>
   > {
  public:
   using BSPNodeRep = BSPNodeTemplate;
   using Parent =
     typename ParentTemplate::template MakeParent<
       BSPPolygon<BSPNodeRep, ParentTemplate>,
-      BSPEdgeInfo<BSPNodeRep>
+      BSPEdgeInfo<>
     >;
   using typename Parent::EdgeParent;
-  using BSPEdgeInfoRep = BSPEdgeInfo<BSPNodeRep>;
+  using BSPEdgeInfoRep = BSPEdgeInfo<>;
 
   static_assert(std::is_base_of<ConvexPolygon<EdgeParent>, Parent>::value,
       "The OutputPolygonParentTemplate must inherit from ConvexPolygon.");
