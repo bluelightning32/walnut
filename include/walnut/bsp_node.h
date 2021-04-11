@@ -31,7 +31,7 @@ template <typename OutputPolygonParentTemplate = AABBConvexPolygon<>>
 class BSPNode {
  public:
   using OutputPolygonParent = OutputPolygonParentTemplate;
-  using PolygonRep = BSPPolygon<BSPNode, OutputPolygonParent>;
+  using PolygonRep = BSPPolygon<OutputPolygonParent>;
   using EdgeParent = typename PolygonRep::EdgeParent;
   using EdgeRep = typename PolygonRep::EdgeRep;
   using BSPEdgeInfoRep = typename PolygonRep::BSPEdgeInfoRep;

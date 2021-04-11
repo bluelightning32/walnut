@@ -13,24 +13,24 @@ namespace walnut {
 
 using BSPContentId = size_t;
 
-template <typename BSPNodeTemplate, typename ParentTemplate = ConvexPolygon<>>
+template <typename ParentTemplate = ConvexPolygon<>,
+          typename EdgeParentTemplate = EdgeInfoRoot>
 class BSPPolygon :
-  public ParentTemplate::template MakeParent<
-    BSPPolygon<BSPNodeTemplate, ParentTemplate>,
-    BSPEdgeInfo<>
-  > {
+  public ParentTemplate::template MakeParent<BSPPolygon<ParentTemplate>,
+                                             BSPEdgeInfo<EdgeParentTemplate>
+                                            > {
  public:
-  using BSPNodeRep = BSPNodeTemplate;
+  using EdgeParent = EdgeParentTemplate;
   using Parent =
-    typename ParentTemplate::template MakeParent<
-      BSPPolygon<BSPNodeRep, ParentTemplate>,
-      BSPEdgeInfo<>
-    >;
-  using typename Parent::EdgeParent;
-  using BSPEdgeInfoRep = BSPEdgeInfo<>;
+    typename ParentTemplate::template MakeParent<BSPPolygon<ParentTemplate>,
+                                                 BSPEdgeInfo<EdgeParent>
+                                                >;
+  using BSPEdgeInfoRep = BSPEdgeInfo<EdgeParent>;
 
-  static_assert(std::is_base_of<ConvexPolygon<EdgeParent>, Parent>::value,
-      "The OutputPolygonParentTemplate must inherit from ConvexPolygon.");
+  static_assert(
+      std::is_base_of<ConvexPolygon<typename Parent::EdgeRep::Parent>,
+                      Parent>::value,
+      "The ParentTemplate must inherit from ConvexPolygon.");
 
   BSPPolygon() = default;
 
@@ -97,7 +97,8 @@ class BSPPolygon :
   }
 
  private:
-  friend BSPNodeRep;
+  template <typename OutputPolygon>
+  friend class BSPNode;
 
   void ResetBSPInfo() {
     for (size_t i = 0; i < Parent::vertex_count(); ++i) {

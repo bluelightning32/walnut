@@ -20,7 +20,7 @@ template<typename Polygon>
 vtkSmartPointer<vtkPolyData> ConvertWalnutMesh(
     const std::vector<Polygon>& mesh) {
   static_assert(
-      std::is_base_of<ConvexPolygon<typename Polygon::EdgeParent>,
+      std::is_base_of<ConvexPolygon<typename Polygon::EdgeRep::Parent>,
                       Polygon>::value,
       "Polygon must inherit from ConvexPolygon");
   auto points = vtkSmartPointer<vtkPoints>::New();

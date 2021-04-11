@@ -65,7 +65,7 @@ class BSPEdgeInfo : public ParentTemplate {
  private:
   template <typename OutputPolygon>
   friend class BSPNode;
-  template <typename BSPNode, typename PolygonParent>
+  template <typename PolygonParent, typename EdgeParent>
   friend class BSPPolygon;
 
   void ResetBSPInfo() {
