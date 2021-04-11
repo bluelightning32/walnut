@@ -1,6 +1,7 @@
 #ifndef WALNUT_HALF_SPACE3_H__
 #define WALNUT_HALF_SPACE3_H__
 
+#include "walnut/half_space2.h"
 #include "walnut/homo_point3.h"
 #include "walnut/point3.h"
 #include "walnut/vector3.h"
@@ -60,6 +61,21 @@ class HalfSpace3 {
                             .Scale(p1.w().GetAbsMult(p3.w())));
     dist_ = unscaled_normal.Dot(p2.vector_from_origin()) * p2.w().GetAbsMult();
     normal_ = unscaled_normal.Scale(p2.w().abs());
+  }
+
+  // Extrudes a 2D half-space to form a 3D half-space.
+  //
+  // `projection` is a 2D projection of the final result, when `add_dimension`
+  // is removed.
+  //
+  // Note that when dimension 1 is added, the 2d vector components are flipped,
+  // that is the vector normal goes from <x, y> to <y, 0, x>.
+  HalfSpace3(const HalfSpace2& projection, int add_dimension)
+      : dist_(projection.d()) {
+    assert(0 <= add_dimension);
+    assert(add_dimension < 3);
+    normal_.components()[(add_dimension + 1)%3] = projection.normal().x();
+    normal_.components()[(add_dimension + 2)%3] = projection.normal().y();
   }
 
   const BigInt& x() const {

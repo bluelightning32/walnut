@@ -80,7 +80,15 @@ class Vector2 {
     return coords_;
   }
 
+  std::array<BigInt, 2>& components() {
+    return coords_;
+  }
+
   const std::array<BigInt, 2>& coords() const {
+    return coords_;
+  }
+
+  const std::array<BigInt, 2>& components() const {
     return coords_;
   }
 

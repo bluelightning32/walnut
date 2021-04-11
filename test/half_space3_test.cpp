@@ -217,4 +217,44 @@ TEST(HalfSpace3, ReduceAllNeg) {
   EXPECT_EQ(reduced.d(), -4);
 }
 
+TEST(HalfSpace3, ExtrudeHalfSpace2ZPosDist) {
+  HalfSpace2 plane2d(Point2(1, 5), Point2(2, 7));
+  HalfSpace3 plane(plane2d, /*add_dimension=*/2);
+  HalfSpace3 expected(Point3(1, 5, 0), Point3(2, 7, 0), Point3(1, 5, -1));
+
+  EXPECT_EQ(plane, expected);
+  EXPECT_GT(plane2d.d(), 0);
+  EXPECT_GT(plane.d(), 0);
+}
+
+TEST(HalfSpace3, ExtrudeHalfSpace2ZNegDist) {
+  HalfSpace2 plane2d(Point2(2, 7), Point2(1, 5));
+  HalfSpace3 plane(plane2d, /*add_dimension=*/2);
+  HalfSpace3 expected(Point3(2, 7, 0), Point3(1, 5, 0), Point3(1, 5, -1));
+
+  EXPECT_EQ(plane, expected);
+  EXPECT_LT(plane2d.d(), 0);
+  EXPECT_LT(plane.d(), 0);
+}
+
+TEST(HalfSpace3, ExtrudeHalfSpace2Y) {
+  HalfSpace2 plane2d(Point2(1, 5), Point2(2, 7));
+  HalfSpace3 plane(plane2d, /*add_dimension=*/1);
+  HalfSpace3 expected(Point3(5, 0, 1), Point3(7, 0, 2), Point3(5, -1, 1));
+
+  EXPECT_EQ(plane, expected);
+  EXPECT_GT(plane2d.d(), 0);
+  EXPECT_GT(plane.d(), 0);
+}
+
+TEST(HalfSpace3, ExtrudeHalfSpace2X) {
+  HalfSpace2 plane2d(Point2(1, 5), Point2(2, 7));
+  HalfSpace3 plane(plane2d, /*add_dimension=*/0);
+  HalfSpace3 expected(Point3(0, 1, 5), Point3(0, 2, 7), Point3(-1, 1, 5));
+
+  EXPECT_EQ(plane, expected);
+  EXPECT_GT(plane2d.d(), 0);
+  EXPECT_GT(plane.d(), 0);
+}
+
 }  // walnut

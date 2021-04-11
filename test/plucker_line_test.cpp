@@ -334,4 +334,36 @@ TEST(PluckerLine, ReduceAllIntMin) {
   EXPECT_EQ(reduced.d().x(), -1);
 }
 
+TEST(PluckerLine, Project2DThenExtrude) {
+  const Point3 p1(17, 23, 31);
+  const Point3 p2(131, 163, 197);
+  const PluckerLine line(p1, p2);
+
+  const Point3 p3(41, 103, 73);
+
+  EXPECT_TRUE(line.IsCoincident(p1));
+  EXPECT_TRUE(line.IsCoincident(p2));
+  EXPECT_FALSE(line.IsCoincident(p3));
+
+  for (int dimension = 0; dimension < 3; ++dimension) {
+    const HalfSpace2 line2d = line.Project2D(dimension);
+    HalfSpace3 extruded(line2d, dimension);
+    EXPECT_TRUE(extruded.IsCoincident(p1))
+      << "dimension=" << dimension << std::endl
+      << "line2d=" << line2d << std::endl
+      << "extruded=" << extruded << std::endl
+      << "p1=" << p1 << std::endl;
+    EXPECT_TRUE(extruded.IsCoincident(p2))
+      << "dimension=" << dimension << std::endl
+      << "line2d=" << line2d << std::endl
+      << "extruded=" << extruded << std::endl
+      << "p2=" << p2;
+    EXPECT_FALSE(extruded.IsCoincident(p3))
+      << "dimension=" << dimension << std::endl
+      << "line2d=" << line2d << std::endl
+      << "extruded=" << extruded << std::endl
+      << "p3=" << p3;
+  }
+}
+
 }  // walnut
