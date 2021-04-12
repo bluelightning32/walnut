@@ -182,18 +182,6 @@ class BSPNode {
   // This may only be called on an interior node.
   void PushContentPWNToChildren();
 
-  // Update the boundary angles in the edges and vertices of `polygon` that are
-  // coincident with `split_`.
-  //
-  // The vertices in the range [coincident_begin, coincident_end) are updated.
-  // The edges in the range [coincident_begin, coincident_end - 1) are updated.
-  //
-  // The caller must ensure coincident_begin <= coincident_end. The function
-  // will apply the modulus on the vertex indices, so it is okay for
-  // coincident_end to be greater than polygon.vertex_count().
-  void UpdateBoundaryAngles(bool pos_child, PolygonRep& polygon,
-      size_t coincident_begin, size_t coincident_end);
-
   // For a leaf node, these are the polygons that are inside the cell. They may
   // possibly be touching the cell border, but they are not on the border.
   //
@@ -335,15 +323,6 @@ void BSPNode<OutputPolygonParent>::PushContentPWNToChildren() {
 }
 
 template <typename OutputPolygonParent>
-void BSPNode<OutputPolygonParent>::UpdateBoundaryAngles(
-    bool pos_child, PolygonRep& polygon, size_t coincident_begin,
-    size_t coincident_end) {
-  SplitSide coincident_info{&split_, pos_child};
-  polygon.UpdateBoundaryAngles(coincident_info, coincident_begin,
-                               coincident_end);
-}
-
-template <typename OutputPolygonParent>
 void BSPNode<OutputPolygonParent>::PushContentsToChildren() {
   if (IsLeaf()) {
     return;
@@ -359,33 +338,21 @@ void BSPNode<OutputPolygonParent>::PushContentsToChildren() {
       if (info.ShouldEmitPositiveChild()) {
         std::pair<PolygonRep, PolygonRep> children =
           std::move(polygon).CreateSplitChildren(std::move(info));
-        assert(children.first.vertex_count() > 2);
-        assert(children.second.vertex_count() > 2);
-        // As described by the CreateSplitChildren function declaration
-        // comment, the last 2 vertices of neg_poly will touch the plane.
-        UpdateBoundaryAngles(/*pos_child=*/false, children.first,
-                            children.first.vertex_count() - 2,
-                            children.first.vertex_count());
-        // The first and last vertices of pos_poly will touch the plane.
-        UpdateBoundaryAngles(/*pos_child=*/true, children.second,
-                            children.second.vertex_count() - 1,
-                            children.second.vertex_count() + 1);
+        PolygonRep::SetChildBoundaryAngles(children, split_);
 
         negative_child_->content_info_by_id_[polygon.id].has_polygons = true;
         negative_child_->contents_.push_back(std::move(children.first));
         positive_child_->content_info_by_id_[polygon.id].has_polygons = true;
         positive_child_->contents_.push_back(std::move(children.second));
       } else {
-        UpdateBoundaryAngles(/*pos_child=*/false, polygon,
-                            info.neg_range().second,
-                            polygon.vertex_count() + info.neg_range().first);
+        polygon.SetBoundaryAngles(SplitSide{&split_, /*pos_child=*/false},
+                                  /*exclude_range=*/info.neg_range());
         negative_child_->content_info_by_id_[polygon.id].has_polygons = true;
         negative_child_->contents_.push_back(std::move(polygon));
       }
     } else if (info.ShouldEmitPositiveChild()) {
-      UpdateBoundaryAngles(/*pos_child=*/true, polygon,
-                          info.pos_range().second,
-                          polygon.vertex_count() + info.pos_range().first);
+      polygon.SetBoundaryAngles(SplitSide{&split_, /*pos_child=*/true},
+                                /*exclude_range=*/info.pos_range());
       positive_child_->content_info_by_id_[polygon.id].has_polygons = true;
       positive_child_->contents_.push_back(std::move(polygon));
     } else {
@@ -396,8 +363,9 @@ void BSPNode<OutputPolygonParent>::PushContentsToChildren() {
       bool pos_child =
         polygon.plane().normal().components()[drop_dimension].HasDifferentSign(
             split_.normal().components()[drop_dimension]);
-      UpdateBoundaryAngles(pos_child, polygon, /*coincident_begin=*/0,
-                           /*coincident_end=*/polygon.vertex_count() + 1);
+      polygon.SetBoundaryAngles(SplitSide{&split_, pos_child},
+                                /*coincident_begin=*/0,
+                                /*coincident_end=*/polygon.vertex_count() + 1);
       if (pos_child) {
         positive_child_->content_info_by_id_[polygon.id].has_polygons = true;
         positive_child_->border_contents_.emplace_back(&split_,
@@ -420,25 +388,21 @@ void BSPNode<OutputPolygonParent>::PushContentsToChildren() {
       if (info.ShouldEmitPositiveChild()) {
         std::pair<PolygonRep, PolygonRep> children =
           std::move(polygon).CreateSplitChildren(std::move(info));
-        // As described by the CreateSplitChildren function declaration
-        // comment, the last 2 vertices of neg_poly will touch the plane.
-        UpdateBoundaryAngles(/*pos_child=*/false, children.first,
-                            children.first.vertex_count() - 2,
-                            children.first.vertex_count());
-        // The first and last vertices of pos_poly will touch the plane.
-        UpdateBoundaryAngles(/*pos_child=*/true, children.second,
-                            children.second.vertex_count() - 1,
-                            children.second.vertex_count() + 1);
+        PolygonRep::SetChildBoundaryAngles(children, split_);
         negative_child_->content_info_by_id_[polygon.id].has_polygons = true;
         negative_child_->border_contents_.push_back(std::move(children.first));
         positive_child_->content_info_by_id_[polygon.id].has_polygons = true;
         positive_child_->border_contents_.push_back(
             std::move(children.second));
       } else {
+        polygon.SetBoundaryAngles(SplitSide{&split_, /*pos_child=*/false},
+                                  /*exclude_range=*/info.neg_range());
         negative_child_->content_info_by_id_[polygon.id].has_polygons = true;
         negative_child_->border_contents_.push_back(std::move(polygon));
       }
     } else if (info.ShouldEmitPositiveChild()) {
+      polygon.SetBoundaryAngles(SplitSide{&split_, /*pos_child=*/true},
+                                /*exclude_range=*/info.pos_range());
       positive_child_->content_info_by_id_[polygon.id].has_polygons = true;
       positive_child_->border_contents_.push_back(std::move(polygon));
     } else {
@@ -452,8 +416,9 @@ void BSPNode<OutputPolygonParent>::PushContentsToChildren() {
       bool pos_child =
         polygon.plane().normal().components()[drop_dimension].HasDifferentSign(
             split_.normal().components()[drop_dimension]);
-      UpdateBoundaryAngles(pos_child, polygon, /*coincident_begin=*/0,
-                           /*coincident_end=*/polygon.vertex_count() + 1);
+      polygon.SetBoundaryAngles(SplitSide{&split_, pos_child},
+                                /*coincident_begin=*/0,
+                                /*coincident_end=*/polygon.vertex_count() + 1);
       if (pos_child) {
         positive_child_->content_info_by_id_[polygon.id].has_polygons = true;
         positive_child_->border_contents_.push_back(std::move(polygon));

@@ -71,6 +71,82 @@ class BSPPolygon :
     return this->edge(index);
   }
 
+  void ResetBSPInfo() {
+    for (size_t i = 0; i < Parent::vertex_count(); ++i) {
+      Parent::edge(i).ResetBSPInfo();
+    }
+  }
+
+  // Sets the boundary angles in the edges and vertices in the given range to
+  // `coincident_info`.
+  //
+  // The vertices in the range [coincident_begin, coincident_end) are updated.
+  // The edges in the range [coincident_begin, coincident_end - 1) are updated.
+  //
+  // The caller must ensure coincident_begin <= coincident_end. The function
+  // will apply the modulus on the vertex indices, so it is okay for
+  // coincident_end to be greater than vertex_count().
+  void SetBoundaryAngles(SplitSide coincident_info, size_t coincident_begin,
+                         size_t coincident_end) {
+    // Typically this function is called with 0 vertices to update. So quickly
+    // handle that case first.
+    if (coincident_begin == coincident_end) return;
+
+    size_t pos = coincident_begin;
+    // Edges go from source to target. So first loop through all of the edges
+    // that need to be updated, and update their corresponding source vertices
+    // along the way too.
+    for (; pos < coincident_end - 1; ++pos) {
+      BSPEdgeInfoRep& edge_info = bsp_edge_info(pos % this->vertex_count());
+      if (edge_info.edge_first_coincident_.split == nullptr) {
+        if (on_node_plane.split != nullptr) {
+          // This edge is newly created, that's why it's
+          // edge_first_coincident_.split is nullptr. However, the parent
+          // polygon was already on a plane. So this new edge must also be on
+          // that plane.
+          edge_info.edge_first_coincident_ = on_node_plane;
+        } else {
+          edge_info.edge_first_coincident_ = coincident_info;
+        }
+      }
+      edge_info.edge_last_coincident_ = coincident_info;
+      edge_info.vertex_last_coincident_ = coincident_info;
+    }
+    // Update the last target vertex.
+    BSPEdgeInfoRep& edge_info = bsp_edge_info(pos % this->vertex_count());
+    edge_info.vertex_last_coincident_ = coincident_info;
+  }
+
+  // Updates the boundary angles for all of the edges outside of
+  // `exclude_range`.
+  void SetBoundaryAngles(SplitSide coincident_info,
+                         const std::pair<size_t, size_t>& exclude_range) {
+    SetBoundaryAngles(coincident_info, exclude_range.second,
+                      this->vertex_count() + exclude_range.first);
+  }
+
+
+  // Updates the boundary angles on the BSPPolygon children created by
+  // `CreateSplitChildren`.
+  //
+  // `FinalPolygon` must inherit from BSPPolygon.
+  template <typename FinalPolygon>
+  static void SetChildBoundaryAngles(std::pair<FinalPolygon,
+                                               FinalPolygon>& children,
+                                     const HalfSpace3& split) {
+    assert(children.first.vertex_count() > 2);
+    assert(children.second.vertex_count() > 2);
+    // As described by the CreateSplitChildren function declaration
+    // comment, the last 2 vertices of neg_poly will touch the plane.
+    children.first.SetBoundaryAngles(SplitSide{&split, /*pos_child=*/false},
+                                     children.first.vertex_count() - 2,
+                                     children.first.vertex_count());
+    // The first and last vertices of pos_poly will touch the plane.
+    children.second.SetBoundaryAngles(SplitSide{&split, /*pos_child=*/true},
+                                      children.second.vertex_count() - 1,
+                                      children.second.vertex_count() + 1);
+  }
+
   BSPContentId id;
 
   // This is the BSPNode whose split plane is coincident with this polygon's
@@ -94,45 +170,6 @@ class BSPPolygon :
     Parent::FillInSplitChildren(std::forward<ParentRef>(parent),
                                 std::forward<SplitInfoRef>(split), neg_child,
                                 pos_child);
-  }
-
- private:
-  template <typename OutputPolygon>
-  friend class BSPNode;
-
-  // This is called directly by BSPNode.
-  void ResetBSPInfo() {
-    for (size_t i = 0; i < Parent::vertex_count(); ++i) {
-      Parent::edge(i).ResetBSPInfo();
-    }
-  }
-
-  // This is called directly by BSPNode.
-  void UpdateBoundaryAngles(SplitSide coincident_info, size_t coincident_begin,
-                            size_t coincident_end) {
-    // Typically this function is called with 0 vertices to update. So quickly
-    // handle that case first.
-    if (coincident_begin == coincident_end) return;
-
-    size_t pos = coincident_begin;
-    // Edges go from source to target. So first loop through all of the edges
-    // that need to be updated, and update their corresponding source vertices
-    // along the way too.
-    for (; pos < coincident_end - 1; ++pos) {
-      BSPEdgeInfoRep& edge_info = bsp_edge_info(pos % this->vertex_count());
-      if (edge_info.edge_first_coincident_.split == nullptr) {
-        if (on_node_plane.split != nullptr) {
-          edge_info.edge_first_coincident_ = on_node_plane;
-        } else {
-          edge_info.edge_first_coincident_ = coincident_info;
-        }
-      }
-      edge_info.edge_last_coincident_ = coincident_info;
-      edge_info.vertex_last_coincident_ = coincident_info;
-    }
-    // Update the last target vertex.
-    BSPEdgeInfoRep& edge_info = bsp_edge_info(pos % this->vertex_count());
-    edge_info.vertex_last_coincident_ = coincident_info;
   }
 };
 
