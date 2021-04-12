@@ -8,21 +8,13 @@
 #include <vector>
 
 #include "walnut/aabb_convex_polygon.h"
+#include "walnut/bsp_content_info.h"
 #include "walnut/bsp_edge_info.h"
 #include "walnut/bsp_polygon.h"
 #include "walnut/half_space3.h"
 #include "walnut/r_transformation.h"
 
 namespace walnut {
-
-struct BSPContentInfo {
-  // Set to true if this BSPNode or a descendant BSPNode has polygons belonging
-  // to this content id, either in the interior of the cell border or on the
-  // cell border.
-  bool has_polygons = false;
-  // PWN for this content at the M-value of the BSPNode.
-  int64_t pwn = 0;
-};
 
 // This is a node within a binary space partition tree.
 //
