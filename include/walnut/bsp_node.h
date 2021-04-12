@@ -338,32 +338,9 @@ template <typename OutputPolygonParent>
 void BSPNode<OutputPolygonParent>::UpdateBoundaryAngles(
     bool pos_child, PolygonRep& polygon, size_t coincident_begin,
     size_t coincident_end) {
-  // Typically this function is called with 0 vertices to update. So quickly
-  // handle that case first.
-  if (coincident_begin == coincident_end) return;
-
   SplitSide coincident_info{&split_, pos_child};
-  size_t pos = coincident_begin;
-  // Edges go from source to target. So first loop through all of the edges
-  // that need to be updated, and update their corresponding source vertices
-  // along the way too.
-  for (; pos < coincident_end - 1; ++pos) {
-    BSPEdgeInfoRep& edge_info = polygon.bsp_edge_info(
-        pos % polygon.vertex_count());
-    if (edge_info.edge_first_coincident_.split == nullptr) {
-      if (polygon.on_node_plane.split != nullptr) {
-        edge_info.edge_first_coincident_ = polygon.on_node_plane;
-      } else {
-        edge_info.edge_first_coincident_ = coincident_info;
-      }
-    }
-    edge_info.edge_last_coincident_ = coincident_info;
-    edge_info.vertex_last_coincident_ = coincident_info;
-  }
-  // Update the last target vertex.
-  BSPEdgeInfoRep& edge_info = polygon.bsp_edge_info(
-      pos % polygon.vertex_count());
-  edge_info.vertex_last_coincident_ = coincident_info;
+  polygon.UpdateBoundaryAngles(coincident_info, coincident_begin,
+                               coincident_end);
 }
 
 template <typename OutputPolygonParent>

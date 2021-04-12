@@ -63,8 +63,6 @@ class BSPEdgeInfo : public ParentTemplate {
   }
 
  private:
-  template <typename OutputPolygon>
-  friend class BSPNode;
   template <typename PolygonParent, typename EdgeParent>
   friend class BSPPolygon;
 
@@ -78,21 +76,21 @@ class BSPEdgeInfo : public ParentTemplate {
   // the entire edge, or nullptr, if the edge is not coincident with any of its
   // ancestor nodes.
   //
-  // This field is updated directly by BSPNode.
+  // This field is updated directly by BSPPolygon.
   SplitSide edge_first_coincident_;
 
   // The split plane of the BSPNode deepest in the tree that is coincident with
   // the vertex, or nullptr, if the vertex is not coincident with any of its
   // ancestor nodes.
   //
-  // This field is updated directly by BSPNode.
+  // This field is updated directly by BSPPolygon.
   SplitSide vertex_last_coincident_;
 
   // The split plane of the BSPNode deepest in the tree that is coincident with
   // the entire edge, or nullptr, if the edge is not coincident with any of its
   // ancestor nodes.
   //
-  // This field is updated directly by BSPNode.
+  // This field is updated directly by BSPPolygon.
   SplitSide edge_last_coincident_;
 };
 

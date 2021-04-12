@@ -100,10 +100,39 @@ class BSPPolygon :
   template <typename OutputPolygon>
   friend class BSPNode;
 
+  // This is called directly by BSPNode.
   void ResetBSPInfo() {
     for (size_t i = 0; i < Parent::vertex_count(); ++i) {
       Parent::edge(i).ResetBSPInfo();
     }
+  }
+
+  // This is called directly by BSPNode.
+  void UpdateBoundaryAngles(SplitSide coincident_info, size_t coincident_begin,
+                            size_t coincident_end) {
+    // Typically this function is called with 0 vertices to update. So quickly
+    // handle that case first.
+    if (coincident_begin == coincident_end) return;
+
+    size_t pos = coincident_begin;
+    // Edges go from source to target. So first loop through all of the edges
+    // that need to be updated, and update their corresponding source vertices
+    // along the way too.
+    for (; pos < coincident_end - 1; ++pos) {
+      BSPEdgeInfoRep& edge_info = bsp_edge_info(pos % this->vertex_count());
+      if (edge_info.edge_first_coincident_.split == nullptr) {
+        if (on_node_plane.split != nullptr) {
+          edge_info.edge_first_coincident_ = on_node_plane;
+        } else {
+          edge_info.edge_first_coincident_ = coincident_info;
+        }
+      }
+      edge_info.edge_last_coincident_ = coincident_info;
+      edge_info.vertex_last_coincident_ = coincident_info;
+    }
+    // Update the last target vertex.
+    BSPEdgeInfoRep& edge_info = bsp_edge_info(pos % this->vertex_count());
+    edge_info.vertex_last_coincident_ = coincident_info;
   }
 };
 
