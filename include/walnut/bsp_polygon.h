@@ -27,6 +27,7 @@ class BSPPolygon :
                                                  BSPEdgeInfo<EdgeParent>
                                                 >;
   using BSPEdgeInfoRep = BSPEdgeInfo<EdgeParent>;
+  using BSPPolygonRep = BSPPolygon;
 
   static_assert(
       std::is_base_of<ConvexPolygon<typename Parent::EdgeRep::Parent>,

@@ -14,7 +14,7 @@ template <typename PolygonTemplate = BSPPolygon<>>
 class PlanePartitioner {
  public:
   using Polygon = PolygonTemplate;
-  using BSPPolygonBase = typename Polygon::BSPPolygon;
+  using BSPPolygonBase = typename Polygon::BSPPolygonRep;
   static_assert(
       std::is_base_of<BSPPolygon<typename BSPPolygonBase::UnspecializedParent,
                                  typename BSPPolygonBase::EdgeParent>,
