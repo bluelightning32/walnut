@@ -98,23 +98,23 @@ class BSPPolygon :
     // along the way too.
     for (; pos < coincident_end - 1; ++pos) {
       BSPEdgeInfoRep& edge_info = bsp_edge_info(pos % this->vertex_count());
-      if (edge_info.edge_first_coincident_.split == nullptr) {
+      if (edge_info.edge_first_coincident.split == nullptr) {
         if (on_node_plane.split != nullptr) {
           // This edge is newly created, that's why it's
-          // edge_first_coincident_.split is nullptr. However, the parent
+          // edge_first_coincident.split is nullptr. However, the parent
           // polygon was already on a plane. So this new edge must also be on
           // that plane.
-          edge_info.edge_first_coincident_ = on_node_plane;
+          edge_info.edge_first_coincident = on_node_plane;
         } else {
-          edge_info.edge_first_coincident_ = coincident_info;
+          edge_info.edge_first_coincident = coincident_info;
         }
       }
-      edge_info.edge_last_coincident_ = coincident_info;
-      edge_info.vertex_last_coincident_ = coincident_info;
+      edge_info.edge_last_coincident = coincident_info;
+      edge_info.vertex_last_coincident = coincident_info;
     }
     // Update the last target vertex.
     BSPEdgeInfoRep& edge_info = bsp_edge_info(pos % this->vertex_count());
-    edge_info.vertex_last_coincident_ = coincident_info;
+    edge_info.vertex_last_coincident = coincident_info;
   }
 
   // Updates the boundary angles for all of the edges outside of

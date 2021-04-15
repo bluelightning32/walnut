@@ -24,16 +24,16 @@ class BSPEdgeInfo : public ParentTemplate {
   // the vertex boundary angle from the edge boundary angle instead of
   // inheriting the parent's vertex boundary angle.
   BSPEdgeInfo(const BSPEdgeInfo& parent, const HomoPoint3& new_source) :
-    edge_first_coincident_(parent.edge_first_coincident_),
-    vertex_last_coincident_(parent.edge_last_coincident_),
-    edge_last_coincident_(parent.edge_last_coincident_) { }
+    edge_first_coincident(parent.edge_first_coincident),
+    vertex_last_coincident(parent.edge_last_coincident),
+    edge_last_coincident(parent.edge_last_coincident) { }
 
   // Create a new line from the parent's existing vertex.
   //
   // Inherit the vertex boundary angle from the parent, but default initialize
   // the edge boundary angle.
   BSPEdgeInfo(const BSPEdgeInfo& parent, const PluckerLine& new_line) :
-    vertex_last_coincident_(parent.vertex_last_coincident_) { }
+    vertex_last_coincident(parent.vertex_last_coincident) { }
 
   // Create a new line starting on a new vertex on the parent's existing edge.
   //
@@ -41,7 +41,7 @@ class BSPEdgeInfo : public ParentTemplate {
   // angle. Default initialize the edge boundary angle.
   BSPEdgeInfo(const BSPEdgeInfo& parent, const HomoPoint3& new_source,
               const PluckerLine& new_line) :
-    vertex_last_coincident_(parent.edge_last_coincident_) { }
+    vertex_last_coincident(parent.edge_last_coincident) { }
 
   bool operator==(const EdgeInfoRoot&) const {
     return true;
@@ -50,56 +50,34 @@ class BSPEdgeInfo : public ParentTemplate {
     return false;
   }
 
-  const SplitSide& edge_first_coincident() const {
-    return edge_first_coincident_;
-  }
-
-  const SplitSide& vertex_last_coincident() const {
-    return vertex_last_coincident_;
-  }
-
-  const SplitSide& edge_last_coincident() const {
-    return edge_last_coincident_;
-  }
-
- private:
-  template <typename PolygonParent, typename EdgeParent>
-  friend class BSPPolygon;
-
   void ResetBSPInfo() {
-    edge_first_coincident_ = SplitSide();
-    vertex_last_coincident_ = SplitSide();
-    edge_last_coincident_ = SplitSide();
+    edge_first_coincident = SplitSide();
+    vertex_last_coincident = SplitSide();
+    edge_last_coincident = SplitSide();
   }
 
   // The split plane of the BSPNode highest in the tree that is coincident with
   // the entire edge, or nullptr, if the edge is not coincident with any of its
   // ancestor nodes.
-  //
-  // This field is updated directly by BSPPolygon.
-  SplitSide edge_first_coincident_;
+  SplitSide edge_first_coincident;
 
   // The split plane of the BSPNode deepest in the tree that is coincident with
   // the vertex, or nullptr, if the vertex is not coincident with any of its
   // ancestor nodes.
-  //
-  // This field is updated directly by BSPPolygon.
-  SplitSide vertex_last_coincident_;
+  SplitSide vertex_last_coincident;
 
   // The split plane of the BSPNode deepest in the tree that is coincident with
   // the entire edge, or nullptr, if the edge is not coincident with any of its
   // ancestor nodes.
-  //
-  // This field is updated directly by BSPPolygon.
-  SplitSide edge_last_coincident_;
+  SplitSide edge_last_coincident;
 };
 
 template <typename ParentTemplate>
 std::ostream& operator<<(std::ostream& out,
                          const BSPEdgeInfo<ParentTemplate>& info) {
-  out << "< edge_first_coincident=" << info.edge_first_coincident()
-      << ", edge_last_coincident=" << info.edge_last_coincident()
-      << ", vertex_last_coincident=" << info.vertex_last_coincident()
+  out << "< edge_first_coincident=" << info.edge_first_coincident
+      << ", edge_last_coincident=" << info.edge_last_coincident
+      << ", vertex_last_coincident=" << info.vertex_last_coincident
       << " >";
   return out;
 }

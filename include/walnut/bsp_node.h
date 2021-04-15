@@ -206,7 +206,7 @@ void BSPNode<OutputPolygonParent>::PushVertexPWNToChildren(
     const SplitSide& edge_last_coincident, const EdgeRep& vertex_edge,
     int crossing_flip) {
   const SplitSide& vertex_last_coincident =
-    vertex_edge.vertex_last_coincident();
+    vertex_edge.vertex_last_coincident;
   const int vertex_comparison =
     RXYCompareBivector(split_.normal(),
                        vertex_last_coincident.split->normal()) *
@@ -293,7 +293,7 @@ void BSPNode<OutputPolygonParent>::PushContentPWNToChildren() {
       const EdgeRep& current_edge = polygon.const_edge(i);
 
       const SplitSide& edge_last_coincident =
-        current_edge.edge_last_coincident();
+        current_edge.edge_last_coincident;
       if (edge_last_coincident.split == nullptr) continue;
       int edge_comparison =
         RXYCompareBivector(split_.normal(),
