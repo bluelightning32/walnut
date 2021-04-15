@@ -1,6 +1,8 @@
 #ifndef WALNUT_BSP_CONTENT_INFO_H__
 #define WALNUT_BSP_CONTENT_INFO_H__
 
+#include <cstdint>
+
 namespace walnut {
 
 struct BSPContentInfo {

@@ -21,6 +21,7 @@ class BSPPolygon :
                                             > {
  public:
   using EdgeParent = EdgeParentTemplate;
+  using UnspecializedParent = ParentTemplate;
   using Parent =
     typename ParentTemplate::template MakeParent<BSPPolygon<ParentTemplate>,
                                                  BSPEdgeInfo<EdgeParent>
