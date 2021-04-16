@@ -87,7 +87,7 @@ class PlanePartitioner {
 
     HalfSpace3 split_plane(split_edge->line().Project2D(drop_dimension),
                            /*add_dimension=*/drop_dimension);
-    visitor.EnterInteriorNode(/*temporary=*/true, split_plane);
+    visitor.EnterInteriorNode(/*from_partitioner=*/true, split_plane);
 
     PolygonVector neg_children = AllocatePolygonVector();
     PolygonVector pos_children = AllocatePolygonVector();
@@ -100,7 +100,7 @@ class PlanePartitioner {
     Run(std::move(pos_children), drop_dimension, pos_normal,
         initial_content_info, visitor);
 
-    visitor.LeaveInteriorNode(/*temporary=*/true, split_plane);
+    visitor.LeaveInteriorNode(/*from_partitioner=*/true, split_plane);
   }
 
   // Returns true if `has_polygons` is true in the content_info for every
@@ -179,7 +179,7 @@ class PlanePartitioner {
 
     HalfSpace3 split_plane(split_edge->line().Project2D(drop_dimension),
                            /*add_dimension=*/drop_dimension);
-    visitor.EnterInteriorNode(/*temporary=*/true, split_plane);
+    visitor.EnterInteriorNode(/*from_partitioner=*/true, split_plane);
 
     PolygonVector neg_children = AllocatePolygonVector();
     PolygonVector pos_children = AllocatePolygonVector();
@@ -195,7 +195,7 @@ class PlanePartitioner {
     Run(std::move(pos_children), drop_dimension, pos_normal,
         initial_content_info, visitor);
 
-    visitor.LeaveInteriorNode(/*temporary=*/true, split_plane);
+    visitor.LeaveInteriorNode(/*from_partitioner=*/true, split_plane);
   }
 
   // Splits the input range along `split_plane` and put the result in

@@ -108,11 +108,13 @@ class BSPVisitor {
 
   // The pointer to `split` is guaranteed to be valid until the same reference
   // is given to `LeaveInteriorNode`. The same pointer may appear in
-  // `SplitSide` objects in the results. If `temporary` is false, the pointer
-  // will be valid past when it is passed to `LeaveInteriorNode`.
-  virtual void EnterInteriorNode(bool temporary, const HalfSpace3& split) { }
+  // `SplitSide` objects in the results. If `from_partitioner` is false, the
+  // pointer will be valid past when it is passed to `LeaveInteriorNode`.
+  virtual void EnterInteriorNode(bool from_partitioner,
+                                 const HalfSpace3& split) { }
 
-  virtual void LeaveInteriorNode(bool temporary, const HalfSpace3& split) { }
+  virtual void LeaveInteriorNode(bool from_partitioner,
+                                 const HalfSpace3& split) { }
 
   virtual void EnterLeafNode() { }
 
@@ -169,16 +171,18 @@ class CollectorVisitor : public BSPVisitor<PolygonRep> {
     polygons_.push_back(std::move(polygon));
   }
 
-  void EnterInteriorNode(bool temporary, const HalfSpace3& split) override {
-    if (temporary) {
+  void EnterInteriorNode(bool from_partitioner,
+                         const HalfSpace3& split) override {
+    if (from_partitioner) {
       split_planes_.push_back(split);
       auto result = split_plane_map_.insert({&split, &split_planes_.back()});
       assert(result.second);
     }
   }
 
-  void LeaveInteriorNode(bool temporary, const HalfSpace3& split) override {
-    if (temporary) {
+  void LeaveInteriorNode(bool from_partitioner,
+                         const HalfSpace3& split) override {
+    if (from_partitioner) {
       size_t removed = split_plane_map_.erase(&split);
       assert(removed == 1);
     }
