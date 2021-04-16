@@ -118,6 +118,10 @@ class BSPVisitor {
 
   virtual void EnterLeafNode() { }
 
+  virtual void Accept(const PolygonRep& polygon) {
+    Accept(PolygonRep(polygon));
+  }
+
   virtual void Accept(PolygonRep&& polygon) { }
 };
 
