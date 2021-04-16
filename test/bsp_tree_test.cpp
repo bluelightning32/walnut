@@ -130,6 +130,8 @@ TEST(BSPTree, SplitTo1Child) {
 
     tree.root.Split(above_up);
     EXPECT_FALSE(tree.root.IsLeaf());
+    EXPECT_THAT(tree.root.contents(), IsEmpty());
+    EXPECT_THAT(tree.root.border_contents(), IsEmpty());
     EXPECT_THAT(DropVertexData(tree.root.negative_child()->contents()),
                 ElementsAre(polygon));
     EXPECT_THAT(DropVertexData(tree.root.positive_child()->contents()),
@@ -143,6 +145,8 @@ TEST(BSPTree, SplitTo1Child) {
 
     tree.root.Split(above_down);
     EXPECT_FALSE(tree.root.IsLeaf());
+    EXPECT_THAT(tree.root.contents(), IsEmpty());
+    EXPECT_THAT(tree.root.border_contents(), IsEmpty());
     EXPECT_THAT(DropVertexData(tree.root.negative_child()->contents()),
                 IsEmpty());
     EXPECT_THAT(DropVertexData(tree.root.positive_child()->contents()),
@@ -553,6 +557,8 @@ TEST(BSPTree, SplitBorderTo2Children) {
   // Split the negative child such that the polygon is split into 2 pieces.
   tree.root.negative_child()->Split(half_space);
   ASSERT_FALSE(tree.root.negative_child()->IsLeaf());
+  EXPECT_THAT(tree.root.negative_child()->contents(), IsEmpty());
+  EXPECT_THAT(tree.root.negative_child()->border_contents(), IsEmpty());
 
   const BSPTree<>::BSPNodeRep* neg_leaf =
     tree.root.negative_child()->negative_child();

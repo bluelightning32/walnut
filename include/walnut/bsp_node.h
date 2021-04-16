@@ -371,6 +371,7 @@ void BSPNode<OutputPolygonParent>::PushContentsToChildren() {
       }
     }
   }
+  contents_.clear();
 
   for (PolygonRep& polygon : border_contents_) {
     assert(polygon.vertex_count() > 0);
@@ -420,6 +421,7 @@ void BSPNode<OutputPolygonParent>::PushContentsToChildren() {
       }
     }
   }
+  border_contents_.clear();
 }
 
 template <typename OutputPolygonParent>

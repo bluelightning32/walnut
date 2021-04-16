@@ -444,7 +444,8 @@ TEST_P(BSPTreePWN, MinimumExcluded) {
                                     0.75);
   EXPECT_TRUE(child->IsLeaf());
   EXPECT_THAT(child->border_contents(), IsEmpty());
-  EXPECT_THAT(inside_cube->contents(), SizeIs(1));
+  EXPECT_THAT(child->contents(), SizeIs(1));
+  EXPECT_THAT(inside_cube->contents(), IsEmpty());
   EXPECT_EQ(child->GetPWNForId(id), 0);
   EXPECT_TRUE(inside_cube->GetContentInfoForId(id).has_polygons);
   EXPECT_TRUE(child->GetContentInfoForId(id).has_polygons);
