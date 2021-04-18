@@ -44,6 +44,15 @@ class BSPNode {
     PushContentsToChildren();
   }
 
+  // Returns a plane that can divide contents_. The chosen plane is guaranteed
+  // to produce leaf nodes where at least one polygon from contents_ is added
+  // to border_contents_, and/or contents_ is split between the two children.
+  //
+  // Currently this function picks an entry from contents_ that belongs to the
+  // polyhedron with the fewest facets in this node. However, this algorithm
+  // could be changed in the future.
+  const HalfSpace3* PickSplitPlane() const;
+
   bool IsLeaf() const {
     return !split().IsValid();
   }
@@ -199,6 +208,41 @@ class BSPNode {
 
   std::vector<BSPContentInfo> content_info_by_id_;
 };
+
+template <typename OutputPolygonParent>
+const HalfSpace3* BSPNode<OutputPolygonParent>::PickSplitPlane() const {
+  assert(IsLeaf());
+  if (contents_.empty()) {
+    return nullptr;
+  }
+
+  // Search for the polygon with the lowest count. If there are multiple
+  // polygons with the same low count, pick the one closest to the middle. The
+  // search starts from the middle and goes outward (alternating directions),
+  // so picking the middle most one means picking the first polygon found with
+  // that low count.
+  size_t mid = contents_.size() / 2;
+  const PolygonRep* split = &contents_[mid];
+  if (contents_.size() == 1) {
+    return &split->plane();
+  }
+  size_t offset = 1;
+  auto consider_split = [this, &split](const PolygonRep &polygon) {
+    if (content_info_by_id_[polygon.id].has_polygons <
+        content_info_by_id_[split->id].has_polygons) {
+      split = &polygon;
+    }
+  };
+  while (offset < mid) {
+    consider_split(contents_[mid + offset]);
+    consider_split(contents_[mid - offset - 1]);
+    ++offset;
+  }
+  if (contents_.size() & 1) {
+    consider_split(contents_[mid + offset]);
+  }
+  return &split->plane();
+}
 
 template <typename OutputPolygonParent>
 void BSPNode<OutputPolygonParent>::PushVertexPWNToChildren(

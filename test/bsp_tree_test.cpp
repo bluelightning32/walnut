@@ -106,6 +106,80 @@ TEST(BSPTree, AddContentsToLeaf) {
               ContainerEq(polygons));
 }
 
+TEST(BSPTree, PickSplitPlaneEmpty) {
+  BSPTree<> tree;
+  EXPECT_EQ(tree.root.PickSplitPlane(), nullptr);
+}
+
+TEST(BSPTree, PickSplitPlaneSinglePolygon) {
+  Point3 triangle[3] =
+  {
+    Point3(0, 0, 10),
+    Point3(1, 0, 10),
+    Point3(1, 1, 10),
+  };
+
+  ConvexPolygon<> polygon = MakeConvexPolygon(triangle);
+
+  BSPTree<> tree;
+  auto leaf_added = [&](BSPNode<>& leaf) {};
+  tree.AddContent(polygon, leaf_added);
+  EXPECT_TRUE(tree.root.PickSplitPlane()->IsSameOrOpposite(polygon.plane()));
+}
+
+TEST(BSPTree, PickSplitPlanePickLowestCount) {
+  BSPTree<> tree;
+  auto leaf_added = [&](BSPNode<>& leaf) {};
+  BSPContentId common_id = tree.AllocateId();
+  BSPContentId single_id = tree.AllocateId();
+  HalfSpace3 expected_plane;
+  for (int i = 0; i < 10; ++i) {
+    Point3 triangle[3] =
+    {
+      Point3(0, 0, i),
+      Point3(1, 0, i),
+      Point3(1, 1, i),
+    };
+
+    ConvexPolygon<> polygon = MakeConvexPolygon(triangle);
+    BSPContentId id;
+    if (i == 3) {
+      id = single_id;
+      expected_plane = polygon.plane();
+    } else {
+      id = common_id;
+    }
+    tree.AddContent(id, polygon, leaf_added);
+  }
+
+  EXPECT_TRUE(tree.root.PickSplitPlane()->IsSameOrOpposite(expected_plane));
+}
+
+TEST(BSPTree, PickSplitPlaneSplitInTwo) {
+  BSPTree<> tree;
+  auto leaf_added = [&](BSPNode<>& leaf) {};
+  BSPContentId id = tree.AllocateId();
+  for (int i = 0; i < 2; ++i) {
+    Point3 triangle[3] =
+    {
+      Point3(0, 0, i),
+      Point3(1, 0, i),
+      Point3(1, 1, i),
+    };
+
+    ConvexPolygon<> polygon = MakeConvexPolygon(triangle);
+    tree.AddContent(id, polygon, leaf_added);
+  }
+
+  tree.root.Split(*tree.root.PickSplitPlane());
+  EXPECT_TRUE(!tree.root.negative_child()->contents().empty() ||
+              !tree.root.negative_child()->border_contents().empty() ||
+              !tree.root.positive_child()->border_contents().empty());
+  EXPECT_TRUE(!tree.root.positive_child()->contents().empty() ||
+              !tree.root.negative_child()->border_contents().empty() ||
+              !tree.root.positive_child()->border_contents().empty());
+}
+
 TEST(BSPTree, SplitTo1Child) {
   Point3 triangle[3] =
   {

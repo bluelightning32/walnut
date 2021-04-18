@@ -129,7 +129,7 @@ class HalfSpace3 {
     return Compare(v) == 0;
   }
 
-  // Determines which side of this half-space a parallel plane is one.
+  // Determines which side of this half-space a parallel plane is on.
   //
   // Returns:
   //   >0:  if `p` is parallel to this half-space's plane and is fully
@@ -172,6 +172,29 @@ class HalfSpace3 {
     } else {
       scale_other = z().abs();
       scale_mine = other.z().abs();
+    }
+
+    return x().Multiply(scale_mine) == other.x().Multiply(scale_other) &&
+           y().Multiply(scale_mine) == other.y().Multiply(scale_other) &&
+           z().Multiply(scale_mine) == other.z().Multiply(scale_other) &&
+           d().Multiply(scale_mine) == other.d().Multiply(scale_other);
+  }
+
+  bool IsSameOrOpposite(const HalfSpace3& other) const {
+    BigInt scale_other;
+    BigInt scale_mine;
+    if (d() != 0) {
+      scale_other = d();
+      scale_mine = other.d();
+    } else if (x() != 0) {
+      scale_other = x();
+      scale_mine = other.x();
+    } else if (y() != 0) {
+      scale_other = y();
+      scale_mine = other.y();
+    } else {
+      scale_other = z();
+      scale_mine = other.z();
     }
 
     return x().Multiply(scale_mine) == other.x().Multiply(scale_other) &&
