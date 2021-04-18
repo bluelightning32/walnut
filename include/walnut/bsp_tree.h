@@ -62,20 +62,15 @@ class BSPTree {
   // Add a new polygon to this node.
   //
   // For an interior node, the contents will be pushed to the children.
-  // `leaf_callback` will be called for every leaf node that some pieces of the
-  // new contents settle in. There may also be spurious calls to
-  // `leaf_callback` for leaves where the contents did not land in.
-  template <typename InputConvexPolygon, typename LeafCallback>
-  void AddContent(BSPContentId id, InputConvexPolygon&& polygon,
-                  LeafCallback leaf_callback) {
+  template <typename InputConvexPolygon>
+  void AddContent(BSPContentId id, InputConvexPolygon&& polygon) {
     root.AddRootContent(id, std::forward<InputConvexPolygon>(polygon));
-    root.PushContentsToLeaves(leaf_callback);
+    root.PushContentsToLeaves();
   }
 
-  template <typename InputConvexPolygon, typename LeafCallback>
-  void AddContent(InputConvexPolygon&& polygon, LeafCallback leaf_callback) {
-    AddContent(AllocateId(), std::forward<InputConvexPolygon>(polygon),
-               leaf_callback);
+  template <typename InputConvexPolygon>
+  void AddContent(InputConvexPolygon&& polygon) {
+    AddContent(AllocateId(), std::forward<InputConvexPolygon>(polygon));
   }
 
   template <typename InputConvexPolygon>
@@ -84,8 +79,7 @@ class BSPTree {
     for (const InputConvexPolygon& polygon : polygons) {
       root.AddRootContent(id, polygon);
     }
-    auto added_to_leaf = [&](BSPNode<>& leaf) { };
-    root.PushContentsToLeaves(added_to_leaf);
+    root.PushContentsToLeaves();
   }
 
   // Traverses the tree and sends the accepted border polygons to `visitor`.

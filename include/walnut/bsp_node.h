@@ -110,13 +110,10 @@ class BSPNode {
   // This is a no-op for leaves.
   void PushContentsToChildren();
 
-  // Push the contents all the way down to descendant leaf nodes. Call
-  // `leaf_callback` on each leaf node that the contents were pushed to (and
-  // possibly more nodes that the contents were not pushed to).
+  // Push the contents all the way down to descendant leaf nodes.
   //
   // This may be called on leaf or interior nodes.
-  template <typename LeafCallback>
-  void PushContentsToLeaves(LeafCallback leaf_callback);
+  void PushContentsToLeaves();
 
  protected:
   void MakeInterior(const HalfSpace3& half_space, BSPNode* negative_child,
@@ -480,18 +477,14 @@ void BSPNode<OutputPolygonParent>::PushContentsToChildren() {
 }
 
 template <typename OutputPolygonParent>
-template <typename LeafCallback>
-void BSPNode<OutputPolygonParent>::PushContentsToLeaves(
-    LeafCallback leaf_callback) {
+void BSPNode<OutputPolygonParent>::PushContentsToLeaves() {
   if (contents_.empty() && border_contents_.empty()) {
     return;
   }
-  if (IsLeaf()) {
-    leaf_callback(*this);
-  } else {
+  if (!IsLeaf()) {
     PushContentsToChildren();
-    negative_child_->PushContentsToLeaves(leaf_callback);
-    positive_child_->PushContentsToLeaves(leaf_callback);
+    negative_child_->PushContentsToLeaves();
+    positive_child_->PushContentsToLeaves();
   }
 }
 

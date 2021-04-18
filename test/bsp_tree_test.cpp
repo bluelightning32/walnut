@@ -94,13 +94,10 @@ TEST(BSPTree, AddContentsToLeaf) {
   };
 
   BSPTree<> tree;
-  auto leaf_added = [&](BSPNode<>& leaf) {
-    EXPECT_EQ(&leaf, &tree.root);
-  };
   std::vector<ConvexPolygon<>> polygons;
   for (Point3 (&triangle)[3] : triangles) {
     polygons.push_back(MakeConvexPolygon(triangle));
-    tree.AddContent(MakeConvexPolygon(triangle), leaf_added);
+    tree.AddContent(MakeConvexPolygon(triangle));
   }
   EXPECT_THAT(DropVertexData(tree.root.contents()),
               ContainerEq(polygons));
@@ -122,14 +119,12 @@ TEST(BSPTree, PickSplitPlaneSinglePolygon) {
   ConvexPolygon<> polygon = MakeConvexPolygon(triangle);
 
   BSPTree<> tree;
-  auto leaf_added = [&](BSPNode<>& leaf) {};
-  tree.AddContent(polygon, leaf_added);
+  tree.AddContent(polygon);
   EXPECT_TRUE(tree.root.PickSplitPlane()->IsSameOrOpposite(polygon.plane()));
 }
 
 TEST(BSPTree, PickSplitPlanePickLowestCount) {
   BSPTree<> tree;
-  auto leaf_added = [&](BSPNode<>& leaf) {};
   BSPContentId common_id = tree.AllocateId();
   BSPContentId single_id = tree.AllocateId();
   HalfSpace3 expected_plane;
@@ -149,7 +144,7 @@ TEST(BSPTree, PickSplitPlanePickLowestCount) {
     } else {
       id = common_id;
     }
-    tree.AddContent(id, polygon, leaf_added);
+    tree.AddContent(id, polygon);
   }
 
   EXPECT_TRUE(tree.root.PickSplitPlane()->IsSameOrOpposite(expected_plane));
@@ -157,7 +152,6 @@ TEST(BSPTree, PickSplitPlanePickLowestCount) {
 
 TEST(BSPTree, PickSplitPlaneSplitInTwo) {
   BSPTree<> tree;
-  auto leaf_added = [&](BSPNode<>& leaf) {};
   BSPContentId id = tree.AllocateId();
   for (int i = 0; i < 2; ++i) {
     Point3 triangle[3] =
@@ -168,7 +162,7 @@ TEST(BSPTree, PickSplitPlaneSplitInTwo) {
     };
 
     ConvexPolygon<> polygon = MakeConvexPolygon(triangle);
-    tree.AddContent(id, polygon, leaf_added);
+    tree.AddContent(id, polygon);
   }
 
   tree.root.Split(*tree.root.PickSplitPlane());
@@ -199,8 +193,7 @@ TEST(BSPTree, SplitTo1Child) {
 
   {
     BSPTree<> tree;
-    auto leaf_added = [&](BSPNode<>& leaf) {};
-    tree.AddContent(polygon, leaf_added);
+    tree.AddContent(polygon);
 
     tree.root.Split(above_up);
     EXPECT_FALSE(tree.root.IsLeaf());
@@ -214,8 +207,7 @@ TEST(BSPTree, SplitTo1Child) {
 
   {
     BSPTree<> tree;
-    auto leaf_added = [&](BSPNode<>& leaf) {};
-    tree.AddContent(polygon, leaf_added);
+    tree.AddContent(polygon);
 
     tree.root.Split(above_down);
     EXPECT_FALSE(tree.root.IsLeaf());
@@ -240,8 +232,7 @@ TEST(BSPTree, SplitOnPlane) {
 
   {
     BSPTree<> tree;
-    auto leaf_added = [&](BSPNode<>& leaf) {};
-    tree.AddContent(polygon, leaf_added);
+    tree.AddContent(polygon);
 
     tree.root.Split(polygon.plane());
     EXPECT_FALSE(tree.root.IsLeaf());
@@ -261,8 +252,7 @@ TEST(BSPTree, SplitOnPlane) {
 
   {
     BSPTree<> tree;
-    auto leaf_added = [&](BSPNode<>& leaf) {};
-    tree.AddContent(polygon, leaf_added);
+    tree.AddContent(polygon);
 
     tree.root.Split(-polygon.plane());
     EXPECT_FALSE(tree.root.IsLeaf());
@@ -314,8 +304,7 @@ TEST(BSPTree, SplitTo2Children) {
   };
 
   BSPTree<> tree;
-  auto leaf_added = [&](BSPNode<>& leaf) {};
-  tree.AddContent(polygon, leaf_added);
+  tree.AddContent(polygon);
 
   tree.root.Split(half_space);
   EXPECT_FALSE(tree.root.IsLeaf());
@@ -395,8 +384,7 @@ TEST(BSPTree, SplitTwiceVertexData) {
   HalfSpace3 split2(/*x=*/0, /*y=*/1, /*z=*/0, /*dist=*/1);
 
   BSPTree<> tree;
-  auto leaf_added = [&](BSPNode<>& leaf) {};
-  tree.AddContent(polygon, leaf_added);
+  tree.AddContent(polygon);
 
   tree.root.Split(split1);
   BSPNode<>& pos_child1 = *tree.root.positive_child();
@@ -512,8 +500,7 @@ TEST(BSPTree, SplitVertThenDiagVertexData) {
                       /*dist=*/q1.x().ToInt() - q2.y().ToInt());
 
   BSPTree<> tree;
-  auto leaf_added = [&](BSPNode<>& leaf) {};
-  tree.AddContent(polygon, leaf_added);
+  tree.AddContent(polygon);
 
   tree.root.Split(split1);
   BSPNode<>& pos_child1 = *tree.root.positive_child();
@@ -607,8 +594,7 @@ TEST(BSPTree, SplitBorderTo2Children) {
   };
 
   BSPTree<> tree;
-  auto leaf_added = [&](BSPNode<>& leaf) {};
-  tree.AddContent(polygon, leaf_added);
+  tree.AddContent(polygon);
 
   // Split the root such that the polygon becomes a border polygon of the
   // negative child.

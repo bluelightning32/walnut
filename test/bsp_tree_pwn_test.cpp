@@ -253,7 +253,6 @@ class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
   // parameters.
   template <typename InputPolygon>
   void AddContent(BSPContentId id, const InputPolygon& polygon) {
-    auto added_to_leaf = [&](BSPNode<>& leaf) { };
     if (std::get<1>(GetParam())) {
       // flip the input polygon
       std::vector<HomoPoint3> vertices;
@@ -262,10 +261,10 @@ class BSPTreePWN : public testing::TestWithParam<std::tuple<bool, bool>> {
         vertices.push_back(it->vertex());
       }
       tree_.AddContent(id, ConvexPolygon<>(-polygon.plane(),
-                                           polygon.drop_dimension(), vertices),
-                       added_to_leaf);
+                                           polygon.drop_dimension(),
+                                           vertices));
     } else {
-      tree_.AddContent(id, polygon, added_to_leaf);
+      tree_.AddContent(id, polygon);
     }
   }
 
