@@ -44,6 +44,13 @@ class BSPNode {
     PushContentsToChildren();
   }
 
+  void Split() {
+    assert(!contents_.empty());
+    const HalfSpace3* half_space = PickSplitPlane();
+    assert(half_space != nullptr);
+    Split(*half_space);
+  }
+
   // Returns a plane that can divide contents_. The chosen plane is guaranteed
   // to produce leaf nodes where at least one polygon from contents_ is added
   // to border_contents_, and/or contents_ is split between the two children.
@@ -80,6 +87,10 @@ class BSPNode {
 
   const std::vector<PolygonRep>& border_contents() const {
     return border_contents_;
+  }
+
+  const std::vector<BSPContentInfo>& content_info_by_id() const {
+    return content_info_by_id_;
   }
 
   BSPContentInfo GetContentInfoForId(BSPContentId id) const {

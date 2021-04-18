@@ -5,6 +5,7 @@
 
 #include "walnut/aabb_convex_polygon.h"
 #include "walnut/bsp_node.h"
+#include "walnut/bsp_traverser.h"
 
 namespace walnut {
 
@@ -75,6 +76,28 @@ class BSPTree {
   void AddContent(InputConvexPolygon&& polygon, LeafCallback leaf_callback) {
     AddContent(AllocateId(), std::forward<InputConvexPolygon>(polygon),
                leaf_callback);
+  }
+
+  template <typename InputConvexPolygon>
+  void AddContents(BSPContentId id,
+                   const std::vector<InputConvexPolygon>& polygons) {
+    for (const InputConvexPolygon& polygon : polygons) {
+      root.AddRootContent(id, polygon);
+    }
+    auto added_to_leaf = [&](BSPNode<>& leaf) { };
+    root.PushContentsToLeaves(added_to_leaf);
+  }
+
+  // Traverses the tree and sends the accepted border polygons to `visitor`.
+  //
+  // `visitor.IsInside` controls which branches of the tree are visited, and
+  // which border polygons are accepted from the leaf nodes. As the tree is
+  // traversed, if any leaf nodes with non-border polygons are encountered,
+  // they are split before being passed to `visitor`.
+  template <typename VisitorPolygon>
+  void Traverse(BSPVisitor<VisitorPolygon>& visitor) {
+    BSPTraverser<BSPNodeRep, VisitorPolygon> traverser;
+    traverser.Run(root, visitor);
   }
 
   // Returns a MappedBSPNode containing the polyhedron boundary of a BSPNode.
