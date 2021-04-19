@@ -40,10 +40,8 @@ class DeedObject {
   // Transfers the object and ownership
   DeedObject& operator=(DeedObject&& other);
 
-  ~DeedObject() {
-    // The deed must be returned before the object is destructed.
-    assert(!owner_);
-  }
+  // Clears ownership of this object.
+  ~DeedObject();
 
  private:
   friend GenericDeed;
@@ -181,6 +179,10 @@ class Deed : public GenericDeed {
 
   Deed& operator=(Deed&& other) = default;
 
+  bool empty() const {
+    return get() == nullptr;
+  }
+
   T* get() const {
     return static_cast<T*>(GenericDeed::get());
   }
@@ -207,6 +209,12 @@ inline DeedObject::DeedObject(DeedObject&& other) noexcept :
   other.owner_ = nullptr;
   if (owner_) {
     owner_->object_ = this;
+  }
+}
+
+inline DeedObject::~DeedObject() {
+  if (owner_) {
+    owner_->object_ = nullptr;
   }
 }
 

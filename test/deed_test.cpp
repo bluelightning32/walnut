@@ -153,6 +153,15 @@ TEST(Deed, PointsTo) {
   EXPECT_EQ(deed1->value, 1);
 }
 
+TEST(Deed, ObjectDestructedFirst) {
+  Deed<TestObject> deed;
+  {
+    TestObject o1(1);
+    deed = Deed<TestObject>(&o1);
+  }
+  EXPECT_TRUE(deed.empty());
+}
+
 // Move-only DeedObjects can be put a std::vector, and so can their deeds.
 TEST(Deed, MoveOnlyVectorCompatible) {
   std::vector<NoCopy> objects;
