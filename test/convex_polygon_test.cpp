@@ -1154,7 +1154,7 @@ TEST_P(ConvexPolygonFindSplitRanges, AtExistingVertices) {
 
   PluckerLine line(p[0], p[2]);
 
-  ConvexPolygon<> polygon(MakeConvexPolygon(p));
+  ConvexPolygon<> polygon = MakeConvexPolygon(p);
 
   // Run it in a loop a few times to get a sense of how fast the
   // function is from the overall test time.
@@ -1194,7 +1194,7 @@ TEST_P(ConvexPolygonFindSplitRanges, AtNewVertices) {
     /*n[1]=*/Point3(1, 1, 2),
   };
 
-  ConvexPolygon<> polygon(MakeConvexPolygon(p));
+  ConvexPolygon<> polygon = MakeConvexPolygon(p);
 
   for (int drop_dimension = 0; drop_dimension < 3; ++drop_dimension) {
     PluckerLine line;
@@ -1281,8 +1281,8 @@ TEST(ConvexPolygon, SplitOnPlane) {
 // Helper for a polygon that is expected to split into 2 pieces
 void SplitHelper(const ConvexPolygon<>& polygon,
                  const HalfSpace3& half_space,
-                 ConvexPolygon<>& neg_side,
-                 ConvexPolygon<>& pos_side) {
+                 MutableConvexPolygon<>& neg_side,
+                 MutableConvexPolygon<>& pos_side) {
   auto info = polygon.GetSplitInfo(half_space);
   ASSERT_TRUE(info.ShouldEmitNegativeChild());
   ASSERT_TRUE(info.ShouldEmitPositiveChild());
@@ -1344,11 +1344,11 @@ TEST(ConvexPolygon, SplitAtExistingVertices) {
   HalfSpace3 half_space(p[0], above, p[2]);
 
   MutableConvexPolygon<> polygon(MakeConvexPolygon(p));
-  ConvexPolygon<> expected_neg_side(MakeConvexPolygon(neg_side_p));
-  ConvexPolygon<> expected_pos_side(MakeConvexPolygon(pos_side_p));
+  ConvexPolygon<> expected_neg_side = MakeConvexPolygon(neg_side_p);
+  ConvexPolygon<> expected_pos_side = MakeConvexPolygon(pos_side_p);
 
-  ConvexPolygon<> neg_side;
-  ConvexPolygon<> pos_side;
+  MutableConvexPolygon<> neg_side;
+  MutableConvexPolygon<> pos_side;
   SplitHelper(polygon, half_space, neg_side, pos_side);
   EXPECT_EQ(neg_side, expected_neg_side);
   EXPECT_EQ(pos_side, expected_pos_side);
@@ -1388,12 +1388,12 @@ TEST(ConvexPolygon, SplitAtExistingVerticesCW) {
   Point3 above(0, 0, 11);
   HalfSpace3 half_space(p[0], above, p[2]);
 
-  ConvexPolygon<> polygon(MakeConvexPolygon(p));
-  ConvexPolygon<> expected_neg_side(MakeConvexPolygon(neg_side_p));
-  ConvexPolygon<> expected_pos_side(MakeConvexPolygon(pos_side_p));
+  ConvexPolygon<> polygon = MakeConvexPolygon(p);
+  ConvexPolygon<> expected_neg_side = MakeConvexPolygon(neg_side_p);
+  ConvexPolygon<> expected_pos_side = MakeConvexPolygon(pos_side_p);
 
-  ConvexPolygon<> neg_side;
-  ConvexPolygon<> pos_side;
+  MutableConvexPolygon<> neg_side;
+  MutableConvexPolygon<> pos_side;
   SplitHelper(polygon, half_space, neg_side, pos_side);
   EXPECT_EQ(neg_side, expected_neg_side);
   EXPECT_EQ(pos_side, expected_pos_side);
@@ -1433,12 +1433,12 @@ TEST(ConvexPolygon, SplitAtNewVertices) {
 
   HalfSpace3 half_space(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
 
-  ConvexPolygon<> polygon(MakeConvexPolygon(p));
-  ConvexPolygon<> expected_neg_side(MakeConvexPolygon(neg_side_p));
-  ConvexPolygon<> expected_pos_side(MakeConvexPolygon(pos_side_p));
+  ConvexPolygon<> polygon = MakeConvexPolygon(p);
+  ConvexPolygon<> expected_neg_side = MakeConvexPolygon(neg_side_p);
+  ConvexPolygon<> expected_pos_side = MakeConvexPolygon(pos_side_p);
 
-  ConvexPolygon<> neg_side;
-  ConvexPolygon<> pos_side;
+  MutableConvexPolygon<> neg_side;
+  MutableConvexPolygon<> pos_side;
   SplitHelper(polygon, half_space, neg_side, pos_side);
   EXPECT_EQ(neg_side, expected_neg_side);
   EXPECT_EQ(pos_side, expected_pos_side);
