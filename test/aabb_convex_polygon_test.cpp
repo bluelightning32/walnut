@@ -162,4 +162,59 @@ TEST(AABBConvexPolygon, SplitInMiddle) {
                    /*denom=*/1));
 }
 
+TEST(AABBConvexPolygon, MergeConvexVertex) {
+  //                              |
+  //      p[3]       p[2]         |
+  //      +-----------+           |
+  //      | polygon1   \          |
+  //      |             \         |
+  // p[0] |______________\ p[1]   |
+  // q[3] |              / q[2]   |
+  //      |             /         |
+  //      | polygon2   /          |
+  //      +-----------+           |
+  //      q[0]       q[1]         |
+  //                              |
+  std::vector<Point3> p = {
+    Point3(0, 2, 10),
+    Point3(4, 2, 10),
+    Point3(3, 4, 10),
+    Point3(0, 4, 10),
+  };
+  HalfSpace3 plane(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10);
+  AABBConvexPolygon<> polygon1a(plane, /*drop_dimension=*/2, p);
+  AABBConvexPolygon<> polygon1b(plane, /*drop_dimension=*/2, p);
+  EXPECT_EQ(polygon1a.vertex(1), p[0]);
+
+  std::vector<Point3> q = {
+    Point3(0, 0, 10),
+    Point3(3, 0, 10),
+    p[1],
+    p[0],
+  };
+  AABBConvexPolygon<> polygon2a(plane, /*drop_dimension=*/2, q);
+  AABBConvexPolygon<> polygon2b(plane, /*drop_dimension=*/2, q);
+  EXPECT_EQ(polygon2a.vertex(1), q[0]);
+
+  std::vector<Point3> merged_points = {
+    q[0],
+    q[1],
+    q[2],
+    p[2],
+    p[3],
+  };
+  AABBConvexPolygon<> expected_merged(plane, /*drop_dimension=*/2, merged_points);
+
+  EXPECT_TRUE(polygon1a.TryMergePolygon(/*nonzero_edge_dimension=*/0,
+                                        /*my_edge_index=*/1,
+                                        /*other=*/polygon2a,
+                                        /*other_edge_index=*/3));
+  EXPECT_EQ(polygon1a.aabb(), expected_merged.aabb());
+  EXPECT_TRUE(polygon2b.TryMergePolygon(/*nonzero_edge_dimension=*/0,
+                                        /*my_edge_index=*/3,
+                                        /*other=*/polygon1b,
+                                        /*other_edge_index=*/1));
+  EXPECT_EQ(polygon2b.aabb(), expected_merged.aabb());
+}
+
 }  // walnut

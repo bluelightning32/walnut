@@ -144,6 +144,18 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
   // ConvexPolygon but not AABBConvexPolygon.
   using Parent::operator==;
 
+  bool TryMergePolygon(int nonzero_edge_dimension, size_t my_edge_index,
+                       AABBConvexPolygon& other, size_t other_edge_index) {
+    if (!Parent::TryMergePolygon(nonzero_edge_dimension, my_edge_index,
+                                 other, other_edge_index)) {
+      return false;
+    }
+
+    aabb_tracker_ = ConvexVertexAABBTracker(Parent::vertices_begin(),
+                                            Parent::vertices_end());
+    return true;
+  }
+
  protected:
   // Overrides the non-virtual function from ConvexPolygon.
   template <typename ParentRef, typename SplitInfoRef>
