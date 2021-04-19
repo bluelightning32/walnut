@@ -7,7 +7,7 @@
 
 namespace walnut {
 
-struct TestObject : public DeedObject {
+struct TestObject : public DeedTarget {
   TestObject(int value) : value(value) { }
 
   TestObject(const TestObject& other) = default;
@@ -21,14 +21,14 @@ struct TestObject : public DeedObject {
   int value = 0;
 };
 
-struct NoCopy : public DeedObject {
+struct NoCopy : public DeedTarget {
   NoCopy(int value) : value(value) { }
 
-  NoCopy(NoCopy&& other) : DeedObject(std::move(other)), value(other.value) { }
+  NoCopy(NoCopy&& other) : DeedTarget(std::move(other)), value(other.value) { }
 
   NoCopy& operator=(NoCopy&& other) {
     value = other.value;
-    DeedObject::operator=(std::move(other));
+    DeedTarget::operator=(std::move(other));
     return *this;
   }
 
@@ -162,7 +162,7 @@ TEST(Deed, ObjectDestructedFirst) {
   EXPECT_TRUE(deed.empty());
 }
 
-// Move-only DeedObjects can be put a std::vector, and so can their deeds.
+// Move-only DeedTargets can be put a std::vector, and so can their deeds.
 TEST(Deed, MoveOnlyVectorCompatible) {
   std::vector<NoCopy> objects;
   objects.emplace_back(0);

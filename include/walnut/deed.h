@@ -18,30 +18,30 @@ namespace walnut {
 
 class GenericDeed;
 
-class DeedObject {
+class DeedTarget {
  public:
-  DeedObject() = default;
+  DeedTarget() = default;
 
   // Copies the object without copying or transferring ownership.
   //
   // The object can be copied, even it if is owned.
-  DeedObject(const DeedObject& other) { }
+  DeedTarget(const DeedTarget& other) { }
 
   // Transfers the object and ownership.
-  DeedObject(DeedObject&& other) noexcept;
+  DeedTarget(DeedTarget&& other) noexcept;
 
   // Copies the object without copying or transferring ownership.
   //
   // The object can be copied, even it if is owned.
-  DeedObject& operator=(const DeedObject& other) {
+  DeedTarget& operator=(const DeedTarget& other) {
     return *this;
   }
 
   // Transfers the object and ownership
-  DeedObject& operator=(DeedObject&& other);
+  DeedTarget& operator=(DeedTarget&& other);
 
   // Clears ownership of this object.
-  ~DeedObject();
+  ~DeedTarget();
 
  private:
   friend GenericDeed;
@@ -54,7 +54,7 @@ class GenericDeed {
   // Initializes the deed to nullptr.
   GenericDeed() = default;
 
-  GenericDeed(DeedObject* object) : object_(object) {
+  GenericDeed(DeedTarget* object) : object_(object) {
     if (object != nullptr && object->owner_ != nullptr) {
       lender_ = object->owner_;
       lender_->MarkLent();
@@ -139,15 +139,15 @@ class GenericDeed {
     return GenericDeed(object_, this);
   }
 
-  DeedObject* get() const {
+  DeedTarget* get() const {
     assert(!is_lender());
     return object_;
   }
 
  private:
-  friend DeedObject;
+  friend DeedTarget;
 
-  GenericDeed(DeedObject* object, GenericDeed* borrowed_from) :
+  GenericDeed(DeedTarget* object, GenericDeed* borrowed_from) :
       object_(object), lender_(borrowed_from) {
     lender_->MarkLent();
   }
@@ -157,7 +157,7 @@ class GenericDeed {
   }
 
   union {
-    DeedObject* object_ = nullptr;
+    DeedTarget* object_ = nullptr;
     // Points to `this` if the pointer was stolen from `this`.
     GenericDeed* is_lender_;
   };
@@ -167,8 +167,8 @@ class GenericDeed {
 template <typename T>
 class Deed : public GenericDeed {
  public:
-  static_assert(std::is_base_of<DeedObject, T>::value,
-                "The object must inherit from DeedObject.");
+  static_assert(std::is_base_of<DeedTarget, T>::value,
+                "The object must inherit from DeedTarget.");
 
   // Initializes the deed to nullptr.
   Deed() = default;
@@ -204,7 +204,7 @@ class Deed : public GenericDeed {
 };
 
 // Transfers the object and ownership.
-inline DeedObject::DeedObject(DeedObject&& other) noexcept :
+inline DeedTarget::DeedTarget(DeedTarget&& other) noexcept :
     owner_(other.owner_) {
   other.owner_ = nullptr;
   if (owner_) {
@@ -212,13 +212,13 @@ inline DeedObject::DeedObject(DeedObject&& other) noexcept :
   }
 }
 
-inline DeedObject::~DeedObject() {
+inline DeedTarget::~DeedTarget() {
   if (owner_) {
     owner_->object_ = nullptr;
   }
 }
 
-inline DeedObject& DeedObject::operator=(DeedObject&& other) {
+inline DeedTarget& DeedTarget::operator=(DeedTarget&& other) {
   if (owner_) {
     owner_->object_ = &other;
   }

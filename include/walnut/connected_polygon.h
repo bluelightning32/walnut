@@ -9,11 +9,11 @@ namespace walnut {
 
 // A half edge of a ConnectedPolygon
 //
-// The DeedObject is used to keep a pointer to the edges while sorting and
+// The DeedTarget is used to keep a pointer to the edges while sorting and
 // connecting them.
 template <typename FinalPolygonTemplate,
           typename ParentTemplate>
-struct ConnectedEdge : public ParentTemplate, public DeedObject {
+struct ConnectedEdge : public ParentTemplate, public DeedTarget {
   using FinalPolygon = FinalPolygonTemplate;
   using Parent = ParentTemplate;
   using ConnectedEdgeRep = ConnectedEdge;
@@ -106,7 +106,7 @@ struct ConnectedEdge : public ParentTemplate, public DeedObject {
 
  protected:
   ConnectedEdge(ConnectedEdge&& other) :
-      Parent(std::move(other)), DeedObject(std::move(other)),
+      Parent(std::move(other)), DeedTarget(std::move(other)),
       polygon_(other.polygon_), partner_(other.partner_) {
     if (partner_ != nullptr) {
       partner_->partner_ = this;
@@ -118,7 +118,7 @@ struct ConnectedEdge : public ParentTemplate, public DeedObject {
 
   ConnectedEdge& operator=(ConnectedEdge&& other) {
     static_cast<Parent&>(*this) = std::move(other);
-    static_cast<DeedObject&>(*this) = std::move(other);
+    static_cast<DeedTarget&>(*this) = std::move(other);
 
     std::swap(partner_, other.partner_);
     polygon_ = other.polygon_;
