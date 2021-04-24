@@ -73,9 +73,9 @@ MutableConvexPolygon<> MakeConvexPolygon(const Container& vertices) {
 }
 
 template <typename InputConvexPolygon>
-std::vector<MutableConvexPolygon<>> DropVertexData(
+std::vector<ConvexPolygon<>> DropVertexData(
     const std::vector<InputConvexPolygon> &input) {
-  return std::vector<MutableConvexPolygon<>>(
+  return std::vector<ConvexPolygon<>>(
       input.begin(), input.end());
 }
 
@@ -94,7 +94,7 @@ TEST(BSPTree, AddContentsToLeaf) {
   };
 
   BSPTree<> tree;
-  std::vector<MutableConvexPolygon<>> polygons;
+  std::vector<ConvexPolygon<>> polygons;
   for (Point3 (&triangle)[3] : triangles) {
     polygons.push_back(MakeConvexPolygon(triangle));
     tree.AddContent(MakeConvexPolygon(triangle));
@@ -182,7 +182,7 @@ TEST(BSPTree, SplitTo1Child) {
     Point3(1, 1, 10),
   };
 
-  MutableConvexPolygon<> polygon = MakeConvexPolygon(triangle);
+  ConvexPolygon<> polygon = MakeConvexPolygon(triangle);
 
   std::vector<Point3> above_points;
   for (const Point3& p : triangle) {
@@ -228,7 +228,7 @@ TEST(BSPTree, SplitOnPlane) {
     Point3(1, 1, 10),
   };
 
-  MutableConvexPolygon<> polygon = MakeConvexPolygon(triangle);
+  ConvexPolygon<> polygon = MakeConvexPolygon(triangle);
 
   {
     BSPTree<> tree;
@@ -576,7 +576,7 @@ TEST(BSPTree, SplitBorderTo2Children) {
     Point3(0, 1, 10),
   };
 
-  MutableConvexPolygon<> polygon = MakeConvexPolygon(p);
+  ConvexPolygon<> polygon = MakeConvexPolygon(p);
   HalfSpace3 half_space(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
 
   Point3 expected_neg[4] = {

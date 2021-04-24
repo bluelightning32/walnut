@@ -46,8 +46,6 @@ class ConvexPolygon {
 
   ConvexPolygon() : plane_(HalfSpace3::Zero()), drop_dimension_(-1) { }
 
-  ConvexPolygon(const ConvexPolygon&) = default;
-
   // `EdgeParent` must be constructible from `OtherEdgeParent`.
   template <typename OtherEdgeParent>
   explicit ConvexPolygon(const ConvexPolygon<OtherEdgeParent>& other) :
@@ -496,8 +494,6 @@ class ConvexPolygon {
   std::string ApproximateNoData() const;
 
  protected:
-  explicit ConvexPolygon(ConvexPolygon&&) = default;
-
   // Returns the information about an edge and the source vertex for that edge.
   EdgeRep& edge(size_t index) {
     return edges_[index];
@@ -662,9 +658,6 @@ class ConvexPolygon {
 
     return true;
   }
-
-  ConvexPolygon& operator=(const ConvexPolygon&) = default;
-  ConvexPolygon& operator=(ConvexPolygon&&) = default;
 
   // `EdgeParent` must be assignable from `OtherEdgeParent`.
   template <typename OtherEdgeParent>
