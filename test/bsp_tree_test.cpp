@@ -79,6 +79,13 @@ std::vector<ConvexPolygon<>> DropVertexData(
       input.begin(), input.end());
 }
 
+TEST(BSPTree, PolygonNoThrowMoveConstructible) {
+  EXPECT_TRUE(
+      std::is_nothrow_move_constructible<
+        BSPTree<>::BSPNodeRep::PolygonRep
+      >::value);
+}
+
 TEST(BSPTree, AddContentsToLeaf) {
   Point3 triangles[][3] = {
     {

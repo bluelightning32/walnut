@@ -36,6 +36,21 @@ class BSPPolygon :
 
   BSPPolygon() = default;
 
+  BSPPolygon(const BSPPolygon&) = default;
+
+  BSPPolygon(BSPPolygon&& other)
+    noexcept(
+        std::is_nothrow_constructible<
+          BSPPolygon, RValueKey<BSPPolygon>
+        >::value)
+    : BSPPolygon(RValueKey<BSPPolygon>(std::move(other))) { }
+
+  BSPPolygon(RValueKey<BSPPolygon> other)
+    noexcept(std::is_nothrow_constructible<Parent, RValueKey<Parent>>::value)
+    : Parent(RValueKey<Parent>(other)),
+      id(other.get().id),
+      on_node_plane(std::move(other.get().on_node_plane)) { }
+
   template <typename OtherPolygon>
   BSPPolygon(BSPContentId id, const HalfSpace3* on_node_plane, bool pos_side,
              OtherPolygon&& parent) :
@@ -60,12 +75,34 @@ class BSPPolygon :
     return result;
   }
 
+  BSPPolygon& operator=(const BSPPolygon&) = default;
+
+  BSPPolygon& operator=(BSPPolygon&& other) {
+    return operator=(RValueKey<BSPPolygon>(std::move(other)));
+  }
+
+  BSPPolygon& operator=(RValueKey<BSPPolygon> other) {
+    Parent::operator=(RValueKey<Parent>(other));
+    id = other.get().id;
+    on_node_plane = std::move(other.get().on_node_plane);
+    return *this;
+  }
+
   // Overload CreateSplitChildren to create the derived polygon type.
   std::pair<BSPPolygon, BSPPolygon> CreateSplitChildren(
       ConvexPolygonSplitInfo&& split) && {
     std::pair<BSPPolygon, BSPPolygon> result;
     FillInSplitChildren(std::move(*this), std::move(split), result.first,
                         result.second);
+    return result;
+  }
+
+  static std::pair<BSPPolygon, BSPPolygon> CreateSplitChildren(
+      RValueKey<BSPPolygon> polygon,
+      ConvexPolygonSplitInfo&& split) {
+    std::pair<BSPPolygon, BSPPolygon> result;
+    FillInSplitChildren(std::move(polygon.get()), std::move(split),
+                        result.first, result.second);
     return result;
   }
 

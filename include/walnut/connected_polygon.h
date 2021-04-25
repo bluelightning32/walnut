@@ -207,20 +207,29 @@ class ConnectedPolygon : public ParentTemplate::template MakeParent<
 
   ConnectedPolygon() = default;
 
-  template <typename OtherPolygon,
-            std::enable_if_t<std::is_constructible<Parent,
-                                                   OtherPolygon>::value,
-                             bool> = true>
-  ConnectedPolygon(OtherPolygon&& other) :
-      Parent(std::forward<OtherPolygon>(other)) {
-    SetEdgeBackPointers();
-  }
-
   ConnectedPolygon(const ConnectedPolygon& other) : Parent(other) {
     SetEdgeBackPointers();
   }
 
-  ConnectedPolygon(ConnectedPolygon&& other) : Parent(std::move(other)) {
+  ConnectedPolygon(RValueKey<ConnectedPolygon> other)
+    noexcept(std::is_nothrow_constructible<Parent, RValueKey<Parent>>::value)
+    : Parent(RValueKey<Parent>(other)) {
+    SetEdgeBackPointers();
+  }
+
+  ConnectedPolygon(ConnectedPolygon&& other)
+    noexcept(
+        std::is_nothrow_constructible<
+          ConnectedPolygon, RValueKey<ConnectedPolygon>
+        >::value)
+    : ConnectedPolygon(RValueKey<ConnectedPolygon>(std::move(other))) { }
+
+  template <typename OtherPolygon,
+            std::enable_if_t<std::is_constructible<Parent,
+                                                   OtherPolygon>::value,
+                             bool> = true>
+  ConnectedPolygon(OtherPolygon&& other)
+    : Parent(std::forward<OtherPolygon>(other)) {
     SetEdgeBackPointers();
   }
 
@@ -248,6 +257,15 @@ class ConnectedPolygon : public ParentTemplate::template MakeParent<
     return result;
   }
 
+  static std::pair<ConnectedPolygon, ConnectedPolygon> CreateSplitChildren(
+      RValueKey<ConnectedPolygon> polygon,
+      ConvexPolygonSplitInfo&& split) {
+    std::pair<ConnectedPolygon, ConnectedPolygon> result;
+    FillInSplitChildren(std::move(polygon.get()), std::move(split),
+                        result.first, result.second);
+    return result;
+  }
+
   bool IsValidState() const {
     if (!Parent::IsValidState()) {
       return false;
@@ -265,6 +283,10 @@ class ConnectedPolygon : public ParentTemplate::template MakeParent<
   using Parent::edge;
   using Parent::vertex_count;
   using Parent::SplitEdge;
+
+  RValueKey<ConnectedPolygon> GetRValueKey() && {
+    return RValueKey<ConnectedPolygon>(std::move(*this));
+  }
 
  protected:
   template <typename ParentRef, typename SplitInfoRef>

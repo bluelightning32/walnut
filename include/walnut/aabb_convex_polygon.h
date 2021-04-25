@@ -32,6 +32,20 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
 
   AABBConvexPolygon() { }
 
+  AABBConvexPolygon(const AABBConvexPolygon&) = default;
+
+  AABBConvexPolygon(AABBConvexPolygon&& other)
+    noexcept(
+        std::is_nothrow_constructible<
+          AABBConvexPolygon, RValueKey<AABBConvexPolygon>
+        >::value)
+    : AABBConvexPolygon(RValueKey<AABBConvexPolygon>(std::move(other))) { }
+
+  AABBConvexPolygon(RValueKey<AABBConvexPolygon> other)
+    noexcept(std::is_nothrow_constructible<Parent, RValueKey<Parent>>::value)
+    : Parent(RValueKey<Parent>(other)),
+      aabb_tracker_(std::move(other.get().aabb_tracker_)) { }
+
   // `EdgeParent` must be constructible from `OtherEdgeParent`.
   template <typename OtherParent>
   explicit AABBConvexPolygon(const AABBConvexPolygon<OtherParent> & other) :
@@ -66,11 +80,23 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
     return true;
   }
 
+  AABBConvexPolygon& operator=(const AABBConvexPolygon& other) = default;
+
   // `EdgeParent` must be assignable from `OtherEdgeParent`.
   template <typename OtherParent>
   AABBConvexPolygon& operator=(const AABBConvexPolygon<OtherParent>& other) {
     Parent::operator=(other);
     aabb_tracker_ = other.aabb_tracker_;
+    return *this;
+  }
+
+  AABBConvexPolygon& operator=(AABBConvexPolygon&& other) {
+    return operator=(RValueKey<AABBConvexPolygon>(std::move(other)));
+  }
+
+  AABBConvexPolygon& operator=(RValueKey<AABBConvexPolygon> other) {
+    Parent::operator=(RValueKey<Parent>(other));
+    aabb_tracker_ = std::move(other.get().aabb_tracker_);
     return *this;
   }
 
@@ -131,6 +157,15 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
     std::pair<AABBConvexPolygon, AABBConvexPolygon> result;
     FillInSplitChildren(std::move(*this), std::move(split), result.first,
                         result.second);
+    return result;
+  }
+
+  static std::pair<AABBConvexPolygon, AABBConvexPolygon> CreateSplitChildren(
+      RValueKey<AABBConvexPolygon> polygon,
+      ConvexPolygonSplitInfo&& split) {
+    std::pair<AABBConvexPolygon, AABBConvexPolygon> result;
+    FillInSplitChildren(std::move(polygon.get()), std::move(split),
+                        result.first, result.second);
     return result;
   }
 

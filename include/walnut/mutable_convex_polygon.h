@@ -18,6 +18,18 @@ class MutableConvexPolygon : public ConvexPolygon<EdgeParent> {
   // statement, because its argument is the same as the parent type.
   MutableConvexPolygon(const Parent& other) : Parent(other) { }
 
+  MutableConvexPolygon(const MutableConvexPolygon&) = default;
+
+  MutableConvexPolygon(MutableConvexPolygon&& other)
+    : Parent(std::move(other).GetRValueKey()) { }
+
+  MutableConvexPolygon& operator=(const MutableConvexPolygon& other) = default;
+
+  MutableConvexPolygon& operator=(MutableConvexPolygon&& other) {
+    *this = std::move(other).GetRValueKey();
+    return *this;
+  }
+
   // Exposes the protected mutating functions
   using Parent::operator=;
   using Parent::edge;
@@ -26,6 +38,10 @@ class MutableConvexPolygon : public ConvexPolygon<EdgeParent> {
   using Parent::CreateSplitChildren;
   using Parent::SplitEdge;
   using Parent::TryMergePolygon;
+
+  RValueKey<MutableConvexPolygon> GetRValueKey() && {
+    return RValueKey<MutableConvexPolygon>(std::move(*this));
+  }
 };
 
 }  // walnut

@@ -46,6 +46,14 @@ class ConvexPolygon {
 
   ConvexPolygon() : plane_(HalfSpace3::Zero()), drop_dimension_(-1) { }
 
+  ConvexPolygon(const ConvexPolygon& other) = default;
+
+  ConvexPolygon(RValueKey<ConvexPolygon> other)
+    noexcept(std::is_nothrow_move_constructible<EdgeVector>::value)
+    : plane_(std::move(other.get().plane_)),
+      drop_dimension_(other.get().drop_dimension_),
+      edges_(std::move(other.get().edges_)) { }
+
   // `EdgeParent` must be constructible from `OtherEdgeParent`.
   template <typename OtherEdgeParent>
   explicit ConvexPolygon(const ConvexPolygon<OtherEdgeParent>& other) :
@@ -484,6 +492,26 @@ class ConvexPolygon {
     return result;
   }
 
+  // Creates both split children.
+  //
+  // This function may only be called if `split.ShouldEmitNegativeChild()`
+  // `split.ShouldEmitPositiveChild()` are both true.
+  //
+  // The first entry of the returned pair is the negative child, and the second
+  // entry is the positive child.
+  //
+  // The last 2 vertices of the negative child will be on the split
+  // plane. Whereas for the postive child, the first and last vertices will be
+  // on the split plane.
+  static std::pair<ConvexPolygon, ConvexPolygon> CreateSplitChildren(
+      RValueKey<ConvexPolygon> polygon,
+      ConvexPolygonSplitInfo&& split) {
+    std::pair<ConvexPolygon, ConvexPolygon> result;
+    FillInSplitChildren(std::move(polygon.get()), std::move(split),
+                        result.first, result.second);
+    return result;
+  }
+
   // Return a string representation of the polygon that uses decimal points to
   // approximate the vertex coordinates.
   std::string Approximate() const;
@@ -668,6 +696,17 @@ class ConvexPolygon {
     return *this;
   }
 
+  ConvexPolygon& operator=(const ConvexPolygon& other) {
+    return operator=<EdgeParent>(other);
+  }
+
+  ConvexPolygon& operator=(RValueKey<ConvexPolygon> other) {
+    plane_ = std::move(other.get().plane());
+    drop_dimension_ = other.get().drop_dimension();
+    edges_ = std::move(other.get().edges_);
+    return *this;
+  }
+
   // Sorts `edges_`, such that the lexicographically minimum vertex comes
   // first.
   //
@@ -684,25 +723,6 @@ class ConvexPolygon {
   // Rotating the vertices does not affect the shape of the polygon.
   void RotateEdges(size_t offset) {
     std::rotate(edges_.begin(), edges_.begin() + offset, edges_.end());
-  }
-
-  // Creates both split children.
-  //
-  // This function may only be called if `split.ShouldEmitNegativeChild()`
-  // `split.ShouldEmitPositiveChild()` are both true.
-  //
-  // The first entry of the returned pair is the negative child, and the second
-  // entry is the positive child.
-  //
-  // The last 2 vertices of the negative child will be on the split
-  // plane. Whereas for the postive child, the first and last vertices will be
-  // on the split plane.
-  std::pair<ConvexPolygon, ConvexPolygon> CreateSplitChildren(
-      ConvexPolygonSplitInfo&& split) && {
-    std::pair<ConvexPolygon, ConvexPolygon> result;
-    FillInSplitChildren(std::move(*this), std::move(split), result.first,
-                        result.second);
-    return result;
   }
 
   // Creates both split children.

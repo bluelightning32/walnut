@@ -66,6 +66,15 @@ TEST(ConnectedPolygon, MoveConstruct) {
   ConnectedPolygon<> polygon3(std::move(polygon));
   ASSERT_TRUE(polygon3.IsValidState());
   EXPECT_EQ(polygon3, polygon2);
+
+  EXPECT_TRUE(std::is_nothrow_move_constructible<ConnectedPolygon<>>::value);
+
+  EXPECT_TRUE(std::is_move_constructible<ConnectedPolygon<>>::value);
+
+  EXPECT_TRUE((
+      std::is_nothrow_constructible<
+        ConnectedPolygon<>, RValueKey<ConnectedPolygon<>>
+      >::value));
 }
 
 TEST(ConnectedPolygon, SplitInMiddle) {

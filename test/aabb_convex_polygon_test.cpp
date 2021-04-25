@@ -73,6 +73,15 @@ TEST(AABBConvexPolygon, MoveConstruct) {
 
   EXPECT_EQ(polygon3, polygon);
   EXPECT_EQ(polygon3.aabb(), polygon.aabb());
+
+  EXPECT_TRUE(std::is_nothrow_move_constructible<AABBConvexPolygon<>>::value);
+
+  EXPECT_TRUE(std::is_move_constructible<AABBConvexPolygon<>>::value);
+
+  EXPECT_TRUE((
+      std::is_nothrow_constructible<
+        AABBConvexPolygon<>, RValueKey<AABBConvexPolygon<>>
+      >::value));
 }
 
 TEST(AABBConvexPolygon, SplitOnNegativeSide) {
