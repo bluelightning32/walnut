@@ -90,10 +90,10 @@ class HalfSpace2 {
   bool operator==(const HalfSpace2& other) const {
     BigInt scale_other;
     BigInt scale_mine;
-    if (d() != 0) {
+    if (!d().IsZero()) {
       scale_other = d().abs();
       scale_mine = other.d().abs();
-    } else if (x() != 0) {
+    } else if (!x().IsZero()) {
       scale_other = x().abs();
       scale_mine = other.x().abs();
     } else {
@@ -119,7 +119,7 @@ class HalfSpace2 {
     if (!d().IsZero()) {
       scale_other = &d();
       scale_mine = &other.d();
-    } else if (x().IsZero()) {
+    } else if (!x().IsZero()) {
       scale_other = &x();
       scale_mine = &other.x();
     } else {
