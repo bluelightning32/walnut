@@ -20,6 +20,16 @@ struct ConnectedEdge : public ParentTemplate, public DeedTarget {
 
   ConnectedEdge() = default;
 
+  ConnectedEdge(RValueKey<ConnectedEdge> other)
+    noexcept(std::is_nothrow_constructible<Parent, RValueKey<Parent>>::value)
+    : Parent(RValueKey<Parent>(other)), DeedTarget(std::move(other.get())),
+      polygon_(other.get().polygon_), partner_(other.get().partner_) {
+    if (partner_ != nullptr) {
+      partner_->partner_ = this;
+      other.get().partner_ = nullptr;
+    }
+  }
+
   ConnectedEdge(const ConnectedEdge&) = default;
 
   ConnectedEdge(const Parent& other) : Parent(other) { }
@@ -105,28 +115,22 @@ struct ConnectedEdge : public ParentTemplate, public DeedTarget {
   }
 
  protected:
-  ConnectedEdge(ConnectedEdge&& other) :
-      Parent(std::move(other)), DeedTarget(std::move(other)),
-      polygon_(other.polygon_), partner_(other.partner_) {
-    if (partner_ != nullptr) {
-      partner_->partner_ = this;
-      other.partner_ = nullptr;
-    }
-  }
-
   ConnectedEdge& operator=(const ConnectedEdge&) = default;
 
-  ConnectedEdge& operator=(ConnectedEdge&& other) {
-    static_cast<Parent&>(*this) = std::move(other);
-    static_cast<DeedTarget&>(*this) = std::move(other);
+  ConnectedEdge& operator=(RValueKey<ConnectedEdge> other)
+      noexcept(std::is_nothrow_move_assignable<
+                 AssignableWrapper<Parent>
+               >::value) {
+    static_cast<Parent&>(*this) = RValueKey<Parent>(other);
+    static_cast<DeedTarget&>(*this) = std::move(other.get());
 
-    std::swap(partner_, other.partner_);
-    polygon_ = other.polygon_;
+    std::swap(partner_, other.get().partner_);
+    polygon_ = other.get().polygon_;
     if (partner_ != nullptr) {
       partner_->partner_ = this;
     }
-    if (other.partner_ != nullptr) {
-      other.partner_->partner_ = &other;
+    if (other.get().partner_ != nullptr) {
+      other.get().partner_->partner_ = &other.get();
     }
     return *this;
   }

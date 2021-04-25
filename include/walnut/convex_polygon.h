@@ -532,7 +532,7 @@ class ConvexPolygon {
                                        vertex().vector_from_origin() *
                                        mid_point.w())));
     edges_.insert(edges_.begin() + split_index + 1,
-                  EdgeRep(original_edge, mid_point));
+                  AssignableWrapper<EdgeRep>(original_edge, mid_point));
   }
 
   // Tries to merge `other` into `this` by joining the half edges at

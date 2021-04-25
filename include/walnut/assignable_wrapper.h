@@ -8,7 +8,34 @@
 
 namespace walnut {
 
-// Exposes the protected constructors and assignment operators from `T`.
+template <typename T>
+struct RValueKey {
+  template <typename U,
+            std::enable_if_t<std::is_base_of<T, U>::value, bool> = true>
+  constexpr RValueKey(RValueKey<U> other) : value(other.value) { }
+
+  constexpr T& get() const {
+    return *value;
+  }
+
+ private:
+  friend T;
+  template <typename U>
+  friend struct RValueKey;
+
+  explicit constexpr RValueKey(T&& value) : value(&value) { }
+
+  T* value;
+};
+
+// Exposes protected and public constructors and assignment operators from T.
+template <typename T>
+struct ExposeProtectedConstructAssign : public T {
+  using T::T;
+  using T::operator=;
+};
+
+// Exposes the RValueKey constructor and assignment from T.
 template <typename T>
 struct AssignableWrapper : public T {
   using T::T;
@@ -19,11 +46,21 @@ struct AssignableWrapper : public T {
   AssignableWrapper(const T& other)
     noexcept(std::is_nothrow_copy_constructible<T>::value) : T(other) { }
 
-  template <typename B = bool,
-            std::enable_if_t<std::is_move_constructible<T>::value, B> = true>
-  AssignableWrapper(T&& other)
-    noexcept(std::is_nothrow_move_constructible<T>::value) :
-      T(std::move(other)) { }
+  AssignableWrapper(const AssignableWrapper<T>& other)
+    noexcept(std::is_nothrow_copy_constructible<T>::value) : T(other) { }
+
+  AssignableWrapper(AssignableWrapper<T>&& other)
+      noexcept(std::is_nothrow_constructible<T, RValueKey<T>>::value) :
+    T(std::move(other).GetRValueKey()) { }
+
+  AssignableWrapper& operator=(AssignableWrapper<T>&& other)
+      noexcept(std::is_nothrow_assignable<ExposeProtectedConstructAssign<T>,
+                                          RValueKey<T>>::value) {
+    *this = std::move(other).GetRValueKey();
+    return *this;
+  }
+
+  AssignableWrapper& operator=(const AssignableWrapper<T>& other) = default;
 };
 
 }  // walnut

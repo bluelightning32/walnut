@@ -116,6 +116,33 @@ TEST(ConnectedPolygon, SplitEdge) {
                        p0.y()*p1.w() + p1.y()*p0.w(),
                        p0.z()*p1.w() + p1.z()*p0.w(), p0.w()*p1.w()*2);
 
+  using EdgeRep = AssignableWrapper<ConnectedPolygon<>::EdgeRep>;
+  EXPECT_TRUE((std::is_nothrow_constructible<
+                 EdgeInfoRoot,
+                 RValueKey<EdgeInfoRoot>
+               >::value));
+  EXPECT_TRUE((std::is_nothrow_constructible<
+                 ConnectedPolygon<>::EdgeRep::Parent,
+                 RValueKey<ConnectedPolygon<>::EdgeRep::Parent>
+               >::value));
+  EXPECT_TRUE((std::is_nothrow_constructible<
+                 ConnectedPolygon<>::EdgeRep,
+                 RValueKey<ConnectedPolygon<>::EdgeRep>
+               >::value));
+  EXPECT_TRUE(std::is_nothrow_move_constructible<EdgeRep>::value);
+
+  EXPECT_TRUE((std::is_nothrow_assignable<
+                 EdgeInfoRoot,
+                 RValueKey<EdgeInfoRoot>
+               >::value));
+  EXPECT_TRUE((std::is_nothrow_move_assignable<
+                 AssignableWrapper<ConnectedPolygon<>::EdgeRep::Parent>
+               >::value));
+  EXPECT_TRUE((std::is_nothrow_move_assignable<
+                 AssignableWrapper<ConnectedPolygon<>::EdgeRep>
+               >::value));
+  EXPECT_TRUE(std::is_nothrow_move_assignable<EdgeRep>::value);
+
   using EdgeDeed = Deed<ConnectedPolygon<>::EdgeRep>;
   EdgeDeed e0_deed(&polygon.edge(0));
   EXPECT_EQ(e0_deed.get(), &polygon.edge(0));
@@ -154,7 +181,7 @@ TEST(ConnectedEdge, MoveConstruct) {
   EdgeRep e1_move(std::move(e1));
   EdgeRep e2_move(std::move(e2));
 
-  EXPECT_EQ(e1_move.partner_, &e2_move);
+  EXPECT_EQ(e1_move.partner_, &e2_move) << "e1.partner=" << e1.partner_;
   EXPECT_EQ(e2_move.partner_, &e1_move);
 
   EXPECT_EQ(&e1_move.polygon(), &polygon);

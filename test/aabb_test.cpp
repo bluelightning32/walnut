@@ -224,6 +224,9 @@ struct StringVertexData : public EdgeInfoRoot {
                    const HomoPoint3& new_source, const PluckerLine& new_line) :
     str(parent.str) { }
 
+  StringVertexData(RValueKey<StringVertexData> other)
+    : str(std::move(other.get().str)) { }
+
   std::string str;
 };
 

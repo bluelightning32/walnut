@@ -1,6 +1,7 @@
 #ifndef WALNUT_EDGE_INFO_ROOT_H__
 #define WALNUT_EDGE_INFO_ROOT_H__
 
+#include "walnut/assignable_wrapper.h"
 #include "walnut/homo_point3.h"
 #include "walnut/plucker_line.h"
 
@@ -12,6 +13,8 @@ struct EdgeInfoRoot {
   constexpr EdgeInfoRoot() = default;
 
   constexpr explicit EdgeInfoRoot(const EdgeInfoRoot&) = default;
+
+  constexpr EdgeInfoRoot(RValueKey<EdgeInfoRoot> other) noexcept { }
 
   EdgeInfoRoot(const EdgeInfoRoot& parent, const HomoPoint3& new_source) { }
 
@@ -29,6 +32,10 @@ struct EdgeInfoRoot {
   }
 
   constexpr EdgeInfoRoot& operator=(const EdgeInfoRoot& other) {
+    return *this;
+  }
+
+  constexpr EdgeInfoRoot& operator=(RValueKey<EdgeInfoRoot> other) noexcept {
     return *this;
   }
 

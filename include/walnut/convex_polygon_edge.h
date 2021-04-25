@@ -4,6 +4,7 @@
 #include <ostream>
 #include <sstream>
 
+#include "walnut/assignable_wrapper.h"
 #include "walnut/homo_point3.h"
 #include "walnut/plucker_line.h"
 #include "walnut/point3.h"
@@ -25,6 +26,18 @@ struct ConvexPolygonEdge : public ParentTemplate {
   using Parent = ParentTemplate;
 
   ConvexPolygonEdge(const ConvexPolygonEdge&) = default;
+
+  // Leave the move constructor implicitly deleted. Explicitly deleting the
+  // move constructor would prevent the compiler from falling back to the copy
+  // constructor.
+  //
+  // ConvexPolygonEdge(ConvexPolygonEdge&&) = delete;
+
+  ConvexPolygonEdge(RValueKey<ConvexPolygonEdge> other)
+    noexcept(std::is_nothrow_constructible<Parent, RValueKey<Parent>>::value)
+    : Parent(RValueKey<Parent>(other)),
+      vertex_(std::move(other.get().vertex_)),
+      line_(std::move(other.get().line_)) { }
 
   // Parent must be default-constructible to use this constructor.
   ConvexPolygonEdge(const Point3& vertex, const Point3& next_vertex) :
@@ -128,10 +141,23 @@ struct ConvexPolygonEdge : public ParentTemplate {
   // assignment operator. So to give the vector access, wrap the edge with an
   // `AssignableWrapper`.
 
-  ConvexPolygonEdge(ConvexPolygonEdge&&) noexcept = default;
-
   ConvexPolygonEdge& operator=(const ConvexPolygonEdge&) = default;
-  ConvexPolygonEdge& operator=(ConvexPolygonEdge&&) = default;
+
+  // Leave the move assignment operator implicitly deleted. Explicitly deleting
+  // the move assignment operator would prevent the compiler from falling back
+  // to the copy assignment operator.
+  //
+  // ConvexPolygonEdge& operator=(ConvexPolygonEdge&&) = delete;
+
+  ConvexPolygonEdge& operator=(RValueKey<ConvexPolygonEdge> other)
+      noexcept(std::is_nothrow_move_assignable<
+                 AssignableWrapper<Parent>
+               >::value) {
+    Parent::operator=(RValueKey<Parent>(other));
+    vertex_ = std::move(other.get().vertex_);
+    line_ = std::move(other.get().line_);
+    return *this;
+  }
 
   template <typename OtherParent>
   ConvexPolygonEdge& operator=(const ConvexPolygonEdge<OtherParent>& other) {
@@ -139,6 +165,10 @@ struct ConvexPolygonEdge : public ParentTemplate {
     vertex_ = other.vertex();
     line_ = other.line();
     return *this;
+  }
+
+  RValueKey<ConvexPolygonEdge> GetRValueKey() && {
+    return RValueKey<ConvexPolygonEdge>(std::move(*this));
   }
 
  private:

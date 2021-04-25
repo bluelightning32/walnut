@@ -16,7 +16,16 @@ struct SplitSide {
 template <typename ParentTemplate = EdgeInfoRoot>
 class BSPEdgeInfo : public ParentTemplate {
  public:
+  using Parent = ParentTemplate;
+
   BSPEdgeInfo(const EdgeInfoRoot&) { }
+
+  BSPEdgeInfo(RValueKey<BSPEdgeInfo> other)
+    noexcept(std::is_nothrow_constructible<Parent, RValueKey<Parent>>::value)
+    : Parent(RValueKey<Parent>(other)),
+      edge_first_coincident(std::move(other.get().edge_first_coincident)),
+      vertex_last_coincident(std::move(other.get().vertex_last_coincident)),
+      edge_last_coincident(std::move(other.get().edge_last_coincident)) { }
 
   // Create a new vertex on the parent's existing edge.
   //

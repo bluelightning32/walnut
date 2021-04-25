@@ -295,6 +295,14 @@ TEST(ConvexPolygonFactory, VertexData) {
     NoDefaultConstructor(const char* str) : str(str) { }
     NoDefaultConstructor() = delete;
 
+    NoDefaultConstructor(RValueKey<NoDefaultConstructor> other)
+      : str(std::move(other.get().str)) { }
+
+    NoDefaultConstructor& operator=(RValueKey<NoDefaultConstructor> other) {
+      str = std::move(other.get().str);
+      return *this;
+    }
+
     std::string str;
   };
   using ConvexPolygonRep = MutableConvexPolygon<NoDefaultConstructor>;
