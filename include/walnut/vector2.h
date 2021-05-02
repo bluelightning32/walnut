@@ -123,14 +123,12 @@ class Vector2 {
 
   // Compute the dot product
   BigInt Dot(const Vector2& other) const {
-    BigInt result = x() * other.x();
-    result += y() * other.y();
-    return result;
+    return (x() * other.x()).AddMultiply(y(), other.y());
   }
 
   // Compute the cross product
   BigInt Cross(const Vector2& other) const {
-    return x()*other.y() - y()*other.x();
+    return (x()*other.y()).SubtractMultiply(y(), other.x());
   }
 
   Vector2 Scale(const BigInt& scale) const {
