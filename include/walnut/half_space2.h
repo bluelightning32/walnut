@@ -146,6 +146,10 @@ class HalfSpace2 {
     return HalfSpace2(-normal_, -dist_);
   }
 
+  HalfSpace2 operator*(int scale) const {
+    return HalfSpace2(normal() * scale, d() * scale);
+  }
+
  private:
   Vector2 normal_;
   BigInt dist_;

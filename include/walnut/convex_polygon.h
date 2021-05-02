@@ -1057,11 +1057,10 @@ template <typename EdgeParent>
 ConvexPolygonSplitInfo ConvexPolygon<EdgeParent>::GetSplitInfo(
     const HalfSpace3& half_space) const {
   int flip = normal().components()[drop_dimension()].GetAbsMult();
-  PluckerLine line(HalfSpace3(half_space.normal() * flip,
-                              half_space.d() * flip),
-                   plane_);
+  ConvexPolygonSplitInfo result;
+  result.new_line = PluckerLine(plane_, half_space);
 
-  if (!line.IsValid()) {
+  if (!result.new_line.IsValid()) {
     // half_space is parallel to plane_.
     //
     // Now calculate the following:
@@ -1097,7 +1096,6 @@ ConvexPolygonSplitInfo ConvexPolygon<EdgeParent>::GetSplitInfo(
                    half_space.normal().components()[drop_dimension()]).Compare(
         half_space.d() *
         normal().components()[drop_dimension()]) * flip;
-    ConvexPolygonSplitInfo result;
     if (compare < 0) {
       // The polygon is entirely on the negative side.
       result.ranges.neg_range.second = vertex_count();
@@ -1110,8 +1108,7 @@ ConvexPolygonSplitInfo ConvexPolygon<EdgeParent>::GetSplitInfo(
     return result;
   }
 
-  auto half_space2 = line.Project2D(drop_dimension());
-  ConvexPolygonSplitInfo result;
+  auto half_space2 = result.new_line.Project2D(drop_dimension()) * -flip;
   result.ranges = vertex_count() < 10 ?
     FindSplitRangesLinear(half_space2, drop_dimension()) :
     FindSplitRangesBisect(half_space2, drop_dimension());
@@ -1121,10 +1118,6 @@ ConvexPolygonSplitInfo ConvexPolygon<EdgeParent>::GetSplitInfo(
     assert(result.IsValid(vertex_count()));
     return result;
   }
-
-  // If the input polygon is counter-clockwise in its projected form, then
-  // `line` is in the correct orientation for the positive output polygon.
-  result.new_line = PluckerLine(line.d() * -flip, line.m() * -flip);
 
   if (result.ranges.neg_range.second % vertex_count() ==
       result.ranges.pos_range.first % vertex_count()) {
