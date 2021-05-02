@@ -396,17 +396,12 @@ class BigInt {
     if (used_words() == 1 && other.used_words() == 1) {
       BigInt result;
       result.words_.resize(2);
-      result.words_[0] = words_[0].Multiply(other.words_[0], &result.words_[1]);
-      result.words_[1] -= other.words_[0].SignExtension() & words_[0];
-      result.words_[1] -= words_[0].SignExtension() & other.words_[0];
+      result.words_[0] = words_[0].MultiplySigned(other.words_[0],
+                                                  &result.words_[1]);
       result.Trim();
       return result;
     }
-    BigInt result = MultiplySlow(other);
-    result.SubtractLeftShiftedMasked(*this, other.used_words(), other.SignExtension());
-    result.SubtractLeftShiftedMasked(other, used_words(), SignExtension());
-    result.Trim();
-    return result;
+    return MultiplySlow(other);
   }
 
   BigInt operator*(const BigInt& other) const {

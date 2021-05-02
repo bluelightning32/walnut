@@ -230,10 +230,25 @@ class BigUIntWordBase {
     return ImplType(low.low_uint32(), middle.low_uint32());
   }
 
-  constexpr ImplType MultiplyAdd(const ImplType& other,
-                                              const ImplType& add,
-                                              bool carry_in,
-                                              ImplType* high_out) const {
+  constexpr ImplType MultiplySigned(const ImplType& other,
+                                    ImplType* high_out) const {
+    ImplType low(static_cast<uint64_t>(low_uint32()) * other.low_uint32());
+
+    bool carry = false;
+    ImplType middle =
+      ImplType(static_cast<uint64_t>(hi_uint32()) * other.low_uint32() + low.hi_uint32())
+        .Add(ImplType{static_cast<uint64_t>(low_uint32()) * other.hi_uint32()}, &carry);
+
+    high_out->i_ = static_cast<uint64_t>(hi_uint32()) * other.hi_uint32() +
+      middle.hi_uint32() + (static_cast<uint64_t>(carry) << 32) -
+      (other.SignExtension().i_ & i_) -
+      (SignExtension().i_ & other.i_);
+
+    return ImplType(low.low_uint32(), middle.low_uint32());
+  }
+
+  constexpr ImplType MultiplyAdd(const ImplType& other, const ImplType& add,
+                                 bool carry_in, ImplType* high_out) const {
     bool low_carry_out = false;
     ImplType low = ImplType{
       static_cast<uint64_t>(low_uint32()) * other.low_uint32()}
@@ -487,6 +502,14 @@ class BigUIntWordGCC
   constexpr ImplType Multiply(const ImplType& other, ImplType* high_out) const {
     unsigned __int128 full = static_cast<unsigned __int128>(this->i_) *
       static_cast<unsigned __int128>(other.i_);
+    *high_out = ImplType(static_cast<uint64_t>(full >> 64));
+    return ImplType(static_cast<uint64_t>(full));
+  }
+
+  constexpr ImplType MultiplySigned(const ImplType& other,
+                                    ImplType* high_out) const {
+    __int128 full = static_cast<__int128>(static_cast<BigIntWord>(this->i_)) *
+      static_cast<__int128>(static_cast<BigIntWord>(other.i_));
     *high_out = ImplType(static_cast<uint64_t>(full >> 64));
     return ImplType(static_cast<uint64_t>(full));
   }

@@ -79,6 +79,10 @@ BigInt BigInt::MultiplySlow(const BigInt& other) const {
   }
   k++;
   assert(result.used_words() == k);
+  result.SubtractLeftShiftedMasked(*this, other.used_words(),
+                                   other.SignExtension());
+  result.SubtractLeftShiftedMasked(other, used_words(), SignExtension());
+  result.Trim();
   return result;
 }
 
