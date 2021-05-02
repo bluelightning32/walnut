@@ -236,7 +236,7 @@ TEST(BSPTraverser, ConnectUnionCubesWithCornerOverlap) {
            std::vector<Visitor::PolygonRep>,
            HalfSpace3ReduceCompare> planes_to_polygons =
              GroupByPlane(visitor.polygons());
-  for (const std::pair<HalfSpace3,
+  for (const std::pair<const HalfSpace3,
                        std::vector<Visitor::PolygonRep>>& plane_info
                        : planes_to_polygons) {
     int non_zero_dims = 0;
@@ -335,7 +335,7 @@ TEST(BSPTraverser, ConnectUnionCubesWithPlaneCornerOverlap) {
            std::vector<Visitor::PolygonRep>,
            HalfSpace3ReduceCompare> planes_to_polygons =
              GroupByPlane(visitor.polygons());
-  for (const std::pair<HalfSpace3,
+  for (const std::pair<const HalfSpace3,
                        std::vector<Visitor::PolygonRep>>& plane_info
                        : planes_to_polygons) {
     int non_zero_dims = 0;

@@ -74,10 +74,9 @@ class BSPTraverser {
     const bool pos_normal =
       first_normal.components()[drop_dimension].GetSign() < 0;
     using BorderMapValue = typename BorderMap::value_type;
-    auto transform =
-      [pos_normal](const BorderMapValue& entry) -> const InputPolygon& {
-        return *entry.second;
-      };
+    auto transform = [](const BorderMapValue& entry) -> const InputPolygon& {
+      return *entry.second;
+    };
     using Transformer =
       TransformIterator<BorderMapIterator, decltype(transform)>;
     partitioner_.Run(Transformer(begin, transform),

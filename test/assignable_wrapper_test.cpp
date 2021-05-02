@@ -147,7 +147,7 @@ struct MoveOnlyDerived : public MoveOnly {
   }
 
   MoveOnlyDerived& operator=(RValueKey<MoveOnlyDerived> other) noexcept {
-    MoveOnlyDerived::operator=(other);
+    MoveOnly::operator=(other);
     return *this;
   }
 };
