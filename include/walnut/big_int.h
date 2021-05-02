@@ -730,10 +730,8 @@ class BigInt {
 
   explicit operator double() const;
 
-  static BigInt Determinant(const BigInt& r1_c1,
-                                const BigInt& r1_c2,
-                                const BigInt& r2_c1,
-                                const BigInt& r2_c2) {
+  static BigInt Determinant(const BigInt& r1_c1, const BigInt& r1_c2,
+                            const BigInt& r2_c1, const BigInt& r2_c2) {
     return r1_c1*r2_c2 - r2_c1*r1_c2;
   }
 
