@@ -82,8 +82,7 @@ inline bool Equals(const BigInt& num1, const BigInt& denom1,
 // Note that this comparison has the transitive property.
 inline bool IsHalfRotationLessThan(const BigInt& x1, const BigInt& y1,
                                    const BigInt& x2, const BigInt& y2,
-                                   const BigInt& y1_x2,
-                                   const BigInt& y2_x1) {
+                                   const BigInt& y1_x2, const BigInt& y2_x1) {
   // For determining whether to negate `this`, look at the sign of y1, when
   // y1 != 0. If y1 == 0, use the sign of x1 instead.
   //

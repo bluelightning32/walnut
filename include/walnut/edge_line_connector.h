@@ -217,8 +217,8 @@ class EdgeLineConnector {
         assert(e2->polygon().vertex_count() >= 3);
         const PluckerLine& e1_line = e1->line();
         const PluckerLine& e2_line = e2->line();
-        const auto e1_2dline = e1_line.d().DropDimension(drop_dimension);
-        const auto e2_2dline = e2_line.d().DropDimension(drop_dimension);
+        const Vector2 e1_2dline = e1_line.d().DropDimension(drop_dimension);
+        const Vector2 e2_2dline = e2_line.d().DropDimension(drop_dimension);
         if (!e1_2dline.IsSameOrOppositeDir(e2_2dline)) {
           return e1_2dline.IsHalfRotationLessThan(e2_2dline);
         }

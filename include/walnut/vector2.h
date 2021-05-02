@@ -222,18 +222,18 @@ inline bool Vector2::IsSameDir(const Vector2& other) const {
 }
 
 inline bool Vector2::IsSameOrOppositeDir(const Vector2& other) const {
-  BigInt scale_other;
-  BigInt scale_mine;
+  const BigInt* scale_other;
+  const BigInt* scale_mine;
   if (x() != 0) {
-    scale_other = x();
-    scale_mine = other.x();
+    scale_other = &x();
+    scale_mine = &other.x();
   } else {
-    scale_other = y();
-    scale_mine = other.y();
+    scale_other = &y();
+    scale_mine = &other.y();
   }
 
-  return x().Multiply(scale_mine) == other.x().Multiply(scale_other) &&
-         y().Multiply(scale_mine) == other.y().Multiply(scale_other);
+  return x().Multiply(*scale_mine) == other.x().Multiply(*scale_other) &&
+         y().Multiply(*scale_mine) == other.y().Multiply(*scale_other);
 }
 
 inline bool Vector2::IsRotationLessThan(const Vector2& other) const {
