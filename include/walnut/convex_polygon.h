@@ -1093,11 +1093,10 @@ ConvexPolygonSplitInfo ConvexPolygon<EdgeParent>::GetSplitInfo(
     //     poly is below half
     //   else
     //     poly is above half
-    int plane_abs_mult = normal().components()[drop_dimension()].GetAbsMult();
     int compare = (plane().d() *
                    half_space.normal().components()[drop_dimension()]).Compare(
         half_space.d() *
-        normal().components()[drop_dimension()]) * plane_abs_mult;
+        normal().components()[drop_dimension()]) * flip;
     ConvexPolygonSplitInfo result;
     if (compare < 0) {
       // The polygon is entirely on the negative side.
@@ -1125,9 +1124,7 @@ ConvexPolygonSplitInfo ConvexPolygon<EdgeParent>::GetSplitInfo(
 
   // If the input polygon is counter-clockwise in its projected form, then
   // `line` is in the correct orientation for the positive output polygon.
-  int neg_line_mult = -normal().components()[drop_dimension()].GetAbsMult();
-  result.new_line = PluckerLine(line.d() * neg_line_mult,
-                                line.m() * neg_line_mult);
+  result.new_line = PluckerLine(line.d() * -flip, line.m() * -flip);
 
   if (result.ranges.neg_range.second % vertex_count() ==
       result.ranges.pos_range.first % vertex_count()) {
