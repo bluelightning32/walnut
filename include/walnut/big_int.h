@@ -39,7 +39,8 @@ class BigInt {
     words_[0] = BigUIntWord{value};
   }
 
-  constexpr BigInt(const BigInt& other) : words_(other.words_) { }
+  BigInt(const BigInt&) = default;
+  constexpr BigInt(BigInt&&) = default;
 
   constexpr BigInt(const BigUInt& other)
    : words_(/*used_words=*/other.used_words() +
