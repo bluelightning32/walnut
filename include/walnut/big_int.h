@@ -219,10 +219,6 @@ class BigInt {
   constexpr BigInt& operator+=(const BigInt& other) {
     if (IsHalfWord() && other.IsHalfWord()) {
       words_[0] += other.words_[0];
-      if ((BigIntWord)words_[0] < std::numeric_limits<BigIntHalfWord>::min() ||
-          (BigIntWord)words_[0] > std::numeric_limits<BigIntHalfWord>::max()) {
-        words_.resize(1);
-      }
       return *this;
     }
     size_t i = 0;
