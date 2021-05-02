@@ -13,7 +13,8 @@ namespace walnut {
 // connecting them.
 template <typename FinalPolygonTemplate,
           typename ParentTemplate>
-struct ConnectedEdge : public ParentTemplate, public DeedTarget {
+class ConnectedEdge : public ParentTemplate, public DeedTarget {
+ public:
   using FinalPolygon = FinalPolygonTemplate;
   using Parent = ParentTemplate;
   using ConnectedEdgeRep = ConnectedEdge;
@@ -114,6 +115,32 @@ struct ConnectedEdge : public ParentTemplate, public DeedTarget {
     }
   }
 
+  bool CanMerge(const ConnectedEdge& next) const {
+    if (partner() != nullptr && next.partner() != nullptr) {
+      if (&partner()->polygon() != &next.partner()->polygon()) {
+        // The edges have different partner polygons. They cannot be merged.
+        return false;
+      }
+      using FinalEdgeRep = typename FinalPolygon::EdgeRep;
+      // The partner edges are in the opposite order. So my prev == other next.
+      const FinalEdgeRep& next_partner =
+        partner()->polygon().edge(partner()->edge_index());
+      const FinalEdgeRep& partner =
+        next.partner()->polygon().edge(next.partner()->edge_index());
+
+      // Temporarily unlink the partner to prevent an infinite loop. Even
+      // though the partner points to `this`, save the value because `this` is
+      // a const pointer and `old_value` is non-const.
+      ConnectedEdge* old_value = partner_->partner_;
+      assert(old_value == this);
+      partner_->partner_ = nullptr;
+      bool merge_result = partner.CanMerge(/*next=*/next_partner);
+      partner_->partner_ = old_value;
+      if (!merge_result) return false;
+    }
+    return Parent::CanMerge(next);
+  }
+
  protected:
   ConnectedEdge& operator=(const ConnectedEdge&) = default;
 
@@ -135,6 +162,27 @@ struct ConnectedEdge : public ParentTemplate, public DeedTarget {
     return *this;
   }
 
+  void Merge(ConnectedEdge& next) {
+    assert(CanMerge(next));
+    if (next.partner() != nullptr) {
+      // This signals the partner not to try and merge this polygon's edges
+      // again (preventing an infinite loop).
+      partner_->partner_ = nullptr;
+      partner_ = next.partner_;
+      partner_->partner_ = this;
+      next.partner_ = nullptr;
+
+      partner()->polygon().MergeConnectedEdge(partner()->edge_index());
+    }
+    Parent::Merge(next);
+  }
+
+  template <typename EdgeParent>
+  void EdgeMoved(ConvexPolygon<EdgeParent>& target) {
+    polygon_ = static_cast<FinalPolygon*>(&target);
+    Parent::EdgeMoved(target);
+  }
+
  private:
   template <typename ParentPolygon, typename FinalPolygon, typename EdgeParent>
   friend class ConnectedPolygon;
@@ -144,6 +192,7 @@ struct ConnectedEdge : public ParentTemplate, public DeedTarget {
   FRIEND_TEST(ConnectedEdge, MoveAssign);
   FRIEND_TEST(ConnectedEdge, MoveConstruct);
   FRIEND_TEST(ConnectedPolygon, SplitEdge);
+  FRIEND_TEST(ConnectedPolygon, Merge);
 
   void ResetPartners() {
     partner_ = nullptr;
@@ -211,18 +260,24 @@ class ConnectedPolygon : public ParentTemplate::template MakeParent<
     SetEdgeBackPointers();
   }
 
-  ConnectedPolygon(RValueKey<ConnectedPolygon> other)
-    noexcept(std::is_nothrow_constructible<Parent, RValueKey<Parent>>::value)
+  ConnectedPolygon(RValueKey<ConnectedPolygon> other) noexcept
     : Parent(RValueKey<Parent>(other)) {
+    static_assert(
+        std::is_nothrow_constructible<Parent, RValueKey<Parent>>::value,
+        "The ConnectedPolygon parent type must be nothrow move constructible "
+        "so that std::vector uses the move constructor.");
     SetEdgeBackPointers();
   }
 
-  ConnectedPolygon(ConnectedPolygon&& other)
-    noexcept(
+  ConnectedPolygon(ConnectedPolygon&& other) noexcept
+    : ConnectedPolygon(RValueKey<ConnectedPolygon>(std::move(other))) {
+    static_assert(
         std::is_nothrow_constructible<
           ConnectedPolygon, RValueKey<ConnectedPolygon>
-        >::value)
-    : ConnectedPolygon(RValueKey<ConnectedPolygon>(std::move(other))) { }
+        >::value,
+        "The ConnectedPolygon parent type must be nothrow move constructible "
+        "so that std::vector uses the move constructor.");
+  }
 
   template <typename OtherPolygon,
             std::enable_if_t<std::is_constructible<Parent,
@@ -283,9 +338,16 @@ class ConnectedPolygon : public ParentTemplate::template MakeParent<
   using Parent::edge;
   using Parent::vertex_count;
   using Parent::SplitEdge;
+  using Parent::TryMergePolygon;
 
   RValueKey<ConnectedPolygon> GetRValueKey() && {
     return RValueKey<ConnectedPolygon>(std::move(*this));
+  }
+
+  ConnectedPolygon& operator=(RValueKey<ConnectedPolygon> other) {
+    Parent::operator=(RValueKey<Parent>(other));
+    SetEdgeBackPointers();
+    return *this;
   }
 
  protected:
@@ -311,10 +373,19 @@ class ConnectedPolygon : public ParentTemplate::template MakeParent<
   }
 
  private:
+  template <typename FinalPolygon, typename Parent>
+  friend class ConnectedEdge;
+
   void SetEdgeBackPointers() {
     for (size_t i = 0; i < vertex_count(); ++i) {
-      edge(i).polygon_ = this;
+      edge(i).polygon_ = static_cast<FinalPolygon*>(this);
     }
+  }
+
+  // Called by ConnectedEdge.
+  void MergeConnectedEdge(size_t index) {
+    bool merged = static_cast<FinalPolygon*>(this)->TryMergeEdge(index);
+    assert(merged);
   }
 };
 

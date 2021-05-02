@@ -15,36 +15,50 @@ TEST(ConnectedPolygon, ConstructEmpty) {
   EXPECT_TRUE(polygon.IsValidState());
 }
 
-ConvexPolygon<> MakeRectangle() {
+ConvexPolygon<> MakeRectangle(int min_x, int min_y,
+                              int max_x, int max_y) {
   // p[3] <----- p[2]
   //  |           ^
   //  v           |
   // p[0] -----> p[1]
 
   std::vector<Point3> p = {
-    Point3(0, 0, 10),
-    Point3(2, 0, 10),
-    Point3(2, 1, 10),
-    Point3(0, 1, 10),
+    Point3(min_x, min_y, 10),
+    Point3(max_x, min_y, 10),
+    Point3(max_x, max_y, 10),
+    Point3(min_x, max_y, 10),
   };
   HalfSpace3 plane(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10);
+  // The ConvexPolygon constructor makes the last vertex the first. So rotate
+  // the input vertices first to compensate.
+  std::rotate(p.begin(), p.begin() + 1, p.end());
   return ConvexPolygon<>(plane, /*drop_dimension=*/2, p);
 }
 
 TEST(ConnectedPolygon, ConstructOnTopAABB) {
-  ConnectedPolygon<AABBConvexPolygon<>> polygon(MakeRectangle());
+  ConnectedPolygon<AABBConvexPolygon<>> polygon(MakeRectangle(/*min_x=*/0,
+                                                              /*min_y=*/0,
+                                                              /*max_x=*/2,
+                                                              /*max_y=*/1));
   EXPECT_TRUE(polygon.IsValidState());
-  EXPECT_EQ(polygon.aabb(), AABBConvexPolygon<>(MakeRectangle()).aabb());
+  EXPECT_EQ(polygon.aabb(),
+            AABBConvexPolygon<>(MakeRectangle(/*min_x=*/0,
+                                              /*min_y=*/0,
+                                              /*max_x=*/2,
+                                              /*max_y=*/1)).aabb());
 }
 
 TEST(ConnectedPolygon, ConstructUnderneathAABB) {
-  AABBConvexPolygon<ConnectedPolygon<>> polygon(MakeRectangle());
+  AABBConvexPolygon<ConnectedPolygon<>> polygon(MakeRectangle(/*min_x=*/0,
+                                                              /*min_y=*/0, /*max_x=*/2, /*max_y=*/1));
   EXPECT_TRUE(polygon.IsValidState());
-  EXPECT_EQ(polygon.aabb(), AABBConvexPolygon<>(MakeRectangle()).aabb());
+  EXPECT_EQ(polygon.aabb(), AABBConvexPolygon<>(MakeRectangle(/*min_x=*/0,
+                                                              /*min_y=*/0, /*max_x=*/2, /*max_y=*/1)).aabb());
 }
 
 TEST(ConnectedPolygon, CopyConstruct) {
-  ConnectedPolygon<> polygon(MakeRectangle());
+  ConnectedPolygon<> polygon(MakeRectangle(/*min_x=*/0, /*min_y=*/0,
+                                           /*max_x=*/2, /*max_y=*/1));
 
   ConnectedPolygon<> polygon2(polygon);
   ASSERT_TRUE(polygon2.IsValidState());
@@ -53,14 +67,15 @@ TEST(ConnectedPolygon, CopyConstruct) {
 
 TEST(ConnectedPolygon, VectorInitializerList) {
   std::vector<ConnectedPolygon<>> v{
-    MakeRectangle(),
-    MakeRectangle(),
+    MakeRectangle(/*min_x=*/0, /*min_y=*/0, /*max_x=*/2, /*max_y=*/1),
+    MakeRectangle(/*min_x=*/0, /*min_y=*/0, /*max_x=*/2, /*max_y=*/1),
   };
   EXPECT_EQ(v[0], v[1]);
 }
 
 TEST(ConnectedPolygon, MoveConstruct) {
-  ConnectedPolygon<> polygon(MakeRectangle());
+  ConnectedPolygon<> polygon(MakeRectangle(/*min_x=*/0, /*min_y=*/0,
+                                           /*max_x=*/2, /*max_y=*/1));
 
   ConnectedPolygon<> polygon2(polygon);
   ConnectedPolygon<> polygon3(std::move(polygon));
@@ -87,7 +102,8 @@ TEST(ConnectedPolygon, SplitInMiddle) {
   // p[0] -----> p[1]
   //         |
 
-  ConnectedPolygon<> polygon(MakeRectangle());
+  ConnectedPolygon<> polygon(MakeRectangle(/*min_x=*/0, /*min_y=*/0,
+                                           /*max_x=*/2, /*max_y=*/1));
 
   HalfSpace3 split(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
   ConvexPolygonSplitInfo split_info = polygon.GetSplitInfo(split);
@@ -105,7 +121,10 @@ TEST(ConnectedPolygon, SplitInMiddle) {
 }
 
 TEST(ConnectedPolygon, edge_index) {
-  AABBConvexPolygon<ConnectedPolygon<>> polygon(MakeRectangle());
+  AABBConvexPolygon<ConnectedPolygon<>> polygon(MakeRectangle(/*min_x=*/0,
+                                                              /*min_y=*/0,
+                                                              /*max_x=*/2,
+                                                              /*max_y=*/1));
 
   for (size_t i = 0; i < polygon.vertex_count(); ++i) {
     EXPECT_EQ(&polygon.edge(i).polygon(), &polygon);
@@ -114,7 +133,8 @@ TEST(ConnectedPolygon, edge_index) {
 }
 
 TEST(ConnectedPolygon, SplitEdge) {
-  ConnectedPolygon<> polygon(MakeRectangle());
+  ConnectedPolygon<> polygon(MakeRectangle(/*min_x=*/0, /*min_y=*/0,
+                                           /*max_x=*/2, /*max_y=*/1));
   polygon.edge(0).partner_ = &polygon.edge(1);
   polygon.edge(1).partner_ = &polygon.edge(0);
 
@@ -178,7 +198,8 @@ TEST(ConnectedPolygon, SplitEdge) {
 // Validates that the partner links are updated when a ConnectedEdge is move
 // constructed to a new location.
 TEST(ConnectedEdge, MoveConstruct) {
-  ConnectedPolygon<> polygon(MakeRectangle());
+  ConnectedPolygon<> polygon(MakeRectangle(/*min_x=*/0, /*min_y=*/0,
+                                           /*max_x=*/2, /*max_y=*/1));
 
   using EdgeRep = AssignableWrapper<ConnectedPolygon<>::EdgeRep>;
   EdgeRep e1(polygon.edge(0));
@@ -200,7 +221,8 @@ TEST(ConnectedEdge, MoveConstruct) {
 // Validates that the partner links are updated when a ConnectedEdge is move
 // assigned to a new location.
 TEST(ConnectedEdge, MoveAssign) {
-  ConnectedPolygon<> polygon(MakeRectangle());
+  ConnectedPolygon<> polygon(MakeRectangle(/*min_x=*/0, /*min_y=*/0,
+                                           /*max_x=*/2, /*max_y=*/1));
 
   using EdgeRep = AssignableWrapper<ConnectedPolygon<>::EdgeRep>;
   EdgeRep e1(polygon.edge(0));
@@ -228,6 +250,91 @@ TEST(ConnectedEdge, MoveAssign) {
   e2_move2 = std::move(std::move(e2));
   EXPECT_EQ(e1_move.partner_, &e2_move);
   EXPECT_EQ(e2_move.partner_, &e1_move);
+}
+
+TEST(ConnectedPolygon, Merge) {
+  // p[3] <- p[2] p[3] <- p[2]
+  //  |       ^    |       ^
+  //  v  r2a  |    v  r2b  |
+  // p[0] -> p[1] p[0] -> p[1]
+  //
+  // p[3] <- p[2] p[3] <- p[2]
+  //  |       ^    |       ^
+  //  v  r1a  |    v  r1b  |
+  // p[0] -> p[1] p[0] -> p[1]
+  ConnectedPolygon<> r1a(MakeRectangle(/*min_x=*/0, /*min_y=*/0,
+                                       /*max_x=*/1, /*max_y=*/1));
+  ConnectedPolygon<> r1b(MakeRectangle(/*min_x=*/1, /*min_y=*/0,
+                                       /*max_x=*/2, /*max_y=*/1));
+  ConnectedPolygon<> r2a(MakeRectangle(/*min_x=*/0, /*min_y=*/1,
+                                       /*max_x=*/1, /*max_y=*/2));
+  ConnectedPolygon<> r2b(MakeRectangle(/*min_x=*/1, /*min_y=*/1,
+                                       /*max_x=*/2, /*max_y=*/2));
+
+  EXPECT_EQ(r1a.vertex(0).x(), 0);
+  EXPECT_EQ(r1a.vertex(0).y(), 0);
+  r1a.edge(1).partner_ = &r1b.edge(3);
+  r1b.edge(3).partner_ = &r1a.edge(1);
+  r2a.edge(1).partner_ = &r2b.edge(3);
+  r2b.edge(3).partner_ = &r2a.edge(1);
+
+  r1a.edge(2).partner_ = &r2a.edge(0);
+  r2a.edge(0).partner_ = &r1a.edge(2);
+  r1b.edge(2).partner_ = &r2b.edge(0);
+  r2b.edge(0).partner_ = &r1b.edge(2);
+
+  EXPECT_TRUE(r1a.TryMergePolygon(/*nonzero_edge_dimension=*/1,
+                                  /*my_edge_index=*/1, /*other=*/r1b,
+                                  /*other_edge_index=*/3));
+  // p[3] <- p[2] p[3] <- p[2]
+  //  |       ^    |       ^
+  //  v  r2a  |    v  r2b  |
+  // p[0] -> p[1] p[0] -> p[1]
+  //
+  // p[4] <--- p[3] <---- p[2]
+  //  |                    ^
+  //  v  r1a               |
+  // p[0] --------------> p[1]
+  //
+  // r1b is emptied out since it was the other polygon in a merge.
+  EXPECT_EQ(r1b.vertex_count(), 0);
+  // The top edges cannot be merged together yet, because they refer to
+  // different partner polygons.
+  ASSERT_EQ(r1a.vertex_count(), 5);
+  EXPECT_EQ(r1a.edge(0).partner(), nullptr);
+  EXPECT_EQ(r1a.edge(1).partner(), nullptr);
+  EXPECT_EQ(r1a.edge(2).partner(), &r2b.edge(0));
+  EXPECT_EQ(r1a.edge(3).partner(), &r2a.edge(0));
+  EXPECT_EQ(r1a.edge(4).partner(), nullptr);
+
+  EXPECT_TRUE(r2a.TryMergePolygon(/*nonzero_edge_dimension=*/1,
+                                  /*my_edge_index=*/1, /*other=*/r2b,
+                                  /*other_edge_index=*/3));
+  // p[3] <-------------- p[2]
+  //  |                    ^
+  //  v  r2a               |
+  // p[0] --------------> p[1]
+  //
+  // p[3] <-------------- p[2]
+  //  |                    ^
+  //  v  r1a               |
+  // p[0] --------------> p[1]
+  //
+  // r2b is emptied out since it was the other polygon in a merge.
+  EXPECT_EQ(r2b.vertex_count(), 0);
+  // The bottom edges can be merged because they both refer to r1a.
+  ASSERT_EQ(r2a.vertex_count(), 4);
+  // Merging the bottom edges of r2b triggered merging the top edges of r1a.
+  ASSERT_EQ(r1a.vertex_count(), 4);
+  EXPECT_EQ(r1a.edge(0).partner(), nullptr);
+  EXPECT_EQ(r1a.edge(1).partner(), nullptr);
+  EXPECT_EQ(r1a.edge(2).partner(), &r2a.edge(0));
+  EXPECT_EQ(r1a.edge(3).partner(), nullptr);
+
+  EXPECT_EQ(r2a.edge(0).partner(), &r1a.edge(2));
+  EXPECT_EQ(r2a.edge(1).partner(), nullptr);
+  EXPECT_EQ(r2a.edge(2).partner(), nullptr);
+  EXPECT_EQ(r2a.edge(3).partner(), nullptr);
 }
 
 }  // walnut

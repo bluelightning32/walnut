@@ -568,7 +568,7 @@ class ConvexPolygon {
   // merged, true is returned and all of the edges are removed from `other`.
   //
   // After merging the polygons, if either vertex of the merged half edges is
-  // redundant, and edge.CanMerge returns true, then the vertex is removed.
+  // redundant, and edge.TryMerge returns true, then the vertex is removed.
   //
   // The caller must ensure that the endpoints of the edges match up.
   //
@@ -667,23 +667,31 @@ class ConvexPolygon {
     std::rotate(edges_.begin() + my_edge_index + 1, edges_.begin() + old_size,
                 edges_.end());
     other.edges_.clear();
+    for (auto it = edges_.begin() + my_edge_index;
+         it != edges_.begin() + my_edge_index + old_other_size - 1; ++it) {
+      it->EdgeMoved(*this);
+    }
 
     if (my_twist == 0 &&
-        edges_[my_edge_index].CanMerge(edges_[(my_edge_index - 1 +
-                                               edges_.size()) %
-                                              edges_.size()])) {
-      edges_.erase(edges_.begin() + my_edge_index);
+        TryMergeEdge((my_edge_index - 1 + edges_.size()) % edges_.size())) {
       --my_edge_index;
     }
     if (other_twist == 0) {
-      size_t other_after_merge =
-        (my_edge_index + old_other_size - 1) % edges_.size();
-      if (edges_[other_after_merge].CanMerge(edges_[my_edge_index +
-                                                    old_other_size - 2])) {
-        edges_.erase(edges_.begin() + other_after_merge);
-      }
+      TryMergeEdge(my_edge_index + old_other_size - 2);
     }
 
+    return true;
+  }
+
+  // Try to merge the edge at `index` with the next edge.
+  bool TryMergeEdge(size_t index) {
+    assert(index < vertex_count());
+    const size_t next_index = (index + 1) % vertex_count();
+    if (!edge(index).CanMerge(/*next=*/edge(next_index))) {
+      return false;
+    }
+    edges_[index].Merge(/*next=*/edges_[next_index]);
+    edges_.erase(edges_.begin() + next_index);
     return true;
   }
 

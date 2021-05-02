@@ -125,15 +125,15 @@ struct ConvexPolygonEdge : public ParentTemplate {
     return vertex_;
   }
 
-  // Returns true if this edge can be merged (removed) when `prev` is the
-  // previous edge.
+  // Returns true if this edge can be merged (the next removed).
   //
-  // The caller ensures that this edge is on the same line and points the same
-  // direction as `prev.
-  bool CanMerge(const ConvexPolygonEdge& prev) const {
-    assert(line().d().IsSameDir(prev.line().d()));
-    assert(prev.line().IsCoincident(vertex_));
-    return Parent::CanMerge(prev);
+  // The caller must ensure that `next` is the next edge in the same polygon,
+  // that this edge is on the same line, and that both edges point in the same
+  // direction.
+  bool CanMerge(const ConvexPolygonEdge& next) const {
+    assert(line().d().IsSameDir(next.line().d()));
+    assert(line().IsCoincident(next.vertex_));
+    return Parent::CanMerge(next);
   }
 
  protected:
@@ -171,7 +171,26 @@ struct ConvexPolygonEdge : public ParentTemplate {
     return RValueKey<ConvexPolygonEdge>(std::move(*this));
   }
 
+  // Merges the data in this edge with the data in `next`.
+  //
+  // This may only be called after CanMerge returns true. Afterwards merging
+  // the edges, the caller should remove `next` from the polygon.
+  //
+  // Even though this is protected, it is called by ConvexPolygon.
+  void Merge(ConvexPolygonEdge& next) {
+    assert(CanMerge(next));
+    return Parent::Merge(next);
+  }
+
+  template <typename EdgeParent>
+  void EdgeMoved(ConvexPolygon<EdgeParent>& target) {
+    Parent::EdgeMoved(target);
+  }
+
  private:
+  template <typename EdgeParent>
+  friend class ConvexPolygon;
+
   HomoPoint3 vertex_;
 
   // This line starts at `vertex` and goes to the next vertex in the polygon.

@@ -7,6 +7,9 @@
 
 namespace walnut {
 
+template <typename EdgeParent>
+class ConvexPolygon;
+
 // This functions as the root of the inheritance chain of the EdgeInfo class in
 // a ConvexPolygon.
 struct EdgeInfoRoot {
@@ -39,14 +42,15 @@ struct EdgeInfoRoot {
     return *this;
   }
 
-  // Returns true if this edge can be merged (removed) when `prev` is the
-  // previous edge.
-  //
-  // The caller ensures that this edge is on the same line and points the same
-  // direction as `prev.
-  bool CanMerge(const EdgeInfoRoot& prev) const {
+  bool CanMerge(const EdgeInfoRoot& next) const {
     return true;
   }
+
+ protected:
+  void Merge(EdgeInfoRoot& next) { }
+
+  template <typename EdgeParent>
+  void EdgeMoved(ConvexPolygon<EdgeParent>& target) { }
 };
 
 }  // walnut
