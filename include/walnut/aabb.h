@@ -306,11 +306,14 @@ int AABB::GetPlaneSide(const HalfSpace3& plane) const {
   const bool z_pos = plane.z().GetSign() > 0;
   // min_value is the distance along the plane normal of the AABB's point that
   // is farthest on the negative side of the plane.
-  const auto min_value =
-    (x_pos ? min_point_num_.x() : max_point_num_.x())*plane.x() +
-    (y_pos ? min_point_num_.y() : max_point_num_.y())*plane.y() +
-    (z_pos ? min_point_num_.z() : max_point_num_.z())*plane.z();
-  const auto scaled_d = plane.d() * denom_;
+  BigInt min_value =
+    (x_pos ? min_point_num_.x() : max_point_num_.x())*plane.x();
+  min_value.AddMultiply(y_pos ? min_point_num_.y() : max_point_num_.y(),
+                        plane.y());
+  min_value.AddMultiply(z_pos ? min_point_num_.z() : max_point_num_.z(),
+                        plane.z());
+
+  const BigInt scaled_d(plane.d() * denom_);
   if (min_value.Compare(scaled_d) * denom_.GetAbsMult() > 0) {
     // Even min_value is in the positive half-space. So the entire AABB is in
     // the positive half-space.
@@ -318,10 +321,13 @@ int AABB::GetPlaneSide(const HalfSpace3& plane) const {
   }
   // max_value is the distance along the plane normal of the AABB's point that
   // is farthest on the positive side of the plane.
-  const auto max_value =
-    (x_pos ? max_point_num_.x() : min_point_num_.x())*plane.x() +
-    (y_pos ? max_point_num_.y() : min_point_num_.y())*plane.y() +
-    (z_pos ? max_point_num_.z() : min_point_num_.z())*plane.z();
+  BigInt max_value =
+    (x_pos ? max_point_num_.x() : min_point_num_.x())*plane.x();
+  max_value.AddMultiply(y_pos ? max_point_num_.y() : min_point_num_.y(),
+                        plane.y());
+  max_value.AddMultiply(z_pos ? max_point_num_.z() : min_point_num_.z(),
+                        plane.z());
+
   if (max_value.Compare(scaled_d) * denom_.GetAbsMult() < 0) {
     // Even max_value is in the negative half-space. So the entire AABB is in
     // the negative half-space.

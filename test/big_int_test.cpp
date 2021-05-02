@@ -782,4 +782,68 @@ TEST(BigInt, GetGreatestCommonDivisorInt256Min) {
   EXPECT_EQ(a.GetGreatestCommonDivisor(b), a);
 }
 
+TEST(BigInt, AddMultiplyInt32Max) {
+  BigInt a{std::numeric_limits<int32_t>::max()};
+  BigInt result = a;
+  result.AddMultiply(a, a);
+
+  EXPECT_EQ(result, a + a*a);
+}
+
+TEST(BigInt, AddMultiplyInt64Max) {
+  BigInt a{std::numeric_limits<int64_t>::max()};
+  BigInt result = a;
+  result.AddMultiply(a, a);
+
+  EXPECT_EQ(result, a + a*a);
+}
+
+TEST(BigInt, AddMultiplyInt32Min) {
+  BigInt a{std::numeric_limits<int32_t>::min()};
+  BigInt result = a;
+  result.AddMultiply(a, a);
+
+  EXPECT_EQ(result, a + a*a);
+}
+
+TEST(BigInt, AddMultiplyInt64Min) {
+  BigInt a{std::numeric_limits<int64_t>::min()};
+  BigInt result = a;
+  result.AddMultiply(a, a);
+
+  EXPECT_EQ(result, a + a*a);
+}
+
+TEST(BigInt, SubtractMultiplyInt32Max) {
+  BigInt a{std::numeric_limits<int32_t>::max()};
+  BigInt result = a;
+  result.SubtractMultiply(a, a);
+
+  EXPECT_EQ(result, a - a*a);
+}
+
+TEST(BigInt, SubtractMultiplyInt64Max) {
+  BigInt a{std::numeric_limits<int64_t>::max()};
+  BigInt result = a;
+  result.SubtractMultiply(a, a);
+
+  EXPECT_EQ(result, a - a*a);
+}
+
+TEST(BigInt, SubtractMultiplyInt32Min) {
+  BigInt a{std::numeric_limits<int32_t>::min()};
+  BigInt result = a;
+  result.SubtractMultiply(a, a);
+
+  EXPECT_EQ(result, a - a*a);
+}
+
+TEST(BigInt, SubtractMultiplyInt64Min) {
+  BigInt a{std::numeric_limits<int64_t>::min()};
+  BigInt result = a;
+  result.SubtractMultiply(a, a);
+
+  EXPECT_EQ(result, a - a*a);
+}
+
 }  // walnut

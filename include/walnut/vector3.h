@@ -19,6 +19,9 @@ class Vector3 {
   Vector3(const BigInt& x, const BigInt& y, const BigInt& z) :
     components_{x, y, z} { }
 
+  Vector3(BigInt&& x, BigInt&& y, BigInt&& z) :
+    components_{std::move(x), std::move(y), std::move(z)} { }
+
   Vector3(long x, long y, long z) :
     components_{BigInt(x), BigInt(y), BigInt(z)} { }
 
@@ -109,9 +112,10 @@ class Vector3 {
 
   // Compute the cross product
   Vector3 Cross(const Vector3& other) const {
-    return Vector3(/*x=*/y()*other.z() - z()*other.y(),
-                   /*y=*/z()*other.x() - x()*other.z(),
-                   /*z=*/x()*other.y() - y()*other.x());
+    return Vector3(
+        /*x=*/std::move((y()*other.z()).SubtractMultiply(z(), other.y())),
+        /*y=*/std::move((z()*other.x()).SubtractMultiply(x(), other.z())),
+        /*z=*/std::move((x()*other.y()).SubtractMultiply(y(), other.x())));
   }
 
   Vector3 Scale(const BigInt& scale) const {

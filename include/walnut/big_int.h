@@ -404,6 +404,24 @@ class BigInt {
     return MultiplySlow(other);
   }
 
+  BigInt& AddMultiply(const BigInt& a, const BigInt& b) {
+    if (IsHalfWord() && a.IsHalfWord() && b.IsHalfWord()) {
+      words_[0] = words_[0].Add(BigUIntWord{BigIntWord{a.words_[0]} *
+                                            BigIntWord{b.words_[0]}});
+      return *this;
+    }
+    return *this += a * b;
+  }
+
+  BigInt& SubtractMultiply(const BigInt& a, const BigInt& b) {
+    if (IsHalfWord() && a.IsHalfWord() && b.IsHalfWord()) {
+      words_[0] = words_[0].Subtract(BigUIntWord{BigIntWord{a.words_[0]} *
+                                                 BigIntWord{b.words_[0]}});
+      return *this;
+    }
+    return *this -= a * b;
+  }
+
   BigInt operator*(const BigInt& other) const {
     return Multiply(other);
   }
@@ -723,7 +741,7 @@ class BigInt {
 
   static BigInt Determinant(const BigInt& r1_c1, const BigInt& r1_c2,
                             const BigInt& r2_c1, const BigInt& r2_c2) {
-    return r1_c1*r2_c2 - r2_c1*r1_c2;
+    return (r1_c1*r2_c2).SubtractMultiply(r2_c1, r1_c2);
   }
 
   BigInt GetGreatestCommonDivisor(const BigInt &other) const {
