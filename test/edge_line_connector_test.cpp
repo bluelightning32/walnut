@@ -550,4 +550,13 @@ TEST(EdgeLineConnector, ConnectUnsorted) {
   EXPECT_EQ(s2.edge(0).partner(), &s1.edge(0));
 }
 
+TEST(EdgeLineConnector, SortNullPtrs) {
+  std::vector<Deed<ConnectedPolygon<>::EdgeRep>> edges;
+  for (int i = 0; i < 50; ++i) {
+    edges.emplace_back();
+  }
+  EdgeLineConnector<>::SortEdgesInPlane(edges.begin(), edges.end(),
+                                        /*drop_dimension=*/2);
+}
+
 }  // walnut

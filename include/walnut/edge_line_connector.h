@@ -211,7 +211,7 @@ class EdgeLineConnector {
 
       bool operator()(const Deed<EdgeRep> &e1, const Deed<EdgeRep> &e2) const {
         if (e1.empty() || e2.empty()) {
-          return e1.empty();
+          return e1.empty() && !e2.empty();
         }
         assert(e1->polygon().vertex_count() >= 3);
         assert(e2->polygon().vertex_count() >= 3);
