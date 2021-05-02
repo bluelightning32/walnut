@@ -13,8 +13,9 @@ using testing::IsEmpty;
 using testing::UnorderedPointwise;
 using testing::SizeIs;
 
-std::vector<ConvexPolygon<>> MakeCuboid(int min_x, int min_y, int min_z,
-                                        int max_x, int max_y, int max_z) {
+std::vector<MutableConvexPolygon<>> MakeCuboid(int min_x, int min_y, int min_z,
+                                               int max_x, int max_y,
+                                               int max_z) {
   AABB aabb(min_x, min_y, min_z, max_x, max_y, max_z, /*denom=*/1);
   return aabb.GetWalls();
 }
@@ -44,9 +45,12 @@ TEST(BSPTraverser, EmptyInput) {
 TEST(BSPTraverser, AcceptSingleCube) {
   BSPTree<> tree;
   BSPContentId id = tree.AllocateId();
-  std::vector<ConvexPolygon<>> cube = MakeCuboid(/*min_x=*/0, /*min_y=*/0,
-                                                 /*min_z=*/0, /*max_x=*/1,
-                                                 /*max_y=*/1, /*max_z=*/1);
+  std::vector<MutableConvexPolygon<>> cube = MakeCuboid(/*min_x=*/0,
+                                                        /*min_y=*/0,
+                                                        /*min_z=*/0,
+                                                        /*max_x=*/1,
+                                                        /*max_y=*/1,
+                                                        /*max_z=*/1);
   tree.AddContents(id, cube);
 
   using OutputPolygon = BSPTree<>::OutputPolygon;
@@ -59,9 +63,12 @@ TEST(BSPTraverser, AcceptSingleCube) {
 
 TEST(BSPTraverser, AcceptOneOfTwoCubes) {
   BSPTree<> tree;
-  std::vector<ConvexPolygon<>> cube = MakeCuboid(/*min_x=*/0, /*min_y=*/0,
-                                                 /*min_z=*/0, /*max_x=*/1,
-                                                 /*max_y=*/1, /*max_z=*/1);
+  std::vector<MutableConvexPolygon<>> cube = MakeCuboid(/*min_x=*/0,
+                                                        /*min_y=*/0,
+                                                        /*min_z=*/0,
+                                                        /*max_x=*/1,
+                                                        /*max_y=*/1,
+                                                        /*max_z=*/1);
   BSPContentId id = tree.AllocateId();
   tree.AddContents(id, cube);
   // Filter out this cube.
@@ -81,9 +88,12 @@ TEST(BSPTraverser, IntersectExactlyMatchingCubes) {
   // Two cubes are added with the exact same walls. The intersection should
   // return only 1.
   BSPTree<> tree;
-  std::vector<ConvexPolygon<>> cube = MakeCuboid(/*min_x=*/0, /*min_y=*/0,
-                                                 /*min_z=*/0, /*max_x=*/1,
-                                                 /*max_y=*/1, /*max_z=*/1);
+  std::vector<MutableConvexPolygon<>> cube = MakeCuboid(/*min_x=*/0,
+                                                        /*min_y=*/0,
+                                                        /*min_z=*/0,
+                                                        /*max_x=*/1,
+                                                        /*max_y=*/1,
+                                                        /*max_z=*/1);
   BSPContentId id1 = tree.AllocateId();
   tree.AddContents(id1, cube);
   BSPContentId id2 = tree.AllocateId();
@@ -102,9 +112,12 @@ TEST(BSPTraverser, UnionExactlyMatchingCubes) {
   // Two cubes are added with the exact same walls. The intersection should
   // return only 1.
   BSPTree<> tree;
-  std::vector<ConvexPolygon<>> cube = MakeCuboid(/*min_x=*/0, /*min_y=*/0,
-                                                 /*min_z=*/0, /*max_x=*/1,
-                                                 /*max_y=*/1, /*max_z=*/1);
+  std::vector<MutableConvexPolygon<>> cube = MakeCuboid(/*min_x=*/0,
+                                                        /*min_y=*/0,
+                                                        /*min_z=*/0,
+                                                        /*max_x=*/1,
+                                                        /*max_y=*/1,
+                                                        /*max_z=*/1);
   BSPContentId id1 = tree.AllocateId();
   tree.AddContents(id1, cube);
   BSPContentId id2 = tree.AllocateId();
@@ -123,14 +136,20 @@ TEST(BSPTraverser, IntersectCubesWithCornerOverlap) {
   // Intersect two cubes that only overlap in their corners. The two cubes do
   // not share any walls.
   BSPTree<> tree;
-  std::vector<ConvexPolygon<>> cube1 = MakeCuboid(/*min_x=*/-3, /*min_y=*/-3,
-                                                  /*min_z=*/-3, /*max_x=*/1,
-                                                  /*max_y=*/1, /*max_z=*/1);
+  std::vector<MutableConvexPolygon<>> cube1 = MakeCuboid(/*min_x=*/-3,
+                                                         /*min_y=*/-3,
+                                                         /*min_z=*/-3,
+                                                         /*max_x=*/1,
+                                                         /*max_y=*/1,
+                                                         /*max_z=*/1);
   BSPContentId id1 = tree.AllocateId();
   tree.AddContents(id1, cube1);
-  std::vector<ConvexPolygon<>> cube2 = MakeCuboid(/*min_x=*/0, /*min_y=*/0,
-                                                  /*min_z=*/0, /*max_x=*/3,
-                                                  /*max_y=*/3, /*max_z=*/3);
+  std::vector<MutableConvexPolygon<>> cube2 = MakeCuboid(/*min_x=*/0,
+                                                         /*min_y=*/0,
+                                                         /*min_z=*/0,
+                                                         /*max_x=*/3,
+                                                         /*max_y=*/3,
+                                                         /*max_z=*/3);
   BSPContentId id2 = tree.AllocateId();
   tree.AddContents(id2, cube2);
 
@@ -140,23 +159,32 @@ TEST(BSPTraverser, IntersectCubesWithCornerOverlap) {
 
   tree.Traverse(visitor);
 
-  std::vector<ConvexPolygon<>> expected = MakeCuboid(/*min_x=*/0, /*min_y=*/0,
-                                                     /*min_z=*/0, /*max_x=*/1,
-                                                     /*max_y=*/1, /*max_z=*/1);
+  std::vector<MutableConvexPolygon<>> expected = MakeCuboid(/*min_x=*/0,
+                                                            /*min_y=*/0,
+                                                            /*min_z=*/0,
+                                                            /*max_x=*/1,
+                                                            /*max_y=*/1,
+                                                            /*max_z=*/1);
   EXPECT_THAT(visitor.polygons(), UnorderedPointwise(Eq(), expected));
 }
 
 TEST(BSPTraverser, IntersectCubesWithWallOverlap) {
   // Intersect two cubes that have some walls that overlap.
   BSPTree<> tree;
-  std::vector<ConvexPolygon<>> cube1 = MakeCuboid(/*min_x=*/0, /*min_y=*/0,
-                                                  /*min_z=*/0, /*max_x=*/2,
-                                                  /*max_y=*/1, /*max_z=*/1);
+  std::vector<MutableConvexPolygon<>> cube1 = MakeCuboid(/*min_x=*/0,
+                                                         /*min_y=*/0,
+                                                         /*min_z=*/0,
+                                                         /*max_x=*/2,
+                                                         /*max_y=*/1,
+                                                         /*max_z=*/1);
   BSPContentId id1 = tree.AllocateId();
   tree.AddContents(id1, cube1);
-  std::vector<ConvexPolygon<>> cube2 = MakeCuboid(/*min_x=*/1, /*min_y=*/0,
-                                                  /*min_z=*/0, /*max_x=*/4,
-                                                  /*max_y=*/1, /*max_z=*/1);
+  std::vector<MutableConvexPolygon<>> cube2 = MakeCuboid(/*min_x=*/1,
+                                                         /*min_y=*/0,
+                                                         /*min_z=*/0,
+                                                         /*max_x=*/4,
+                                                         /*max_y=*/1,
+                                                         /*max_z=*/1);
   BSPContentId id2 = tree.AllocateId();
   tree.AddContents(id2, cube2);
 
@@ -166,9 +194,12 @@ TEST(BSPTraverser, IntersectCubesWithWallOverlap) {
 
   tree.Traverse(visitor);
 
-  std::vector<ConvexPolygon<>> expected = MakeCuboid(/*min_x=*/1, /*min_y=*/0,
-                                                     /*min_z=*/0, /*max_x=*/2,
-                                                     /*max_y=*/1, /*max_z=*/1);
+  std::vector<MutableConvexPolygon<>> expected = MakeCuboid(/*min_x=*/1,
+                                                            /*min_y=*/0,
+                                                            /*min_z=*/0,
+                                                            /*max_x=*/2,
+                                                            /*max_y=*/1,
+                                                            /*max_z=*/1);
   EXPECT_THAT(visitor.polygons(), UnorderedPointwise(Eq(), expected));
 }
 
@@ -176,14 +207,20 @@ TEST(BSPTraverser, ConnectIntersectCubesWithCornerOverlap) {
   // Intersect two cubes that only overlap in their corners. The two cubes do
   // not share any walls.
   BSPTree<> tree;
-  std::vector<ConvexPolygon<>> cube1 = MakeCuboid(/*min_x=*/-3, /*min_y=*/-3,
-                                                  /*min_z=*/-3, /*max_x=*/1,
-                                                  /*max_y=*/1, /*max_z=*/1);
+  std::vector<MutableConvexPolygon<>> cube1 = MakeCuboid(/*min_x=*/-3,
+                                                         /*min_y=*/-3,
+                                                         /*min_z=*/-3,
+                                                         /*max_x=*/1,
+                                                         /*max_y=*/1,
+                                                         /*max_z=*/1);
   BSPContentId id1 = tree.AllocateId();
   tree.AddContents(id1, cube1);
-  std::vector<ConvexPolygon<>> cube2 = MakeCuboid(/*min_x=*/0, /*min_y=*/0,
-                                                  /*min_z=*/0, /*max_x=*/3,
-                                                  /*max_y=*/3, /*max_z=*/3);
+  std::vector<MutableConvexPolygon<>> cube2 = MakeCuboid(/*min_x=*/0,
+                                                         /*min_y=*/0,
+                                                         /*min_z=*/0,
+                                                         /*max_x=*/3,
+                                                         /*max_y=*/3,
+                                                         /*max_z=*/3);
   BSPContentId id2 = tree.AllocateId();
   tree.AddContents(id2, cube2);
 
@@ -198,9 +235,12 @@ TEST(BSPTraverser, ConnectIntersectCubesWithCornerOverlap) {
   tree.Traverse(visitor);
 
   EXPECT_FALSE(errored);
-  std::vector<ConvexPolygon<>> expected = MakeCuboid(/*min_x=*/0, /*min_y=*/0,
-                                                     /*min_z=*/0, /*max_x=*/1,
-                                                     /*max_y=*/1, /*max_z=*/1);
+  std::vector<MutableConvexPolygon<>> expected = MakeCuboid(/*min_x=*/0,
+                                                            /*min_y=*/0,
+                                                            /*min_z=*/0,
+                                                            /*max_x=*/1,
+                                                            /*max_y=*/1,
+                                                            /*max_z=*/1);
   EXPECT_THAT(visitor.polygons(), UnorderedPointwise(Eq(), expected));
 }
 
@@ -208,14 +248,20 @@ TEST(BSPTraverser, ConnectUnionCubesWithCornerOverlap) {
   // Union two cubes that only overlap in their corners. The two cubes do not
   // share any walls.
   BSPTree<> tree;
-  std::vector<ConvexPolygon<>> cube1 = MakeCuboid(/*min_x=*/-3, /*min_y=*/-3,
-                                                  /*min_z=*/-3, /*max_x=*/1,
-                                                  /*max_y=*/1, /*max_z=*/1);
+  std::vector<MutableConvexPolygon<>> cube1 = MakeCuboid(/*min_x=*/-3,
+                                                         /*min_y=*/-3,
+                                                         /*min_z=*/-3,
+                                                         /*max_x=*/1,
+                                                         /*max_y=*/1,
+                                                         /*max_z=*/1);
   BSPContentId id1 = tree.AllocateId();
   tree.AddContents(id1, cube1);
-  std::vector<ConvexPolygon<>> cube2 = MakeCuboid(/*min_x=*/0, /*min_y=*/0,
-                                                  /*min_z=*/0, /*max_x=*/3,
-                                                  /*max_y=*/3, /*max_z=*/3);
+  std::vector<MutableConvexPolygon<>> cube2 = MakeCuboid(/*min_x=*/0,
+                                                         /*min_y=*/0,
+                                                         /*min_z=*/0,
+                                                         /*max_x=*/3,
+                                                         /*max_y=*/3,
+                                                         /*max_z=*/3);
   BSPContentId id2 = tree.AllocateId();
   tree.AddContents(id2, cube2);
 
@@ -272,14 +318,20 @@ TEST(BSPTraverser, ConnectUnionCubesWithCornerOverlap) {
 TEST(BSPTraverser, ConnectUnionCubesIntoCubiod) {
   // Union two cubes that together form a rectangular prism.
   BSPTree<> tree;
-  std::vector<ConvexPolygon<>> cube1 = MakeCuboid(/*min_x=*/0, /*min_y=*/0,
-                                                  /*min_z=*/0, /*max_x=*/3,
-                                                  /*max_y=*/3, /*max_z=*/3);
+  std::vector<MutableConvexPolygon<>> cube1 = MakeCuboid(/*min_x=*/0,
+                                                         /*min_y=*/0,
+                                                         /*min_z=*/0,
+                                                         /*max_x=*/3,
+                                                         /*max_y=*/3,
+                                                         /*max_z=*/3);
   BSPContentId id1 = tree.AllocateId();
   tree.AddContents(id1, cube1);
-  std::vector<ConvexPolygon<>> cube2 = MakeCuboid(/*min_x=*/1, /*min_y=*/0,
-                                                  /*min_z=*/0, /*max_x=*/4,
-                                                  /*max_y=*/3, /*max_z=*/3);
+  std::vector<MutableConvexPolygon<>> cube2 = MakeCuboid(/*min_x=*/1,
+                                                         /*min_y=*/0,
+                                                         /*min_z=*/0,
+                                                         /*max_x=*/4,
+                                                         /*max_y=*/3,
+                                                         /*max_z=*/3);
   BSPContentId id2 = tree.AllocateId();
   tree.AddContents(id2, cube2);
 
@@ -295,9 +347,12 @@ TEST(BSPTraverser, ConnectUnionCubesIntoCubiod) {
 
   EXPECT_FALSE(errored);
 
-  std::vector<ConvexPolygon<>> expected = MakeCuboid(/*min_x=*/0, /*min_y=*/0,
-                                                     /*min_z=*/0, /*max_x=*/4,
-                                                     /*max_y=*/3, /*max_z=*/3);
+  std::vector<MutableConvexPolygon<>> expected = MakeCuboid(/*min_x=*/0,
+                                                            /*min_y=*/0,
+                                                            /*min_z=*/0,
+                                                            /*max_x=*/4,
+                                                            /*max_y=*/3,
+                                                            /*max_z=*/3);
   visitor.FilterEmptyPolygons();
   EXPECT_THAT(visitor.polygons(), UnorderedPointwise(Eq(), expected));
 }
@@ -306,14 +361,20 @@ TEST(BSPTraverser, ConnectUnionCubesWithPlaneCornerOverlap) {
   // Union two cubes whose corners overlap, and both cubes have the same start
   // and height in the z component.
   BSPTree<> tree;
-  std::vector<ConvexPolygon<>> cube1 = MakeCuboid(/*min_x=*/0, /*min_y=*/0,
-                                                  /*min_z=*/0, /*max_x=*/2,
-                                                  /*max_y=*/2, /*max_z=*/1);
+  std::vector<MutableConvexPolygon<>> cube1 = MakeCuboid(/*min_x=*/0,
+                                                         /*min_y=*/0,
+                                                         /*min_z=*/0,
+                                                         /*max_x=*/2,
+                                                         /*max_y=*/2,
+                                                         /*max_z=*/1);
   BSPContentId id1 = tree.AllocateId();
   tree.AddContents(id1, cube1);
-  std::vector<ConvexPolygon<>> cube2 = MakeCuboid(/*min_x=*/1, /*min_y=*/1,
-                                                  /*min_z=*/0, /*max_x=*/3,
-                                                  /*max_y=*/3, /*max_z=*/1);
+  std::vector<MutableConvexPolygon<>> cube2 = MakeCuboid(/*min_x=*/1,
+                                                         /*min_y=*/1,
+                                                         /*min_z=*/0,
+                                                         /*max_x=*/3,
+                                                         /*max_y=*/3,
+                                                         /*max_z=*/1);
   BSPContentId id2 = tree.AllocateId();
   tree.AddContents(id2, cube2);
 

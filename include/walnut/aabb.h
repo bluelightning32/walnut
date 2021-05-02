@@ -125,7 +125,7 @@ class AABB {
   int GetPlaneSide(const HalfSpace3& plane) const;
 
   // Returns all 6 sides of the prism.
-  std::vector<ConvexPolygon<>> GetWalls() const;
+  std::vector<MutableConvexPolygon<>> GetWalls() const;
 
   HomoPoint3 min_point() const {
     return HomoPoint3(min_point_num_, denom_);
@@ -242,7 +242,7 @@ ConvexPolygonRep AABB::IntersectPlane(
   return result;
 }
 
-std::vector<ConvexPolygon<>> AABB::GetWalls() const {
+std::vector<MutableConvexPolygon<>> AABB::GetWalls() const {
   HomoPoint3 p[] = {
     HomoPoint3(min_point_num_.x(), min_point_num_.y(), min_point_num_.z(),
                denom_),
@@ -280,7 +280,7 @@ std::vector<ConvexPolygon<>> AABB::GetWalls() const {
     {2, {4, 5, 6, 7}},
   };
 
-  std::vector<ConvexPolygon<>> result;
+  std::vector<MutableConvexPolygon<>> result;
   std::vector<HomoPoint3> vertices;
   vertices.reserve(4);
   for (int side = 0; side < 6; ++side) {
