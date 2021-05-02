@@ -16,9 +16,8 @@ class HomoPoint3 {
   // Leaves the components in an undefined state
   HomoPoint3() = default;
 
-  HomoPoint3(const HomoPoint3& other) :
-    vector_from_origin_(other.vector_from_origin()),
-    dist_denom_(other.dist_denom()) { }
+  HomoPoint3(const HomoPoint3&) = default;
+  HomoPoint3(HomoPoint3&&) = default;
 
   HomoPoint3(const BigInt& x, const BigInt& y, const BigInt& z,
              const BigInt& w) :
@@ -32,6 +31,9 @@ class HomoPoint3 {
 
   HomoPoint3(const Vector3& v, const BigInt& w) :
     vector_from_origin_(v), dist_denom_(w) { }
+
+  HomoPoint3& operator=(const HomoPoint3&) = default;
+  HomoPoint3& operator=(HomoPoint3&&) = default;
 
   BigInt& x() {
     return vector_from_origin_.x();

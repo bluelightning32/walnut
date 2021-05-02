@@ -57,8 +57,8 @@ class PluckerLine {
   PluckerLine(const Vector3& d, const Vector3& m) :
     d_(d), m_(m) { }
 
-  PluckerLine(const PluckerLine& other) :
-    PluckerLine(other.d(), other.m()) { }
+  PluckerLine(const PluckerLine&) = default;
+  PluckerLine(PluckerLine&&) = default;
 
   PluckerLine(const Point3& p1, const Point3& p2) :
     d_(p2 - p1), m_(p1.vector_from_origin().Cross(p2.vector_from_origin())) { }
@@ -74,6 +74,9 @@ class PluckerLine {
   // Both `a` and `b` must be valid (have non-zero normals), and they must be
   // non-equal, otherwise `IsValid` will return false on the constructed line.
   PluckerLine(const HalfSpace3& a, const HalfSpace3& b);
+
+  PluckerLine& operator=(const PluckerLine&) = default;
+  PluckerLine& operator=(PluckerLine&&) = default;
 
   // Returns true if `p` is on the line.
   bool IsCoincident(const Point3& p) const {
