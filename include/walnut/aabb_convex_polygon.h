@@ -52,7 +52,10 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
     Parent(other),
     aabb_tracker_(other.aabb_tracker_) { }
 
-  template <typename OtherParentPolygon>
+  template <typename OtherParentPolygon,
+            std::enable_if_t<!std::is_base_of<AABBConvexPolygon,
+                                              OtherParentPolygon>::value,
+                             bool> = true>
   explicit AABBConvexPolygon(const OtherParentPolygon& other) :
       Parent(other),
       aabb_tracker_(Parent::vertices_begin(), Parent::vertices_end()) { }
