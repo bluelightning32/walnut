@@ -21,13 +21,26 @@ class MutableConvexPolygon : public ConvexPolygon<EdgeParent> {
   MutableConvexPolygon(const MutableConvexPolygon&) = default;
 
   MutableConvexPolygon(MutableConvexPolygon&& other)
-    : Parent(std::move(other).GetRValueKey()) { }
+    noexcept(
+        std::is_nothrow_constructible<
+          MutableConvexPolygon, RValueKey<MutableConvexPolygon>
+        >::value)
+    : MutableConvexPolygon(RValueKey<MutableConvexPolygon>(std::move(other))) {
+  }
+
+  MutableConvexPolygon(RValueKey<MutableConvexPolygon> other)
+    noexcept(std::is_nothrow_constructible<Parent, RValueKey<Parent>>::value)
+    : Parent(RValueKey<Parent>(other)) { }
 
   MutableConvexPolygon& operator=(const MutableConvexPolygon& other) = default;
 
-  MutableConvexPolygon& operator=(MutableConvexPolygon&& other) {
-    *this = std::move(other).GetRValueKey();
+  MutableConvexPolygon& operator=(RValueKey<MutableConvexPolygon> other) {
+    *this = RValueKey<Parent>(other);
     return *this;
+  }
+
+  MutableConvexPolygon& operator=(MutableConvexPolygon&& other) {
+    return *this = std::move(other).GetRValueKey();
   }
 
   // Exposes the protected mutating functions

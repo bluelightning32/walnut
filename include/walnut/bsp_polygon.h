@@ -15,6 +15,20 @@ using BSPContentId = size_t;
 
 template <typename ParentTemplate = ConvexPolygon<>,
           typename EdgeParentTemplate = EdgeInfoRoot>
+class BSPPolygon;
+
+template <typename Polygon>
+struct IsBSPPolygon {
+  static constexpr bool value = false;
+};
+
+template <typename ParentTemplate,
+          typename EdgeParentTemplate>
+struct IsBSPPolygon<BSPPolygon<ParentTemplate, EdgeParentTemplate>> {
+  static constexpr bool value = true;
+};
+
+template <typename ParentTemplate, typename EdgeParentTemplate>
 class BSPPolygon :
   public ParentTemplate::template MakeParent<BSPPolygon<ParentTemplate>,
                                              BSPEdgeInfo<EdgeParentTemplate>
@@ -22,6 +36,8 @@ class BSPPolygon :
  public:
   using EdgeParent = EdgeParentTemplate;
   using UnspecializedParent = ParentTemplate;
+  static_assert(!IsBSPPolygon<UnspecializedParent>::value,
+                "BSPPolygon cannot inherit from BSPPolygon.");
   using Parent =
     typename ParentTemplate::template MakeParent<BSPPolygon<ParentTemplate>,
                                                  BSPEdgeInfo<EdgeParent>
@@ -50,6 +66,10 @@ class BSPPolygon :
     : Parent(RValueKey<Parent>(other)),
       id(other.get().id),
       on_node_plane(std::move(other.get().on_node_plane)) { }
+
+  template <typename OtherParent, typename OtherEdgeParent>
+  BSPPolygon(const BSPPolygon<OtherParent, OtherEdgeParent>& other)
+    : Parent(other), id(other.id), on_node_plane(other.on_node_plane) { }
 
   template <typename OtherPolygon>
   BSPPolygon(BSPContentId id, const HalfSpace3* on_node_plane, bool pos_side,

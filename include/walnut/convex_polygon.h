@@ -757,6 +757,9 @@ class ConvexPolygon {
                                   ConvexPolygon& pos_child);
 
  private:
+  template <typename OtherEdgeParent>
+  friend class ConvexPolygon;
+
   // The plane that all of the vertices are in.
   HalfSpace3 plane_;
   // When this dimension is projected to 0, 'dropped', the vertices will not

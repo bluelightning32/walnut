@@ -1,6 +1,8 @@
 #ifndef WALNUT_HALF_SPACE3_H__
 #define WALNUT_HALF_SPACE3_H__
 
+#include <tuple>
+
 #include "walnut/half_space2.h"
 #include "walnut/homo_point3.h"
 #include "walnut/point3.h"
@@ -235,6 +237,20 @@ class HalfSpace3 {
 };
 
 std::ostream& operator<<(std::ostream& out, const HalfSpace3& p);
+
+// An inefficient comparison function for HalfSpace3 that is only useful for
+// tests.
+struct HalfSpace3ReduceCompare {
+  bool operator()(const HalfSpace3& a, const HalfSpace3& b) const {
+    HalfSpace3 a_copy = a;
+    a_copy.Reduce();
+    HalfSpace3 b_copy = b;
+    b_copy.Reduce();
+
+    return std::make_tuple(a.x(), a.y(), a.z(), a.d()) <
+           std::make_tuple(b.x(), b.y(), b.z(), b.d());
+  }
+};
 
 }  // walnut
 

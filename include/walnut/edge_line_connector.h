@@ -18,11 +18,13 @@ namespace walnut {
 // Given a sorted range of Deed<EdgeRep>s all on the same line, this in place
 // algorithm connects the half-edges together.
 //
-// Typically one instantiates the class, calls `SortEdgesInPlane` to sort a
-// range of edges, splits up the edges based on the lines, then calls `Connect`
-// to connect each group of edges on the same line. This algorithm exists as a
-// class so that the std::vector intermediate data structures can be stored as
-// member variables and reused between calls to the algorithm.
+// Typically one instantiates the class and calls `ConnectedUnsorted` to sort a
+// range of edges, split up the edges based on the lines, and finally connect
+// them.
+//
+// This algorithm exists as a class so that the std::vector intermediate data
+// structures can be stored as member variables and reused between calls to the
+// algorithm.
 template <typename EdgeTemplate = ConnectedPolygon<>::EdgeRep>
 class EdgeLineConnector {
  public:
@@ -58,6 +60,12 @@ class EdgeLineConnector {
                        int drop_dimension,
                        const std::function<void(const std::string&)>& error) {
     SortEdgesInPlane(edges_begin, edges_end, drop_dimension);
+    // Null edges can end up in the input range if some of the polygons have
+    // already been merged. SortEdgesInPlane puts the null edges in the front.
+    // Skip over those now.
+    while (edges_begin != edges_end && edges_begin->empty()) {
+      ++edges_begin;
+    }
     while (edges_begin != edges_end) {
       std::pair<Iterator, int> range_end =
         FindNextLineStart(edges_begin, edges_end, drop_dimension);
@@ -122,7 +130,9 @@ class EdgeLineConnector {
       }
       assert(prev_location == nullptr ||
              IsLocationLessThan(*prev_location, *current_location,
-                                sorted_dimension));
+                                sorted_dimension) ||
+             !IsLocationLessThan(*current_location, *prev_location,
+                                 sorted_dimension));
       prev_location = current_location;
 
       assert(end_events_.size() == active_edges.size());
@@ -198,6 +208,11 @@ class EdgeLineConnector {
       EdgeCompare(int drop_dimension) : drop_dimension(drop_dimension) { }
 
       bool operator()(const Deed<EdgeRep> &e1, const Deed<EdgeRep> &e2) const {
+        if (e1.empty() || e2.empty()) {
+          return e1.empty();
+        }
+        assert(e1->polygon().vertex_count() >= 3);
+        assert(e2->polygon().vertex_count() >= 3);
         const PluckerLine& e1_line = e1->line();
         const PluckerLine& e2_line = e2->line();
         const auto e1_2dline = e1_line.d().DropDimension(drop_dimension);
