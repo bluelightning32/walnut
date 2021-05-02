@@ -385,6 +385,8 @@ class ConnectedPolygon : public ParentTemplate::template MakeParent<
   // Called by ConnectedEdge.
   void MergeConnectedEdge(size_t index) {
     bool merged = static_cast<FinalPolygon*>(this)->TryMergeEdge(index);
+    // Fix an unused variable warning in release builds.
+    (void)(merged);
     assert(merged);
   }
 };

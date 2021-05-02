@@ -113,6 +113,8 @@ class EdgeLineConnector {
     EndEventsCompare end_events_compare(sorted_dimension);
 
     const HomoPoint3* prev_location = nullptr;
+    // Fix an unused variable warning in release builds.
+    (void)(prev_location);
     while (edges_begin != edges_end) {
       const HomoPoint3* current_location;
       if (end_events_.empty() ||

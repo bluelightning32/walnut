@@ -140,6 +140,7 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
         return Parent::GetSplitInfo(half_space);
       default:
         assert(false);
+        return ConvexPolygonSplitInfo();
     }
   }
 

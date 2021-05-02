@@ -581,12 +581,11 @@ class ConvexPolygon {
   // * The merged polygon would not be convex.
   bool TryMergePolygon(int nonzero_edge_dimension, size_t my_edge_index,
                        ConvexPolygon& other, size_t other_edge_index) {
-    const EdgeRep& my_edge = edge(my_edge_index);
-    const EdgeRep& other_edge = other.edge(other_edge_index);
-    assert(!my_edge.line().d().components()[nonzero_edge_dimension].IsZero());
-    assert(my_edge.vertex() ==
+    assert(!edge(my_edge_index).line().d()
+           .components()[nonzero_edge_dimension].IsZero());
+    assert(edge(my_edge_index).vertex() ==
            other.vertex((other_edge_index + 1) % other.vertex_count()));
-    assert(other_edge.vertex() ==
+    assert(other.edge(other_edge_index).vertex() ==
            vertex((my_edge_index + 1) % vertex_count()));
 
     if (!normal().DropDimension(nonzero_edge_dimension).IsSameDir(

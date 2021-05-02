@@ -179,8 +179,11 @@ class CollectorVisitor : public BSPVisitor<PolygonRep> {
                          const HalfSpace3& split) override {
     if (from_partitioner) {
       split_planes_.push_back(split);
-      auto result = split_plane_map_.insert({&split, &split_planes_.back()});
-      assert(result.second);
+      bool inserted =
+        split_plane_map_.insert({&split, &split_planes_.back()}).second;
+      // Fix an unused variable warning in release builds.
+      (void)(inserted);
+      assert(inserted);
     }
   }
 
@@ -188,6 +191,8 @@ class CollectorVisitor : public BSPVisitor<PolygonRep> {
                          const HalfSpace3& split) override {
     if (from_partitioner) {
       size_t removed = split_plane_map_.erase(&split);
+      // Fix an unused variable warning in release builds.
+      (void)(removed);
       assert(removed == 1);
     }
   }

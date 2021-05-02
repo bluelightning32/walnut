@@ -160,6 +160,8 @@ class BigUInt {
     size_t pos = shift / bits_per_word;
     unsigned shift_mod = shift % bits_per_word;
     size_t old_used = used_words();
+    // Fix an unused variable warning in release builds.
+    (void)(old_used);
     words_.resize(std::max(used_words(),
                            (pos + 1 + (shift_mod != 0))),
                   BigUIntWord{0});
