@@ -20,6 +20,30 @@ struct TrackMoveCopy {
   mutable int copied_count = 0;
 };
 
+TEST(MemberForward, NoRefParent) {
+  std::tuple<TrackMoveCopy> t;
+
+  MemberForward<decltype(t)>(std::get<0>(t));
+
+  EXPECT_EQ(std::get<0>(t).moved_count, 0);
+  EXPECT_EQ(std::get<0>(t).copied_count, 0);
+
+  TrackMoveCopy moved1 = MemberForward<decltype(t)>(std::get<0>(t));
+  // avoid an unused variable warning.
+  (void)moved1;
+
+  EXPECT_EQ(std::get<0>(t).moved_count, 1);
+  EXPECT_EQ(std::get<0>(t).copied_count, 0);
+
+  TrackMoveCopy moved2 = MemberForward<decltype(t)>(
+      std::move(std::get<0>(t)));
+  // avoid an unused variable warning.
+  (void)moved2;
+
+  EXPECT_EQ(std::get<0>(t).moved_count, 2);
+  EXPECT_EQ(std::get<0>(t).copied_count, 0);
+}
+
 TEST(MemberForward, ConstRefParent) {
   std::tuple<TrackMoveCopy> t;
 

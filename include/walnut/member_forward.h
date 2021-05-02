@@ -18,7 +18,7 @@ namespace walnut {
 
 template <typename Parent, typename T>
 typename std::enable_if_t<
-  std::is_rvalue_reference<Parent>::value &&
+  !std::is_lvalue_reference<Parent>::value &&
     !std::is_const<std::remove_reference_t<T>>::value,
   std::remove_reference_t<T>&& >
 MemberForward(T&& t) {
@@ -26,7 +26,9 @@ MemberForward(T&& t) {
 }
 
 template <typename Parent, typename T>
-std::enable_if_t<!std::is_rvalue_reference<Parent>::value, T&& >
+std::enable_if_t<std::is_lvalue_reference<Parent>::value ||
+                 std::is_const<std::remove_reference_t<T>>::value,
+                 T&& >
 MemberForward(T&& t) {
   return std::forward<T>(t);
 }
