@@ -41,8 +41,8 @@ class HalfSpace3 {
 
   HalfSpace3(int x, int y, int z, int dist) : normal_(x, y, z), dist_(dist) { }
 
-  HalfSpace3(const HalfSpace3& other) :
-    HalfSpace3(other.normal(), other.d()) { }
+  HalfSpace3(const HalfSpace3&) = default;
+  HalfSpace3(HalfSpace3&&) = default;
 
   HalfSpace3(const Point3& p1, const Point3& p2, const Point3& p3) :
     // Use p2 as the center point, because if p1, p2, and p3 are from a polygon
@@ -79,6 +79,9 @@ class HalfSpace3 {
     normal_.components()[(add_dimension + 1)%3] = projection.normal().x();
     normal_.components()[(add_dimension + 2)%3] = projection.normal().y();
   }
+
+  HalfSpace3& operator=(const HalfSpace3&) = default;
+  HalfSpace3& operator=(HalfSpace3&&) = default;
 
   const BigInt& x() const {
     return normal_.x();
