@@ -13,15 +13,17 @@ class Vector3 {
   // Leaves the coordinates in an undefined state
   Vector3() = default;
 
-  Vector3(const Vector3& other) :
-    components_{other.components()[0], other.components()[1],
-                other.components()[2]} { }
+  Vector3(const Vector3&) = default;
+  Vector3(Vector3&&) = default;
 
   Vector3(const BigInt& x, const BigInt& y, const BigInt& z) :
     components_{x, y, z} { }
 
   Vector3(long x, long y, long z) :
     components_{BigInt(x), BigInt(y), BigInt(z)} { }
+
+  Vector3& operator=(const Vector3&) = default;
+  Vector3& operator=(Vector3&&) = default;
 
   static Vector3 Zero() {
     return Vector3(/*x=*/0, /*y=*/0, /*z=*/0);
