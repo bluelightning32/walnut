@@ -90,4 +90,72 @@ TEST(HomoPoint3, ReduceDifferentFactors) {
   EXPECT_EQ(reduced.w(), 3 * 5 * 7);
 }
 
+TEST(HomoPoint3, FromDoublesExact2) {
+  HomoPoint3 p = HomoPoint3::FromDoublesExact(/*x=*/2, /*y=*/2, /*z=*/2);
+
+  EXPECT_EQ(p.x(), 2);
+  EXPECT_EQ(p.y(), 2);
+  EXPECT_EQ(p.z(), 2);
+  EXPECT_EQ(p.w(), 1);
+}
+
+TEST(HomoPoint3, FromDoublesExactOneHalf) {
+  HomoPoint3 p = HomoPoint3::FromDoublesExact(/*x=*/0.5, /*y=*/0.5, /*z=*/0.5);
+
+  EXPECT_EQ(p.x(), 1);
+  EXPECT_EQ(p.y(), 1);
+  EXPECT_EQ(p.z(), 1);
+  EXPECT_EQ(p.w(), 2);
+}
+
+TEST(HomoPoint3, FromDoublesExact2AndOneHalf) {
+  HomoPoint3 p = HomoPoint3::FromDoublesExact(/*x=*/2, /*y=*/2, /*z=*/0.5);
+
+  EXPECT_EQ(p.x(), 4);
+  EXPECT_EQ(p.y(), 4);
+  EXPECT_EQ(p.z(), 1);
+  EXPECT_EQ(p.w(), 2);
+}
+
+TEST(HomoPoint3, FromDoublesExactVeryBig) {
+  double d = std::ldexp(1, 1000);
+  HomoPoint3 p = HomoPoint3::FromDoublesExact(/*x=*/d, /*y=*/d, /*z=*/d);
+
+  EXPECT_EQ(p.x(), BigInt(1) << 1000);
+  EXPECT_EQ(p.y(), BigInt(1) << 1000);
+  EXPECT_EQ(p.z(), BigInt(1) << 1000);
+  EXPECT_EQ(p.w(), 1);
+}
+
+TEST(HomoPoint3, FromDoublesExactVerySmall) {
+  double d = std::ldexp(1, -1000);
+  HomoPoint3 p = HomoPoint3::FromDoublesExact(/*x=*/d, /*y=*/d, /*z=*/d);
+
+  EXPECT_EQ(p.x(), 1);
+  EXPECT_EQ(p.y(), 1);
+  EXPECT_EQ(p.z(), 1);
+  EXPECT_EQ(p.w(), BigInt(1) << 1000);
+}
+
+TEST(HomoPoint3, FromDoublesExactZero) {
+  HomoPoint3 p = HomoPoint3::FromDoublesExact(/*x=*/0, /*y=*/0, /*z=*/0);
+
+  EXPECT_EQ(p.x(), 0);
+  EXPECT_EQ(p.y(), 0);
+  EXPECT_EQ(p.z(), 0);
+  EXPECT_EQ(p.w(), 1);
+}
+
+TEST(HomoPoint3, FromDoublesExactNextAfter0) {
+  double d = std::nextafter(0.0, 1.0);
+  HomoPoint3 p = HomoPoint3::FromDoublesExact(/*x=*/d, /*y=*/d, /*z=*/d);
+
+  EXPECT_EQ(p.x(), 1);
+  EXPECT_EQ(p.y(), 1);
+  EXPECT_EQ(p.z(), 1);
+  EXPECT_EQ(p.x() / (long double)p.w(), d);
+  EXPECT_EQ(p.y() / (long double)p.w(), d);
+  EXPECT_EQ(p.z() / (long double)p.w(), d);
+}
+
 }  // walnut

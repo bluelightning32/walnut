@@ -53,6 +53,24 @@ BigInt::operator double() const {
   }
 }
 
+BigInt::operator long double() const {
+  static_assert(2*sizeof(BigIntWord) >= sizeof(long double),
+                "The cast function assumes that at most 3 words need to be "
+                "inspected to convert to a double.");
+  if (used_words() == 1) {
+    return (long double)BigIntWord{words_[0]};
+  } else if (used_words() == 2) {
+    return std::ldexp((long double)BigIntWord{words_[1]}, bits_per_word) +
+           words_[0].ToLongDoubleWithShift(0);
+  } else {
+    size_t used = used_words();
+    return std::ldexp((long double)BigIntWord{words_[used - 1]},
+                      bits_per_word * (used - 1)) +
+           words_[used - 2].ToLongDoubleWithShift(bits_per_word * (used - 2)) +
+           words_[used - 3].ToLongDoubleWithShift(bits_per_word * (used - 3));
+  }
+}
+
 BigInt BigInt::MultiplySlow(const BigInt& other) const {
   if (used_words() < other.used_words()) {
     return other.MultiplySlow(*this);

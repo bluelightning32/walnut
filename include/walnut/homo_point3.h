@@ -23,6 +23,10 @@ class HomoPoint3 {
              const BigInt& w) :
     vector_from_origin_(x, y, z), dist_denom_(w) { }
 
+  HomoPoint3(BigInt&& x, BigInt&& y, BigInt&& z, BigInt&& w) :
+    vector_from_origin_(std::move(x), std::move(y), std::move(z)),
+    dist_denom_(std::move(w)) { }
+
   HomoPoint3(long x, long y, long z, long w) :
     vector_from_origin_(x, y, z), dist_denom_(w) { }
 
@@ -34,6 +38,15 @@ class HomoPoint3 {
 
   HomoPoint3& operator=(const HomoPoint3&) = default;
   HomoPoint3& operator=(HomoPoint3&&) = default;
+
+  // Returns a HomoPoint3 that is the exact value of the double point.
+  //
+  // The returned point can take a lot of memory (about 600 bytes in the worst
+  // case) if the exponents of any of the doubles are very high or low.
+  //
+  // The return value is unspecified if any of the input coordinates are not
+  // finite (such as infinite or NaN).
+  static HomoPoint3 FromDoublesExact(double x, double y, double z);
 
   BigInt& x() {
     return vector_from_origin_.x();

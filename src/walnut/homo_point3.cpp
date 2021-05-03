@@ -1,6 +1,24 @@
 #include "walnut/homo_point3.h"
 
+// For std::min
+#include <algorithm>
+
+#include "walnut/double.h"
+
 namespace walnut {
+
+HomoPoint3 HomoPoint3::FromDoublesExact(double x, double y, double z) {
+  int x_exp, y_exp, z_exp;
+  int64_t x_mantissa = Decompose(x, &x_exp);
+  int64_t y_mantissa = Decompose(y, &y_exp);
+  int64_t z_mantissa = Decompose(z, &z_exp);
+
+  int denom_exp = std::min({0, x_exp, y_exp, z_exp});
+  return HomoPoint3(BigInt(x_mantissa) << (x_exp - denom_exp),
+                    BigInt(y_mantissa) << (y_exp - denom_exp),
+                    BigInt(z_mantissa) << (z_exp - denom_exp),
+                    BigInt(1) << -denom_exp);
+}
 
 bool HomoPoint3::LexicographicallyLt(const HomoPoint3& a,
                                      const HomoPoint3& b) {

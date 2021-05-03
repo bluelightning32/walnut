@@ -383,6 +383,10 @@ class BigUIntWordBase {
     return std::ldexp(i_, shift);
   }
 
+  long double ToLongDoubleWithShift(int shift) const {
+    return std::ldexp((long double)i_, shift);
+  }
+
  protected:
   uint64_t i_;
 
