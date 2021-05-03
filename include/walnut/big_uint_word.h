@@ -322,6 +322,17 @@ class BigUIntWordBase {
     return result + static_cast<unsigned>(v);
   }
 
+  // Return the number of least significant zeros, or 0 if no bits are set.
+  constexpr unsigned GetTrailingZeros() const {
+    if (i_ == 0) return 0;
+
+    unsigned trailing_zeros = 0;
+    while (!(i_ & (static_cast<uint64_t>(1) << trailing_zeros))) {
+      ++trailing_zeros;
+    }
+    return trailing_zeros;
+  }
+
   // Prefix overload
   constexpr ImplType& operator++() {
     ++i_;
@@ -420,6 +431,12 @@ class BigUIntWordBase {
 #  define HAS_BUILTIN_CLZL
 #elif HAS_GNUC_VERSION(3, 4, 6)
 #  define HAS_BUILTIN_CLZL
+#endif
+
+#if __has_builtin(__builtin_ctzl)
+#  define HAS_BUILTIN_CTZL
+#elif HAS_GNUC_VERSION(3, 4, 6)
+#  define HAS_BUILTIN_CTZL
 #endif
 
 // Overload some functions in BigUIntWordBase to use the builtin overflow functions provided by GCC and clang.
@@ -548,6 +565,22 @@ class BigUIntWordGCC
   typename std::enable_if_t<sizeof(Parent::i_) != sizeof(unsigned long), X>
   GetHighestSetBit() const {
     return Parent::GetHighestSetBit();
+  }
+#endif
+
+#if defined(HAS_BUILTIN_CTZL)
+  template <typename X=unsigned>
+  constexpr
+  typename std::enable_if_t<sizeof(Parent::i_) == sizeof(unsigned long), X>
+  GetTrailingZeros() const {
+    return this->i_ == 0 ? 0 : __builtin_ctzl(this->i_);
+  }
+
+  template <typename X=unsigned>
+  constexpr
+  typename std::enable_if_t<sizeof(Parent::i_) != sizeof(unsigned long), X>
+  GetTrailingZeros() const {
+    return Parent::GetTrailingZeros();
   }
 #endif
 };

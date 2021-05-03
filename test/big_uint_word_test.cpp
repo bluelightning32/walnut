@@ -149,4 +149,10 @@ TYPED_TEST(BigUIntWordTest, GetHighestDoubleBitSet) {
   }
 }
 
+TYPED_TEST(BigUIntWordTest, GetTrailingZeros) {
+  for (unsigned i = 0; i < TypeParam::bits_per_word; i++) {
+    EXPECT_EQ((TypeParam{1} << i).GetTrailingZeros(), i);
+  }
+}
+
 }  // walnut
