@@ -846,4 +846,39 @@ TEST(BigInt, SubtractMultiplyInt64Min) {
   EXPECT_EQ(result, a - a*a);
 }
 
+TEST(BigInt, AllHalfWordsInt32MinInt32Max) {
+  BigInt min{std::numeric_limits<int32_t>::min()};
+  BigInt max{std::numeric_limits<int32_t>::max()};
+
+  EXPECT_TRUE(BigInt::AllHalfWords(min, max));
+  EXPECT_TRUE(BigInt::AllHalfWords(max, min));
+
+  EXPECT_TRUE(BigInt::AllHalfWords(min, max, min));
+  EXPECT_TRUE(BigInt::AllHalfWords(max, min, max));
+}
+
+TEST(BigInt, AllHalfWordsNegInt32Min) {
+  BigInt a{0};
+  BigInt b{-static_cast<int64_t>(std::numeric_limits<int32_t>::min())};
+
+  EXPECT_FALSE(BigInt::AllHalfWords(a, b));
+  EXPECT_FALSE(BigInt::AllHalfWords(b, a));
+
+  EXPECT_FALSE(BigInt::AllHalfWords(b, a, a));
+  EXPECT_FALSE(BigInt::AllHalfWords(a, b, a));
+  EXPECT_FALSE(BigInt::AllHalfWords(a, a, b));
+}
+
+TEST(BigInt, AllHalfWordsPow65) {
+  BigInt a{0};
+  BigInt b{BigInt{1} << 64};
+
+  EXPECT_FALSE(BigInt::AllHalfWords(a, b));
+  EXPECT_FALSE(BigInt::AllHalfWords(b, a));
+
+  EXPECT_FALSE(BigInt::AllHalfWords(b, a, a));
+  EXPECT_FALSE(BigInt::AllHalfWords(a, b, a));
+  EXPECT_FALSE(BigInt::AllHalfWords(a, a, b));
+}
+
 }  // walnut

@@ -70,6 +70,18 @@ class BigIntWords {
     return extra_size_ + 1;
   }
 
+  constexpr size_t extra_size() const {
+    return extra_size_;
+  }
+
+  constexpr const BigUIntWord& first() const {
+    return first_;
+  }
+
+  constexpr BigUIntWord& first() {
+    return first_;
+  }
+
   constexpr const BigUIntWord& operator[](size_t i) const {
     assert(i < size());
     if (i == 0) {

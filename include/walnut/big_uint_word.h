@@ -97,6 +97,10 @@ class BigUIntWordBase {
     return low_uint32();
   }
 
+  constexpr BigUIntHalfWord high_half_word() const {
+    return i_ >> 32;
+  }
+
   constexpr uint64_t low_uint64() const {
     return i_;
   }

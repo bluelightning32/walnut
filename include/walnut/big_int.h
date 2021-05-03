@@ -70,6 +70,39 @@ class BigInt {
     return word(0).ToInt();
   }
 
+  // Returns (a.IsHalfWord() && b.IsHalfWord())
+  //
+  // This is more efficient than calling IsHalfWord directly.
+  static constexpr bool AllHalfWords(const BigInt& a, const BigInt& b) {
+    constexpr const BigUIntWord kLowSignBit =
+      BigUIntWord{1} << (sizeof(BigUIntHalfWord) * 8 - 1);
+    // The upper bits of this will be all 0 if the BigInts are in range.
+    BigUIntWord first_in_range = a.words_.first().Add(kLowSignBit) |
+                                 b.words_.first().Add(kLowSignBit);
+    // This will be 0 if all of the BigInts are in range.
+    size_t extra_size_in_range = a.words_.extra_size() |
+                                 b.words_.extra_size();
+    return (first_in_range.high_half_word() | extra_size_in_range) == 0;
+  }
+
+  // Returns (a.IsHalfWord() && b.IsHalfWord() && c.IsHalfWord())
+  //
+  // This is more efficient than calling IsHalfWord directly.
+  static constexpr bool AllHalfWords(const BigInt& a, const BigInt& b,
+                                     const BigInt& c) {
+    constexpr const BigUIntWord kLowSignBit =
+      BigUIntWord{1} << (sizeof(BigUIntHalfWord) * 8 - 1);
+    // The upper bits of this will be all 0 if the BigInts are in range.
+    BigUIntWord first_in_range = a.words_.first().Add(kLowSignBit) |
+                                      b.words_.first().Add(kLowSignBit) |
+                                      c.words_.first().Add(kLowSignBit);
+    // This will be 0 if all of the BigInts are in range.
+    size_t extra_size_in_range = a.words_.extra_size() |
+                                 b.words_.extra_size() |
+                                 c.words_.extra_size();
+    return (first_in_range.high_half_word() | extra_size_in_range) == 0;
+  }
+
   constexpr bool IsHalfWord() const {
     return used_words() == 1 && CanTrimLastHalf(word(0));
   }
@@ -182,8 +215,8 @@ class BigInt {
   }
 
   BigInt Add(const BigInt& other) const {
-    if (IsHalfWord() && other.IsHalfWord()) {
-      return BigInt(BigIntWord{words_[0].Add(other.words_[0])});
+    if (AllHalfWords(*this, other)) {
+      return BigInt(BigIntWord{words_.first().Add(other.words_.first())});
     }
     BigInt result;
     result.words_.resize(std::max(used_words(), other.used_words()) + 1);
@@ -217,8 +250,8 @@ class BigInt {
   }
 
   constexpr BigInt& operator+=(const BigInt& other) {
-    if (IsHalfWord() && other.IsHalfWord()) {
-      words_[0] += other.words_[0];
+    if (AllHalfWords(*this, other)) {
+      words_.first() += other.words_.first();
       return *this;
     }
     size_t i = 0;
@@ -283,10 +316,12 @@ class BigInt {
   }
 
   constexpr BigInt& operator-=(const BigInt& other) {
-    if (IsHalfWord() && other.IsHalfWord()) {
-      words_[0] -= other.words_[0];
-      if ((BigIntWord)words_[0] < std::numeric_limits<BigIntHalfWord>::min() ||
-          (BigIntWord)words_[0] > std::numeric_limits<BigIntHalfWord>::max()) {
+    if (AllHalfWords(*this, other)) {
+      words_.first() -= other.words_.first();
+      if ((BigIntWord)words_.first() <
+          std::numeric_limits<BigIntHalfWord>::min() ||
+          (BigIntWord)words_.first() >
+          std::numeric_limits<BigIntHalfWord>::max()) {
         words_.resize(1);
       }
       return *this;
@@ -355,8 +390,8 @@ class BigInt {
   }
 
   BigInt Subtract(const BigInt& other) const {
-    if (IsHalfWord() && other.IsHalfWord()) {
-      return BigInt(BigIntWord{words_[0].Subtract(other.words_[0])});
+    if (AllHalfWords(*this, other)) {
+      return BigInt(BigIntWord{words_.first().Subtract(other.words_.first())});
     }
     BigInt result;
     result.words_.resize(std::max(used_words(), other.used_words()) + 1);
@@ -390,8 +425,9 @@ class BigInt {
   }
 
   BigInt Multiply(const BigInt& other) const {
-    if (IsHalfWord() && other.IsHalfWord()) {
-      return BigInt(BigIntWord{words_[0]} * BigIntWord{other.words_[0]});
+    if (AllHalfWords(*this, other)) {
+      return BigInt(BigIntWord{words_.first()} *
+                    BigIntWord{other.words_.first()});
     }
     if (used_words() == 1 && other.used_words() == 1) {
       BigInt result;
@@ -405,18 +441,20 @@ class BigInt {
   }
 
   BigInt& AddMultiply(const BigInt& a, const BigInt& b) {
-    if (IsHalfWord() && a.IsHalfWord() && b.IsHalfWord()) {
-      words_[0] = words_[0].Add(BigUIntWord{BigIntWord{a.words_[0]} *
-                                            BigIntWord{b.words_[0]}});
+    if (AllHalfWords(*this, a, b)) {
+      words_.first() = words_.first().Add(
+          BigUIntWord{BigIntWord{a.words_.first()} *
+                      BigIntWord{b.words_.first()}});
       return *this;
     }
     return *this += a * b;
   }
 
   BigInt& SubtractMultiply(const BigInt& a, const BigInt& b) {
-    if (IsHalfWord() && a.IsHalfWord() && b.IsHalfWord()) {
-      words_[0] = words_[0].Subtract(BigUIntWord{BigIntWord{a.words_[0]} *
-                                                 BigIntWord{b.words_[0]}});
+    if (AllHalfWords(*this, a, b)) {
+      words_.first() = words_.first().Subtract(
+          BigUIntWord{BigIntWord{a.words_.first()} *
+                      BigIntWord{b.words_.first()}});
       return *this;
     }
     return *this -= a * b;
