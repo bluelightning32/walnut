@@ -539,9 +539,16 @@ class BigUIntWordGCC
   constexpr
   typename std::enable_if_t<sizeof(Parent::i_) == sizeof(unsigned long), X>
   GetHighestSetBit() const {
-    return this->i_ == 0 ? 0 : Parent::bits_per_word - __builtin_clz(this->i_);
+    return this->i_ == 0 ? 0 :
+      Parent::bits_per_word - __builtin_clzl(this->i_);
   }
-  using Parent::GetHighestSetBit;
+
+  template <typename X=unsigned>
+  constexpr
+  typename std::enable_if_t<sizeof(Parent::i_) != sizeof(unsigned long), X>
+  GetHighestSetBit() const {
+    return Parent::GetHighestSetBit();
+  }
 #endif
 };
 
