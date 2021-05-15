@@ -124,4 +124,18 @@ TEST(RedirectableValue, Equality) {
   EXPECT_EQ(v3, v1);
 }
 
+TEST(RedirectableValue, RedirectThroughConstructor) {
+  int v1_destructed = 0;
+  {
+    RedirectableValue<TrackDestruction> v1(v1_destructed);
+    {
+      RedirectableValue<TrackDestruction> v2(v1);
+      EXPECT_EQ(v1, v2);
+      EXPECT_EQ(v1_destructed, 0);
+    }
+    EXPECT_EQ(v1_destructed, 0);
+  }
+  EXPECT_EQ(v1_destructed, 1);
+}
+
 }  // walnut

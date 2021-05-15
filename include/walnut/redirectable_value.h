@@ -20,8 +20,7 @@ class RedirectableValue {
     new(&value_) Value(std::forward<Args...>(args...));
   }
 
-  RedirectableValue(const RedirectableValue& other) :
-    RedirectableValue(*other) { }
+  RedirectableValue(RedirectableValue& other) : redirect_(&other) { }
 
   ~RedirectableValue() {
     if (redirect_ == this) {
