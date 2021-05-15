@@ -115,6 +115,16 @@ class HomoPoint3 {
     return HomoPoint2(v, w());
   }
 
+  std::array<double, 3> GetDoublePoint3() const {
+    long double w_d = (long double)w();
+    long double x_d = (long double)x();
+    long double y_d = (long double)y();
+    long double z_d = (long double)z();
+    return std::array<double, 3>{static_cast<double>(x_d / w_d),
+                                 static_cast<double>(y_d / w_d),
+                                 static_cast<double>(z_d / w_d)};
+  }
+
   // Note that everything equals the 0 point with a 0 denominator.
   bool operator==(const HomoPoint3& other) const {
     return vector_from_origin().Scale(other.w()) ==
