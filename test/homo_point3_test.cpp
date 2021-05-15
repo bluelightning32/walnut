@@ -157,12 +157,12 @@ TEST(HomoPoint3, FromDoublesExactNextAfter0) {
   EXPECT_EQ((long double)p.y() / (long double)p.w(), d);
   EXPECT_EQ((long double)p.z() / (long double)p.w(), d);
 
-  EXPECT_EQ(p.GetDoublePoint3(), (std::array<double, 3>{d, d, d}));
+  EXPECT_EQ(p.GetDoublePoint3(), DoublePoint3(d, d, d));
 }
 
 TEST(HomoPoint3, GetDoublePoint3) {
-  std::array<double, 3> input{10, 0.1, 0.01};
-  HomoPoint3 p = HomoPoint3::FromDoublesExact(input[0], input[1], input[2]);
+  DoublePoint3 input{10, 0.1, 0.01};
+  HomoPoint3 p = HomoPoint3::FromDoublesExact(input.x, input.y, input.z);
 
   EXPECT_EQ(p.GetDoublePoint3(), input);
 }

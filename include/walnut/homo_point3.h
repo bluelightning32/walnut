@@ -3,6 +3,7 @@
 
 #include <sstream>
 
+#include "walnut/double_point3.h"
 #include "walnut/homo_point2.h"
 #include "walnut/point3.h"
 #include "walnut/vector3.h"
@@ -115,14 +116,14 @@ class HomoPoint3 {
     return HomoPoint2(v, w());
   }
 
-  std::array<double, 3> GetDoublePoint3() const {
+  DoublePoint3 GetDoublePoint3() const {
     long double w_d = (long double)w();
     long double x_d = (long double)x();
     long double y_d = (long double)y();
     long double z_d = (long double)z();
-    return std::array<double, 3>{static_cast<double>(x_d / w_d),
-                                 static_cast<double>(y_d / w_d),
-                                 static_cast<double>(z_d / w_d)};
+    return DoublePoint3(static_cast<double>(x_d / w_d),
+                        static_cast<double>(y_d / w_d),
+                        static_cast<double>(z_d / w_d));
   }
 
   // Note that everything equals the 0 point with a 0 denominator.
