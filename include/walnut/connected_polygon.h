@@ -87,18 +87,39 @@ class ConnectedEdge : public ParentTemplate, public DeedTarget {
     return next_edge.vertex();
   }
 
+  // Returns the start vertex of this edge.
+  const HomoPoint3& vertex() const {
+    using FinalEdgeRep = typename FinalPolygon::EdgeRep;
+    const FinalEdgeRep& final_this = static_cast<const FinalEdgeRep&>(*this);
+    return final_this.vertex();
+  }
+
   // Returns the begin location of this edge as defined by the
   // `EdgeLineConnector`.
   const HomoPoint3& GetBeginLocation(int sorted_dimension) const {
     if (IsPositive(sorted_dimension)) {
-      // This is a positive edge. It starts at the start point of the edge.
-      using FinalEdgeRep = typename FinalPolygon::EdgeRep;
-      const FinalEdgeRep& final_this = static_cast<const FinalEdgeRep&>(*this);
-      return final_this.vertex();
+      return vertex();
     } else {
       // This is a negative edge. It starts at the start of the next edge.
       return next_vertex();
     }
+  }
+
+  // Gets the edge in the partner polygon that originates from the same source
+  // vertex.
+  //
+  // When viewed from the outside of the polyhedron, this function returns the
+  // next edge in the clockwise direction that originates from the same source
+  // vertex.
+  //
+  // This function returns nullptr if the edge does not have a partner. This
+  // may happen if the polyhedron is not closed.
+  const ConnectedEdge* GetNextAroundVertex() const {
+    if (!partner_) return nullptr;
+
+    FinalPolygon& next_polygon = partner_->polygon();
+    return &next_polygon.edge((partner_->edge_index() + 1) %
+                              next_polygon.vertex_count());
   }
 
   // Returns the end location of this edge as defined by the

@@ -49,6 +49,10 @@ class HomoPoint3 {
   // finite (such as infinite or NaN).
   static HomoPoint3 FromDoublesExact(double x, double y, double z);
 
+  static HomoPoint3 FromDoublePoint3Exact(const DoublePoint3& p) {
+    return FromDoublesExact(p.x, p.y, p.z);
+  }
+
   BigInt& x() {
     return vector_from_origin_.x();
   }

@@ -3,6 +3,7 @@
 
 // For std::hash
 #include <functional>
+#include <sstream>
 
 namespace walnut {
 
@@ -32,6 +33,8 @@ struct DoublePoint3 {
   double y;
   double z;
 };
+
+std::ostream& operator<<(std::ostream& out, const DoublePoint3& p);
 
 }  // walnut
 
