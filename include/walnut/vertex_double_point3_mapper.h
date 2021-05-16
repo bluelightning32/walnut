@@ -46,6 +46,7 @@ struct VertexDoublePoint3Mapper {
   using Value = std::remove_reference_t<
     decltype(std::declval<ValueFactory>()(std::declval<DoublePoint3>()))>;
   using MapType = std::unordered_map<DoublePoint3, RedirectableValue<Value>>;
+  using MapValue = typename MapType::value_type;
   using MapIterator = typename MapType::iterator;
 
   VertexDoublePoint3Mapper() = default;
@@ -54,7 +55,7 @@ struct VertexDoublePoint3Mapper {
     : factory(std::move(factory)), merger(std::move(merger)) { }
 
   template <typename FinalPolygon, typename EdgeParent>
-  MapIterator Map(const ConnectedEdge<FinalPolygon, EdgeParent>& edge) {
+  MapValue& Map(const ConnectedEdge<FinalPolygon, EdgeParent>& edge) {
     DoublePoint3 first_point = edge.vertex().GetDoublePoint3();
     MapIterator it = map.find(first_point);
     if (it == map.end()) {
@@ -62,6 +63,7 @@ struct VertexDoublePoint3Mapper {
       assert(emplace_result.second);
       it = emplace_result.first;
     }
+    MapValue& result = *it;
 
     // The point is in the map. However, there can be multiple DoublePoint3
     // representations of the same HomoPoint3. So check the next edge that
@@ -69,18 +71,18 @@ struct VertexDoublePoint3Mapper {
     // representation, merge them.
     const ConnectedEdge<FinalPolygon, EdgeParent>* next =
       edge.GetNextAroundVertex();
-    if (next == nullptr) return it;
+    if (next == nullptr) return result;
 
     DoublePoint3 next_point = next->vertex().GetDoublePoint3();
     if (next_point != first_point) {
       MapIterator next_it = map.find(next_point);
       if (next_it == map.end()) {
-        map.emplace(next_point, it->second);
-      } else if (next_it->second != it->second) {
-        merger(it->second, next_it->second);
+        map.emplace(next_point, result.second);
+      } else if (next_it->second != result.second) {
+        merger(result.second, next_it->second);
       }
     }
-    return it;
+    return result;
   }
 
   ValueFactory factory;

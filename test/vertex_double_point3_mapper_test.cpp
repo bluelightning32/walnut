@@ -115,7 +115,6 @@ void Generate4Triangles(const HomoPoint3& center0,
 }
 
 TEST(VertexDoublePoint3Mapper, MapMerge) {
-
   std::vector<HomoPoint3> centers = MakePointsWithDifferentReps(2);
   const HomoPoint3& p = centers[0];
   const HomoPoint3& q = centers[1];
@@ -151,6 +150,47 @@ TEST(VertexDoublePoint3Mapper, MapMerge) {
 
   EXPECT_TRUE(mapper.map.find(p.GetDoublePoint3()) != mapper.map.end());
   EXPECT_TRUE(mapper.map.find(q.GetDoublePoint3()) != mapper.map.end());
+}
+
+// Creates 1000 different mappers, each with a different amount of existing
+// entries, then adds a new entry each one and verifies that the references are
+// valid.
+TEST(VertexDoublePoint3Mapper, RehashDuringMerge) {
+  auto value_factory = [](const DoublePoint3& p) -> int {
+    return 0;
+  };
+  auto value_merger = [](RedirectableValue<int>& a,
+                                RedirectableValue<int>& b) {
+    a.Redirect(b);
+  };
+  std::vector<VertexDoublePoint3Mapper<decltype(value_factory),
+                                       decltype(value_merger)>> mappers;
+  for (size_t i = 0; i < 20; ++i) {
+    mappers.emplace_back(value_factory, value_merger);
+
+    HomoPoint3 center(i + 1, i + 1, i + 1, 1);
+    std::vector<ConnectedPolygon<>> triangles;
+    Generate4Triangles(center, center, center, center, triangles);
+    for (size_t j = 0; j < i; ++j) {
+      auto& result = mappers[j].Map(triangles[0].edge(0));
+      EXPECT_EQ(result.first, triangles[0].vertex(0).GetDoublePoint3());
+    }
+  }
+
+  std::vector<ConnectedPolygon<>> triangles;
+  std::vector<HomoPoint3> centers = MakePointsWithDifferentReps(3);
+  Generate4Triangles(centers[0], centers[1], centers[2], centers[2],
+                     triangles);
+
+  VertexDoublePoint3Mapper<decltype(value_factory), decltype(value_merger)>
+    mapper(value_factory, value_merger);
+  for (size_t j = 0; j < 4; ++j) {
+    for (size_t i = 0; i < 20; ++i) {
+      auto& result = mappers[i].Map(triangles[j].edge(0));
+      auto& retry = mappers[i].Map(triangles[j].edge(0));
+      EXPECT_EQ(result, retry);
+    }
+  }
 }
 
 }  // walnut
