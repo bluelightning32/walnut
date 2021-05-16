@@ -673,8 +673,8 @@ TEST(BSPTree, GetNodeBorderEmptyTree) {
   AABB bounding_box(Point3(-1, -1, -1), Point3(2, 2, 2));
   std::vector<bool> node_path = { };
 
-  BSPTree<>::MappedBSPNode node_border_root;
-  BSPTree<>::MappedBSPNode* node_border_leaf =
+  BSPTree<>::BSPNodeRep node_border_root;
+  BSPTree<>::BSPNodeRep* node_border_leaf =
     tree.GetNodeBorder(node_path.begin(), node_path.end(), bounding_box,
                        node_border_root);
   std::vector<BSPTree<>::OutputPolygon> facets = node_border_leaf->contents();
@@ -739,8 +739,8 @@ TEST(BSPTree, GetNodeBorder1Split) {
     std::vector<bool> node_path = {pos_side};
     AABB bounding_box(Point3(-1, -1, -1), Point3(2, 2, 2));
 
-    BSPTree<>::MappedBSPNode node_border_root;
-    BSPTree<>::MappedBSPNode* node_border_leaf =
+    BSPTree<>::BSPNodeRep node_border_root;
+    BSPTree<>::BSPNodeRep* node_border_leaf =
       tree.GetNodeBorder(node_path.begin(), node_path.end(), bounding_box,
                          node_border_root);
     std::vector<BSPTree<>::OutputPolygon> facets = node_border_leaf->contents();

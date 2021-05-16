@@ -64,8 +64,8 @@ std::vector<walnut::BSPTree<>::OutputPolygon> CreateCellBorder(
 
   walnut::AABB bounding_box(walnut::Point3(-8, -8, 0),
                               walnut::Point3(8, 8, 10));
-  walnut::BSPTree<>::MappedBSPNode node_border_root;
-  walnut::BSPTree<>::MappedBSPNode* node_border_leaf = tree.GetNodeBorder(
+  walnut::BSPTree<>::BSPNodeRep node_border_root;
+  walnut::BSPTree<>::BSPNodeRep* node_border_leaf = tree.GetNodeBorder(
       node_path.begin(), node_path.end(), bounding_box, node_border_root);
   std::vector<walnut::BSPTree<>::OutputPolygon> mesh = node_border_leaf->contents();
   mesh.insert(mesh.end(), node_border_leaf->border_contents().begin(),

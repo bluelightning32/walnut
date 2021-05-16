@@ -19,46 +19,6 @@ class BSPTree {
   using OutputPolygon = typename BSPNodeRep::PolygonRep;
   using EdgeParent = typename BSPNodeRep::EdgeParent;
 
-  // BSPNode that represents and references a node copied from another tree.
-  class MappedBSPNode : public BSPNodeRep {
-   public:
-    using Parent = BSPNodeRep;
-
-    MappedBSPNode() = default;
-
-    MappedBSPNode(const BSPNodeRep* original) : original_(original) { }
-
-    void Reset(const BSPNodeRep* original) {
-      Parent::Reset();
-      original_ = original;
-    }
-
-    // Note that this overload hides the `Parent::Split` method that only takes
-    // 1 argument.
-    void Split(const HalfSpace3& half_space,
-               const BSPNodeRep* original_neg_child,
-               const BSPNodeRep* original_pos_child) {
-      Parent::MakeInterior(half_space, new MappedBSPNode(original_neg_child),
-                           new MappedBSPNode(original_pos_child));
-      Parent::PushContentsToChildren();
-    }
-
-    MappedBSPNode* negative_child() {
-      return static_cast<MappedBSPNode*>(Parent::negative_child());
-    }
-
-    MappedBSPNode* positive_child() {
-      return static_cast<MappedBSPNode*>(Parent::positive_child());
-    }
-
-    const BSPNodeRep* original() const {
-     return original_;
-    }
-
-   private:
-    const BSPNodeRep* original_ = nullptr;
-  };
-
   // Add a new polygon to this node.
   //
   // For an interior node, the contents will be pushed to the children.
@@ -94,25 +54,23 @@ class BSPTree {
     traverser.Run(root, visitor);
   }
 
-  // Returns a MappedBSPNode containing the polyhedron boundary of a BSPNode.
+  // Returns a BSPNodeRep containing the polyhedron boundary of a BSPNode.
   //
   // The path to the BSPNode from the root is specified as a sequence of bools,
   // indicating whether to go to the negative child (false) or the positive
   // child (true). The sequence of bools is specified through the iterators
   // `node_path_begin` and `node_path_end`.
   //
-  // The result is a MappedBSPNode that is split the same way as the input
-  // BSPNode. The combination of the border polygons and content polygons in
-  // that mapped node define the polyhedron of the boundary of the input node.
-  // Each returned polygon indicates which BSPNode division it came from
-  // through the on_node_plane->original field.
+  // The result is a BSPNode that is split the same way as the input BSPNode.
+  // The combination of the border polygons and content polygons in that mapped
+  // node define the polyhedron of the boundary of the input node.
   //
   // In case the BSPNode border is unbounded, `bounding_box` provides an upper
   // bound for how far the ConvexPolygons will extend.
   template<typename Iterator>
-  MappedBSPNode* GetNodeBorder(
+  BSPNodeRep* GetNodeBorder(
       Iterator node_path_begin, Iterator node_path_end,
-      const AABB& bounding_box, MappedBSPNode& mapped_root) const;
+      const AABB& bounding_box, BSPNodeRep& mapped_root) const;
 
   BSPContentId AllocateId() {
     return next_id_++;
@@ -130,12 +88,11 @@ class BSPTree {
 
 template <typename ConvexPolygonTemplate>
 template <typename Iterator>
-typename BSPTree<ConvexPolygonTemplate>::MappedBSPNode*
+typename BSPTree<ConvexPolygonTemplate>::BSPNodeRep*
 BSPTree<ConvexPolygonTemplate>::GetNodeBorder(
     Iterator node_path_begin, Iterator node_path_end,
     const AABB& bounding_box,
-    MappedBSPNode& mapped_root) const {
-  mapped_root.Reset(&root);
+    BSPNodeRep& mapped_root) const {
   for (auto& polygon : bounding_box.GetWalls()) {
     assert(polygon.vertex_count() > 0);
     mapped_root.AddRootContent(/*id=*/0, std::move(polygon));
@@ -159,11 +116,10 @@ BSPTree<ConvexPolygonTemplate>::GetNodeBorder(
 
   // Split the mapped_root the same way as the original root along the node
   // path.
-  MappedBSPNode* mapped_node = &mapped_root;
+  BSPNodeRep* mapped_node = &mapped_root;
   original_node = &root;
   for (Iterator pos = node_path_begin; pos != node_path_end; ++pos) {
-    mapped_node->Split(original_node->split(), original_node->negative_child(),
-                       original_node->positive_child());
+    mapped_node->Split(original_node->split());
     if (*pos) {
       original_node = original_node->positive_child();
       mapped_node = mapped_node->positive_child();

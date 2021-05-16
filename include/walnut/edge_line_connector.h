@@ -15,10 +15,10 @@
 
 namespace walnut {
 
-// Given a sorted range of Deed<EdgeRep>s all on the same line, this in place
+// Given a sorted range of Deed<EdgeRep>s all on the same plane, this in place
 // algorithm connects the half-edges together.
 //
-// Typically one instantiates the class and calls `ConnectedUnsorted` to sort a
+// Typically one instantiates the class and calls `ConnectUnsorted` to sort a
 // range of edges, split up the edges based on the lines, and finally connect
 // them.
 //

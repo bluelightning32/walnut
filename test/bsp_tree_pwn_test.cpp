@@ -534,8 +534,8 @@ TEST_P(BSPTreePWN, SkipEdgesAlongIPath) {
   slice_top_tree.root.Split(slice_top_plane);
   // Use the negative half of slice_top_plane.
   std::vector<bool> node_path { false };
-  BSPTree<>::MappedBSPNode node_border_root;
-  BSPTree<>::MappedBSPNode* node_border_leaf =
+  BSPTree<>::BSPNodeRep node_border_root;
+  BSPTree<>::BSPNodeRep* node_border_leaf =
     slice_top_tree.GetNodeBorder(node_path.begin(), node_path.end(),
                                  bounding_box, node_border_root);
   for (const walnut::BSPTree<>::OutputPolygon& wall :
