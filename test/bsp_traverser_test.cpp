@@ -230,8 +230,7 @@ TEST(BSPTraverser, ConnectIntersectCubesWithCornerOverlap) {
     errored = true;
     std::cout << error << std::endl;
   };
-  ConnectingVisitor<ConvexPolygon<>, decltype(filter)> visitor(filter,
-                                                               error_log);
+  ConnectingVisitor<decltype(filter)> visitor(filter, error_log);
   tree.Traverse(visitor);
 
   EXPECT_FALSE(errored);
@@ -271,7 +270,7 @@ TEST(BSPTraverser, ConnectUnionCubesWithCornerOverlap) {
     errored = true;
     std::cout << error << std::endl;
   };
-  using Visitor = ConnectingVisitor<ConvexPolygon<>, decltype(filter)>;
+  using Visitor = ConnectingVisitor<decltype(filter)>;
   Visitor visitor(filter, error_log);
   tree.Traverse(visitor);
 
@@ -341,7 +340,7 @@ TEST(BSPTraverser, ConnectUnionCubesIntoCubiod) {
     errored = true;
     std::cout << error << std::endl;
   };
-  using Visitor = ConnectingVisitor<ConvexPolygon<>, decltype(filter)>;
+  using Visitor = ConnectingVisitor<decltype(filter)>;
   Visitor visitor(filter, error_log);
   tree.Traverse(visitor);
 
@@ -384,7 +383,7 @@ TEST(BSPTraverser, ConnectUnionCubesWithPlaneCornerOverlap) {
     errored = true;
     std::cout << error << std::endl;
   };
-  using Visitor = ConnectingVisitor<ConvexPolygon<>, decltype(filter)>;
+  using Visitor = ConnectingVisitor<decltype(filter)>;
   Visitor visitor(filter, error_log);
   tree.Traverse(visitor);
 

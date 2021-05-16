@@ -12,6 +12,7 @@
 #include "walnut/bsp_polygon.h"
 #include "walnut/bsp_visitor.h"
 #include "walnut/connected_polygon.h"
+#include "walnut/convex_polygon.h"
 #include "walnut/edge_line_connector.h"
 
 namespace walnut {
@@ -19,7 +20,7 @@ namespace walnut {
 // This visitor accepts polygons produced by BSPTraverser. It then connects
 // adjacent facets together using EdgeLineConnector. Redundant facets are
 // merged together.
-template <typename ConnectedParent, typename FilterTemplate>
+template <typename FilterTemplate, typename ConnectedParent = ConvexPolygon<>>
 class ConnectingVisitor
   : public BSPVisitor<BSPPolygon<ConnectedPolygon<ConnectedParent>>> {
  public:
