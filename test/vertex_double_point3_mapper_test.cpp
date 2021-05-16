@@ -50,50 +50,49 @@ TEST(VertexDoublePoint3Mapper, ThreeRepsExist) {
   }
 }
 
-TEST(VertexDoublePoint3Mapper, MapMerge) {
-  // Creates a vertex where 4 triangles meet. The place where they meet has 2
-  // different DoublePoint3 representations, labelled p and q in the diagram
-  // below.
-  //
-  //          -|-           |
-  //         / | \          |
-  //       --  |  --        |
-  //     /   e0|    \       |
-  //   --      |     - -    |
-  //  /       p|p  e1   \   |
-  // +---------+---------+  |
-  //  \   e3  q|q       /   |
-  //   --      |      --    |
-  //     \     |e2   /      |
-  //      --   |   --       |
-  //        \  |  /         |
-  //         --|--          |
+// Creates 4 triangles that meet at a central vertex. The caller can pass in
+// different (but equivalent) values for the center vertex. All components of
+// the center points (including the denominator) must be positive.
+//
+//          -|-           |
+//         / | \          |
+//       --  |  --        |
+//     /   e0|    \       |
+//   --      |     - -    |
+//  /      c0|c1 e1   \   |
+// +---------+---------+  |
+//  \   e3 c3|c2      /   |
+//   --      |      --    |
+//     \     |e2   /      |
+//      --   |   --       |
+//        \  |  /         |
+//         --|--          |
+void Generate4Triangles(const HomoPoint3& center0,
+                        const HomoPoint3& center1,
+                        const HomoPoint3& center2,
+                        const HomoPoint3& center3,
+                        std::vector<ConnectedPolygon<>>& triangles) {
+  triangles.clear();
 
-  std::vector<HomoPoint3> centers = MakePointsWithDifferentReps(2);
-  const HomoPoint3& p = centers[0];
-  const HomoPoint3& q = centers[1];
+  HomoPoint3 left(-center0.x(), center0.y(), center0.z(), center0.w());
+  HomoPoint3 top(center0.x(), center0.y() << 1, center0.z(), center0.w());
+  HomoPoint3 right(center0.x() << 1, center0.y(), center0.z(), center0.w());
+  HomoPoint3 bottom(center0.x(), -center0.y(), center0.z(), center0.w());
 
-  HomoPoint3 left(-p.x(), p.y(), p.z(), p.w());
-  HomoPoint3 top(p.x(), p.y() << 1, p.z(), p.w());
-  HomoPoint3 right(p.x() << 1, p.y(), p.z(), p.w());
-  HomoPoint3 bottom(p.x(), -p.y(), p.z(), p.w());
-
-  HalfSpace3 plane(/*x=*/BigInt{0}, /*y=*/BigInt{0}, /*z=*/p.w(),
-                   /*dist=*/p.z());
+  HalfSpace3 plane(/*x=*/BigInt{0}, /*y=*/BigInt{0}, /*z=*/center0.w(),
+                   /*dist=*/center0.z());
 
   // The ConnectedPolygon constructor makes the last vertex the first. So list
   // the center vertex last so that the edge with the center as the source
   // becomes the first edge.
-  std::vector<ConnectedPolygon<>> triangles{
-    ConnectedPolygon<>(plane, /*drop_dimension=*/2,
-                       std::vector<HomoPoint3>{top, left, p}),
-    ConnectedPolygon<>(plane, /*drop_dimension=*/2,
-                       std::vector<HomoPoint3>{right, top, p}),
-    ConnectedPolygon<>(plane, /*drop_dimension=*/2,
-                       std::vector<HomoPoint3>{bottom, right, q}),
-    ConnectedPolygon<>(plane, /*drop_dimension=*/2,
-                       std::vector<HomoPoint3>{left, bottom, q}),
-  };
+  triangles.emplace_back(plane, /*drop_dimension=*/2,
+                         std::vector<HomoPoint3>{top, left, center0});
+  triangles.emplace_back(plane, /*drop_dimension=*/2,
+                         std::vector<HomoPoint3>{right, top, center1});
+  triangles.emplace_back(plane, /*drop_dimension=*/2,
+                         std::vector<HomoPoint3>{bottom, right, center2});
+  triangles.emplace_back(plane, /*drop_dimension=*/2,
+                         std::vector<HomoPoint3>{left, bottom, center3});
 
   std::vector<Deed<ConnectedPolygon<>::EdgeRep>> connect_edges;
   for (ConnectedPolygon<>& triangle : triangles) {
@@ -113,6 +112,16 @@ TEST(VertexDoublePoint3Mapper, MapMerge) {
   connector.ConnectUnsorted(connect_edges.begin(), connect_edges.end(),
                             /*drop_dimension=*/2, error_handler);
   EXPECT_FALSE(errored);
+}
+
+TEST(VertexDoublePoint3Mapper, MapMerge) {
+
+  std::vector<HomoPoint3> centers = MakePointsWithDifferentReps(2);
+  const HomoPoint3& p = centers[0];
+  const HomoPoint3& q = centers[1];
+
+  std::vector<ConnectedPolygon<>> triangles;
+  Generate4Triangles(p, p, q, q, triangles);
 
   int merged = 0;
   int created = 0;

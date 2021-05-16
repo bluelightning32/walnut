@@ -365,6 +365,10 @@ class ConnectedPolygon : public ParentTemplate::template MakeParent<
     return RValueKey<ConnectedPolygon>(std::move(*this));
   }
 
+  ConnectedPolygon& operator=(ConnectedPolygon&& other) {
+    return *this = std::move(other).GetRValueKey();
+  }
+
   ConnectedPolygon& operator=(RValueKey<ConnectedPolygon> other) {
     Parent::operator=(RValueKey<Parent>(other));
     SetEdgeBackPointers();
