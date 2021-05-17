@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
   static constexpr double kInitialTop = 3;
   std::vector<walnut::ConnectingVisitorOutputPolygon<>> mesh =
     CreateCellBorder(kInitialTop, 0);
-  auto converted_mesh = ConvertWalnutMesh(mesh);
+  auto converted_mesh = WalnutToVTKMesh(mesh);
   cleaner->SetInputData(converted_mesh);
   cleaner->SetToleranceIsAbsolute(true);
   cleaner->SetAbsoluteTolerance(0.000001);
@@ -139,7 +139,7 @@ int main(int argc, char *argv[]) {
   auto update_mesh = [height_rep, angle_rep, cleaner, &top_point]() {
     std::vector<walnut::ConnectingVisitorOutputPolygon<>> mesh =
       CreateCellBorder(height_rep->GetValue(), angle_rep->GetValue());
-    auto converted_mesh = ConvertWalnutMesh(mesh);
+    auto converted_mesh = WalnutToVTKMesh(mesh);
     cleaner->SetInputData(converted_mesh);
     top_point.SetPoint(0, GetTopPoint(mesh));
   };

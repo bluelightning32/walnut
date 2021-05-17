@@ -160,7 +160,7 @@ TEST(VertexDoublePoint3Mapper, RehashDuringMerge) {
     return 0;
   };
   auto value_merger = [](RedirectableValue<int>& a,
-                                RedirectableValue<int>& b) {
+                         RedirectableValue<int>& b) {
     a.Redirect(b);
   };
   std::vector<VertexDoublePoint3Mapper<decltype(value_factory),

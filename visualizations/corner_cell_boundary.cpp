@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
   std::vector<walnut::ConnectingVisitorOutputPolygon<>> mesh =
     tree.GetNodeBorder(node_path.begin(), node_path.end(), bounding_box);
 
-  auto converted_mesh = ConvertWalnutMesh(mesh);
+  auto converted_mesh = WalnutToVTKMesh(mesh);
   auto cleaner = vtkSmartPointer<vtkCleanPolyData>::New();
   cleaner->SetToleranceIsAbsolute(true);
   cleaner->SetAbsoluteTolerance(0.000001);
