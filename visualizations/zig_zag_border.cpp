@@ -17,8 +17,11 @@
 
 constexpr const double pi = 3.14159265358979323846;
 
-std::vector<walnut::BSPTree<>::OutputPolygon> CreateCellBorder(
+std::vector<walnut::ConnectingVisitorOutputPolygon<>> CreateCellBorder(
     double top, double vert_angle) {
+  static constexpr double kDenom = 10000;
+  // Prevent the top split from being coincident with the bounding box walls.
+  top = std::max(top, 1.0 / kDenom);
   walnut::BSPTree<> tree;
   using NodeRep = typename walnut::BSPTree<>::BSPNodeRep;
   std::vector<bool> node_path;
@@ -33,7 +36,6 @@ std::vector<walnut::BSPTree<>::OutputPolygon> CreateCellBorder(
     y_rotation[i][1] = sin(y_rotation_angles[i]);
   }
   static constexpr double kDist = 4;
-  static constexpr double kDenom = 10000;
   NodeRep* leaf = &tree.root;
   static constexpr int kZigZagCount = 4;
   for (int i = 0; i < kZigZagCount; ++i) {
@@ -64,19 +66,13 @@ std::vector<walnut::BSPTree<>::OutputPolygon> CreateCellBorder(
 
   walnut::AABB bounding_box(walnut::Point3(-8, -8, 0),
                               walnut::Point3(8, 8, 10));
-  walnut::BSPTree<>::BSPNodeRep node_border_root;
-  walnut::BSPTree<>::BSPNodeRep* node_border_leaf = tree.GetNodeBorder(
-      node_path.begin(), node_path.end(), bounding_box, node_border_root);
-  std::vector<walnut::BSPTree<>::OutputPolygon> mesh = node_border_leaf->contents();
-  mesh.insert(mesh.end(), node_border_leaf->border_contents().begin(),
-              node_border_leaf->border_contents().end());
-  return mesh;
+  return tree.GetNodeBorder(node_path.begin(), node_path.end(), bounding_box);
 }
 
 int main(int argc, char *argv[]) {
   auto cleaner = vtkSmartPointer<vtkCleanPolyData>::New();
   static constexpr double kInitialTop = 3;
-  std::vector<walnut::BSPTree<>::OutputPolygon> mesh =
+  std::vector<walnut::ConnectingVisitorOutputPolygon<>> mesh =
     CreateCellBorder(kInitialTop, 0);
   auto converted_mesh = ConvertWalnutMesh(mesh);
   cleaner->SetInputData(converted_mesh);
@@ -141,7 +137,7 @@ int main(int argc, char *argv[]) {
   angle_rep->GetPoint2Coordinate()->SetValue(125, 600);
 
   auto update_mesh = [height_rep, angle_rep, cleaner, &top_point]() {
-    std::vector<walnut::BSPTree<>::OutputPolygon> mesh =
+    std::vector<walnut::ConnectingVisitorOutputPolygon<>> mesh =
       CreateCellBorder(height_rep->GetValue(), angle_rep->GetValue());
     auto converted_mesh = ConvertWalnutMesh(mesh);
     cleaner->SetInputData(converted_mesh);

@@ -673,11 +673,8 @@ TEST(BSPTree, GetNodeBorderEmptyTree) {
   AABB bounding_box(Point3(-1, -1, -1), Point3(2, 2, 2));
   std::vector<bool> node_path = { };
 
-  BSPTree<>::BSPNodeRep node_border_root;
-  BSPTree<>::BSPNodeRep* node_border_leaf =
-    tree.GetNodeBorder(node_path.begin(), node_path.end(), bounding_box,
-                       node_border_root);
-  std::vector<BSPTree<>::OutputPolygon> facets = node_border_leaf->contents();
+  std::vector<ConnectingVisitorOutputPolygon<>> facets =
+    tree.GetNodeBorder(node_path.begin(), node_path.end(), bounding_box);
 
   Point3 p[] = {
     Point3{-1, -1, -1},
@@ -739,13 +736,8 @@ TEST(BSPTree, GetNodeBorder1Split) {
     std::vector<bool> node_path = {pos_side};
     AABB bounding_box(Point3(-1, -1, -1), Point3(2, 2, 2));
 
-    BSPTree<>::BSPNodeRep node_border_root;
-    BSPTree<>::BSPNodeRep* node_border_leaf =
-      tree.GetNodeBorder(node_path.begin(), node_path.end(), bounding_box,
-                         node_border_root);
-    std::vector<BSPTree<>::OutputPolygon> facets = node_border_leaf->contents();
-    facets.insert(facets.end(), node_border_leaf->border_contents().begin(),
-                  node_border_leaf->border_contents().end());
+    std::vector<ConnectingVisitorOutputPolygon<>> facets =
+      tree.GetNodeBorder(node_path.begin(), node_path.end(), bounding_box);
 
     std::vector<std::vector<Point3>> expected_facet_vertices = {
       // bottom

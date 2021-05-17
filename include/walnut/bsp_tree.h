@@ -1,11 +1,14 @@
 #ifndef WALNUT_BSP_TREE_H__
 #define WALNUT_BSP_TREE_H__
 
+#include <cassert>
+#include <iostream>
 #include <type_traits>
 
 #include "walnut/aabb_convex_polygon.h"
 #include "walnut/bsp_node.h"
 #include "walnut/bsp_traverser.h"
+#include "walnut/connecting_visitor.h"
 
 namespace walnut {
 
@@ -66,11 +69,12 @@ class BSPTree {
   // node define the polyhedron of the boundary of the input node.
   //
   // In case the BSPNode border is unbounded, `bounding_box` provides an upper
-  // bound for how far the ConvexPolygons will extend.
+  // bound for how far the ConvexPolygons will extend. All of `bounding_box`'s
+  // walls must not be coincident with any of the split planes.
   template<typename Iterator>
-  BSPNodeRep* GetNodeBorder(
-      Iterator node_path_begin, Iterator node_path_end,
-      const AABB& bounding_box, BSPNodeRep& mapped_root) const;
+  std::vector<ConnectingVisitorOutputPolygon<>>
+  GetNodeBorder(Iterator node_path_begin, Iterator node_path_end,
+                const AABB& bounding_box) const;
 
   BSPContentId AllocateId() {
     return next_id_++;
@@ -88,11 +92,11 @@ class BSPTree {
 
 template <typename ConvexPolygonTemplate>
 template <typename Iterator>
-typename BSPTree<ConvexPolygonTemplate>::BSPNodeRep*
-BSPTree<ConvexPolygonTemplate>::GetNodeBorder(
-    Iterator node_path_begin, Iterator node_path_end,
-    const AABB& bounding_box,
-    BSPNodeRep& mapped_root) const {
+std::vector<ConnectingVisitorOutputPolygon<>>
+BSPTree<ConvexPolygonTemplate>::GetNodeBorder(Iterator node_path_begin,
+                                              Iterator node_path_end,
+                                              const AABB& bounding_box) const {
+  BSPNodeRep mapped_root;
   for (auto& polygon : bounding_box.GetWalls()) {
     assert(polygon.vertex_count() > 0);
     mapped_root.AddRootContent(/*id=*/0, std::move(polygon));
@@ -114,21 +118,43 @@ BSPTree<ConvexPolygonTemplate>::GetNodeBorder(
     }
   }
 
+  auto error_log = [](const std::string& error) {
+    std::cerr << error << std::endl;
+    assert(false);
+  };
+  ConnectingVisitor<OddPolygonFilter> visitor(OddPolygonFilter(0), error_log);
+
   // Split the mapped_root the same way as the original root along the node
   // path.
-  BSPNodeRep* mapped_node = &mapped_root;
   original_node = &root;
+  std::vector<BSPNodeRep*> mapped_nodes{&mapped_root};
   for (Iterator pos = node_path_begin; pos != node_path_end; ++pos) {
-    mapped_node->Split(original_node->split());
+    visitor.EnterInteriorNode(/*from_partitioner=*/false,
+                              mapped_nodes.back()->split());
+    mapped_nodes.back()->Split(original_node->split());
+    BSPNodeRep* mapped_child;
     if (*pos) {
       original_node = original_node->positive_child();
-      mapped_node = mapped_node->positive_child();
+      mapped_child = mapped_nodes.back()->positive_child();
     } else {
       original_node = original_node->negative_child();
-      mapped_node = mapped_node->negative_child();
+      mapped_child = mapped_nodes.back()->negative_child();
     }
+    mapped_nodes.push_back(mapped_child);
   }
-  return mapped_node;
+
+  // If `bounding_box` is smaller than the last node, then the last node will
+  // not be fully split. However, it must be fully split for the
+  // ConnectingVisitor to work.
+  BSPTraverser<BSPNodeRep, ConnectingVisitorOutputPolygon<>> traverser;
+  traverser.Run(*mapped_nodes.back(), visitor);
+
+  mapped_nodes.pop_back();
+  for (auto it = mapped_nodes.rbegin(); it != mapped_nodes.rend(); ++it) {
+    visitor.LeaveInteriorNode(/*from_partitioner=*/false,
+                              (*it)->split());
+  }
+  return visitor.TakePolygons();
 }
 
 }  // walnut

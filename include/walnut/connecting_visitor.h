@@ -17,6 +17,10 @@
 
 namespace walnut {
 
+template <typename ConnectedParent = ConvexPolygon<>>
+using ConnectingVisitorOutputPolygon =
+    BSPPolygon<ConnectedPolygon<ConnectedParent>>;
+
 // This visitor accepts polygons produced by BSPTraverser. It then connects
 // adjacent facets together using EdgeLineConnector. Redundant facets are
 // merged together.
@@ -25,7 +29,7 @@ class ConnectingVisitor
   : public BSPVisitor<BSPPolygon<ConnectedPolygon<ConnectedParent>>> {
  public:
   using Filter = FilterTemplate;
-  using PolygonRep = BSPPolygon<ConnectedPolygon<ConnectedParent>>;
+  using PolygonRep = ConnectingVisitorOutputPolygon<ConnectedParent>;
 
   ConnectingVisitor(Filter filter,
                     std::function<void(const std::string&)> error_log)

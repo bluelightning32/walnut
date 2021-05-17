@@ -35,6 +35,33 @@ class PolygonFilter {
   BSPContentId accept_id_;
 };
 
+// Filters out all polygons except for the ones that have the requested id.
+//
+// All points with an odd PWN for the given id are considered as inside the
+// shape.
+class OddPolygonFilter {
+ public:
+  OddPolygonFilter(BSPContentId accept_id) : accept_id_(accept_id) { }
+
+  // Specifically the first returned bool is true if the PWN is inside the
+  // polyhedron defined by this visitor. The second returned bool is true if
+  // the sideness could change as subnodes of this branch of the BSP tree is
+  // visited, given which polygons have not been visited yet in this subtree
+  // (the `has_polygons` field).
+  std::pair<bool, bool> operator()(
+      const std::vector<BSPContentInfo>& content_info_by_id) {
+    if (accept_id_ >= content_info_by_id.size()) {
+      return std::make_pair(false, false);
+    } else {
+      return std::make_pair(content_info_by_id[accept_id_].pwn & 1,
+                            content_info_by_id[accept_id_].has_polygons);
+    }
+  }
+
+ private:
+  BSPContentId accept_id_;
+};
+
 template <typename Filter1, typename Filter2>
 class IntersectionFilter {
  public:

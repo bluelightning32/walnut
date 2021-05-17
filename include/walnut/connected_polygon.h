@@ -359,6 +359,7 @@ class ConnectedPolygon : public ParentTemplate::template MakeParent<
   using Parent::edge;
   using Parent::vertex_count;
   using Parent::SplitEdge;
+  using Parent::SortVertices;
   using Parent::TryMergePolygon;
 
   RValueKey<ConnectedPolygon> GetRValueKey() && {
