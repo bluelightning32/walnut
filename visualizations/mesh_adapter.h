@@ -6,7 +6,7 @@
 #include <vtkPolyData.h>
 #include <vtkPolygon.h>
 
-#include "walnut/convex_polygon.h"
+#include "walnut/connected_polygon.h"
 
 namespace walnut {
 
@@ -20,9 +20,12 @@ template<typename Polygon>
 vtkSmartPointer<vtkPolyData> ConvertWalnutMesh(
     const std::vector<Polygon>& mesh) {
   static_assert(
-      std::is_base_of<ConvexPolygon<typename Polygon::EdgeRep::Parent>,
+      std::is_base_of<typename Polygon::ConnectedPolygonRep,
                       Polygon>::value,
-      "Polygon must inherit from ConvexPolygon");
+      "Polygon must inherit from ConnectedPolygon");
+  static_assert(
+      IsConnectedPolygon<typename Polygon::ConnectedPolygonRep>::value,
+      "Polygon must inherit from ConnectedPolygon");
   auto points = vtkSmartPointer<vtkPoints>::New();
   auto cell_array = vtkSmartPointer<vtkCellArray>::New();
   for (const Polygon& polygon : mesh) {

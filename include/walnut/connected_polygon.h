@@ -7,6 +7,11 @@
 
 namespace walnut {
 
+template <typename ParentTemplate = ConvexPolygon<>,
+          typename FinalPolygonTemplate = void,
+          typename EdgeParentTemplate = EdgeInfoRoot>
+class ConnectedPolygon;
+
 // A half edge of a ConnectedPolygon
 //
 // The DeedTarget is used to keep a pointer to the edges while sorting and
@@ -226,6 +231,18 @@ class ConnectedEdge : public ParentTemplate, public DeedTarget {
   ConnectedEdge* partner_ = nullptr;
 };
 
+template <typename Polygon>
+struct IsConnectedPolygon {
+  static constexpr bool value = false;
+};
+
+template <typename ParentTemplate, typename FinalPolygonTemplate,
+          typename EdgeParentTemplate>
+struct IsConnectedPolygon<ConnectedPolygon<ParentTemplate,
+                                           FinalPolygonTemplate,
+                                           EdgeParentTemplate>> {
+  static constexpr bool value = true;
+};
 
 // This convex polygon is part of a doubly connected edge list. In addition to
 // how half edges within the same polygon are implicitly connected together, a
@@ -238,9 +255,8 @@ class ConnectedEdge : public ParentTemplate, public DeedTarget {
 // `FinalPolygonTemplate` and `EdgeParentTemplate` parameters are used
 // internally. The default values should be used when externally referring to a
 // ConnectedPolygon.
-template <typename ParentTemplate = ConvexPolygon<>,
-          typename FinalPolygonTemplate = void,
-          typename EdgeParentTemplate = EdgeInfoRoot>
+template <typename ParentTemplate, typename FinalPolygonTemplate,
+          typename EdgeParentTemplate>
 class ConnectedPolygon : public ParentTemplate::template MakeParent<
                                   FinalPolygonTemplate,
                                   ConnectedEdge<
@@ -258,6 +274,7 @@ class ConnectedPolygon : public ParentTemplate::template MakeParent<
                                   >
                                 > {
  public:
+  using ConnectedPolygonRep = ConnectedPolygon;
   // If `FinalPolygonTemplate` is not void, use it as the final polygon type,
   // otherwise use `ConnectedPolygon`.
   using FinalPolygon =
