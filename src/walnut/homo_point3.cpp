@@ -71,7 +71,8 @@ BigIntWord HomoPoint3::Get2DTwistDir(int drop_dimension, const HomoPoint3& p1,
   Vector2 p3_from_origin =
     p3.vector_from_origin().DropDimension(drop_dimension) * dist_denom();
   return (p1_from_origin - p2_from_origin1).Cross(
-      p3_from_origin - p2_from_origin3).GetSign();
+      p3_from_origin - p2_from_origin3).GetSign() ^
+    p1.dist_denom().SignExtension() ^ p3.dist_denom().SignExtension();
 }
 
 void HomoPoint3::Reduce() {

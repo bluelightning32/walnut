@@ -167,4 +167,82 @@ TEST(HomoPoint3, GetDoublePoint3) {
   EXPECT_EQ(p.GetDoublePoint3(), input);
 }
 
+TEST(HomoPoint3, Get2DTwistDirCollinear) {
+  HomoPoint3 p1(/*x=*/1, /*y=*/2, /*z=*/3, /*w=*/5);
+  HomoPoint3 p2(/*x=*/-2, /*y=*/-4, /*z=*/-6, /*w=*/-5);
+  HomoPoint3 p3(/*x=*/3, /*y=*/6, /*z=*/9, /*w=*/6);
+
+  EXPECT_EQ(p2.Get2DTwistDir(/*drop_dimension=*/0, p1, p3), 0);
+  EXPECT_EQ(p2.Get2DTwistDir(/*drop_dimension=*/1, p1, p3), 0);
+  EXPECT_EQ(p2.Get2DTwistDir(/*drop_dimension=*/2, p1, p3), 0);
+}
+
+TEST(HomoPoint3, Get2DTwistDirPosDenom) {
+  //
+  //  p1               |
+  //  ^                |
+  //   \               |
+  //   p2 -> p3        |
+  //
+  HomoPoint3 p1(/*x=*/1, /*y=*/2, /*z=*/1, /*w=*/3);
+  HomoPoint3 p2(/*x=*/1, /*y=*/1, /*z=*/1, /*w=*/2);
+  HomoPoint3 p3(/*x=*/3, /*y=*/2, /*z=*/1, /*w=*/4);
+
+  // p3 is clockwise from p1.
+  EXPECT_LT(p2.Get2DTwistDir(/*drop_dimension=*/2, p1, p3), 0);
+  // p1 is counter-clockwise from p3.
+  EXPECT_GT(p2.Get2DTwistDir(/*drop_dimension=*/2, p3, p1), 0);
+}
+
+TEST(HomoPoint3, Get2DTwistDirPosPosNegDenom) {
+  //
+  //  p1               |
+  //  ^                |
+  //   \               |
+  //   p2 -> p3        |
+  //
+  HomoPoint3 p1(/*x=*/1, /*y=*/2, /*z=*/1, /*w=*/3);
+  HomoPoint3 p2(/*x=*/1, /*y=*/1, /*z=*/1, /*w=*/2);
+  HomoPoint3 p3(/*x=*/-3, /*y=*/-2, /*z=*/-1, /*w=*/-4);
+
+  // p3 is clockwise from p1.
+  EXPECT_LT(p2.Get2DTwistDir(/*drop_dimension=*/2, p1, p3), 0);
+  // p1 is counter-clockwise from p3.
+  EXPECT_GT(p2.Get2DTwistDir(/*drop_dimension=*/2, p3, p1), 0);
+}
+
+TEST(HomoPoint3, Get2DTwistDirPosNegNegDenom) {
+  //
+  //  p1               |
+  //  ^                |
+  //   \               |
+  //   p2 -> p3        |
+  //
+  HomoPoint3 p1(/*x=*/1, /*y=*/2, /*z=*/1, /*w=*/3);
+  HomoPoint3 p2(/*x=*/-1, /*y=*/-1, /*z=*/-1, /*w=*/-2);
+  HomoPoint3 p3(/*x=*/-3, /*y=*/-2, /*z=*/-1, /*w=*/-4);
+
+  // p3 is clockwise from p1.
+  EXPECT_LT(p2.Get2DTwistDir(/*drop_dimension=*/2, p1, p3), 0);
+  // p1 is counter-clockwise from p3.
+  EXPECT_GT(p2.Get2DTwistDir(/*drop_dimension=*/2, p3, p1), 0);
+}
+
+TEST(HomoPoint3, Get2DTwistDirNegNegNegDenom) {
+  //
+  //  p1               |
+  //  ^                |
+  //   \               |
+  //   p2 -> p3        |
+  //
+  HomoPoint3 p1(/*x=*/-1, /*y=*/-2, /*z=*/-1, /*w=*/-3);
+  HomoPoint3 p2(/*x=*/-1, /*y=*/-1, /*z=*/-1, /*w=*/-2);
+  HomoPoint3 p3(/*x=*/-3, /*y=*/-2, /*z=*/-1, /*w=*/-4);
+
+  // p3 is clockwise from p1.
+  EXPECT_LT(p2.Get2DTwistDir(/*drop_dimension=*/2, p1, p3), 0);
+  // p1 is counter-clockwise from p3.
+  EXPECT_GT(p2.Get2DTwistDir(/*drop_dimension=*/2, p3, p1), 0);
+}
+
 }  // walnut
