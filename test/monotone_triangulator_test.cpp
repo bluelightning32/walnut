@@ -4,22 +4,21 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "walnut/homo_point3.h"
 
 namespace walnut {
 
 using testing::ElementsAre;
 
-class ResultCollector :
-  public MonotoneTriangulator<Point3> {
+template <typename Point3Rep = Point3>
+class ResultCollector : public MonotoneTriangulator<Point3Rep> {
  public:
-  using typename MonotoneTriangulator<Point3>::Point3Rep;
-
   void EmitTriangle(bool p3_is_top_chain, const Point3Rep& p1,
                     const Point3Rep& p2, const Point3Rep& p3) override {
     result_.emplace_back(std::array<Point3Rep, 3>{p1, p2, p3});
   }
 
-  const std::vector<std::array<Point3, 3>>& result() {
+  const std::vector<std::array<Point3Rep, 3>>& result() {
     return result_;
   }
 
@@ -53,7 +52,7 @@ TEST(MonotoneTriangulator, AlreadyConvexAllTopChain) {
     Point3(5, 0, 10),
   };
 
-  ResultCollector collector;
+  ResultCollector<> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
@@ -93,7 +92,7 @@ TEST(MonotoneTriangulator, AlreadyConvexAllBottomChain) {
     Point3(5, 0, 10),
   };
 
-  ResultCollector collector;
+  ResultCollector<> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
@@ -136,7 +135,7 @@ TEST(MonotoneTriangulator, AlreadyConvexAlternatingChains) {
     Point3(9, 0, 10),
   };
 
-  ResultCollector collector;
+  ResultCollector<> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
@@ -170,7 +169,7 @@ TEST(MonotoneTriangulator, SingleReflexOnTop) {
     Point3(3, 0, 10),
   };
 
-  ResultCollector collector;
+  ResultCollector<> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
@@ -207,7 +206,7 @@ TEST(MonotoneTriangulator, SelfIntersecting) {
     Point3(4, 0, 10),
   };
 
-  ResultCollector collector;
+  ResultCollector<> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
@@ -216,6 +215,44 @@ TEST(MonotoneTriangulator, SelfIntersecting) {
         std::array<Point3, 3>{top_chain[1], top_chain[0], top_chain[2]},
         std::array<Point3, 3>{top_chain[2], top_chain[0], bottom_chain[0]},
         std::array<Point3, 3>{top_chain[3], top_chain[2], bottom_chain[0]}
+        ));
+}
+
+TEST(MonotoneTriangulator, SelfIntersectingHomoPoint3) {
+  //
+  //      t1          t3                 |
+  //     /  \        /  \                |
+  //    /    \      /    \               |
+  //  t0----- \--- /----> b0             |
+  //           \  /                      |
+  //            t2                       |
+  //
+  //      t1          t3                 |
+  //     /  \        /  \                |
+  //    /    \      /    \               |
+  //  t0----- \--- /----> b0             |
+  //    \__I__ \I /  I   /               |
+  //          \>t2------                 |
+  //
+  HomoPoint3 top_chain[] = {
+    HomoPoint3(0, 0, 10, /*w=*/100),
+    HomoPoint3(-1, -1, -10, /*w=*/-101),
+    HomoPoint3(2, -1, 10, /*w=*/102),
+    HomoPoint3(3, 1, 10, /*w=*/103),
+  };
+  HomoPoint3 bottom_chain[] = {
+    HomoPoint3(4, 0, 10, /*w=*/104),
+  };
+
+  ResultCollector<HomoPoint3> collector;
+  collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
+             std::begin(top_chain), std::end(top_chain),
+             std::begin(bottom_chain), std::end(bottom_chain));
+
+  EXPECT_THAT(collector.result(), ElementsAre(
+        std::array<HomoPoint3, 3>{top_chain[1], top_chain[0], top_chain[2]},
+        std::array<HomoPoint3, 3>{top_chain[2], top_chain[0], bottom_chain[0]},
+        std::array<HomoPoint3, 3>{top_chain[3], top_chain[2], bottom_chain[0]}
         ));
 }
 

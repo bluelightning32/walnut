@@ -119,6 +119,16 @@ class Point3 {
     vector_from_origin_.Negate();
   }
 
+  // Compares `component` from this and `other`.
+  //
+  // Returns <0 if the component is less in this than other.
+  // Returns 0 if the is equal in the two points.
+  // Returns >0 if the component is larger in this than other.
+  int CompareComponent(size_t component, const Point3& other) const {
+    return vector_from_origin().components()[component].Compare(
+        other.vector_from_origin().components()[component]);
+  }
+
  private:
   Vector3 vector_from_origin_;
 };

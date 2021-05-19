@@ -7,6 +7,7 @@
 #include <type_traits>
 #include <vector>
 
+#include "walnut/homo_point3.h"
 #include "walnut/point3.h"
 
 namespace walnut {
@@ -15,8 +16,9 @@ template <typename Point3RepTemplate = Point3>
 class MonotoneTriangulator {
  public:
   using Point3Rep = Point3RepTemplate;
-  static_assert(std::is_base_of<Point3, Point3Rep>::value,
-                "Point3Rep must be derived from Point3.");
+  static_assert(std::is_base_of<Point3, Point3Rep>::value ||
+                  std::is_base_of<HomoPoint3, Point3Rep>::value ||
+                "Point3Rep must be derived from Point3 or HomoPoint3.");
 
   // Given a monotone polygon in the form of an iterator range for its top
   // chain and an iterator range for its bottom chain, this converts the
@@ -113,8 +115,7 @@ void MonotoneTriangulator<Point3RepTemplate>::Build(
   // Bottom chain must contain the maximum vertex.
   assert(bottom_pos != bottom_end);
   if (top_pos == top_end ||
-      bottom_pos->components()[monotone_dimension] <
-      top_pos->components()[monotone_dimension]) {
+      bottom_pos->CompareComponent(monotone_dimension, *top_pos) < 0) {
     reflex_stack_.push_back(&*bottom_pos);
     ++bottom_pos;
     top_chain_is_current_ = false;
@@ -127,8 +128,7 @@ void MonotoneTriangulator<Point3RepTemplate>::Build(
   while (top_pos != top_end) {
     // The bottom chain must have the maximum vertex remaining.
     assert(bottom_pos != bottom_end);
-    if (bottom_pos->components()[monotone_dimension] <
-        top_pos->components()[monotone_dimension]) {
+    if (bottom_pos->CompareComponent(monotone_dimension, *top_pos) < 0) {
       ProcessVertex(drop_dimension, /*is_top=*/false, *bottom_pos);
       ++bottom_pos;
     } else {
