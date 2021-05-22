@@ -187,9 +187,8 @@ template <typename Point3Iterator>
 inline void MonotoneRange<Point3Iterator>::FollowDirReverse(
     int monotone_dimension, int dir, const Point3Rep* next,
     Point3Iterator& remaining_end) {
-  while ((next->components()[monotone_dimension] -
-          remaining_end->components()[monotone_dimension]).GetSign() * dir >=
-      0) {
+  while (next->components()[monotone_dimension].Compare(
+          remaining_end->components()[monotone_dimension]) * dir >= 0) {
     next = &*remaining_end;
     --remaining_end;
   }
@@ -203,8 +202,8 @@ template <typename Point3Iterator>
 inline void MonotoneRange<Point3Iterator>::FollowDir(
     int monotone_dimension, int dir, const Point3Rep* prev,
     Point3Iterator& remaining_begin) {
-  while ((remaining_begin->components()[monotone_dimension] -
-          prev->components()[monotone_dimension]).GetSign() * dir >= 0) {
+  while (remaining_begin->components()[monotone_dimension].Compare(
+          prev->components()[monotone_dimension]) * dir >= 0) {
     prev = &*remaining_begin;
     ++remaining_begin;
   }
@@ -214,11 +213,10 @@ template <typename Point3Iterator>
 inline void MonotoneRange<Point3Iterator>::FollowDirUpTo(
     int monotone_dimension, int dir, const Point3Rep* prev,
     Point3Iterator& remaining_begin, const Point3Rep* up_to) {
-  while (
-      (up_to->components()[monotone_dimension] -
-       remaining_begin->components()[monotone_dimension]).GetSign() * dir > 0 &&
-      (remaining_begin->components()[monotone_dimension] -
-       prev->components()[monotone_dimension]).GetSign() * dir >= 0) {
+  while (up_to->components()[monotone_dimension].Compare(
+          remaining_begin->components()[monotone_dimension]) * dir > 0 &&
+         remaining_begin->components()[monotone_dimension].Compare(
+           prev->components()[monotone_dimension]) * dir >= 0) {
     prev = &*remaining_begin;
     ++remaining_begin;
   }
@@ -228,11 +226,10 @@ template <typename Point3Iterator>
 inline void MonotoneRange<Point3Iterator>::FollowDirUpToReverse(
     int monotone_dimension, int dir, const Point3Rep* next,
     Point3Iterator& remaining_end, const Point3Rep* up_to) {
-  while (
-      (next->components()[monotone_dimension] -
-       remaining_end->components()[monotone_dimension]).GetSign() * dir >= 0 &&
-      (remaining_end->components()[monotone_dimension] -
-       up_to->components()[monotone_dimension]).GetSign() * dir > 0) {
+  while (next->components()[monotone_dimension].Compare(
+          remaining_end->components()[monotone_dimension]) * dir >= 0 &&
+         remaining_end->components()[monotone_dimension].Compare(
+          up_to->components()[monotone_dimension]) * dir > 0) {
     next = &*remaining_end;
     --remaining_end;
   }
