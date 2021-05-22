@@ -18,8 +18,6 @@ struct ConvexPolygonEdge;
 template <typename Parent>
 std::string Approximate(const ConvexPolygonEdge<Parent>& edge);
 
-std::string Approximate(const ConvexPolygonEdge<EdgeInfoRoot>& edge);
-
 // An edge of a ConvexPolygon
 template <typename ParentTemplate = EdgeInfoRoot>
 struct ConvexPolygonEdge : public ParentTemplate {
@@ -103,18 +101,10 @@ struct ConvexPolygonEdge : public ParentTemplate {
     return vertex_.IsValid() && line_.IsValid() && line_.IsCoincident(vertex_);
   }
 
-  // Return a string representation of the edge that uses decimal points to
+  // Print a string representation of the edge that uses decimal points to
   // approximate the vertex coordinates.
-  std::string Approximate() const {
-    return walnut::Approximate(*this);
-  }
-
-  // Return a string representation of the edge that uses decimal points to
-  // approximate the vertex coordinates and does not include the data fields.
-  std::string ApproximateNoData() const {
-    std::ostringstream out;
-    out << vertex_.Approximate();
-    return out.str();
+  std::ostream& Approximate(std::ostream& out) const {
+    return Parent::Approximate(vertex().Approximate(out));
   }
 
   const PluckerLine& line() const {
@@ -203,13 +193,8 @@ struct ConvexPolygonEdge : public ParentTemplate {
 template <typename Parent>
 std::string Approximate(const ConvexPolygonEdge<Parent>& edge) {
   std::ostringstream out;
-  out << edge.vertex().Approximate() << ": "
-      << static_cast<const Parent&>(edge);
+  out << edge.Approximate(out);
   return out.str();
-}
-
-inline std::string Approximate(const ConvexPolygonEdge<EdgeInfoRoot>& edge) {
-  return edge.ApproximateNoData();
 }
 
 template <typename Parent>

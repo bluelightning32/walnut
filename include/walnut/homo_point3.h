@@ -197,9 +197,13 @@ class HomoPoint3 {
   // before.
   void Reduce();
 
-  // Return a string representation of the edge that uses decimal points to
-  // approximate the vertex coordinates.
+  // Return a string representation of the point that uses decimal points to
+  // approximate the coordinates.
   std::string Approximate() const;
+
+  // Print a string representation of the point that uses decimal points to
+  // approximate the coordinates.
+  std::ostream& Approximate(std::ostream& out) const;
 
  private:
   Vector3 vector_from_origin_;

@@ -1,6 +1,8 @@
 #ifndef WALNUT_EDGE_INFO_ROOT_H__
 #define WALNUT_EDGE_INFO_ROOT_H__
 
+#include <ostream>
+
 #include "walnut/assignable_wrapper.h"
 #include "walnut/homo_point3.h"
 #include "walnut/plucker_line.h"
@@ -44,6 +46,10 @@ struct EdgeInfoRoot {
 
   bool CanMerge(const EdgeInfoRoot& next) const {
     return true;
+  }
+
+  std::ostream& Approximate(std::ostream& out) const {
+    return out;
   }
 
  protected:

@@ -96,13 +96,18 @@ void HomoPoint3::Reduce() {
 
 std::string HomoPoint3::Approximate() const {
   std::ostringstream out;
+  Approximate(out);
+  return out.str();
+}
+
+std::ostream& HomoPoint3::Approximate(std::ostream& out) const {
   double w_double(w());
   out << "{ "
       << (double)x()/w_double << ", "
       << (double)y()/w_double << ", "
       << (double)z()/w_double
       << " }";
-  return out.str();
+  return out;
 }
 
 std::ostream& operator<<(std::ostream& out, const HomoPoint3& p) {

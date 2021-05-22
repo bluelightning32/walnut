@@ -167,6 +167,13 @@ class ConnectedEdge : public ParentTemplate, public DeedTarget {
     return Parent::CanMerge(next);
   }
 
+  std::ostream& Approximate(std::ostream& out) const {
+    out << " next=";
+    next_vertex().Approximate(out);
+    out << " polygon=" << &polygon() << " partner=" << partner();
+    return Parent::Approximate(out);
+  }
+
  protected:
   ConnectedEdge& operator=(const ConnectedEdge&) = default;
 
