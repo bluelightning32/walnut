@@ -135,13 +135,17 @@ class Point3 {
         other.vector_from_origin().components()[component];
   }
 
+  static bool LexicographicallyLt(const Point3& a, const Point3& b);
+
+  bool LexicographicallyLt(const Point3& other) const {
+    return LexicographicallyLt(*this, other);
+  }
+
  private:
   Vector3 vector_from_origin_;
 };
 
-inline std::ostream& operator<<(std::ostream& out, const Point3& v) {
-  return out << v.vector_from_origin();
-}
+std::ostream& operator<<(std::ostream& out, const Point3& p);
 
 }  // walnut
 

@@ -103,6 +103,10 @@ class HomoPoint3 {
 
   static bool LexicographicallyLt(const HomoPoint3& a, const HomoPoint3& b);
 
+  bool LexicographicallyLt(const HomoPoint3& other) const {
+    return LexicographicallyLt(*this, other);
+  }
+
   static bool TopnessLt(const HomoPoint3& a, const HomoPoint3& b);
 
   // Returns 0 if (p1, `this`, p3) are collinear.

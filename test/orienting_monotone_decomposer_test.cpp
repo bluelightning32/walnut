@@ -7,21 +7,26 @@ namespace walnut {
 
 using testing::ElementsAre;
 
-struct PolygonResult {
-  int orientation;
-  std::vector<Point3> vertices;
-};
-
-class ResultCollector : public OrientingMonotoneDecomposer<Point3> {
+template <typename Point3Rep>
+class ResultCollector : public OrientingMonotoneDecomposer<Point3Rep> {
  public:
-  std::vector<std::vector<Point3>> GetSortedPolygonResult() {
+  struct PolygonResult {
+    int orientation;
+    std::vector<Point3Rep> vertices;
+  };
+
+  using Parent = OrientingMonotoneDecomposer<Point3Rep>;
+  using typename Parent::const_reverse_iterator;
+  using typename Parent::const_iterator;
+
+  std::vector<std::vector<Point3Rep>> GetSortedPolygonResult() {
     for (PolygonResult& polygon : result_) {
       SortVertices(polygon.vertices);
     }
 
     std::sort(result_.begin(), result_.end(), PolygonLt);
 
-    std::vector<std::vector<Point3>> result;
+    std::vector<std::vector<Point3Rep>> result;
     for (const auto& polygon : result_) {
       result.push_back(polygon.vertices);
     }
@@ -42,8 +47,8 @@ class ResultCollector : public OrientingMonotoneDecomposer<Point3> {
     return result;
   }
 
-  static void SortVertices(std::vector<Point3>& polygon) {
-    std::vector<Point3>::iterator min = polygon.begin();
+  static void SortVertices(std::vector<Point3Rep>& polygon) {
+    typename std::vector<Point3Rep>::iterator min = polygon.begin();
     for (auto it = polygon.begin(); it != polygon.end(); ++it) {
       if (PointLt(*it, *min)) {
         min = it;
@@ -52,11 +57,8 @@ class ResultCollector : public OrientingMonotoneDecomposer<Point3> {
     std::rotate(polygon.begin(), min, polygon.end());
   }
 
-  static bool PointLt(const Point3& a, const Point3& b) {
-    return std::lexicographical_compare(a.components().begin(),
-                                        a.components().end(),
-                                        b.components().begin(),
-                                        b.components().end());
+  static bool PointLt(const Point3Rep& a, const Point3Rep& b) {
+    return a.LexicographicallyLt(b);
   }
 
   static bool PolygonLt(const PolygonResult& a,
@@ -100,7 +102,7 @@ TEST(OrientingMonotoneDecomposer, NotFlipped) {
     Point3(5, 0, 10),
   };
 
-  ResultCollector collector;
+  ResultCollector<Point3> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(bottom_chain), std::end(bottom_chain),
              std::begin(top_chain), std::end(top_chain));
@@ -125,7 +127,7 @@ TEST(OrientingMonotoneDecomposer, Flipped) {
     Point3(5, 0, 10),
   };
 
-  ResultCollector collector;
+  ResultCollector<Point3> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
@@ -150,7 +152,7 @@ TEST(OrientingMonotoneDecomposer, AllCollinear) {
     Point3(5, 5, 10),
   };
 
-  ResultCollector collector;
+  ResultCollector<Point3> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(bottom_chain), std::end(bottom_chain),
              std::begin(top_chain), std::end(top_chain));
@@ -176,7 +178,7 @@ TEST(OrientingMonotoneDecomposer, CollinearPrefixNotFlipped) {
     Point3(3, 0, 10),
   };
 
-  ResultCollector collector;
+  ResultCollector<Point3> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(bottom_chain), std::end(bottom_chain),
              std::begin(top_chain), std::end(top_chain));
@@ -202,7 +204,7 @@ TEST(OrientingMonotoneDecomposer, CollinearPrefixFlipped) {
     Point3(3, 0, 10),
   };
 
-  ResultCollector collector;
+  ResultCollector<Point3> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
