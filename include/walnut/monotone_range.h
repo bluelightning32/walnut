@@ -169,8 +169,8 @@ inline int MonotoneRange<Point3Iterator>::GetDir(
   // Find the first vertex that has a different value in the monotone dimension
   // than *remaining_end. This is necessary to find out if the vertices are
   // initially increasing or decreasing in the monotone dimension.
-  while (remaining_begin->components()[monotone_dimension] ==
-         prev->components()[monotone_dimension]) {
+  while (remaining_begin->IsEquivalentComponent(monotone_dimension,
+                                                *prev)) {
     ++remaining_begin;
     if (remaining_begin == remaining_end) {
       return 0;
@@ -179,16 +179,15 @@ inline int MonotoneRange<Point3Iterator>::GetDir(
 
   // Verified by previous loop
   assert(remaining_begin != remaining_end);
-  return prev->components()[monotone_dimension] <
-         remaining_begin->components()[monotone_dimension] ? 1 : -1;
+  return remaining_begin->CompareComponent(monotone_dimension, *prev);
 }
 
 template <typename Point3Iterator>
 inline void MonotoneRange<Point3Iterator>::FollowDirReverse(
     int monotone_dimension, int dir, const Point3Rep* next,
     Point3Iterator& remaining_end) {
-  while (next->components()[monotone_dimension].Compare(
-          remaining_end->components()[monotone_dimension]) * dir >= 0) {
+  while (next->CompareComponent(monotone_dimension,
+                                *remaining_end) * dir >= 0) {
     next = &*remaining_end;
     --remaining_end;
   }
@@ -202,8 +201,8 @@ template <typename Point3Iterator>
 inline void MonotoneRange<Point3Iterator>::FollowDir(
     int monotone_dimension, int dir, const Point3Rep* prev,
     Point3Iterator& remaining_begin) {
-  while (remaining_begin->components()[monotone_dimension].Compare(
-          prev->components()[monotone_dimension]) * dir >= 0) {
+  while (remaining_begin->CompareComponent(monotone_dimension,
+                                           *prev) * dir >= 0) {
     prev = &*remaining_begin;
     ++remaining_begin;
   }
@@ -213,10 +212,10 @@ template <typename Point3Iterator>
 inline void MonotoneRange<Point3Iterator>::FollowDirUpTo(
     int monotone_dimension, int dir, const Point3Rep* prev,
     Point3Iterator& remaining_begin, const Point3Rep* up_to) {
-  while (up_to->components()[monotone_dimension].Compare(
-          remaining_begin->components()[monotone_dimension]) * dir > 0 &&
-         remaining_begin->components()[monotone_dimension].Compare(
-           prev->components()[monotone_dimension]) * dir >= 0) {
+  while (up_to->CompareComponent(monotone_dimension,
+                                 *remaining_begin) * dir > 0 &&
+         remaining_begin->CompareComponent(monotone_dimension,
+                                           *prev) * dir >= 0) {
     prev = &*remaining_begin;
     ++remaining_begin;
   }
@@ -226,10 +225,10 @@ template <typename Point3Iterator>
 inline void MonotoneRange<Point3Iterator>::FollowDirUpToReverse(
     int monotone_dimension, int dir, const Point3Rep* next,
     Point3Iterator& remaining_end, const Point3Rep* up_to) {
-  while (next->components()[monotone_dimension].Compare(
-          remaining_end->components()[monotone_dimension]) * dir >= 0 &&
-         remaining_end->components()[monotone_dimension].Compare(
-          up_to->components()[monotone_dimension]) * dir > 0) {
+  while (next->CompareComponent(monotone_dimension,
+                                 *remaining_end) * dir >= 0 &&
+         remaining_end->CompareComponent(monotone_dimension,
+                                          *up_to) * dir > 0) {
     next = &*remaining_end;
     --remaining_end;
   }
@@ -337,8 +336,8 @@ inline void MonotoneRange<Point3Iterator>::Build(
   //   range_begin < remaining_begin <= remaining_end
   assert(remaining_begin != range_begin);
   while (remaining_begin != remaining_end &&
-         (remaining_begin->components()[monotone_dimension] ==
-          remaining_end->components()[monotone_dimension])) {
+         remaining_begin->IsEquivalentComponent(monotone_dimension,
+                                                *remaining_end)) {
     ++remaining_begin;
   }
   chain2_.Append(range_begin, remaining_begin);
@@ -360,8 +359,8 @@ inline void MonotoneRange<Point3Iterator>::Build(
   if (remaining_begin != remaining_end) {
     --remaining_end;
     while (remaining_begin != remaining_end &&
-           (last_accepted->components()[monotone_dimension] ==
-            remaining_end->components()[monotone_dimension])) {
+           last_accepted->IsEquivalentComponent(monotone_dimension,
+                                                *remaining_end)) {
       --remaining_end;
     }
     ++remaining_end;

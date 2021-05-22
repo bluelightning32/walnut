@@ -159,6 +159,10 @@ class HomoPoint3 {
   // Returns >0 if the component is larger in this than other.
   int CompareComponent(size_t component, const HomoPoint3& other) const;
 
+  // Returns true if `component` from this and `other` are equivalent, taking w
+  // and other.w into account.
+  bool IsEquivalentComponent(size_t component, const HomoPoint3& other) const;
+
   bool IsValid() const {
     return !dist_denom_.IsZero();
   }
@@ -190,6 +194,15 @@ inline int HomoPoint3::CompareComponent(size_t component,
   auto scaled_other =
     other.vector_from_origin().components()[component] * w();
   return scaled_this.Compare(scaled_other) * other.w().GetAbsMult(w());
+}
+
+inline bool HomoPoint3::IsEquivalentComponent(size_t component,
+                                             const HomoPoint3& other) const {
+  // Check:
+  // new_min/new_denom == old_min/old_denom
+  // new_min*old_denom == old_min*new_denom
+  return vector_from_origin().components()[component] * other.w() ==
+         other.vector_from_origin().components()[component] * w();
 }
 
 inline bool operator==(const Point3& a, const HomoPoint3& b) {

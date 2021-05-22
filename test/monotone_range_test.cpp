@@ -2,6 +2,7 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "walnut/homo_point3.h"
 
 namespace walnut {
 
@@ -159,6 +160,61 @@ TEST(MonotoneRange, StopsAtNonMonotone) {
                                   input[2], input[3], input[4]));
 
   std::vector<Point3> chain2(chain2_begin, chain2_end);
+  EXPECT_THAT(chain2, ElementsAre(input[11], input[10], input[9], input[6],
+                                  input[5], input[4]));
+}
+
+TEST(MonotoneRange, StopsAtNonMonotoneHomoPoint3) {
+  //
+  //        p0 -> p1 -> p2                  |
+  //                      \                 |
+  //      p12              p3               |
+  //       |               |                |
+  //      p11              p4               |
+  //        \             /                 |
+  //        p10         p5                  |
+  //         |          |                   |
+  //        p9          p6                  |
+  //        /             \                 |
+  //       p8 <----------- p7               |
+  //
+  using HomoPoint3Iterator = std::vector<HomoPoint3>::iterator;
+  using MonotoneRange = MonotoneRange<HomoPoint3Iterator>;
+  using ConcatRange = MonotoneRange::ConcatRangeRep;
+  std::vector<HomoPoint3> input{
+    HomoPoint3(1, 5, 0, 1), // p0
+    HomoPoint3(-2, -5, 0, -1), // p1
+    HomoPoint3(-3, -5, 0, -1), // p2
+    HomoPoint3(16, 16, 0, 4), // p3
+    HomoPoint3(-4, -3, 0, -1), // p4
+    HomoPoint3(-3, -2, 0, -1), // p5
+    HomoPoint3(3, 1, 0, 1), // p6
+    HomoPoint3(-4, 0, 0, -1), // p7
+    HomoPoint3(0, 0, 0, -1), // p8
+    HomoPoint3(1, 1, 0, 1), // p9
+    HomoPoint3(-1, -2, 0, -1), // p10
+    HomoPoint3(0, -3, 0, -1), // p11
+    HomoPoint3(0, 4, 0, 1), // p12
+  };
+
+  HomoPoint3Iterator remaining_begin = input.begin();
+  HomoPoint3Iterator remaining_end = input.end();
+  MonotoneRange range;
+  range.Build(/*monotone_dimension=*/0, remaining_begin, remaining_end);
+  EXPECT_EQ(remaining_begin, input.begin() + 6);
+  EXPECT_EQ(remaining_end, input.begin() + 10);
+
+  ConcatRange::const_iterator chain1_begin;
+  ConcatRange::const_iterator chain1_end;
+  ConcatRange::const_reverse_iterator chain2_begin;
+  ConcatRange::const_reverse_iterator chain2_end;
+  range.GetChains(chain1_begin, chain1_end, chain2_begin, chain2_end);
+
+  std::vector<HomoPoint3> chain1(chain1_begin, chain1_end);
+  EXPECT_THAT(chain1, ElementsAre(input[11], input[12], input[0], input[1],
+                                  input[2], input[3], input[4]));
+
+  std::vector<HomoPoint3> chain2(chain2_begin, chain2_end);
   EXPECT_THAT(chain2, ElementsAre(input[11], input[10], input[9], input[6],
                                   input[5], input[4]));
 }

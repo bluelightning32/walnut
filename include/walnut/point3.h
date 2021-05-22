@@ -129,6 +129,12 @@ class Point3 {
         other.vector_from_origin().components()[component]);
   }
 
+  // Returns true if `component` from this and `other` are equal.
+  bool IsEquivalentComponent(size_t component, const Point3& other) const {
+    return vector_from_origin().components()[component] ==
+        other.vector_from_origin().components()[component];
+  }
+
  private:
   Vector3 vector_from_origin_;
 };
