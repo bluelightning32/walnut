@@ -119,6 +119,25 @@ class HomoPoint3 {
   BigIntWord Get2DTwistDir(int drop_dimension, const HomoPoint3& p1,
                            const HomoPoint3& p3) const;
 
+  // Returns 0 if (p1, `this`, p3) are collinear.
+  // Returns 1 if p3 is counter-clockwise from p1, with `this` as the center
+  // point.
+  // Returns -1 if p3 is clockwise from p1, with `this` as the center point.
+  //
+  // The calculations are done in 2D by removing (treating it as 0)
+  // `drop_dimension` from the point.
+  int Get2DTwistDirReduced(int drop_dimension, const HomoPoint3& p1,
+                           const HomoPoint3& p3) const {
+    const BigIntWord twist = Get2DTwistDir(drop_dimension, p1, p3);
+    if (twist > 0) {
+      return 1;
+    } else if (twist < 0) {
+      return -1;
+    } else {
+      return 0;
+    }
+  }
+
   HomoPoint2 DropDimension(int drop_dimension) const {
     Vector2 v = vector_from_origin().DropDimension(drop_dimension);
     return HomoPoint2(v, w());

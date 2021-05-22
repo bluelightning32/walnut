@@ -138,6 +138,31 @@ TEST(OrientingMonotoneDecomposer, Flipped) {
         1));
 }
 
+TEST(OrientingMonotoneDecomposer, FlippedHomoPoint3) {
+  HomoPoint3 top_chain[] = {
+    HomoPoint3(0, 0, 10, 1),
+    HomoPoint3(-1, -3, -10, -1),
+    HomoPoint3(2, 5, 10, 1),
+    HomoPoint3(-3, -5, -10, -1),
+    HomoPoint3(4, 3, 10, 1),
+    HomoPoint3(-5, 0, -10, -1),
+  };
+  HomoPoint3 bottom_chain[] = {
+    HomoPoint3(0, 0, -10, -1),
+    HomoPoint3(5, 0, 10, 1),
+  };
+
+  ResultCollector<HomoPoint3> collector;
+  collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
+             std::begin(top_chain), std::end(top_chain),
+             std::begin(bottom_chain), std::end(bottom_chain));
+  EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
+        std::vector<HomoPoint3>{top_chain[0], top_chain[1], top_chain[2],
+                                 top_chain[3], top_chain[4], top_chain[5]}));
+  EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(
+        1));
+}
+
 TEST(OrientingMonotoneDecomposer, AllCollinear) {
   Point3 top_chain[] = {
     Point3(0, 0, 10),

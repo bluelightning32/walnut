@@ -196,8 +196,7 @@ bool OrientingMonotoneDecomposer<Point3RepTemplate>::DetectOrientation(
     }
     assert(chain2_pos != chain2_end);
     const bool chain1_is_current =
-      chain1_pos->components()[monotone_dimension] <=
-      chain2_pos->components()[monotone_dimension];
+      chain1_pos->CompareComponent(monotone_dimension, *chain2_pos) <= 0;
     const Point3Rep& current = chain1_is_current ? *chain1_pos : *chain2_pos;
     const int twist = minimum_vertex.Get2DTwistDir(drop_dimension,
                                                    collinear_vertex, current);
