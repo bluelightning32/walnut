@@ -7,16 +7,21 @@ namespace walnut {
 
 using testing::ElementsAre;
 
-class ResultCollector : public MonotoneDecomposer<Point3> {
+template <typename Point3Rep>
+class ResultCollector : public MonotoneDecomposer<Point3Rep> {
  public:
-  std::vector<std::vector<Point3>> GetSortedPolygonResult() {
-    for (std::pair<int, std::vector<Point3>>& polygon : result_) {
+  using Parent = MonotoneDecomposer<Point3Rep>;
+  using typename Parent::const_reverse_iterator;
+  using typename Parent::const_iterator;
+
+  std::vector<std::vector<Point3Rep>> GetSortedPolygonResult() {
+    for (std::pair<int, std::vector<Point3Rep>>& polygon : result_) {
       SortVertices(polygon.second);
     }
 
     std::sort(result_.begin(), result_.end(), PolygonLt);
 
-    std::vector<std::vector<Point3>> result;
+    std::vector<std::vector<Point3Rep>> result;
     for (const auto& polygon : result_) {
       result.push_back(polygon.second);
     }
@@ -24,7 +29,7 @@ class ResultCollector : public MonotoneDecomposer<Point3> {
   }
 
   std::vector<int> GetSortedOrientationResult() {
-    for (std::pair<int, std::vector<Point3>>& polygon : result_) {
+    for (std::pair<int, std::vector<Point3Rep>>& polygon : result_) {
       SortVertices(polygon.second);
     }
 
@@ -37,8 +42,8 @@ class ResultCollector : public MonotoneDecomposer<Point3> {
     return result;
   }
 
-  static void SortVertices(std::vector<Point3>& polygon) {
-    std::vector<Point3>::iterator min = polygon.begin();
+  static void SortVertices(std::vector<Point3Rep>& polygon) {
+    typename std::vector<Point3Rep>::iterator min = polygon.begin();
     for (auto it = polygon.begin(); it != polygon.end(); ++it) {
       if (PointLt(*it, *min)) {
         min = it;
@@ -47,15 +52,12 @@ class ResultCollector : public MonotoneDecomposer<Point3> {
     std::rotate(polygon.begin(), min, polygon.end());
   }
 
-  static bool PointLt(const Point3& a, const Point3& b) {
-    return std::lexicographical_compare(a.components().begin(),
-                                        a.components().end(),
-                                        b.components().begin(),
-                                        b.components().end());
+  static bool PointLt(const Point3Rep& a, const Point3Rep& b) {
+    return a.LexicographicallyLt(b);
   }
 
-  static bool PolygonLt(const std::pair<int, std::vector<Point3>>& a,
-                        const std::pair<int, std::vector<Point3>>& b) {
+  static bool PolygonLt(const std::pair<int, std::vector<Point3Rep>>& a,
+                        const std::pair<int, std::vector<Point3Rep>>& b) {
     return std::lexicographical_compare(a.second.begin(), a.second.end(),
                                         b.second.begin(), b.second.end(),
                                         &PointLt);
@@ -66,7 +68,7 @@ class ResultCollector : public MonotoneDecomposer<Point3> {
                  const_reverse_iterator range1_end,
                  const_iterator range2_begin,
                  const_iterator range2_end) override {
-    result_.emplace_back(orientation, std::vector<Point3>());
+    result_.emplace_back(orientation, std::vector<Point3Rep>());
     result_.back().second.reserve((range1_end - range1_begin) +
                            (range2_end - range2_begin));
     result_.back().second.insert(result_.back().second.end(), range1_begin,
@@ -76,7 +78,7 @@ class ResultCollector : public MonotoneDecomposer<Point3> {
   }
 
  private:
-  std::vector<std::pair<int, std::vector<Point3>>> result_;
+  std::vector<std::pair<int, std::vector<Point3Rep>>> result_;
 };
 
 TEST(MonotoneDecomposer, AlreadyConvexAllTopChain) {
@@ -91,7 +93,7 @@ TEST(MonotoneDecomposer, AlreadyConvexAllTopChain) {
     Point3(5, 0, 10),
   };
 
-  ResultCollector collector;
+  ResultCollector<Point3> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
@@ -114,7 +116,7 @@ TEST(MonotoneDecomposer, AlreadyConvexAllBottomChain) {
     Point3(5, 0, 10),
   };
 
-  ResultCollector collector;
+  ResultCollector<Point3> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
@@ -142,7 +144,7 @@ TEST(MonotoneDecomposer, AlreadyConvexAlternatingChains) {
     Point3(9, 0, 10),
   };
 
-  ResultCollector collector;
+  ResultCollector<Point3> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
@@ -165,7 +167,7 @@ TEST(MonotoneDecomposer, SingleReflexOnTop) {
     Point3(3, 0, 10),
   };
 
-  ResultCollector collector;
+  ResultCollector<Point3> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
@@ -190,7 +192,7 @@ TEST(MonotoneDecomposer, MergeCheckReflex1) {
     Point3(4, 0, 10),
   };
 
-  ResultCollector collector;
+  ResultCollector<Point3> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
@@ -216,7 +218,7 @@ TEST(MonotoneDecomposer, MergeCheckConvex1) {
     Point3(4, 0, 10),
   };
 
-  ResultCollector collector;
+  ResultCollector<Point3> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
@@ -241,7 +243,7 @@ TEST(MonotoneDecomposer, MergeCheckReflex2) {
     Point3(18, 0, 10),
   };
 
-  ResultCollector collector;
+  ResultCollector<Point3> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
@@ -268,7 +270,7 @@ TEST(MonotoneDecomposer, MergeCheckReflex3) {
     Point3(14, 0, 10),
   };
 
-  ResultCollector collector;
+  ResultCollector<Point3> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
@@ -295,7 +297,7 @@ TEST(MonotoneDecomposer, MergeAfterReflex) {
     Point3(14, 0, 10)
   };
 
-  ResultCollector collector;
+  ResultCollector<Point3> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
@@ -322,7 +324,7 @@ TEST(MonotoneDecomposer, SelfIntersecting1) {
     Point3(19, 0, 10),
   };
 
-  ResultCollector collector;
+  ResultCollector<Point3> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
@@ -350,7 +352,7 @@ TEST(MonotoneDecomposer, SelfIntersecting2) {
     Point3(23, 0, 10),
   };
 
-  ResultCollector collector;
+  ResultCollector<Point3> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
@@ -380,7 +382,7 @@ TEST(MonotoneDecomposer, SelfIntersecting3) {
     Point3(23, 0, 10),
   };
 
-  ResultCollector collector;
+  ResultCollector<Point3> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
@@ -413,7 +415,7 @@ TEST(MonotoneDecomposer, SelfIntersecting4) {
     Point3(17, 0, 10),
   };
 
-  ResultCollector collector;
+  ResultCollector<Point3> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
@@ -452,7 +454,7 @@ TEST(MonotoneDecomposer, AllCollinear) {
     Point3(7, 0, 10),
   };
 
-  ResultCollector collector;
+  ResultCollector<Point3> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
@@ -476,7 +478,7 @@ TEST(MonotoneDecomposer, DuplicateReflex) {
     Point3(5, -1, 10),
   };
 
-  ResultCollector collector;
+  ResultCollector<Point3> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
@@ -500,7 +502,7 @@ TEST(MonotoneDecomposer, TopChainDegenerateTriangle) {
     Point3(4, -1, 10),
   };
 
-  ResultCollector collector;
+  ResultCollector<Point3> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
@@ -527,7 +529,7 @@ TEST(MonotoneDecomposer, NonstrictlyMonotone) {
     Point3(2, -3, 10),
   };
 
-  ResultCollector collector;
+  ResultCollector<Point3> collector;
   collector.Build(/*drop_dimension=*/2, /*monotone_dimension=*/0,
              std::begin(top_chain), std::end(top_chain),
              std::begin(bottom_chain), std::end(bottom_chain));
