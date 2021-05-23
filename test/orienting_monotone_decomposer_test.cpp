@@ -241,4 +241,59 @@ TEST(OrientingMonotoneDecomposer, CollinearPrefixFlipped) {
         0, 1));
 }
 
+TEST(OrientingMonotoneDecomposer, FlippedSquare) {
+  HomoPoint3 top_chain[] = {
+    HomoPoint3(0, -5, -10, 2),
+    HomoPoint3(0, 5, -10, 2),
+  };
+  HomoPoint3 bottom_chain[] = {
+    HomoPoint3(0, -5, -10, 2),
+    HomoPoint3(10, -5, 0, 2),
+    HomoPoint3(10, 5, 0, 2),
+    HomoPoint3(0, 5, -10, 2),
+  };
+
+  ResultCollector<HomoPoint3> collector;
+  collector.Build(/*drop_dimension=*/0, /*monotone_dimension=*/1,
+             std::begin(top_chain), std::end(top_chain),
+             std::begin(bottom_chain), std::end(bottom_chain));
+  EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
+        std::vector<HomoPoint3>{top_chain[0], bottom_chain[3], bottom_chain[2],
+                                bottom_chain[1]}
+        ));
+  EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(-1));
+}
+
+TEST(OrientingMonotoneDecomposer, LargeFlippedSquare) {
+  // This is almost the same square as in `FlippedSquare`, but some of the
+  // HomoPoint3s use large numerators and denominators.
+
+  // big1 = 47223664828696452136960
+  BigInt big1 = BigInt(5) << 73;
+  // big2 = 94447329657392904273920
+  BigInt big2 = BigInt(10) << 73;
+  // big3 = 18889465931478580854784
+  BigInt big3 = BigInt(2) << 73;
+  HomoPoint3 top_chain[] = {
+    HomoPoint3(BigInt(5783231), -big1, -big2, big3),
+    HomoPoint3(BigInt(5783231), big1, -big2, big3),
+  };
+  HomoPoint3 bottom_chain[] = {
+    HomoPoint3(BigInt(5783231), -big1, -big2, big3),
+    HomoPoint3(10, -5, 0, 2),
+    HomoPoint3(10, 5, 0, 2),
+    HomoPoint3(BigInt(5783231), big1, -big2, big3),
+  };
+
+  ResultCollector<HomoPoint3> collector;
+  collector.Build(/*drop_dimension=*/0, /*monotone_dimension=*/1,
+             std::begin(top_chain), std::end(top_chain),
+             std::begin(bottom_chain), std::end(bottom_chain));
+  EXPECT_THAT(collector.GetSortedPolygonResult(), ElementsAre(
+        std::vector<HomoPoint3>{top_chain[0], bottom_chain[3], bottom_chain[2],
+                                bottom_chain[1]}
+        ));
+  EXPECT_THAT(collector.GetSortedOrientationResult(), ElementsAre(-1));
+}
+
 }  // walnut

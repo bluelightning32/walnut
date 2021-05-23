@@ -167,8 +167,9 @@ bool OrientingMonotoneDecomposer<Point3RepTemplate>::DetectOrientation(
   Chain2Iterator chain2_pos = chain2_begin;
   ++chain2_pos;
 
-  const int twist = minimum_vertex.Get2DTwistDir(drop_dimension,
-                                                 *chain1_pos, *chain2_pos);
+  const BigIntWord twist = minimum_vertex.Get2DTwistDir(drop_dimension,
+                                                        *chain1_pos,
+                                                        *chain2_pos);
   if (twist != 0) {
     // The first vertices from each chain are not collinear.
     flipped_ = twist < 0;
