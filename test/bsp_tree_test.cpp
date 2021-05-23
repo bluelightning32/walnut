@@ -607,7 +607,7 @@ TEST(BSPTree, SplitBorderTo2Children) {
   // negative child.
   tree.root.Split(polygon.plane());
   ASSERT_FALSE(tree.root.IsLeaf());
-  ASSERT_THAT(DropVertexData(tree.root.negative_child()->border_contents()),
+  ASSERT_THAT(tree.root.negative_child()->border_contents(),
               ElementsAre(polygon));
   EXPECT_EQ(
       tree.root.negative_child()->border_contents()[0].on_node_plane.split,
@@ -645,9 +645,11 @@ TEST(BSPTree, SplitBorderTo2Children) {
             &tree.root.split());
   EXPECT_FALSE(pos_leaf->border_contents()[0].on_node_plane.pos_side);
 
+  bool found_edge = false;
   for (const BSPNode<>::EdgeRep& edge :
        neg_leaf->border_contents()[0].edges()) {
     if (edge.vertex() == expected_neg[1]) {
+      found_edge = true;
       EXPECT_EQ(edge.edge_last_coincident.split,
                 &tree.root.negative_child()->split());
     } else {
@@ -655,9 +657,13 @@ TEST(BSPTree, SplitBorderTo2Children) {
     }
     EXPECT_EQ(edge.edge_first_coincident.split, &tree.root.split());
   }
+  EXPECT_TRUE(found_edge);
+
+  found_edge = false;
   for (const BSPNode<>::EdgeRep& edge :
        pos_leaf->border_contents()[0].edges()) {
     if (edge.vertex() == expected_pos[3]) {
+      found_edge = true;
       EXPECT_EQ(edge.edge_last_coincident.split,
                 &tree.root.negative_child()->split());
     } else {
@@ -665,6 +671,7 @@ TEST(BSPTree, SplitBorderTo2Children) {
     }
     EXPECT_EQ(edge.edge_first_coincident.split, &tree.root.split());
   }
+  EXPECT_TRUE(found_edge);
 }
 
 TEST(BSPTree, GetNodeBorderEmptyTree) {
