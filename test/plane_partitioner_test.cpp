@@ -30,10 +30,15 @@ BSPPolygon<> MakeRectangle(BSPContentId id, int minx, int miny, int maxx,
     Point3(maxx, maxy, 10),
     Point3(minx, maxy, 10),
   };
-  HalfSpace3 plane(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10);
-  return BSPPolygon<>(id, /*on_node_plane=*/nullptr, /*pos_side=*/false,
+  const static HalfSpace3 plane(/*x=*/0, /*y=*/0, /*z=*/1, /*dist=*/10);
+  BSPPolygon<> result(id, /*on_node_plane=*/&plane, /*pos_side=*/false,
                       /*parent=*/ConvexPolygon<>(plane, /*drop_dimension=*/2,
                                                  p));
+  result.SetBoundaryAngles(/*coincident_info=*/SplitSide{/*split=*/&plane,
+                                                         /*pos_side=*/false},
+                           /*coincident_begin=*/0,
+                           /*coincident_end=*/result.vertex_count());
+  return result;
 }
 
 TEST(PlanePartitioner, AcceptSinglePolygon) {

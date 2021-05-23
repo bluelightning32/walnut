@@ -20,6 +20,38 @@ std::vector<MutableConvexPolygon<>> MakeCuboid(int min_x, int min_y, int min_z,
   return aabb.GetWalls();
 }
 
+// Return a cubiod where every facet is split into 2 triangle, instead of a
+// square facets.
+std::vector<MutableConvexPolygon<>> MakeTriangulatedCuboid(int min_x,
+                                                           int min_y,
+                                                           int min_z,
+                                                           int max_x,
+                                                           int max_y,
+                                                           int max_z) {
+  std::vector<MutableConvexPolygon<>> triangles;
+  for (const MutableConvexPolygon<>& square : MakeCuboid(min_x, min_y, min_z,
+                                                         max_x, max_y,
+                                                         max_z)) {
+    assert(square.vertex_count() == 4);
+    ConvexPolygonSplitInfo split_info;
+    // All vertices except index 1 are in the positive child.
+    split_info.ranges.neg_range.first = 1;
+    split_info.ranges.neg_range.second = 2;
+    // All vertices except index 3 are in the negative child.
+    split_info.ranges.pos_range.first = 3;
+    split_info.ranges.pos_range.second = 4;
+    split_info.new_line = PluckerLine(square.vertex(0), square.vertex(2));
+    assert(split_info.ShouldEmitNegativeChild());
+    assert(split_info.ShouldEmitPositiveChild());
+
+    std::pair<MutableConvexPolygon<>, MutableConvexPolygon<>> children =
+      square.CreateSplitChildren(split_info);
+    triangles.push_back(std::move(children.first));
+    triangles.push_back(std::move(children.second));
+  }
+  return triangles;
+}
+
 template <typename Polygon>
 std::map<HalfSpace3, std::vector<Polygon>, HalfSpace3ReduceCompare>
 GroupByPlane(const std::vector<Polygon>& polygons) {
@@ -59,6 +91,23 @@ TEST(BSPTraverser, AcceptSingleCube) {
   tree.Traverse(visitor);
 
   EXPECT_THAT(visitor.polygons(), UnorderedPointwise(Eq(), cube));
+}
+
+TEST(BSPTraverser, AcceptSingleTriangulatedCube) {
+  BSPTree<> tree;
+  BSPContentId id = tree.AllocateId();
+  std::vector<MutableConvexPolygon<>> triangulated_cube =
+    MakeTriangulatedCuboid(/*min_x=*/0, /*min_y=*/0, /*min_z=*/0, /*max_x=*/1,
+                           /*max_y=*/1, /*max_z=*/1);
+  EXPECT_THAT(triangulated_cube, SizeIs(12));
+  tree.AddContents(id, triangulated_cube);
+
+  using OutputPolygon = BSPTree<>::OutputPolygon;
+  CollectorVisitor<OutputPolygon, PolygonFilter> visitor((PolygonFilter(id)));
+
+  tree.Traverse(visitor);
+
+  EXPECT_THAT(visitor.polygons(), UnorderedPointwise(Eq(), triangulated_cube));
 }
 
 TEST(BSPTraverser, AcceptOneOfTwoCubes) {

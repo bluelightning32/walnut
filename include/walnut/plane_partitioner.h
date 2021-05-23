@@ -119,13 +119,19 @@ class PlanePartitioner {
  private:
   using PolygonVector = std::vector<Polygon>;
 
-  // Returns the first edge of `polygon` where `edge_first_coincident_` is
-  // unset, or nullptr if there is no such edge.
+  // Returns the first edge of `polygon` where `edge_first_coincident_` equals
+  // `edge_last_coincident`, or nullptr if there is no such edge.
+  //
+  // `polygon` is expected to be on a split plane already, so all of its edges
+  // will be coincident with at least 1 BSP split. However, if the edge is not
+  // at the corner of two BSP splits, then its first and last coincident BSPs
+  // will be the same.
   template <typename InputPolygon>
   const typename InputPolygon::EdgeRep*
   SearchForSplitEdge(const InputPolygon& polygon) {
     for (size_t i = 0; i < polygon.vertex_count(); ++i) {
-      if (polygon.edge(i).edge_first_coincident.split == nullptr) {
+      if (polygon.edge(i).edge_first_coincident.split ==
+          polygon.edge(i).edge_last_coincident.split) {
         return &polygon.edge(i);
       }
     }
