@@ -1015,15 +1015,12 @@ void ConvexPolygon<EdgeParent>::FillInSplitChildren(
     pos_child.edges_.push_back(MemberForward<ParentRef>(parent.edges_[
           split.neg_range().second % parent.vertex_count()]));
   } else {
-    size_t last_neg_index = (split.neg_range().second +
-                             parent.vertex_count() - 1) %
-                             parent.vertex_count();
-    neg_child.edges_.emplace_back(parent.edge(last_neg_index),
-                                  split.new_shared_point2,
-                                  split.new_line);
-    pos_child.edges_.emplace_back(
-        MemberForward<ParentRef>(parent.edges_[last_neg_index]),
-        MemberForward<SplitInfoRef>(split.new_shared_point2));
+    pos_child.edges_.emplace_back(neg_child.edges_.back(),
+                                  split.new_shared_point2);
+    assert(neg_child.edges_.size() < neg_child.edges_.capacity());
+    neg_child.edges_.emplace_back(
+        neg_child.edges_.back(),
+        MemberForward<SplitInfoRef>(split.new_shared_point2), split.new_line);
   }
 
   for (size_t i = split.pos_range().first; i < split.pos_range().second; ++i) {
@@ -1041,15 +1038,13 @@ void ConvexPolygon<EdgeParent>::FillInSplitChildren(
     neg_child.edges_.push_back(MemberForward<ParentRef>(parent.edges_[
           split.pos_range().second % parent.vertex_count()]));
   } else {
-    size_t last_pos_index = (split.pos_range().second +
-                             parent.vertex_count() - 1) %
-                            parent.vertex_count();
-    pos_child.edges_.emplace_back(parent.edge(last_pos_index),
-                                  split.new_shared_point1,
-                                  -MemberForward<SplitInfoRef>(split.new_line));
-    neg_child.edges_.emplace_back(
-        MemberForward<ParentRef>(parent.edges_[last_pos_index]),
-        MemberForward<SplitInfoRef>(split.new_shared_point1));
+    neg_child.edges_.emplace_back(pos_child.edges_.back(),
+                                  split.new_shared_point1);
+    assert(pos_child.edges_.size() < pos_child.edges_.capacity());
+    pos_child.edges_.emplace_back(
+        pos_child.edges_.back(),
+        MemberForward<SplitInfoRef>(split.new_shared_point1),
+        -MemberForward<SplitInfoRef>(split.new_line));
   }
 }
 

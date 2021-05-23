@@ -1322,6 +1322,49 @@ void SplitHelper(const ConvexPolygon<>& polygon,
   }
 }
 
+// Helper for a polygon that is expected to split into 2 pieces
+void SplitHelper(MutableConvexPolygon<>&& polygon,
+                 const HalfSpace3& half_space,
+                 MutableConvexPolygon<>& neg_side,
+                 MutableConvexPolygon<>& pos_side) {
+  auto info = polygon.GetSplitInfo(half_space);
+  ASSERT_TRUE(info.ShouldEmitNegativeChild());
+  ASSERT_TRUE(info.ShouldEmitPositiveChild());
+
+  std::pair<ConvexPolygon<>, ConvexPolygon<>> children =
+    ConvexPolygon<>::CreateSplitChildren(std::move(polygon).GetRValueKey(),
+                                         std::move(info));
+  neg_side = std::move(children.first);
+  pos_side = std::move(children.second);
+
+  ASSERT_GE(neg_side.vertex_count(), 3);
+  EXPECT_TRUE(half_space.IsCoincident(neg_side.vertex(
+          neg_side.vertex_count() - 2)));
+  EXPECT_TRUE(half_space.IsCoincident(neg_side.vertex(
+          neg_side.vertex_count() - 1)));
+  for (size_t i = 0; i < neg_side.vertex_count() - 2; ++i) {
+    EXPECT_FALSE(half_space.IsCoincident(neg_side.vertex(i)));
+  }
+
+  ASSERT_GE(pos_side.vertex_count(), 3);
+  EXPECT_TRUE(half_space.IsCoincident(pos_side.vertex(0)));
+  EXPECT_TRUE(half_space.IsCoincident(pos_side.vertex(
+          pos_side.vertex_count() - 1)));
+  for (size_t i = 1; i < pos_side.vertex_count() - 1; ++i) {
+    EXPECT_FALSE(half_space.IsCoincident(pos_side.vertex(i)));
+  }
+
+  for (const ConvexPolygon<>* output : {&neg_side, &pos_side}) {
+    for (size_t i = 0; i < output->vertex_count(); ++i) {
+      PluckerLine expected_line(
+          output->vertex(i), output->vertex((i + 1) % output->vertex_count()));
+      EXPECT_EQ(output->const_edge(i).line(), expected_line);
+      EXPECT_TRUE(
+          output->const_edge(i).line().d().IsSameDir(expected_line.d()));
+    }
+  }
+}
+
 TEST(ConvexPolygon, SplitAtExistingVertices) {
   //
   // p[3] <--- p[2]
@@ -1420,15 +1463,15 @@ TEST(ConvexPolygon, SplitAtNewVertices) {
 
   Point3 neg_side_p[] = {
     p[0],
-    Point3(1, 0, 10), 
-    Point3(1, 1, 10), 
+    Point3(1, 0, 10),
+    Point3(1, 1, 10),
     p[3],
   };
   Point3 pos_side_p[] = {
-    Point3(1, 0, 10), 
+    Point3(1, 0, 10),
     p[1],
     p[2],
-    Point3(1, 1, 10), 
+    Point3(1, 1, 10),
   };
 
   HalfSpace3 half_space(/*x=*/1, /*y=*/0, /*z=*/0, /*dist=*/1);
@@ -1446,6 +1489,65 @@ TEST(ConvexPolygon, SplitAtNewVertices) {
   SplitHelper(polygon, -half_space, pos_side, neg_side);
   EXPECT_EQ(neg_side, expected_neg_side);
   EXPECT_EQ(pos_side, expected_pos_side);
+}
+
+TEST(ConvexPolygon, SplitAtNewVerticesLargeValues) {
+  // This is the same as SplitAtNewVertices, except the coordinates are shifted
+  // to the left by 64 bits.
+  //
+  // p[3] <--------- p[2]
+  //  |       |       ^
+  //  |       |pos->  |
+  //  v       |       |
+  // p[0] ---------> p[1]
+  //
+  BigInt big0(0);
+  BigInt big1 = BigInt(1) << 64;
+  BigInt big2 = BigInt(2) << 64;
+  BigInt big10 = BigInt(10) << 64;
+  Point3 p[4] = {
+    Point3(big0, big0, big10),
+    Point3(big2, big0, big10),
+    Point3(big2, big1, big10),
+    Point3(big0, big1, big10),
+  };
+
+  Point3 neg_side_p[] = {
+    p[0],
+    Point3(big1, big0, big10),
+    Point3(big1, big1, big10),
+    p[3],
+  };
+  Point3 pos_side_p[] = {
+    Point3(big1, big0, big10),
+    p[1],
+    p[2],
+    Point3(big1, big1, big10),
+  };
+
+  HalfSpace3 half_space(/*x=*/BigInt(1), /*y=*/big0, /*z=*/big0,
+                        /*dist=*/big1);
+
+  ConvexPolygon<> expected_neg_side(MakeConvexPolygon(neg_side_p));
+  ConvexPolygon<> expected_pos_side(MakeConvexPolygon(pos_side_p));
+
+  {
+    MutableConvexPolygon<> polygon(MakeConvexPolygon(p));
+    MutableConvexPolygon<> neg_side;
+    MutableConvexPolygon<> pos_side;
+    SplitHelper(std::move(polygon), half_space, neg_side, pos_side);
+    EXPECT_EQ(neg_side, expected_neg_side);
+    EXPECT_EQ(pos_side, expected_pos_side);
+  }
+
+  {
+    MutableConvexPolygon<> polygon(MakeConvexPolygon(p));
+    MutableConvexPolygon<> neg_side;
+    MutableConvexPolygon<> pos_side;
+    SplitHelper(std::move(polygon), -half_space, pos_side, neg_side);
+    EXPECT_EQ(neg_side, expected_neg_side);
+    EXPECT_EQ(pos_side, expected_pos_side);
+  }
 }
 
 TEST(ConvexPolygon, SplitOnParallelPlane) {
