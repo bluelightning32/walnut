@@ -328,18 +328,22 @@ TEST(BSPTree, SplitTo2Children) {
     if (edge.vertex() == expected_neg[1]) {
       EXPECT_EQ(edge.edge_first_coincident.split, &tree.root.split());
       EXPECT_FALSE(edge.edge_first_coincident.pos_side);
+      EXPECT_EQ(edge.edge_created_by.split, &tree.root.split());
     } else {
       EXPECT_EQ(edge.edge_first_coincident.split, nullptr);
     }
+    EXPECT_EQ(edge.edge_last_coincident, edge.edge_first_coincident);
   }
   for (const BSPNode<>::EdgeRep& edge :
        tree.root.positive_child()->contents()[0].edges()) {
     if (edge.vertex() == expected_pos[3]) {
       EXPECT_EQ(edge.edge_first_coincident.split, &tree.root.split());
       EXPECT_TRUE(edge.edge_first_coincident.pos_side);
+      EXPECT_EQ(edge.edge_created_by.split, &tree.root.split());
     } else {
       EXPECT_EQ(edge.edge_first_coincident.split, nullptr);
     }
+    EXPECT_EQ(edge.edge_last_coincident, edge.edge_first_coincident);
   }
 }
 
@@ -430,6 +434,7 @@ TEST(BSPTree, SplitTwiceVertexData) {
       EXPECT_EQ(edge.edge_last_coincident.split, nullptr);
       EXPECT_EQ(edge.vertex_last_coincident.split, nullptr);
     }
+    EXPECT_EQ(edge.edge_created_by, edge.edge_first_coincident);
   }
   // Validate pos_child2.
   for (const BSPNode<>::EdgeRep& edge :
@@ -458,6 +463,7 @@ TEST(BSPTree, SplitTwiceVertexData) {
       EXPECT_EQ(edge.edge_last_coincident.split, nullptr);
       EXPECT_EQ(edge.vertex_last_coincident.split, nullptr);
     }
+    EXPECT_EQ(edge.edge_created_by, edge.edge_first_coincident);
   }
 }
 
@@ -543,6 +549,7 @@ TEST(BSPTree, SplitVertThenDiagVertexData) {
       EXPECT_EQ(edge.vertex_last_coincident.split, &pos_child1.split());
       EXPECT_FALSE(edge.vertex_last_coincident.pos_side);
     }
+    EXPECT_EQ(edge.edge_created_by, edge.edge_first_coincident);
   }
   // Validate pos_child2.
   EXPECT_EQ(pos_child2.contents()[0].vertex_count(), 3);
@@ -565,6 +572,7 @@ TEST(BSPTree, SplitVertThenDiagVertexData) {
       EXPECT_EQ(edge.edge_last_coincident.split, nullptr);
       EXPECT_EQ(edge.vertex_last_coincident.split, nullptr);
     }
+    EXPECT_EQ(edge.edge_created_by, edge.edge_first_coincident);
   }
 }
 
@@ -652,8 +660,11 @@ TEST(BSPTree, SplitBorderTo2Children) {
       found_edge = true;
       EXPECT_EQ(edge.edge_last_coincident.split,
                 &tree.root.negative_child()->split());
+      EXPECT_EQ(edge.edge_created_by.split,
+                &tree.root.negative_child()->split());
     } else {
       EXPECT_EQ(edge.edge_last_coincident.split, &tree.root.split());
+      EXPECT_EQ(edge.edge_created_by.split, nullptr);
     }
     EXPECT_EQ(edge.edge_first_coincident.split, &tree.root.split());
   }
@@ -666,8 +677,11 @@ TEST(BSPTree, SplitBorderTo2Children) {
       found_edge = true;
       EXPECT_EQ(edge.edge_last_coincident.split,
                 &tree.root.negative_child()->split());
+      EXPECT_EQ(edge.edge_created_by.split,
+                &tree.root.negative_child()->split());
     } else {
       EXPECT_EQ(edge.edge_last_coincident.split, &tree.root.split());
+      EXPECT_EQ(edge.edge_created_by.split, nullptr);
     }
     EXPECT_EQ(edge.edge_first_coincident.split, &tree.root.split());
   }

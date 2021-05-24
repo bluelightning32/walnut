@@ -200,10 +200,17 @@ class BSPPolygon :
     children.first.SetBoundaryAngles(SplitSide{&split, /*pos_child=*/false},
                                      children.first.vertex_count() - 2,
                                      children.first.vertex_count());
+    BSPEdgeInfoRep& neg_created_edge =
+      children.first.bsp_edge_info(children.first.vertex_count() - 2);
+    neg_created_edge.edge_created_by = SplitSide{&split, /*pos_child=*/false};
+
     // The first and last vertices of pos_poly will touch the plane.
     children.second.SetBoundaryAngles(SplitSide{&split, /*pos_child=*/true},
                                       children.second.vertex_count() - 1,
                                       children.second.vertex_count() + 1);
+    BSPEdgeInfoRep& pos_created_edge =
+      children.second.bsp_edge_info(children.second.vertex_count() - 1);
+    pos_created_edge.edge_created_by = SplitSide{&split, /*pos_child=*/true};
   }
 
   BSPContentId id;
