@@ -17,7 +17,7 @@ class MonotoneTriangulator {
  public:
   using Point3Rep = Point3RepTemplate;
   static_assert(std::is_base_of<Point3, Point3Rep>::value ||
-                  std::is_base_of<HomoPoint3, Point3Rep>::value ||
+                  std::is_base_of<HomoPoint3, Point3Rep>::value,
                 "Point3Rep must be derived from Point3 or HomoPoint3.");
 
   // Given a monotone polygon in the form of an iterator range for its top
