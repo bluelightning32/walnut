@@ -15,12 +15,16 @@ class RedirectableValue {
     new(&value_) Value();
   }
 
+  RedirectableValue(RedirectableValue& other)
+    : redirect_(other.redirect_) { }
+
+  RedirectableValue(const RedirectableValue& other)
+    : redirect_(other.redirect_) { }
+
   template<typename ...Args>
   RedirectableValue(Args&&... args) : redirect_(this) {
     new(&value_) Value(std::forward<Args...>(args...));
   }
-
-  RedirectableValue(RedirectableValue& other) : redirect_(&other) { }
 
   ~RedirectableValue() {
     if (redirect_ == this) {
