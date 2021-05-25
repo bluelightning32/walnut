@@ -38,6 +38,46 @@ class EdgeLineConnector {
                      >::value,
                      "EdgeRep must inherit from ConnectedEdge.");
 
+  // Comparison Used to sort edges before passing them to ConnectSorted.
+  struct EdgeCompare {
+    EdgeCompare(int drop_dimension) : drop_dimension(drop_dimension) { }
+
+    bool operator()(const Deed<EdgeRep> &e1, const Deed<EdgeRep> &e2) const {
+      if (e1.empty() || e2.empty()) {
+        return e1.empty() && !e2.empty();
+      }
+      assert(e1->polygon().vertex_count() >= 3);
+      assert(e2->polygon().vertex_count() >= 3);
+      const PluckerLine& e1_line = e1->line();
+      const PluckerLine& e2_line = e2->line();
+      const Vector2 e1_2dline = e1_line.d().DropDimension(drop_dimension);
+      const Vector2 e2_2dline = e2_line.d().DropDimension(drop_dimension);
+      if (!e1_2dline.IsSameOrOppositeDir(e2_2dline)) {
+        return e1_2dline.IsHalfRotationLessThan(e2_2dline);
+      }
+      int sorted_dimension = (
+          e1_line.d().components()[(drop_dimension + 1) % 3].IsZero() ?
+          drop_dimension + 2 : drop_dimension + 1) % 3;
+      auto scaled_e1_dist = e1_line.m().components()[drop_dimension] *
+                            e2_line.d().components()[sorted_dimension];
+      auto scaled_e2_dist = e2_line.m().components()[drop_dimension] *
+                            e1_line.d().components()[sorted_dimension];
+      if (scaled_e1_dist != scaled_e2_dist) {
+        assert(!e1_line.d().components()[sorted_dimension].IsZero());
+        assert(!e2_line.d().components()[sorted_dimension].IsZero());
+        return scaled_e1_dist.LessThan(
+            /*flip=*/(e2_line.d().components()[sorted_dimension] < 0) ^
+                     (e1_line.d().components()[sorted_dimension] < 0),
+            scaled_e2_dist);
+      }
+      return IsLocationLessThan(e1->GetBeginLocation(sorted_dimension),
+                                e2->GetBeginLocation(sorted_dimension),
+                                sorted_dimension);
+    }
+
+    int drop_dimension;
+  };
+
   // Connects the adjacent edges in the range of ConnectedEdges.
   //
   // From `edges_begin` up to `edges_end` defines a range of
@@ -60,6 +100,31 @@ class EdgeLineConnector {
                        int drop_dimension,
                        const std::function<void(const std::string&)>& error) {
     SortEdgesInPlane(edges_begin, edges_end, drop_dimension);
+    ConnectSorted(edges_begin, edges_end, drop_dimension, error);
+  }
+
+  // Connects the adjacent edges in the range of ConnectedEdges.
+  //
+  // From `edges_begin` up to `edges_end` defines a range of
+  // Deed<EdgeRep>s. All edges must lie in a common plane. `drop_dimension`
+  // indicates which component of the normal of that plane is non-zero. The
+  // range must be sorted as specified by `EdgeCompare`.
+  //
+  // Two half-edges are only connected if their line segments overlap. When
+  // there are more than two half-edges overlapping the same line segment, then
+  // each half-edge is connected to the half-edge that is closest rotationally
+  // around the common line. Positive half-edges are connected to the next
+  // half-edge by going counter-clockwise around the common line. Negative
+  // edges are connected to the next half-edge by going clockwise around the
+  // common line.
+  //
+  // `error` is called if the half-edges come from an open polyhedron. Even if
+  // `error` is called, as many half-edges as possible will be connected. The
+  // ones that cannot be connected will have nullptr partners.
+  template <typename Iterator>
+  void ConnectSorted(Iterator edges_begin, const Iterator& edges_end,
+                     int drop_dimension,
+                     const std::function<void(const std::string&)>& error) {
     // Null edges can end up in the input range if some of the polygons have
     // already been merged. SortEdgesInPlane puts the null edges in the front.
     // Skip over those now.
@@ -69,8 +134,8 @@ class EdgeLineConnector {
     while (edges_begin != edges_end) {
       std::pair<Iterator, int> range_end =
         FindNextLineStart(edges_begin, edges_end, drop_dimension);
-      ConnectSorted(edges_begin, range_end.first,
-                    /*sorted_dimension=*/range_end.second, error);
+      ConnectEdgesInLine(edges_begin, range_end.first,
+                         /*sorted_dimension=*/range_end.second, error);
       edges_begin = std::move(range_end.first);
     }
   }
@@ -103,9 +168,9 @@ class EdgeLineConnector {
   // `error` is called, as many half-edges as possible will be connected. The
   // ones that cannot be connected will have nullptr partners.
   template <typename Iterator>
-  void ConnectSorted(Iterator edges_begin, const Iterator& edges_end,
-                     int sorted_dimension,
-                     const std::function<void(const std::string&)>& error) {
+  void ConnectEdgesInLine(
+      Iterator edges_begin, const Iterator& edges_end, int sorted_dimension,
+      const std::function<void(const std::string&)>& error) {
     assert(end_events_.empty());
     assert(need_partners_.empty());
 
@@ -206,44 +271,6 @@ class EdgeLineConnector {
   template <typename Iterator>
   static void SortEdgesInPlane(const Iterator& edges_begin,
                                const Iterator& edges_end, int drop_dimension) {
-    struct EdgeCompare {
-      EdgeCompare(int drop_dimension) : drop_dimension(drop_dimension) { }
-
-      bool operator()(const Deed<EdgeRep> &e1, const Deed<EdgeRep> &e2) const {
-        if (e1.empty() || e2.empty()) {
-          return e1.empty() && !e2.empty();
-        }
-        assert(e1->polygon().vertex_count() >= 3);
-        assert(e2->polygon().vertex_count() >= 3);
-        const PluckerLine& e1_line = e1->line();
-        const PluckerLine& e2_line = e2->line();
-        const Vector2 e1_2dline = e1_line.d().DropDimension(drop_dimension);
-        const Vector2 e2_2dline = e2_line.d().DropDimension(drop_dimension);
-        if (!e1_2dline.IsSameOrOppositeDir(e2_2dline)) {
-          return e1_2dline.IsHalfRotationLessThan(e2_2dline);
-        }
-        int sorted_dimension = (
-            e1_line.d().components()[(drop_dimension + 1) % 3].IsZero() ?
-            drop_dimension + 2 : drop_dimension + 1) % 3;
-        auto scaled_e1_dist = e1_line.m().components()[drop_dimension] *
-                              e2_line.d().components()[sorted_dimension];
-        auto scaled_e2_dist = e2_line.m().components()[drop_dimension] *
-                              e1_line.d().components()[sorted_dimension];
-        if (scaled_e1_dist != scaled_e2_dist) {
-          assert(!e1_line.d().components()[sorted_dimension].IsZero());
-          assert(!e2_line.d().components()[sorted_dimension].IsZero());
-          return scaled_e1_dist.LessThan(
-              /*flip=*/(e2_line.d().components()[sorted_dimension] < 0) ^
-                       (e1_line.d().components()[sorted_dimension] < 0),
-              scaled_e2_dist);
-        }
-        return IsLocationLessThan(e1->GetBeginLocation(sorted_dimension),
-                                  e2->GetBeginLocation(sorted_dimension),
-                                  sorted_dimension);
-      }
-
-      int drop_dimension;
-    };
     std::sort(edges_begin, edges_end, EdgeCompare(drop_dimension));
   }
 

@@ -252,6 +252,84 @@ TEST(BSPTraverser, IntersectCubesWithWallOverlap) {
   EXPECT_THAT(visitor.polygons(), UnorderedPointwise(Eq(), expected));
 }
 
+TEST(BSPTraverser, MergeCubeAfterExtraSplits) {
+  // First a cube is added to the BSP tree and the BSP is partitioned at the
+  // top and bottom of the cube. That promotes the top and bottom of the cube
+  // to border contents, and it ensures that the edge_first_coincident field is
+  // set to one of those two first partitions for the all the edges of those
+  // top and bottom facets, even after the facets have been split again later.
+  //
+  // Next extra partitions are performed on the tree so that the top and bottom
+  // of the cube are split. The extra partitions alternate
+  // between the x and y directions so that it produces this pattern:
+  //
+  //    y
+  //
+  //    5+-+-+-+-+-+
+  //     | | | | | |
+  //    4| | | |---+
+  //     | | | |   |
+  //    3| | |-----+
+  //     | | |     |
+  //    2| |-------+
+  //     | |       |
+  //    1+---------+
+  //     |         |
+  //    0+---------+
+  //     0 1 2 3 4 5 x
+  //
+  // The test verifies that the ConnectingVisitor merges all of the splits back
+  // together to produce a cube with 6 facets. In order to that, the
+  // ConnectingVisitor must sort the edges correctly before trying to merge
+  // them. It must sort the edges using the edge_created_by field, not
+  // edge_first_coincident, because the edge_first_coincident is the same for
+  // every subfacet of the top and bottom of the cube (and thus provides no
+  // clues on how to sort them).
+  //
+  BSPTree<> tree;
+  std::vector<MutableConvexPolygon<>> cube1 = MakeCuboid(/*min_x=*/0,
+                                                         /*min_y=*/0,
+                                                         /*min_z=*/0,
+                                                         /*max_x=*/5,
+                                                         /*max_y=*/5,
+                                                         /*max_z=*/5);
+  BSPContentId id1 = tree.AllocateId();
+  tree.AddContents(id1, cube1);
+
+  BSPTree<>::BSPNodeRep* split_pos = &tree.root;
+  split_pos->Split(HalfSpace3(Vector3(0, 0, 1), /*dist=*/BigInt(0)));
+  split_pos = split_pos->positive_child();
+  EXPECT_THAT(split_pos->border_contents(), SizeIs(1));
+
+  split_pos->Split(HalfSpace3(Vector3(0, 0, 1), /*dist=*/BigInt(5)));
+  split_pos = split_pos->negative_child();
+  EXPECT_THAT(split_pos->border_contents(), SizeIs(2));
+
+  for (int i = 1; i < 5; ++i) {
+    split_pos->Split(HalfSpace3(Vector3(0, 1, 0), /*dist=*/BigInt(i)));
+    split_pos = split_pos->positive_child();
+
+    split_pos->Split(HalfSpace3(Vector3(1, 0, 0), /*dist=*/BigInt(i)));
+    split_pos = split_pos->positive_child();
+    // Should contain the top, bottom, left, and upper sides
+    EXPECT_THAT(split_pos->border_contents(), SizeIs(2));
+  }
+
+  auto filter = PolygonFilter(id1);
+  bool errored = false;
+  auto error_log = [&errored](const std::string& error) {
+    errored = true;
+    std::cout << error << std::endl;
+  };
+  ConnectingVisitor<decltype(filter)> visitor(filter, error_log);
+  tree.Traverse(visitor);
+
+  EXPECT_FALSE(errored);
+  EXPECT_GT(visitor.polygons().size(), cube1.size());
+  visitor.FilterEmptyPolygons();
+  EXPECT_THAT(visitor.polygons(), UnorderedPointwise(Eq(), cube1));
+}
+
 TEST(BSPTraverser, ConnectIntersectCubesWithCornerOverlap) {
   // Intersect two cubes that only overlap in their corners. The two cubes do
   // not share any walls.

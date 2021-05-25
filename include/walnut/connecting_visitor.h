@@ -14,6 +14,7 @@
 #include "walnut/connected_polygon.h"
 #include "walnut/convex_polygon.h"
 #include "walnut/edge_line_connector.h"
+#include "walnut/transform_iterator.h"
 
 namespace walnut {
 
@@ -33,7 +34,9 @@ class ConnectingVisitor
 
   ConnectingVisitor(Filter filter,
                     std::function<void(const std::string&)> error_log)
-    : filter_(std::move(filter)), error_log_(std::move(error_log)) { }
+    : filter_(std::move(filter)), error_log_(std::move(error_log)) {
+    node_depth_[nullptr] = 0;
+  }
 
   std::pair<bool, bool> IsInside(
       const std::vector<BSPContentInfo>& content_info_by_id) override {
@@ -75,7 +78,10 @@ class ConnectingVisitor
       auto& edge = polygon.edge(i);
       auto it = interior_nodes_.find(edge.edge_first_coincident.split);
       assert(it != interior_nodes_.end());
-      it->second.first_coincident_edges.emplace_back(&edge);
+      assert(node_depth_.find(edge.edge_created_by.split) !=
+             node_depth_.end());
+      it->second.first_coincident_edges.emplace_back(
+          node_depth_[edge.edge_created_by.split], &edge);
       if (it->second.temporary) {
         edge.edge_first_coincident.split = nullptr;
       }
@@ -97,6 +103,8 @@ class ConnectingVisitor
 
   void EnterInteriorNode(bool from_partitioner,
                          const HalfSpace3& split) override {
+    node_depth_.emplace(&split, interior_nodes_.size() + 1);
+
     if (edge_vector_freelist_.empty()) {
       edge_vector_freelist_.emplace();
     }
@@ -116,7 +124,8 @@ class ConnectingVisitor
     for (const std::pair<const HalfSpace3* const, NodeInfo>& node_pair :
          interior_nodes_) {
       const NodeInfo& node_info = node_pair.second;
-      for (const Deed<EdgeRep>& edge : node_info.first_coincident_edges) {
+      for (const EdgeInfo& edge_info : node_info.first_coincident_edges) {
+        const Deed<EdgeRep>& edge = edge_info.edge;
         if (edge.empty()) continue;
 
         if (edge->polygon().vertex_count() < 3) {
@@ -156,22 +165,48 @@ class ConnectingVisitor
     NodeMapIterator it = interior_nodes_.find(&split);
     assert(it != interior_nodes_.end());
     NodeInfo& node_info = it->second;
+    struct {
+      Deed<EdgeRep>& operator()(EdgeInfo& entry) const {
+        return entry.edge;
+      }
+    } transform;
+    using Transformer =
+      TransformIterator<EdgeVectorIterator, decltype(transform)>;
     // Some edges edges in node_info.first_coincident_edges could be nullptr.
     // So calculate `drop_dimension` from the split plane, instead of copying
     // it from one of the edge's polygons.
     int drop_dimension = it->first->normal().GetFirstNonzeroDimension();
-    edge_connector_.ConnectUnsorted(node_info.first_coincident_edges.begin(),
-                                    node_info.first_coincident_edges.end(),
-                                    drop_dimension, error_log_);
+
+    typename EdgeLineConnector<EdgeRep>::EdgeCompare connector_edge_compare(
+        drop_dimension);
+    std::sort(node_info.first_coincident_edges.begin(),
+              node_info.first_coincident_edges.end(),
+              [connector_edge_compare](const EdgeInfo& a, const EdgeInfo& b) {
+                return connector_edge_compare(a.edge, b.edge);
+              });
+
+    edge_connector_.ConnectUnsorted(
+        Transformer(node_info.first_coincident_edges.begin(), transform),
+        Transformer(node_info.first_coincident_edges.end(), transform),
+        drop_dimension, error_log_);
     assert(IsValidState());
+
+    // Sort the edges in descending order by the depth in the tree at which the
+    // edges were created.
+    std::sort(node_info.first_coincident_edges.begin(),
+              node_info.first_coincident_edges.end(),
+              [](const EdgeInfo& a, const EdgeInfo &b) {
+                return a.created_at_depth > b.created_at_depth;
+              });
     for (EdgeVectorIterator it = node_info.first_coincident_edges.begin();
          it != node_info.first_coincident_edges.end(); ++it) {
-      EdgeRep* edge = it->get();
+      EdgeRep* edge = it->edge.get();
       if (edge != nullptr && edge->partner() != nullptr) {
-        int sorted_dimension =
+        int nonzero_edge_dimension =
           (edge->line().d().components()[(drop_dimension + 1) % 3].IsZero() ?
            drop_dimension + 2 : drop_dimension + 1) % 3;
-        edge->polygon().TryMergePolygon(sorted_dimension, edge->edge_index(),
+        edge->polygon().TryMergePolygon(nonzero_edge_dimension,
+                                        edge->edge_index(),
                                         edge->partner()->polygon(),
                                         edge->partner()->edge_index());
         assert(IsValidState());
@@ -180,12 +215,21 @@ class ConnectingVisitor
     node_info.first_coincident_edges.clear();
     edge_vector_freelist_.push(std::move(node_info.first_coincident_edges));
     interior_nodes_.erase(it);
+    node_depth_.erase(&split);
     assert(IsValidState());
   }
 
  private:
   using EdgeRep = typename PolygonRep::EdgeRep;
-  using EdgeVector = std::vector<Deed<EdgeRep>>;
+  struct EdgeInfo {
+    EdgeInfo(size_t created_at_depth, EdgeRep* edge)
+      : created_at_depth(created_at_depth),
+        edge(edge) { }
+
+    size_t created_at_depth;
+    Deed<EdgeRep> edge;
+  };
+  using EdgeVector = std::vector<EdgeInfo>;
   using EdgeVectorIterator = typename EdgeVector::iterator;
   struct NodeInfo {
     bool temporary;
@@ -198,6 +242,9 @@ class ConnectingVisitor
   std::vector<PolygonRep> polygons_;
   std::stack<EdgeVector> edge_vector_freelist_;
   NodeMap interior_nodes_;
+  // Maps the partition from an interior node into the depth of that node in
+  // the tree.
+  std::unordered_map<const HalfSpace3*, size_t> node_depth_;
   EdgeLineConnector<EdgeRep> edge_connector_;
   std::function<void(const std::string&)> error_log_;
 };

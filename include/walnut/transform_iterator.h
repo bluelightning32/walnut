@@ -17,7 +17,7 @@ class TransformIterator {
   // so that the argument is considered an expression instead of an entity.
   using value_type = typename std::remove_reference<decltype(
         std::declval<Transformer>()(
-          std::declval<typename InputIterator::value_type>()))>::type;
+          std::declval<typename InputIterator::reference>()))>::type;
   using pointer = value_type*;
   using reference = value_type&;
   using iterator_category = typename InputIterator::iterator_category;

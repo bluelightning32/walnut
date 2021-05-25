@@ -87,8 +87,8 @@ TEST(EdgeLineConnector, PairAdjacentFlat) {
     std::cout << message << std::endl;
     errored = true;
   };
-  connector.ConnectSorted(connect_edges.begin(), connect_edges.end(),
-                          /*sorted_dimension=*/0, error_handler);
+  connector.ConnectEdgesInLine(connect_edges.begin(), connect_edges.end(),
+                               /*sorted_dimension=*/0, error_handler);
   EXPECT_FALSE(errored);
   EXPECT_EQ(t1.edge(0).partner(), &t2.edge(0));
   EXPECT_EQ(t2.edge(0).partner(), &t1.edge(0));
@@ -129,8 +129,8 @@ TEST(EdgeLineConnector, SplitPairAdjacentFlat) {
     std::cout << message << std::endl;
     errored = true;
   };
-  connector.ConnectSorted(connect_edges.begin(), connect_edges.end(),
-                          /*sorted_dimension=*/0, error_handler);
+  connector.ConnectEdgesInLine(connect_edges.begin(), connect_edges.end(),
+                               /*sorted_dimension=*/0, error_handler);
   EXPECT_FALSE(errored);
   EXPECT_EQ(t1.edge(0).partner(), &t2_b.edge(0));
   EXPECT_EQ(t1.vertex(1), t2_b.vertex(0));
@@ -206,8 +206,8 @@ TEST(EdgeLineConnector, EightShareEdge) {
     std::cout << message << std::endl;
     errored = true;
   };
-  connector.ConnectSorted(connect_edges.begin(), connect_edges.end(),
-                          /*sorted_dimension=*/0, error_handler);
+  connector.ConnectEdgesInLine(connect_edges.begin(), connect_edges.end(),
+                               /*sorted_dimension=*/0, error_handler);
   EXPECT_FALSE(errored);
   EXPECT_EQ(t1.edge(0).partner(), &t8.edge(0));
   EXPECT_EQ(t2.edge(0).partner(), &t3.edge(0));
@@ -259,8 +259,8 @@ TEST(EdgeLineConnector, TwoCoplanarPolygons) {
     std::cout << message << std::endl;
     errored = true;
   };
-  connector.ConnectSorted(connect_edges.begin(), connect_edges.end(),
-                          /*sorted_dimension=*/0, error_handler);
+  connector.ConnectEdgesInLine(connect_edges.begin(), connect_edges.end(),
+                               /*sorted_dimension=*/0, error_handler);
   EXPECT_FALSE(errored);
   EXPECT_EQ(t1.edge(0).partner(), &t2.edge(0));
   EXPECT_EQ(t2.edge(0).partner(), &t1.edge(0));
@@ -318,8 +318,8 @@ TEST(EdgeLineConnector, SplitCoplanarPolygons) {
     std::cout << message << std::endl;
     errored = true;
   };
-  connector.ConnectSorted(connect_edges.begin(), connect_edges.end(),
-                          /*sorted_dimension=*/0, error_handler);
+  connector.ConnectEdgesInLine(connect_edges.begin(), connect_edges.end(),
+                               /*sorted_dimension=*/0, error_handler);
   EXPECT_FALSE(errored);
   EXPECT_EQ(t1.edge(0).partner(), &t2_b.edge(0));
   EXPECT_EQ(t1.vertex(1), t2_b.vertex(0));
