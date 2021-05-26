@@ -49,6 +49,14 @@ class HomoPoint3 {
   // finite (such as infinite or NaN).
   static HomoPoint3 FromDoublesExact(double x, double y, double z);
 
+  // Returns a HomoPoint3 that is the value of the double point after rounding
+  // to the grain size, where the grain size is 2^min_exponent.
+  //
+  // The return value is unspecified if any of the input coordinates are not
+  // finite (such as infinite or NaN).
+  static HomoPoint3 FromDoubles(int min_exponent, double x, double y,
+                                double z);
+
   static HomoPoint3 FromDoublePoint3Exact(const DoublePoint3& p) {
     return FromDoublesExact(p.x, p.y, p.z);
   }

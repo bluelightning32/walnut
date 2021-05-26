@@ -7,6 +7,34 @@
 
 namespace walnut {
 
+namespace {
+
+BigInt SafeShiftLeft(int64_t value, int shift) {
+  if (shift >= 0) return BigInt(value) << shift;
+
+  if (-shift >= (int)BigInt::bits_per_word) return BigInt(0);
+
+  return BigInt(value >> -shift);
+}
+
+} // namespace
+
+HomoPoint3 HomoPoint3::FromDoubles(int min_exponent, double x, double y,
+                                   double z) {
+  int x_exp, y_exp, z_exp;
+  int64_t x_mantissa = Decompose(x, &x_exp);
+  int64_t y_mantissa = Decompose(y, &y_exp);
+  int64_t z_mantissa = Decompose(z, &z_exp);
+
+  int denom_exp = std::min(0,
+                           std::max(min_exponent,
+                                    std::min({x_exp, y_exp, z_exp})));
+  return HomoPoint3(SafeShiftLeft(x_mantissa, x_exp - denom_exp),
+                    SafeShiftLeft(y_mantissa, y_exp - denom_exp),
+                    SafeShiftLeft(z_mantissa, z_exp - denom_exp),
+                    BigInt(1) << -denom_exp);
+}
+
 HomoPoint3 HomoPoint3::FromDoublesExact(double x, double y, double z) {
   int x_exp, y_exp, z_exp;
   int64_t x_mantissa = Decompose(x, &x_exp);

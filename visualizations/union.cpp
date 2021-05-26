@@ -27,6 +27,7 @@ int main(int argc, char *argv[]) {
   bool_filter->AddInputConnection(cu->GetOutputPort());
   bool_filter->AddInputConnection(cyl->GetOutputPort());
   bool_filter->AddInputConnection(cu2->GetOutputPort());
+  bool_filter->SetMinExponent(-8);
   //bool_filter->SetOperationToIntersection();
   //bool_filter->SetOperationToDifference();
 

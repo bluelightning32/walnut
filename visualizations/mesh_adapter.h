@@ -83,8 +83,11 @@ void SaveWalnutMeshToVTK(const std::vector<Polygon>& mesh,
 }
 
 // Converts a VTK polydata object into a vector of walnut polygons.
+//
+// The result is quantized to 2^min_exponent. Set `min_exponent` to INT_MIN to
+// avoid quantization.
 std::vector<MutableConvexPolygon<>>
-VTKToWalnutMesh(vtkPolyData* input, bool flip) {
+VTKToWalnutMesh(vtkPolyData* input, int min_exponent, bool flip) {
   class Collector : public ConvexPolygonFactory<HomoPoint3> {
    public:
     using ConvexPolygonFactory<HomoPoint3>::ConvexPolygonRep;
@@ -102,9 +105,10 @@ VTKToWalnutMesh(vtkPolyData* input, bool flip) {
   for (vtkIdType i = 0; i < input->GetNumberOfPoints(); ++i) {
     double coordinates[3];
     input->GetPoint(i, coordinates);
-    HomoPoint3 converted = HomoPoint3::FromDoublesExact(coordinates[0],
-                                                        coordinates[1],
-                                                        coordinates[2]);
+    HomoPoint3 converted = HomoPoint3::FromDoubles(min_exponent,
+                                                   coordinates[0],
+                                                   coordinates[1],
+                                                   coordinates[2]);
     converted_points.push_back(std::move(converted));
   }
 
@@ -148,17 +152,17 @@ VTKToWalnutMesh(vtkPolyData* input, bool flip) {
         double coordinates[3];
         for (int j = 0; j < 3; ++j) {
           input->GetPoint(input_vertices[2 - j], coordinates);
-          vertices[j] = HomoPoint3::FromDoublesExact(coordinates[0],
-                                                     coordinates[1],
-                                                     coordinates[2]);
+          vertices[j] = HomoPoint3::FromDoubles(min_exponent, coordinates[0],
+                                                coordinates[1],
+                                                coordinates[2]);
         }
       } else {
         double coordinates[3];
         for (int j = 0; j < 3; ++j) {
           input->GetPoint(input_vertices[j], coordinates);
-          vertices[j] = HomoPoint3::FromDoublesExact(coordinates[0],
-                                                     coordinates[1],
-                                                     coordinates[2]);
+          vertices[j] = HomoPoint3::FromDoubles(min_exponent, coordinates[0],
+                                                coordinates[1],
+                                                coordinates[2]);
         }
       }
       HalfSpace3 plane(vertices[0], vertices[1], vertices[2]);

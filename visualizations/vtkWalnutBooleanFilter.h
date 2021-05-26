@@ -24,6 +24,10 @@ class VTK_EXPORT vtkWalnutBooleanFilter : public vtkPolyDataAlgorithm {
                    /*max=*/OperationType::VTK_DIFFERENCE);
   vtkGetMacro(/*name=*/Operation, /*type=*/OperationType);
 
+  vtkSetClampMacro(/*name=*/MinExponent, /*type=*/int,
+                   /*min=*/std::numeric_limits<int>::min(), /*max=*/0);
+  vtkGetMacro(/*name=*/MinExponent, /*type=*/int);
+
   void SetOperationToUnion() {
     SetOperation(OperationType::VTK_UNION );
   }
@@ -50,7 +54,8 @@ class VTK_EXPORT vtkWalnutBooleanFilter : public vtkPolyDataAlgorithm {
       const bool flip = Operation == OperationType::VTK_DIFFERENCE && i > 0;
       tree.AddContents(ids.back(),
                        walnut::VTKToWalnutMesh(
-                        vtkPolyData::GetData(input_vector[0], i), flip));
+                        vtkPolyData::GetData(input_vector[0], i), MinExponent,
+                        flip));
     }
 
 #if 1
@@ -118,6 +123,7 @@ class VTK_EXPORT vtkWalnutBooleanFilter : public vtkPolyDataAlgorithm {
 
  private:
   OperationType Operation = OperationType::VTK_UNION;
+  int MinExponent = std::numeric_limits<int>::min();
 };
 
 vtkStandardNewMacro(vtkWalnutBooleanFilter);
