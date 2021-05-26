@@ -333,7 +333,12 @@ class BigUInt {
       BigUIntWord result = this_shifted / other_shifted;
       quotient.AddLeftShifted(result, shift_result_left);
       remainder.SubtractLeftShifted(other.Multiply(result), shift_result_left + bits_per_word);
-      assert(remainder.GetAtBitOffset(this_shift_right_bits + bits_per_word) <= BigUIntWord{1}<<34);
+      // Avoid calling GetAtBitOffset with the shift bits equal to the bits in
+      // the BigInt.
+      assert((this_shift_right_bits + bits_per_word) / bits_per_word ==
+               remainder.used_words() ||
+             remainder.GetAtBitOffset(this_shift_right_bits +
+                                      bits_per_word) <= BigUIntWord{1}<<34);
     }
     for (;
           this_shift_right_bits + int(bits_per_word)/2 >= other_shift_right;

@@ -445,7 +445,8 @@ template <typename FinalPolygon, typename Parent>
 inline std::ostream& operator<<(std::ostream& out,
                                 const ConnectedEdge<FinalPolygon,
                                                     Parent>& edge) {
-  out << "polygon=" << &edge.polygon() << " partner=" << edge.partner();
+  out << " next=" << edge.next_vertex() << " polygon=" << &edge.polygon()
+      << " partner=" << edge.partner();
   return out;
 }
 

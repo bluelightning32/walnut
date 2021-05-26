@@ -48,6 +48,12 @@ struct ConvexPolygonEdge : public ParentTemplate {
   }
 
   // Parent must be default-constructible to use this constructor.
+  ConvexPolygonEdge(HomoPoint3&& vertex, const HomoPoint3& next_vertex) :
+      vertex_(std::move(vertex)), line_(vertex_, next_vertex) {
+    assert(line_.IsValid());
+  }
+
+  // Parent must be default-constructible to use this constructor.
   //
   // `line` should be in the direction from `vertex` to the next vertex in the
   // polygon.

@@ -34,6 +34,7 @@ class BigIntWords {
       first_(other.first_),
       extra_size_(other.extra_size_),
       extra_(AllocateExtra(extra_size_)) {
+    assert(other.extra_size_ == 0 || other.extra_ != nullptr);
     for (size_t i = 0; i < other.extra_size_; ++i) {
       extra_[i] = other.extra_[i];
     }

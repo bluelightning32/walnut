@@ -92,6 +92,18 @@ class ConvexPolygon {
     assert(IsValidState());
   }
 
+  template <size_t n>
+  ConvexPolygon(HalfSpace3&& plane, int drop_dimension,
+                HomoPoint3 (&&vertices)[n]) :
+      plane_(std::move(plane)), drop_dimension_(drop_dimension) {
+    edges_.reserve(n);
+    for (size_t i = 0; i < n - 1; ++i) {
+      edges_.emplace_back(std::move(vertices[i]), vertices[i + 1]);
+    }
+    edges_.emplace_back(std::move(vertices[n - 1]), edges_[0].vertex());
+    assert(IsValidState());
+  }
+
   // Verifies the polygon is really convex
   bool IsValidState() const {
     if (vertex_count() == 0) return true;
@@ -1394,7 +1406,7 @@ std::string ConvexPolygon<EdgeParent>::Approximate() const {
   for (const auto& edge : edges()) {
     if (!first) out << ", ";
     first = false;
-    out << edge.Approximate();
+    edge.Approximate(out);
   }
   out << "]";
   return out.str();

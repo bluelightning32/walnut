@@ -80,6 +80,8 @@ class BSPEdgeInfo : public ParentTemplate {
   // nullptr if the edge came from the input polygon.
   SplitSide edge_created_by;
 
+  std::ostream& Approximate(std::ostream& out) const;
+
   // The split plane of the BSPNode highest in the tree that is coincident with
   // the entire edge, or nullptr, if the edge is not coincident with any of its
   // ancestor nodes.
@@ -107,7 +109,7 @@ std::ostream& operator<<(std::ostream& out,
   return out;
 }
 
-std::ostream& operator<<(std::ostream& out, const SplitSide& info) {
+inline std::ostream& operator<<(std::ostream& out, const SplitSide& info) {
   if (info.split == nullptr) {
     out << "none";
   } else {
@@ -120,6 +122,13 @@ std::ostream& operator<<(std::ostream& out, const SplitSide& info) {
     out << " " << *info.split << "]";
   }
   return out;
+}
+
+template <typename Parent>
+inline std::ostream& BSPEdgeInfo<Parent>::Approximate(
+    std::ostream& out) const {
+  out << " edge_first_coincident=" << edge_first_coincident;
+  return Parent::Approximate(out);
 }
 
 }  // walnut

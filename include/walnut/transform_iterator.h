@@ -12,15 +12,18 @@ namespace walnut {
 template <typename InputIterator, typename Transformer>
 class TransformIterator {
  public:
-  using difference_type = typename InputIterator::difference_type;
+  using difference_type =
+    typename std::iterator_traits<InputIterator>::difference_type;
+  using InputReference =
+    typename std::iterator_traits<InputIterator>::reference;
   // The extra set of parenthesis around the argument to decltype are necessary
   // so that the argument is considered an expression instead of an entity.
   using value_type = typename std::remove_reference<decltype(
-        std::declval<Transformer>()(
-          std::declval<typename InputIterator::reference>()))>::type;
+        std::declval<Transformer>()(std::declval<InputReference>()))>::type;
   using pointer = value_type*;
   using reference = value_type&;
-  using iterator_category = typename InputIterator::iterator_category;
+  using iterator_category =
+    typename std::iterator_traits<InputIterator>::iterator_category;
 
   TransformIterator() = default;
 

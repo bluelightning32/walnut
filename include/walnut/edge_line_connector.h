@@ -484,12 +484,12 @@ class EdgeLineConnector {
       if (pos_edge == partner_pos_edge) {
         std::ostringstream out;
         out << "The closest edge has the same polarity as its neighbor"
-            << ", needs_partner=";
+            << ", needs_partner={";
         needs_partner->second.edge->Approximate(out);
-        out << ", pos_edge=" << pos_edge
-            << ", closest=";
+        out << "}, pos_edge=" << pos_edge
+            << ", closest={";
         new_partner->second.edge->Approximate(out);
-        out << " pos_edge=" << partner_pos_edge << ".";
+        out << "} pos_edge=" << partner_pos_edge << ".";
         error(out.str());
         MaybeSplitEdge(needs_partner, location);
         assert(needs_partner->second.edge->partner_ == nullptr);

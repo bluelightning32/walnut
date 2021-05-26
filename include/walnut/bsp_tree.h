@@ -45,6 +45,15 @@ class BSPTree {
     root.PushContentsToLeaves();
   }
 
+  template <typename InputConvexPolygon>
+  void AddContents(BSPContentId id,
+                   std::vector<InputConvexPolygon>&& polygons) {
+    for (InputConvexPolygon& polygon : polygons) {
+      root.AddRootContent(id, std::move(polygon));
+    }
+    root.PushContentsToLeaves();
+  }
+
   // Traverses the tree and sends the accepted border polygons to `visitor`.
   //
   // `visitor.IsInside` controls which branches of the tree are visited, and

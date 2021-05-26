@@ -45,6 +45,11 @@ target_link_libraries(corner_cell_boundary
                       visualization
                       ${GLEW_LIBRARIES} ${VTK_LIBRARIES} )
 
+add_executable(union union.cpp)
+target_link_libraries(union
+                      visualization
+                      ${GLEW_LIBRARIES} ${VTK_LIBRARIES} )
+
 add_executable(zig_zag_border zig_zag_border.cpp)
 target_link_libraries(zig_zag_border
                       visualization

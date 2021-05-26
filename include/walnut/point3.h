@@ -141,11 +141,21 @@ class Point3 {
     return LexicographicallyLt(*this, other);
   }
 
+  // Print an exact string representation of the point.
+  //
+  // This function is included in Point3 so that it has a similar interface as
+  // HomoPoint3.
+  std::ostream& Approximate(std::ostream& out) const;
+
  private:
   Vector3 vector_from_origin_;
 };
 
 std::ostream& operator<<(std::ostream& out, const Point3& p);
+
+inline std::ostream& Point3::Approximate(std::ostream& out) const {
+  return out << *this;
+}
 
 }  // walnut
 
