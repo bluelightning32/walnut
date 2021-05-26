@@ -135,6 +135,12 @@ class BigInt {
   static BigInt min_value(size_t clear_bits);
 
   BigInt operator << (size_t shift) const {
+    if (words_.extra_size() == 0 && shift < bits_per_word) {
+      BigIntWord shifted(words_.first() << shift);
+      if (shifted >> shift == BigIntWord(words_.first())) {
+        return BigInt(shifted);
+      }
+    }
     BigInt result;
     size_t in = 0;
     size_t out = shift / bits_per_word;
