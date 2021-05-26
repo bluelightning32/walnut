@@ -74,7 +74,6 @@ class ConnectingVisitor
   }
 
   void Accept(PolygonRep&& polygon) override {
-
     for (size_t i = 0; i < polygon.vertex_count(); ++i) {
       auto& edge = polygon.edge(i);
       auto it = interior_nodes_.find(edge.edge_first_coincident.split);

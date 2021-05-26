@@ -22,6 +22,14 @@ namespace walnut {
 template<typename Polygon>
 vtkSmartPointer<vtkPolyData> WalnutToVTKMesh(
     const std::vector<Polygon>& mesh) {
+  auto poly_data = vtkSmartPointer<vtkPolyData>::New();
+  SaveWalnutMeshToVTK(mesh, poly_data);
+  return poly_data;
+}
+
+template<typename Polygon>
+void SaveWalnutMeshToVTK(const std::vector<Polygon>& mesh,
+                         vtkPolyData* save_to) {
   static_assert(
       std::is_base_of<typename Polygon::ConnectedPolygonRep,
                       Polygon>::value,
@@ -70,15 +78,13 @@ vtkSmartPointer<vtkPolyData> WalnutToVTKMesh(
     cell_array->InsertNextCell(converted_polygon);
   }
 
-  auto poly_data = vtkSmartPointer<vtkPolyData>::New();
-  poly_data->SetPoints(points);
-  poly_data->SetPolys(cell_array);
-  return poly_data;
+  save_to->SetPoints(points);
+  save_to->SetPolys(cell_array);
 }
 
 // Converts a VTK polydata object into a vector of walnut polygons.
 std::vector<MutableConvexPolygon<>>
-VTKToWalnutMesh(vtkPolyData* input) {
+VTKToWalnutMesh(vtkPolyData* input, bool flip) {
   class Collector : public ConvexPolygonFactory<HomoPoint3> {
    public:
     using ConvexPolygonFactory<HomoPoint3>::ConvexPolygonRep;
@@ -121,17 +127,23 @@ VTKToWalnutMesh(vtkPolyData* input) {
   vtkIdType vertex_count;
   vtkIdType* input_vertices;
   while (input->GetPolys()->GetNextCell(vertex_count, input_vertices)) {
+    if (flip) {
+      std::reverse(input_vertices, input_vertices + vertex_count);
+    }
     polygon_factory.Build(
         /*begin=*/HomoPoint3Iterator(input_vertices, vertex_id_to_homo_point3),
         /*end=*/HomoPoint3Iterator(input_vertices + vertex_count,
                                    vertex_id_to_homo_point3));
+    if (flip) {
+      std::reverse(input_vertices, input_vertices + vertex_count);
+    }
   }
 
   input->GetStrips()->InitTraversal();
   while (input->GetStrips()->GetNextCell(vertex_count, input_vertices)) {
     for (vtkIdType i = 0; i < vertex_count - 2; ++i) {
       HomoPoint3 vertices[3];
-      if (i & 0) {
+      if ((i & 0) ^ flip) {
         // The vertices are in clockwise order. Reverse them first.
         double coordinates[3];
         for (int j = 0; j < 3; ++j) {

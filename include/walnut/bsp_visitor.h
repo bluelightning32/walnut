@@ -117,40 +117,6 @@ UnionFilter<Filter1, Filter2> MakeUnionFilter(Filter1 filter1,
   return UnionFilter<Filter1, Filter2>(std::move(filter1), std::move(filter2));
 }
 
-// Calculates the union of multiple polyhedrons. A point is considered part of
-// one of the unioned polyhedrons if its pwn >= 1.
-class UnionIdsFilter {
- public:
-  UnionIdsFilter(std::vector<BSPContentId> ids) : ids_(ids) { }
-
-  std::pair<bool, bool> operator()(
-      const std::vector<BSPContentInfo>& content_info_by_id) {
-
-    std::pair<bool, bool> total(false, false);
-
-    for (BSPContentId id : ids_) {
-      std::pair<bool, bool> id_result;
-
-      if (id >= content_info_by_id.size()) {
-        id_result = std::make_pair(false, false);
-      } else {
-        id_result =  std::make_pair(content_info_by_id[id].pwn > 0,
-                                    content_info_by_id[id].has_polygons);
-      }
-
-      total.second = (!total.first || total.second) &&
-                     (!id_result.first || id_result.second) &&
-                     (total.second || id_result.second);
-      total.first |= id_result.first;
-    }
-
-    return total;
-  }
-
- private:
-  std::vector<BSPContentId> ids_;
-};
-
 template <typename PolygonRepTemplate>
 class BSPVisitor {
  public:

@@ -233,8 +233,8 @@ class EdgeLineConnector {
           std::ostringstream out;
           out << "Two active edges have the same polygon normal and polarity"
               << ", normal=" << edges_begin->get()->polygon().normal()
-              << ", new_edge=" << edges_begin->get()
-              << ", existing_edge=" << add_info.first->second.edge.get();
+              << ", new_edge=" << *edges_begin->get()
+              << ", existing_edge=" << *add_info.first->second.edge.get();
           error(out.str());
         }
         ++edges_begin;
