@@ -32,9 +32,9 @@ class ConnectingVisitor
   using Filter = FilterTemplate;
   using PolygonRep = ConnectingVisitorOutputPolygon<ConnectedParent>;
 
-  ConnectingVisitor(Filter filter,
+  ConnectingVisitor(Filter& filter,
                     std::function<void(const std::string&)> error_log)
-    : filter_(std::move(filter)), error_log_(std::move(error_log)) {
+    : filter_(filter), error_log_(std::move(error_log)) {
     node_depth_[nullptr] = 0;
   }
 
@@ -239,7 +239,7 @@ class ConnectingVisitor
   using NodeMap = std::unordered_map<const HalfSpace3*, NodeInfo>;
   using NodeMapIterator = typename NodeMap::iterator;
 
-  Filter filter_;
+  Filter& filter_;
   std::vector<PolygonRep> polygons_;
   std::stack<EdgeVector> edge_vector_freelist_;
   NodeMap interior_nodes_;

@@ -131,7 +131,8 @@ BSPTree<ConvexPolygonTemplate>::GetNodeBorder(Iterator node_path_begin,
     std::cerr << error << std::endl;
     assert(false);
   };
-  ConnectingVisitor<OddPolygonFilter> visitor(OddPolygonFilter(0), error_log);
+  OddPolygonFilter filter(0);
+  ConnectingVisitor<OddPolygonFilter> visitor(filter, error_log);
 
   // Split the mapped_root the same way as the original root along the node
   // path.
