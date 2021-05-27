@@ -368,6 +368,7 @@ TEST(ConvexPolygon, RedundantEdges) {
   };
 
   ConvexPolygon<> polygon = MakeConvexPolygon(input);
+  EXPECT_TRUE(polygon.IsValidState());
 
   ASSERT_EQ(polygon.vertex_count(), std::end(input) - std::begin(input));
   for (size_t i = 0; i < polygon.vertex_count(); ++i) {
@@ -385,6 +386,27 @@ TEST(ConvexPolygon, RedundantEdges) {
     EXPECT_GT(
         (next_input_vertex - input_vertex).Dot(
           polygon.const_edge(i).line().d()), 0);
+  }
+}
+
+TEST(ConvexPolygon, ClockwiseRedundantEdges) {
+  Point3 input[] = {
+    Point3(-3, 0, 10),
+    Point3(-3, 1, 10),
+    Point3(-2, 1, 10), // collinear
+    Point3(-1, 1, 10), // collinear
+    Point3(0, 1, 10),
+    Point3(0, 0, 10),
+    Point3(-1, 0, 10), // collinear
+    Point3(-2, 0, 10), // collinear
+  };
+
+  ConvexPolygon<> polygon = MakeConvexPolygon(input);
+  EXPECT_TRUE(polygon.IsValidState());
+
+  ASSERT_EQ(polygon.vertex_count(), std::end(input) - std::begin(input));
+  for (size_t i = 0; i < polygon.vertex_count(); ++i) {
+    EXPECT_EQ(polygon.vertex(i), input[i]) << i;
   }
 }
 
