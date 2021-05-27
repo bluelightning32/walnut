@@ -101,13 +101,19 @@ class ConvexPolygonFactory :
       first = prev;
       ++pos1;
       while (pos1 != range1_end) {
-        edges.emplace_back(*prev, *pos1);
-        prev = &*pos1;
+        PluckerLine line(*prev, *pos1);
+        if (line.IsValid()) {
+          edges.emplace_back(*prev, std::move(line));
+          prev = &*pos1;
+        }
         ++pos1;
       }
       for (auto pos2 = range2_begin; pos2 != range2_end; ++pos2) {
-        edges.emplace_back(*prev, *pos2);
-        prev = &*pos2;
+        PluckerLine line(*prev, *pos2);
+        if (line.IsValid()) {
+          edges.emplace_back(*prev, std::move(line));
+          prev = &*pos2;
+        }
       }
     } else {
       auto pos2 = range2_begin;
@@ -115,12 +121,18 @@ class ConvexPolygonFactory :
       first = prev;
       ++pos2;
       while (pos2 != range2_end) {
-        edges.emplace_back(*prev, *pos2);
-        prev = &*pos2;
+        PluckerLine line(*prev, *pos2);
+        if (line.IsValid()) {
+          edges.emplace_back(*prev, std::move(line));
+          prev = &*pos2;
+        }
         ++pos2;
       }
     }
-    edges.emplace_back(*prev, *first);
+    PluckerLine line(*prev, *first);
+    if (line.IsValid()) {
+      edges.emplace_back(*prev, std::move(line));
+    }
     // orientation is -1 if the polygon is counter-clockwise.
     // plane_orientation_ is -1 if plane_ is already the normal of a
     // counter-clockwise polygon. If both are -1, then plane_ is already

@@ -57,8 +57,19 @@ struct ConvexPolygonEdge : public ParentTemplate {
   //
   // `line` should be in the direction from `vertex` to the next vertex in the
   // polygon.
+  ConvexPolygonEdge(HomoPoint3&& vertex, PluckerLine&& line)
+    : vertex_(std::move(vertex)), line_(std::move(line)) {
+    assert(line_.IsValid());
+  }
+
+  // Parent must be default-constructible to use this constructor.
+  //
+  // `line` should be in the direction from `vertex` to the next vertex in the
+  // polygon.
   ConvexPolygonEdge(const HomoPoint3& vertex, const PluckerLine& line) :
-    vertex_(vertex), line_(line) { }
+    vertex_(vertex), line_(line) {
+    assert(line_.IsValid());
+  }
 
   // Inherit the line and vertex data from `parent_edge`, but overwrite the
   // vertex.
@@ -92,7 +103,13 @@ struct ConvexPolygonEdge : public ParentTemplate {
 
   ConvexPolygonEdge(const Point3WithVertexData<Parent>& vertex,
                     const Point3& next_vertex) :
-    Parent(vertex.data), vertex_(vertex), line_(vertex, next_vertex) { }
+    ConvexPolygonEdge(vertex, PluckerLine(vertex, next_vertex)) { }
+
+  ConvexPolygonEdge(const Point3WithVertexData<Parent>& vertex,
+                    PluckerLine line)
+    : Parent(vertex.data), vertex_(vertex), line_(std::move(line)) {
+    assert(line_.IsValid());
+  }
 
   template <typename OtherParent>
   explicit ConvexPolygonEdge(const ConvexPolygonEdge<OtherParent>& other) :

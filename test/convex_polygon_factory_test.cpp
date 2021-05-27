@@ -355,4 +355,24 @@ TEST(ConvexPolygonFactory, GetPlaneOrientationAfterProjection) {
   }
 }
 
+TEST(ConvexPolygonFactory, DropsRedundantVertices) {
+  HomoPoint3 input[] = {
+    HomoPoint3(0, 0, 10, 1),
+    HomoPoint3(1, 0, 10, 1),
+    HomoPoint3(2, 0, 20, 2),
+    HomoPoint3(1, 1, 10, 1),
+  };
+
+  ResultCollector<ConvexPolygonFactory<HomoPoint3>> collector;
+  collector.Build(std::begin(input), std::end(input));
+  EXPECT_THAT(collector.GetSortedPolygonResult(),
+      ElementsAre(
+        ConvexPolygon<>(/*plane=*/HalfSpace3(/*x=*/0, /*y=*/0, /*z=*/1,
+                                             /*dist=*/10),
+                        /*drop_dimension=*/2,
+                        /*vertices=*/std::vector<HomoPoint3>{input[0],
+                                                             input[1],
+                                                             input[3]})));
+}
+
 }  // walnut
