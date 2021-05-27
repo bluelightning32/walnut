@@ -375,4 +375,24 @@ TEST(ConvexPolygonFactory, DropsRedundantVertices) {
                                                              input[3]})));
 }
 
+TEST(ConvexPolygonFactory, SkipsRedudantVertexAtBeginning) {
+  HomoPoint3 input[] = {
+    HomoPoint3(1, 3, 0, 1),
+    HomoPoint3(-1, 3, -1, 1),
+    HomoPoint3(-2, 6, -2, 2),
+    HomoPoint3(-1, 3, 0, 1),
+  };
+
+  ResultCollector<ConvexPolygonFactory<HomoPoint3>> collector;
+  collector.Build(std::begin(input), std::end(input));
+  EXPECT_THAT(collector.GetSortedPolygonResult(),
+      ElementsAre(
+        ConvexPolygon<>(/*plane=*/HalfSpace3(/*x=*/0, /*y=*/1, /*z=*/0,
+                                             /*dist=*/3),
+                        /*drop_dimension=*/1,
+                        /*vertices=*/std::vector<HomoPoint3>{input[1],
+                                                             input[3],
+                                                             input[0]})));
+}
+
 }  // walnut

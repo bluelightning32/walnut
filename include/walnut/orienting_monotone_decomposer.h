@@ -75,7 +75,7 @@ class OrientingMonotoneDecomposer :
       convex_bottom_.clear();
       return;
     }
-    
+
     if (flipped_) {
       Chain1Iterator chain1_before_end = chain1_end;
       --chain1_before_end;
@@ -167,14 +167,49 @@ bool OrientingMonotoneDecomposer<Point3RepTemplate>::DetectOrientation(
   Chain2Iterator chain2_pos = chain2_begin;
   ++chain2_pos;
 
-  const BigIntWord twist = minimum_vertex.Get2DTwistDir(drop_dimension,
-                                                        *chain1_pos,
-                                                        *chain2_pos);
-  if (twist != 0) {
-    // The first vertices from each chain are not collinear.
-    flipped_ = twist < 0;
-    return true;
+  {
+    const BigIntWord twist = minimum_vertex.Get2DTwistDir(drop_dimension,
+                                                          *chain1_pos,
+                                                          *chain2_pos);
+    if (twist != 0) {
+      // The first vertices from each chain are not collinear.
+      flipped_ = twist < 0;
+      return true;
+    }
   }
+
+  bool advanced = false;
+  while (*chain1_pos == minimum_vertex) {
+    advanced = true;
+    ++chain1_pos;
+    if (chain1_pos == chain1_end) {
+      // All values in chain1 equal minimum_vertex. Since chain1 must contain
+      // the minimum and maximum vertices, the minimum and maximum are equal.
+      return false;
+    }
+  }
+
+  while (*chain2_pos == minimum_vertex) {
+    advanced = true;
+    ++chain2_pos;
+    // chain2 must contain the maximum value. It was already validated that
+    // chain1 contains a maximum value which is different from the minimum. So
+    // chain2 must also contain a maximum that is different from the minimum
+    // before its end.
+    assert(chain2_pos != chain2_end);
+  }
+
+  if (advanced) {
+    const BigIntWord twist = minimum_vertex.Get2DTwistDir(drop_dimension,
+                                                          *chain1_pos,
+                                                          *chain2_pos);
+    if (twist != 0) {
+      // The first vertices from each chain are not collinear.
+      flipped_ = twist < 0;
+      return true;
+    }
+  }
+
   // (minimum_vertex, collinear_vertex) define the line that chain1_pos and
   // chain2_pos are collinear with. Either chain1_pos or chain2_pos could be
   // used here.
@@ -199,8 +234,8 @@ bool OrientingMonotoneDecomposer<Point3RepTemplate>::DetectOrientation(
     const bool chain1_is_current =
       chain1_pos->CompareComponent(monotone_dimension, *chain2_pos) <= 0;
     const Point3Rep& current = chain1_is_current ? *chain1_pos : *chain2_pos;
-    const int twist = minimum_vertex.Get2DTwistDir(drop_dimension,
-                                                   collinear_vertex, current);
+    const BigIntWord twist =
+      minimum_vertex.Get2DTwistDir(drop_dimension, collinear_vertex, current);
     if (twist != 0) {
       // A non-collinear vertex has been found. The chain it was part of
       // (indicated by chain1_is_current) can be identified, and the other
