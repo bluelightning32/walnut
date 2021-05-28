@@ -4,18 +4,13 @@ Build the project:
   cmake ../
   make -j4
 
-The project has some algorithm visualizations to help illustrate how the
-alogrithm works in specific examples. To build them, run the following command
-from the build directory. The visualization programs will be written
-build/visualizations.
-  make -j4 visualizations
+Walnut is a library for performing 3D boolean operations. It also contains an
+optional library that wraps the algorithm in a VTK filter, along with some
+examples of how to use the VTK filter. These parts can be excluded from the
+build with the -DUSE_VTK=OFF option to cmake.
 
 The -L option lists other common options.
   cmake ../ -L
 
 For regular development, a debug release type is recommended. The debug release has the asserts enabled, and it has full debug symbols.
   cmake ../ -DCMAKE_BUILD_TYPE=Debug
-
-After making a change to the library, everything can be built and all the tests
-run with this command:
-  make -j4 all extras

@@ -13,13 +13,11 @@ else()
     add_compile_options(-Wall -Werror)
 endif()
 
-add_subdirectory(visualizations EXCLUDE_FROM_ALL)
-get_property(visualization_targets
-             DIRECTORY visualizations
-             PROPERTY BUILDSYSTEM_TARGETS)
-add_custom_target(visualizations DEPENDS ${visualization_targets})
+option(USE_VTK "Build targets that depend on VTK" ON)
 
-add_custom_target(extras DEPENDS visualizations)
+if(USE_VTK)
+  add_subdirectory(visualizations)
+endif()
 
 option(PACKAGE_TESTS "Build the tests" ON)
 if(PACKAGE_TESTS)
