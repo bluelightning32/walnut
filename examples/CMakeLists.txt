@@ -35,16 +35,6 @@ add_library(examples_helper STATIC
             visualization_window.cpp)
 target_link_libraries(examples_helper walnut)
 
-add_executable(extrusion extrusion.cpp)
-target_link_libraries(extrusion
-                      examples_helper
-                      ${GLEW_LIBRARIES} ${VTK_LIBRARIES} )
-
-add_executable(corner_cell_boundary corner_cell_boundary.cpp)
-target_link_libraries(corner_cell_boundary
-                      examples_helper
-                      ${GLEW_LIBRARIES} ${VTK_LIBRARIES} )
-
 add_executable(union union.cpp)
 target_link_libraries(union
                       examples_helper

@@ -6,14 +6,31 @@
 #include <vtkTextProperty.h>
 
 #include "function_command.h"
-#include "mesh_adapter.h"
 #include "normals_actor.h"
 #include "points_actor.h"
 #include "visualization_window.h"
+#include "walnut_to_vtk_mesh.h"
 #include "walnut/aabb.h"
 #include "walnut/bsp_tree.h"
 #include "walnut/half_space3.h"
+#include "walnut/homo_point3.h"
 #include "walnut/point3.h"
+
+template<typename Polygon>
+walnut::HomoPoint3 GetTopPoint(const std::vector<Polygon>& mesh) {
+  walnut::HomoPoint3 top(0, 0, 0, 0);
+
+  for (const Polygon& polygon : mesh) {
+    for (size_t i = 0; i < polygon.vertex_count(); ++i) {
+      const walnut::HomoPoint3& point = polygon.vertex(i);
+      if (top.w().IsZero() || walnut::HomoPoint3::TopnessLt(top, point)) {
+        top = point;
+      }
+    }
+  }
+  return top;
+}
+
 
 constexpr const double pi = 3.14159265358979323846;
 

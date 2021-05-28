@@ -9,7 +9,8 @@
 #include <vtkPolyDataAlgorithm.h>
 #include <vtkSetGet.h>
 
-#include "mesh_adapter.h"
+#include "vtk_to_walnut_mesh.h"
+#include "walnut_to_vtk_mesh.h"
 #include "walnut/boolean_operation_filter.h"
 #include "walnut/bsp_tree.h"
 
