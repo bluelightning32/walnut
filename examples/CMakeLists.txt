@@ -34,7 +34,7 @@ add_library(examples_helper STATIC
             observer_registration.cpp
             points_actor.cpp
             visualization_window.cpp)
-target_link_libraries(examples_helper walnut)
+target_link_libraries(examples_helper walnut_vtk)
 
 add_executable(union union.cpp)
 target_link_libraries(union
