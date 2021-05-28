@@ -50,6 +50,67 @@ AUX_SOURCE_DIRECTORY(src/walnut SOURCES)
 add_library(walnut STATIC ${SOURCES})
 target_include_directories(walnut PUBLIC include)
 
+set(WALNUT_PUBLIC_HEADERS
+    "include/walnut/convex_polygon_factory.h"
+    "include/walnut/mutable_convex_polygon.h"
+    "include/walnut/aabb.h"
+    "include/walnut/aabb_convex_polygon.h"
+    "include/walnut/assignable_wrapper.h"
+    "include/walnut/big_int.h"
+    "include/walnut/big_int_words.h"
+    "include/walnut/big_uint.h"
+    "include/walnut/big_uint_word.h"
+    "include/walnut/boolean_operation_filter.h"
+    "include/walnut/bsp_content_info.h"
+    "include/walnut/bsp_edge_info.h"
+    "include/walnut/bsp_node.h"
+    "include/walnut/bsp_polygon.h"
+    "include/walnut/bsp_traverser.h"
+    "include/walnut/bsp_tree.h"
+    "include/walnut/bsp_visitor.h"
+    "include/walnut/concat_range.h"
+    "include/walnut/connected_polygon.h"
+    "include/walnut/connecting_visitor.h"
+    "include/walnut/convex_polygon.h"
+    "include/walnut/convex_polygon_edge.h"
+    "include/walnut/convex_polygon_factory.h"
+    "include/walnut/convex_polygon_split_info.h"
+    "include/walnut/convex_polygon_vertex_iterator.h"
+    "include/walnut/convex_vertex_aabb_tracker.h"
+    "include/walnut/deed.h"
+    "include/walnut/double.h"
+    "include/walnut/double_point3.h"
+    "include/walnut/edge_info_root.h"
+    "include/walnut/edge_line_connector.h"
+    "include/walnut/half_space2.h"
+    "include/walnut/half_space2_sideless_compare.h"
+    "include/walnut/half_space3.h"
+    "include/walnut/homo_point2.h"
+    "include/walnut/homo_point3.h"
+    "include/walnut/member_forward.h"
+    "include/walnut/monotone_decomposer.h"
+    "include/walnut/monotone_range.h"
+    "include/walnut/monotone_triangulator.h"
+    "include/walnut/mutable_convex_polygon.h"
+    "include/walnut/orienting_monotone_decomposer.h"
+    "include/walnut/planar_range.h"
+    "include/walnut/plane_partitioner.h"
+    "include/walnut/plucker_line.h"
+    "include/walnut/point2.h"
+    "include/walnut/point3.h"
+    "include/walnut/point3_with_vertex_data.h"
+    "include/walnut/r_transformation.h"
+    "include/walnut/rational.h"
+    "include/walnut/redirectable_value.h"
+    "include/walnut/transform_iterator.h"
+    "include/walnut/vector2.h"
+    "include/walnut/vector3.h"
+    "include/walnut/vertex_double_point3_mapper.h"
+    )
+set_target_properties(walnut PROPERTIES
+                      PUBLIC_HEADER "${WALNUT_PUBLIC_HEADERS}")
+install(TARGETS walnut PUBLIC_HEADER DESTINATION "include/walnut")
+
 if(BUILD_TESTS)
     enable_testing()
     include(GoogleTest)
