@@ -16,7 +16,7 @@ endif()
 option(USE_VTK "Build targets that depend on VTK" ON)
 
 if(USE_VTK)
-  add_subdirectory(visualizations)
+  add_subdirectory(examples)
 endif()
 
 option(PACKAGE_TESTS "Build the tests" ON)
