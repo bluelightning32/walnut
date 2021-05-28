@@ -1,5 +1,5 @@
 #include "visualization_window.h"
-#include "vtkWalnutBooleanFilter.h"
+#include "walnut/vtkWalnutBooleanFilter.h"
 
 #include <vtkCylinderSource.h>
 #include <vtkCubeSource.h>
@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
   cu2->SetZLength(10);
   cu2->SetCenter(0, 6, 0);
 
-  auto bool_filter = vtkSmartPointer<vtkWalnutBooleanFilter>::New();
+  auto bool_filter = vtkSmartPointer<walnut::vtkWalnutBooleanFilter>::New();
   bool_filter->AddInputConnection(cu->GetOutputPort());
   bool_filter->AddInputConnection(cyl->GetOutputPort());
   bool_filter->AddInputConnection(cu2->GetOutputPort());

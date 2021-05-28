@@ -1,5 +1,5 @@
-#ifndef WALNUT_VTK_WALNUT_TO_VTK_MESH_H__
-#define WALNUT_VTK_WALNUT_TO_VTK_MESH_H__
+#ifndef WALNUT_WALNUT_TO_VTK_MESH_H__
+#define WALNUT_WALNUT_TO_VTK_MESH_H__
 
 #include <unordered_map>
 
@@ -82,4 +82,4 @@ void SaveWalnutMeshToVTK(const std::vector<Polygon>& mesh,
 
 } // walnut
 
-#endif // WALNUT_VTK_WALNUT_TO_VTK_MESH_H__
+#endif // WALNUT_WALNUT_TO_VTK_MESH_H__

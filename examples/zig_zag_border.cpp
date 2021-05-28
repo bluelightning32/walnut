@@ -9,12 +9,12 @@
 #include "normals_actor.h"
 #include "points_actor.h"
 #include "visualization_window.h"
-#include "walnut_to_vtk_mesh.h"
 #include "walnut/aabb.h"
 #include "walnut/bsp_tree.h"
 #include "walnut/half_space3.h"
 #include "walnut/homo_point3.h"
 #include "walnut/point3.h"
+#include "walnut/walnut_to_vtk_mesh.h"
 
 template<typename Polygon>
 walnut::HomoPoint3 GetTopPoint(const std::vector<Polygon>& mesh) {

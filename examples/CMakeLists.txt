@@ -27,6 +27,7 @@ include(${VTK_USE_FILE})
 
 # Make the top level walnut include files visible to all targets in this file.
 include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR}/vtk_interface/include)
 
 add_library(examples_helper STATIC
             normals_actor.cpp

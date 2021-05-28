@@ -1,5 +1,5 @@
-#ifndef WALNUT_VTK_VTK_TO_WALNUT_MESH_H__
-#define WALNUT_VTK_VTK_TO_WALNUT_MESH_H__
+#ifndef WALNUT_VTK_TO_WALNUT_MESH_H__
+#define WALNUT_VTK_TO_WALNUT_MESH_H__
 
 #include <vtkPolyData.h>
 
@@ -104,4 +104,4 @@ std::vector<MutableConvexPolygon<>> VTKToWalnutMesh(vtkPolyData* input,
 
 } // walnut
 
-#endif // WALNUT_VTK_VTK_TO_WALNUT_MESH_H__
+#endif // WALNUT_VTK_TO_WALNUT_MESH_H__

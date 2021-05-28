@@ -1,5 +1,5 @@
-#ifndef WALNUT_VISUALIZATIONS_VTK_WALNUT_BOOLEAN_FILTER_H__
-#define WALNUT_VISUALIZATIONS_VTK_WALNUT_BOOLEAN_FILTER_H__
+#ifndef WALNUT_VTK_WALNUT_BOOLEAN_FILTER_H__
+#define WALNUT_VTK_WALNUT_BOOLEAN_FILTER_H__
 
 #include <chrono>
 
@@ -9,10 +9,12 @@
 #include <vtkPolyDataAlgorithm.h>
 #include <vtkSetGet.h>
 
-#include "vtk_to_walnut_mesh.h"
-#include "walnut_to_vtk_mesh.h"
 #include "walnut/boolean_operation_filter.h"
 #include "walnut/bsp_tree.h"
+#include "walnut/vtk_to_walnut_mesh.h"
+#include "walnut/walnut_to_vtk_mesh.h"
+
+namespace walnut {
 
 class VTK_EXPORT vtkWalnutBooleanFilter : public vtkPolyDataAlgorithm {
  public:
@@ -47,14 +49,14 @@ class VTK_EXPORT vtkWalnutBooleanFilter : public vtkPolyDataAlgorithm {
     auto start = std::chrono::steady_clock::now();
 
     int num_connections = input_vector[0]->GetNumberOfInformationObjects();
-    walnut::BSPTree<> tree;
-    std::vector<walnut::BSPContentId> ids;
+    BSPTree<> tree;
+    std::vector<BSPContentId> ids;
 
     for (int i = 0; i < num_connections; ++i) {
       ids.push_back(tree.AllocateId());
       const bool flip = Operation == OperationType::VTK_DIFFERENCE && i > 0;
       tree.AddContents(ids.back(),
-                       walnut::VTKToWalnutMesh(
+                       VTKToWalnutMesh(
                         vtkPolyData::GetData(input_vector[0], i), MinExponent,
                         flip));
     }
@@ -71,10 +73,10 @@ class VTK_EXPORT vtkWalnutBooleanFilter : public vtkPolyDataAlgorithm {
       vtkErrorMacro(<< error);
       errored = true;
     };
-    walnut::UnionIdsFilter union_filter;
-    walnut::IntersectIdsFilter intersect_filter;
-    walnut::SubtractIdsFilter subtract_filter;
-    walnut::BooleanOperationFilter* selected_filter;
+    UnionIdsFilter union_filter;
+    IntersectIdsFilter intersect_filter;
+    SubtractIdsFilter subtract_filter;
+    BooleanOperationFilter* selected_filter;
 
     switch (Operation) {
       default:
@@ -95,8 +97,8 @@ class VTK_EXPORT vtkWalnutBooleanFilter : public vtkPolyDataAlgorithm {
         break;
     }
 
-    walnut::ConnectingVisitor<walnut::BooleanOperationFilter> visitor(
-        *selected_filter, error_log);
+    ConnectingVisitor<BooleanOperationFilter> visitor(*selected_filter,
+                                                      error_log);
     tree.Traverse(visitor);
 
     if (errored) return 0;
@@ -110,7 +112,7 @@ class VTK_EXPORT vtkWalnutBooleanFilter : public vtkPolyDataAlgorithm {
               << std::endl;
 #endif
 
-    walnut::SaveWalnutMeshToVTK(visitor.TakePolygons(), output);
+    SaveWalnutMeshToVTK(visitor.TakePolygons(), output);
 
 #if 1
     auto end = std::chrono::steady_clock::now();
@@ -138,4 +140,6 @@ inline int vtkWalnutBooleanFilter::FillInputPortInformation(int port,
   return 1;
 }
 
-#endif // WALNUT_VISUALIZATIONS_VTK_WALNUT_BOOLEAN_FILTER_H__
+}  // walnut
+
+#endif // WALNUT_VTK_WALNUT_BOOLEAN_FILTER_H__
