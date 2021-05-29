@@ -1403,7 +1403,7 @@ ConvexPolygonSplitRanges ConvexPolygon<EdgeParent>::FindSplitRangesLinear(
 template <typename EdgeParent>
 std::string ConvexPolygon<EdgeParent>::Approximate() const {
   std::ostringstream out;
-  out << "[";
+  out << "[ normal=" << normal() << " ";
   bool first = true;
   for (const auto& edge : edges()) {
     if (!first) out << ", ";

@@ -198,6 +198,9 @@ class HomoPoint3 {
     return !dist_denom_.IsZero();
   }
 
+  HomoPoint3 AddOffset(const Vector3& direction,
+                       const BigInt& direction_denom) const;
+
   // Removes the common factor.
   //
   // After this function returns, the point may be stored in a more efficient
@@ -217,6 +220,14 @@ class HomoPoint3 {
   Vector3 vector_from_origin_;
   BigInt dist_denom_;
 };
+
+inline HomoPoint3 HomoPoint3::AddOffset(const Vector3& direction,
+                                        const BigInt& direction_denom) const {
+  return HomoPoint3(/*x=*/x()*direction_denom + direction.x()*w(),
+                    /*y=*/y()*direction_denom + direction.y()*w(),
+                    /*z=*/z()*direction_denom + direction.z()*w(),
+                    /*w=*/direction_denom*w());
+}
 
 inline int HomoPoint3::CompareComponent(size_t component,
                                         const HomoPoint3& other) const {

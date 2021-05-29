@@ -1,6 +1,8 @@
 #ifndef WALNUT_WALNUT_TO_VTK_MESH_H__
 #define WALNUT_WALNUT_TO_VTK_MESH_H__
 
+// For std::enable_if_t
+#include <type_traits>
 #include <unordered_map>
 
 #include <vtkCellArray.h>
@@ -25,8 +27,13 @@ vtkSmartPointer<vtkPolyData> WalnutToVTKMesh(
   return poly_data;
 }
 
+// Use the VertexDoublePoint3Mapper to accurately convert the vertices to
+// doubles if possible.
+//
+// The VertexDoublePoint3Mapper only works for ConnectedPolygons.
 template<typename Polygon>
-void SaveWalnutMeshToVTK(const std::vector<Polygon>& mesh,
+std::enable_if_t<IsConnectedPolygon<Polygon>::value>
+SaveWalnutMeshToVTK(const std::vector<Polygon>& mesh,
                          vtkPolyData* save_to) {
   static_assert(
       std::is_base_of<typename Polygon::ConnectedPolygonRep,
@@ -72,6 +79,42 @@ void SaveWalnutMeshToVTK(const std::vector<Polygon>& mesh,
     for (size_t i = 0; i < polygon.vertex_count(); ++i) {
       converted_polygon->GetPointIds()->SetId(
           i, *map[polygon.vertex(i).GetDoublePoint3()]);
+    }
+    cell_array->InsertNextCell(converted_polygon);
+  }
+
+  save_to->SetPoints(points);
+  save_to->SetPolys(cell_array);
+}
+
+// Use an unordered_map to convert the vertices to doubles if the polygons are
+// not connected.
+//
+// The downside to calling GetDoublePoint3 directly is that sometimes two
+// different equivalent `HomoPoint3`s will produce different `DoublePoint3`s.
+template<typename Polygon>
+std::enable_if_t<!IsConnectedPolygon<Polygon>::value>
+SaveWalnutMeshToVTK(const std::vector<Polygon>& mesh,
+                         vtkPolyData* save_to) {
+  std::unordered_map<DoublePoint3, vtkIdType> point_map;
+  auto points = vtkSmartPointer<vtkPoints>::New();
+
+  auto cell_array = vtkSmartPointer<vtkCellArray>::New();
+  for (const Polygon& polygon : mesh) {
+    auto converted_polygon = vtkSmartPointer<vtkPolygon>::New();
+    converted_polygon->GetPointIds()->SetNumberOfIds(polygon.vertex_count());
+    for (size_t i = 0; i < polygon.vertex_count(); ++i) {
+      vtkIdType point_id;
+      DoublePoint3 point = polygon.vertex(i).GetDoublePoint3();
+      auto found = point_map.find(point);
+      if (found != point_map.end()) {
+        point_id = found->second;
+      } else {
+        point_id = points->InsertNextPoint(point.x, point.y, point.z);
+        point_map.emplace(point, point_id);
+      }
+
+      converted_polygon->GetPointIds()->SetId(i, point_id);
     }
     cell_array->InsertNextCell(converted_polygon);
   }

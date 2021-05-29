@@ -238,17 +238,38 @@ class ConnectedEdge : public ParentTemplate, public DeedTarget {
   ConnectedEdge* partner_ = nullptr;
 };
 
+// The value field in this class will be set to true if the template parameter,
+// `Polygon` is `ConnectedPolygon` with some combination of template arguments.
 template <typename Polygon>
-struct IsConnectedPolygon {
+struct IsExactlyConnectedPolygon {
   static constexpr bool value = false;
 };
 
 template <typename ParentTemplate, typename FinalPolygonTemplate,
           typename EdgeParentTemplate>
-struct IsConnectedPolygon<ConnectedPolygon<ParentTemplate,
-                                           FinalPolygonTemplate,
-                                           EdgeParentTemplate>> {
+struct IsExactlyConnectedPolygon<ConnectedPolygon<ParentTemplate,
+                                                  FinalPolygonTemplate,
+                                                  EdgeParentTemplate>> {
   static constexpr bool value = true;
+};
+
+// The value field in this class will be set to true if the template parameter,
+// `Polygon` inherits from `ConnectedPolygon` with some combination of template
+// arguments.
+template <typename Polygon>
+struct IsConnectedPolygon {
+ private:
+  template <typename T>
+  static std::false_type Check(...);
+
+  template <typename T>
+  static std::enable_if_t<
+    IsExactlyConnectedPolygon<typename T::ConnectedPolygonRep>::value,
+    std::true_type>
+  Check(int);
+
+ public:
+  static constexpr bool value = decltype(Check<Polygon>(0))::value;
 };
 
 // This convex polygon is part of a doubly connected edge list. In addition to

@@ -45,3 +45,8 @@ add_executable(zig_zag_border zig_zag_border.cpp)
 target_link_libraries(zig_zag_border
                       examples_helper
                       ${GLEW_LIBRARIES} ${VTK_LIBRARIES} )
+
+add_executable(self_intersection self_intersection.cpp)
+target_link_libraries(self_intersection
+                      examples_helper
+                      ${GLEW_LIBRARIES} ${VTK_LIBRARIES} )
