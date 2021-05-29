@@ -1,7 +1,7 @@
 #ifndef WALNUT_CONVEX_POLYGON_SPLIT_INFO_H__
 #define WALNUT_CONVEX_POLYGON_SPLIT_INFO_H__
 
-#include <sstream>
+#include <ostream>
 // for std::pair
 #include <utility>
 
@@ -140,26 +140,11 @@ struct ConvexPolygonSplitInfo {
   HomoPoint3 new_shared_point2;
 };
 
-std::ostream& operator<<(
-    std::ostream& out, const ConvexPolygonSplitRanges& ranges) {
-  out << "neg_range=[" << ranges.neg_range.first
-      << ", " << ranges.neg_range.second << ")";
-  out << ", pos_range=[" << ranges.pos_range.first
-      << ", " << ranges.pos_range.second << ")";
-  return out;
-}
+std::ostream& operator<<(std::ostream& out,
+                         const ConvexPolygonSplitRanges& ranges);
 
-inline std::ostream& operator<<(std::ostream& out,
-                                const ConvexPolygonSplitInfo& info) {
-  out << info.ranges;
-  if (info.has_new_shared_point1) {
-    out << ", new_shared_point1=" << info.new_shared_point1;
-  }
-  if (info.has_new_shared_point2) {
-    out << ", new_shared_point2=" << info.new_shared_point2;
-  }
-  return out;
-}
+std::ostream& operator<<(std::ostream& out,
+                         const ConvexPolygonSplitInfo& info);
 
 }  // walnut
 

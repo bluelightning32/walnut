@@ -82,6 +82,7 @@ set(WALNUT_PUBLIC_HEADERS
     "include/walnut/double_point3.h"
     "include/walnut/edge_info_root.h"
     "include/walnut/edge_line_connector.h"
+    "include/walnut/extrude.h"
     "include/walnut/half_space2.h"
     "include/walnut/half_space2_sideless_compare.h"
     "include/walnut/half_space3.h"
@@ -165,6 +166,7 @@ package_add_test(convex_vertex_aabb_tracker_test test/convex_vertex_aabb_tracker
 package_add_test(deed_test test/deed_test.cpp)
 package_add_test(double_test test/double_test.cpp)
 package_add_test(edge_line_connector_test test/edge_line_connector_test.cpp)
+package_add_test(extrude_test test/extrude_test.cpp)
 package_add_test(half_space2_sideless_compare_test test/half_space2_sideless_compare_test.cpp)
 package_add_test(half_space2_test test/half_space2_test.cpp)
 package_add_test(half_space3_test test/half_space3_test.cpp)
