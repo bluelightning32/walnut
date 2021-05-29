@@ -42,6 +42,8 @@ vtkSmartPointer<vtkGlyph3D> GetNormalsGlyph(
   auto normals = vtkSmartPointer<vtkPolyDataNormals>::New();
   normals->SetInputConnection(shape);
 
+  normals->SplittingOff();
+  normals->ConsistencyOff();
   normals->ComputePointNormalsOff();
   normals->ComputeCellNormalsOn();
 
