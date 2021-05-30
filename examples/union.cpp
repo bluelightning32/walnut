@@ -28,13 +28,38 @@ int main(int argc, char *argv[]) {
   bool_filter->AddInputConnection(cyl->GetOutputPort());
   bool_filter->AddInputConnection(cu2->GetOutputPort());
   bool_filter->SetMinExponent(-8);
-  //bool_filter->SetOperationToIntersection();
-  //bool_filter->SetOperationToDifference();
 
   walnut::VisualizationWindow window;
   auto actor = window.AddShape(bool_filter->GetOutputPort(), 1, 0.8, 0.8, 0.6);
   window.AddWireframe(bool_filter->GetOutputPort());
   window.AddShapeNormals(bool_filter->GetOutputPort(), /*scale=*/1);
+
+  int mode = 0;
+  walnut::ObserverRegistration switch_mode = window.AddKeyPressObserver(
+      [&bool_filter, &cu2, &mode](char key) {
+      if (key == 'm') {
+        ++mode;
+        mode %= 3;
+        switch(mode) {
+        case 0:
+          bool_filter->SetOperationToUnion();
+          break;
+        case 1:
+          // There is no intersection between all 3 objects. So remove the last
+          // one and compute the intersection between the first two.
+          bool_filter->RemoveInputConnection(0, 2);
+          bool_filter->SetOperationToIntersection();
+          break;
+        case 2:
+          // Add back the object that was removed in mode 1.
+          bool_filter->AddInputConnection(cu2->GetOutputPort());
+          bool_filter->SetOperationToDifference();
+          break;
+        }
+        return true;
+      }
+      return false;
+    });
 
   double bounds[6];
   // xmin
