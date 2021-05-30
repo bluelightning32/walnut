@@ -1,6 +1,8 @@
 #ifndef WALNUT_VTK_TO_WALNUT_MESH_H__
 #define WALNUT_VTK_TO_WALNUT_MESH_H__
 
+#include <iterator>
+
 #include <vtkPolyData.h>
 
 #include "walnut/convex_polygon_factory.h"
@@ -51,22 +53,32 @@ std::vector<MutableConvexPolygon<>> VTKToWalnutMesh(vtkPolyData* input,
     const std::vector<HomoPoint3>* converted_points = nullptr;
   } vertex_id_to_homo_point3(converted_points);
 
-  using HomoPoint3Iterator =
-    TransformIterator<const vtkIdType*, VertexIdToHomoPoint3>;
-
   input->GetPolys()->InitTraversal();
   vtkIdType vertex_count;
-  vtkIdType* input_vertices;
+  const vtkIdType* input_vertices;
+  std::vector<vtkIdType> flipped;
   while (input->GetPolys()->GetNextCell(vertex_count, input_vertices)) {
     if (flip) {
-      std::reverse(input_vertices, input_vertices + vertex_count);
-    }
-    polygon_factory.Build(
-        /*begin=*/HomoPoint3Iterator(input_vertices, vertex_id_to_homo_point3),
-        /*end=*/HomoPoint3Iterator(input_vertices + vertex_count,
+      using HomoPoint3Iterator =
+        TransformIterator<std::vector<vtkIdType>::iterator,
+                          VertexIdToHomoPoint3>;
+      flipped.insert(flipped.end(),
+                     std::reverse_iterator<const vtkIdType*>(input_vertices +
+                                                             vertex_count),
+                     std::reverse_iterator<const vtkIdType*>(input_vertices));
+      polygon_factory.Build(
+          /*begin=*/HomoPoint3Iterator(flipped.begin(),
+                                       vertex_id_to_homo_point3),
+          /*end=*/HomoPoint3Iterator(flipped.end(), vertex_id_to_homo_point3));
+      flipped.clear();
+    } else {
+      using HomoPoint3Iterator =
+        TransformIterator<const vtkIdType*, VertexIdToHomoPoint3>;
+      polygon_factory.Build(
+          /*begin=*/HomoPoint3Iterator(input_vertices,
+                                       vertex_id_to_homo_point3),
+          /*end=*/HomoPoint3Iterator(input_vertices + vertex_count,
                                    vertex_id_to_homo_point3));
-    if (flip) {
-      std::reverse(input_vertices, input_vertices + vertex_count);
     }
   }
 

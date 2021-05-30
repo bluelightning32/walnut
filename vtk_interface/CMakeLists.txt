@@ -31,7 +31,7 @@ include_directories(${CMAKE_SOURCE_DIR}/vtk_interface/include)
 
 add_library(walnut_vtk STATIC
             src/vtkWalnutBooleanFilter.cpp)
-target_link_libraries(walnut_vtk walnut)
+target_link_libraries(walnut_vtk walnut ${VTK_LIBRARIES})
 
 set(WALNUT_VTK_PUBLIC_HEADERS
     "include/walnut/vtkWalnutBooleanFilter.h"

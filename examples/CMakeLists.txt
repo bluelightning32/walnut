@@ -12,11 +12,13 @@ find_package(VTK REQUIRED COMPONENTS
     vtkFiltersHybrid
     vtkFiltersModeling
     vtkFiltersSources
+    vtkImagingOpenGL2
     vtkInteractionStyle
     vtkIOGeometry
     vtkIOImage
     vtkIOPLY
     vtkIOXML
+    vtkRenderingAnnotation
     vtkRenderingCore
     vtkRenderingFreeType
     vtkRenderingOpenGL2
