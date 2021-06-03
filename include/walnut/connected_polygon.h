@@ -1,7 +1,6 @@
 #ifndef WALNUT_CONNECTED_POLYGON_H__
 #define WALNUT_CONNECTED_POLYGON_H__
 
-#include "gtest/gtest_prod.h"
 #include "walnut/convex_polygon.h"
 #include "walnut/deed.h"
 
@@ -222,10 +221,13 @@ class ConnectedEdge : public ParentTemplate, public DeedTarget {
   template <typename EdgeTemplate>
   friend class EdgeLineConnector;
 
+// defined in gtest_prod.h
+#ifdef FRIEND_TEST
   FRIEND_TEST(ConnectedEdge, MoveAssign);
   FRIEND_TEST(ConnectedEdge, MoveConstruct);
   FRIEND_TEST(ConnectedPolygon, SplitEdge);
   FRIEND_TEST(ConnectedPolygon, Merge);
+#endif
 
   void ResetPartners() {
     partner_ = nullptr;

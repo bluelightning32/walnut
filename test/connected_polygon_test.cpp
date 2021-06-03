@@ -1,3 +1,5 @@
+// Include gtest_prod first so that connected_polygon.h uses FRIEND_TEST
+#include "gtest/gtest_prod.h"
 #include "walnut/connected_polygon.h"
 
 #include <vector>

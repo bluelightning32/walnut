@@ -4,6 +4,8 @@
 // For std::min
 #include <algorithm>
 #include <cassert>
+// For offsetof
+#include <cstddef>
 #include <cstdlib>
 
 #include "walnut/big_uint_word.h"
