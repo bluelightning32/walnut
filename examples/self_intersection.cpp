@@ -35,7 +35,13 @@ int main(int argc, char *argv[]) {
   walnut::ConnectingVisitor<walnut::PolygonFilter> visitor(filter, error_log);
   tree.Traverse(visitor);
   visitor.FilterEmptyPolygons();
-  auto filtered_mesh = WalnutToVTKMesh(visitor.TakePolygons());
+  auto positive_mesh = WalnutToVTKMesh(visitor.TakePolygons());
+
+  walnut::OddPolygonFilter odd_filter(id);
+  walnut::CollectorVisitor<walnut::BSPPolygon<>,
+                           walnut::OddPolygonFilter> odd_visitor(odd_filter);
+  tree.Traverse(odd_visitor);
+  auto even_odd_mesh = WalnutToVTKMesh(odd_visitor.polygons());
 
   auto cleaner = vtkSmartPointer<vtkCleanPolyData>::New();
   auto converted_mesh = WalnutToVTKMesh(walnut_mesh);
@@ -47,15 +53,22 @@ int main(int argc, char *argv[]) {
   window.AddWireframe(cleaner->GetOutputPort());
   window.AddShapeNormals(cleaner->GetOutputPort(), /*scale=*/1);
 
-  bool use_filtered = false;
+  int mode = 0;
   walnut::ObserverRegistration switch_mode = window.AddKeyPressObserver(
-      [&use_filtered, &cleaner, &filtered_mesh, &converted_mesh](char key) {
-      if (key == 'f') {
-        use_filtered ^= true;
-        if (use_filtered) {
-          cleaner->SetInputData(filtered_mesh);
-        } else {
+      [&](char key) {
+      if (key == 'm') {
+        ++mode;
+        mode %= 3;
+        switch (mode) {
+        case 0:
           cleaner->SetInputData(converted_mesh);
+          break;
+        case 1:
+          cleaner->SetInputData(even_odd_mesh);
+          break;
+        case 2:
+          cleaner->SetInputData(positive_mesh);
+          break;
         }
         return true;
       }
@@ -66,11 +79,11 @@ int main(int argc, char *argv[]) {
   // xmin
   bounds[0] = 0;
   // xmax
-  bounds[1] = 6;
+  bounds[1] = 5;
   // ymin
   bounds[2] = 0;
   // ymax
-  bounds[3] = 6;
+  bounds[3] = 3;
   // zmin
   bounds[4] = 0;
   // zmax
