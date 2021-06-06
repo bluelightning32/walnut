@@ -94,8 +94,7 @@ SaveWalnutMeshToVTK(const std::vector<Polygon>& mesh,
 // different equivalent `HomoPoint3`s will produce different `DoublePoint3`s.
 template<typename Polygon>
 std::enable_if_t<!IsConnectedPolygon<Polygon>::value>
-SaveWalnutMeshToVTK(const std::vector<Polygon>& mesh,
-                         vtkPolyData* save_to) {
+SaveWalnutMeshToVTK(const std::vector<Polygon>& mesh, vtkPolyData* save_to) {
   std::unordered_map<DoublePoint3, vtkIdType> point_map;
   auto points = vtkSmartPointer<vtkPoints>::New();
 

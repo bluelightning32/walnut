@@ -7,12 +7,22 @@ namespace walnut {
 
 struct NormalsActor {
  public:
+  NormalsActor() = default;
+
   NormalsActor(VisualizationWindow& window, vtkAlgorithmOutput* shape,
                double scale=3, bool start3d = false);
 
+  NormalsActor& operator=(NormalsActor&& other);
+
+  void SetVisibility(bool visible);
+  void SetColor(double r, double g, double b);
+
+  bool use_3d = true;
+  bool visible = true;
   vtkSmartPointer<vtkActor> actor_2d;
   vtkSmartPointer<vtkActor> actor_3d;
 
+  VisualizationWindow* window = nullptr;
   ObserverRegistration switch_mode;
 };
 

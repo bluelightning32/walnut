@@ -11,6 +11,7 @@ find_package(VTK REQUIRED COMPONENTS
     vtkFiltersGeneral
     vtkFiltersHybrid
     vtkFiltersModeling
+    vtkFiltersParallel
     vtkFiltersSources
     vtkImagingOpenGL2
     vtkInteractionStyle
@@ -55,5 +56,10 @@ target_link_libraries(self_intersection
 
 add_executable(redundant_faces redundant_faces.cpp)
 target_link_libraries(redundant_faces
+                      examples_helper
+                      ${GLEW_LIBRARIES} ${VTK_LIBRARIES} )
+
+add_executable(cube_tree cube_tree.cpp)
+target_link_libraries(cube_tree
                       examples_helper
                       ${GLEW_LIBRARIES} ${VTK_LIBRARIES} )

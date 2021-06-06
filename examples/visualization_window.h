@@ -21,20 +21,19 @@ class VisualizationWindow {
  public:
   VisualizationWindow();
 
-  vtkSmartPointer<vtkActor> AddShape(vtkSmartPointer<vtkPolyData> shape,
+  vtkSmartPointer<vtkActor> AddShape(vtkPolyData* shape,
                                      double r, double g, double b, double a);
 
-  vtkSmartPointer<vtkActor> AddShape(vtkSmartPointer<vtkAlgorithmOutput> shape,
+  vtkSmartPointer<vtkActor> AddShape(vtkAlgorithmOutput* shape,
                                      double r, double g, double b, double a);
 
   // Call `GetProperty()->SetColor` on the result to change the color.
-  vtkSmartPointer<vtkActor> AddWireframe(
-      vtkSmartPointer<vtkAlgorithmOutput> shape);
+  vtkSmartPointer<vtkActor> AddWireframe(vtkAlgorithmOutput* shape);
 
   // Call `GetProperty()->SetColor` on the result to change the color.
-  vtkSmartPointer<vtkActor> AddShapeNormals(
-      vtkSmartPointer<vtkAlgorithmOutput> shape, double scale=3,
-      bool normals3d=true);
+  vtkSmartPointer<vtkActor> AddShapeNormals(vtkAlgorithmOutput* shape,
+                                            double scale=3,
+                                            bool normals3d=true);
 
   // Call `GetBounds` on a previously added actor to get the bounds.
   vtkSmartPointer<vtkCubeAxesActor> Axes(double content_bounds[6],
@@ -59,6 +58,13 @@ class VisualizationWindow {
   // The function should return true if the window needs to be re-rendered, or
   // false if the keypress was ignored.
   ObserverRegistration AddKeyPressObserver(std::function<bool(char)> observer);
+
+  // Adds an observer that is notified of key presses.
+  //
+  // The function should return true if the window needs to be re-rendered, or
+  // false if the keypress was ignored.
+  ObserverRegistration AddKeyPressObserver(
+      std::function<bool(const char*)> observer);
 
   void Redraw();
 

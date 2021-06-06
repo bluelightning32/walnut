@@ -85,12 +85,22 @@ class BSPTree {
   GetNodeBorder(Iterator node_path_begin, Iterator node_path_end,
                 const AABB& bounding_box) const;
 
+  template<typename Iterator>
+  std::vector<MutableConvexPolygon<>>
+  GetNodeBorderNoBoundWalls(Iterator node_path_begin, Iterator node_path_end,
+                            const AABB& bounding_box) const;
+
   BSPContentId AllocateId() {
     return next_id_++;
   }
 
   BSPContentId next_id() const {
     return next_id_;
+  }
+
+  void Reset() {
+    next_id_ = 0;
+    root.Reset();
   }
 
   BSPNodeRep root;
@@ -165,6 +175,56 @@ BSPTree<ConvexPolygonTemplate>::GetNodeBorder(Iterator node_path_begin,
                               (*it)->split());
   }
   return visitor.TakePolygons();
+}
+
+template <typename ConvexPolygonTemplate>
+template <typename Iterator>
+std::vector<MutableConvexPolygon<>>
+BSPTree<ConvexPolygonTemplate>::GetNodeBorderNoBoundWalls(
+    Iterator node_path_begin, Iterator node_path_end,
+    const AABB& bounding_box) const {
+  BSPNodeRep mapped_root;
+  const BSPNodeRep* original_node = &root;
+  // Add the split partitions from the node_path of from the original root into
+  // mapped_root.
+  for (Iterator pos = node_path_begin; pos != node_path_end; ++pos) {
+    if (*pos) {
+      mapped_root.AddRootContent(
+          /*id=*/0, bounding_box.IntersectPlane(-original_node->split()));
+      assert(mapped_root.contents().back().vertex_count() > 0);
+      original_node = original_node->positive_child();
+    } else {
+      mapped_root.AddRootContent(
+          /*id=*/0, bounding_box.IntersectPlane(original_node->split()));
+      assert(mapped_root.contents().back().vertex_count() > 0);
+      original_node = original_node->negative_child();
+    }
+  }
+
+  // Split the mapped_root the same way as the original root along the node
+  // path.
+  original_node = &root;
+  BSPNodeRep* mapped_pos = &mapped_root;
+  for (Iterator pos = node_path_begin; pos != node_path_end; ++pos) {
+    mapped_pos->Split(original_node->split());
+    BSPNodeRep* mapped_child;
+    if (*pos) {
+      original_node = original_node->positive_child();
+      mapped_child = mapped_pos->positive_child();
+    } else {
+      original_node = original_node->negative_child();
+      mapped_child = mapped_pos->negative_child();
+    }
+    mapped_pos = mapped_child;
+  }
+
+  std::vector<MutableConvexPolygon<>> result;
+  result.insert(result.end(), mapped_pos->border_contents().begin(),
+                mapped_pos->border_contents().end());
+  result.insert(result.end(), mapped_pos->contents().begin(),
+                mapped_pos->contents().end());
+
+  return result;
 }
 
 }  // walnut

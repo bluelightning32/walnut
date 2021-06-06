@@ -156,6 +156,7 @@ template <typename PolygonRep, typename FilterTemplate>
 class CollectorVisitor : public BSPVisitor<PolygonRep> {
  public:
   using Filter = FilterTemplate;
+  using Parent = BSPVisitor<PolygonRep>;
 
   explicit CollectorVisitor(Filter filter) : filter_(std::move(filter)) { }
 
@@ -201,6 +202,8 @@ class CollectorVisitor : public BSPVisitor<PolygonRep> {
     }
     polygons_.push_back(std::move(polygon));
   }
+
+  using Parent::Accept;
 
   void EnterInteriorNode(bool from_partitioner,
                          const HalfSpace3& split) override {

@@ -102,7 +102,7 @@ void VisualizationWindow::UseTopDownView() {
 }
 
 vtkSmartPointer<vtkActor> VisualizationWindow::AddShape(
-    vtkSmartPointer<vtkPolyData> shape, double r, double g, double b,
+    vtkPolyData* shape, double r, double g, double b,
     double a) {
   auto mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   mapper->SetInputConnection(Color(shape, r, g, b, a)->GetOutputPort());
@@ -119,7 +119,7 @@ vtkSmartPointer<vtkActor> VisualizationWindow::AddShape(
 }
 
 vtkSmartPointer<vtkActor> VisualizationWindow::AddShape(
-    vtkSmartPointer<vtkAlgorithmOutput> shape, double r, double g, double b,
+    vtkAlgorithmOutput* shape, double r, double g, double b,
     double a) {
   auto mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   mapper->SetInputConnection(Color(shape, r, g, b, a)->GetOutputPort());
@@ -136,7 +136,7 @@ vtkSmartPointer<vtkActor> VisualizationWindow::AddShape(
 }
 
 vtkSmartPointer<vtkActor> VisualizationWindow::AddWireframe(
-    vtkSmartPointer<vtkAlgorithmOutput> shape) {
+    vtkAlgorithmOutput* shape) {
   auto wireframe_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   wireframe_mapper->SetInputConnection(shape);
 
@@ -153,7 +153,7 @@ vtkSmartPointer<vtkActor> VisualizationWindow::AddWireframe(
 }
 
 vtkSmartPointer<vtkActor> VisualizationWindow::AddShapeNormals(
-    vtkSmartPointer<vtkAlgorithmOutput> shape, double scale, bool normals3d) {
+    vtkAlgorithmOutput* shape, double scale, bool normals3d) {
   auto mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
   mapper->SetInputConnection(
       GetNormalsGlyph(shape, scale, normals3d)->GetOutputPort());
@@ -263,6 +263,21 @@ ObserverRegistration VisualizationWindow::AddKeyPressObserver(
     walnut::MakeFunctionCommand([interactor = interactor_, observer](
           vtkObject* caller, unsigned long event_id, void* data) {
         if (observer(interactor->GetKeyCode())) {
+          interactor->Render();
+        }
+      });
+
+  return ObserverRegistration(
+      interactor_,
+      interactor_->AddObserver(vtkCommand::KeyPressEvent, command));
+}
+
+ObserverRegistration VisualizationWindow::AddKeyPressObserver(
+    std::function<bool(const char*)> observer) {
+  vtkSmartPointer<walnut::FunctionCommand> command =
+    walnut::MakeFunctionCommand([interactor = interactor_, observer](
+          vtkObject* caller, unsigned long event_id, void* data) {
+        if (observer(interactor->GetKeySym())) {
           interactor->Render();
         }
       });
