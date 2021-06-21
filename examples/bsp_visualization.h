@@ -32,39 +32,25 @@ class BSPVisualization {
               return KeyPressed(key);
             })) {
     UpdateShapes();
-    negative_child_actor_ = window.AddShape(
-        negative_child_filter_->GetOutputPort(), /*r=*/1.0, /*g=*/1.0,
-        /*b=*/0.0, /*a=*/0.2);
+    border_actor_ = window.AddShape(border_filter->GetOutputPort(), /*r=*/1.0,
+                                    /*g=*/1.0, /*b=*/0.0, /*a=*/0.2);
     split_actor_ = window.AddShape(
         split_filter_->GetOutputPort(), /*r=*/0.5, /*g=*/1.0,
         /*b=*/0.0, /*a=*/0.4);
-    positive_child_actor_ = window.AddShape(
-        positive_child_filter_->GetOutputPort(), /*r=*/1.0, /*g=*/1.0,
-        /*b=*/0.0, /*a=*/0.2);
 
-    negative_child_wireframe_ = window.AddWireframe(
-        negative_child_filter_->GetOutputPort());
-    negative_child_wireframe_->GetProperty()->SetColor(/*r=*/1.0, /*g=*/1.0,
-                                                       /*b=*/0.0);
+    border_wireframe_ = window.AddWireframe(border_filter->GetOutputPort());
+    border_wireframe_->GetProperty()->SetColor(/*r=*/1.0, /*g=*/1.0,
+                                               /*b=*/0.0);
     split_wireframe_ = window.AddWireframe(split_filter_->GetOutputPort());
     split_wireframe_->GetProperty()->SetColor(/*r=*/0.8, /*g=*/1.0, /*b=*/0.0);
-    positive_child_wireframe_ = window.AddWireframe(
-        positive_child_filter_->GetOutputPort());
-    positive_child_wireframe_->GetProperty()->SetColor(/*r=*/1.0, /*g=*/1.0,
-                                                       /*b=*/0.0);
 
-    negative_child_normals_ = NormalsActor(
-        window, negative_child_filter_->GetOutputPort(), /*scale=*/3,
-        /*start3d=*/true);
-    negative_child_normals_.SetColor(/*r=*/1.0, /*g=*/1.0, /*b=*/0.0);
+    border_normals_ = NormalsActor(window, border_filter->GetOutputPort(),
+                                   /*scale=*/3, /*start3d=*/true);
+    border_normals_.SetColor(/*r=*/1.0, /*g=*/1.0, /*b=*/0.0);
     split_normals_ = NormalsActor(
         window, split_filter_->GetOutputPort(), /*scale=*/3,
         /*start3d=*/true);
     split_normals_.SetColor(/*r=*/0.8, /*g=*/1.0, /*b=*/0.0);
-    positive_child_normals_ = NormalsActor(
-        window, positive_child_filter_->GetOutputPort(), /*scale=*/3,
-        /*start3d=*/true);
-    positive_child_normals_.SetColor(/*r=*/1.0, /*g=*/1.0, /*b=*/0.0);
 
     UpdateActorVisibility();
   }
@@ -233,57 +219,35 @@ class BSPVisualization {
   }
 
   void UpdateShapes() {
+    std::vector<bool> child_path(chosen_branches_);
+    vtkSmartPointer<vtkPolyData> border =
+      WalnutToVTKMesh(
+          original_tree_.GetNodeBorderNoBoundWalls(child_path.begin(),
+                                                   child_path.end(),
+                                                   bounding_box_));
+    border_filter->SetInputDataObject(border);
+
     if (original_pos_->IsLeaf()) {
-      std::vector<bool> child_path(chosen_branches_);
-      vtkSmartPointer<vtkPolyData> shape =
-        WalnutToVTKMesh(
-            original_tree_.GetNodeBorderNoBoundWalls(child_path.begin(),
-                                                     child_path.end(),
-                                                     bounding_box_));
-      // Only the negative child will be shown, but apply the shape to the
-      // other two filters too so that the actors do not print warnings.
-      negative_child_filter_->SetInputDataObject(shape);
-      split_filter_->SetInputDataObject(shape);
-      positive_child_filter_->SetInputDataObject(shape);
+      // The split actor will not be shown, but set its input to the border
+      // anyway so that it doesn't print warnings about not having any inputs.
+      split_filter_->SetInputDataObject(border);
     } else {
-      std::vector<bool> child_path(chosen_branches_);
-      child_path.push_back(false);
+      std::vector<bool> neg_child_path(chosen_branches_);
+      neg_child_path.push_back(false);
       std::vector<MutableConvexPolygon<>> split_wall;
       std::vector<MutableConvexPolygon<>> negative_child_walls =
-        original_tree_.GetNodeBorderNoBoundWalls(child_path.begin(),
-                                                 child_path.end(),
-                                                 bounding_box_);
-      child_path.pop_back();
-      child_path.push_back(true);
-      std::vector<MutableConvexPolygon<>> positive_child_walls =
-        original_tree_.GetNodeBorderNoBoundWalls(child_path.begin(),
-                                                 child_path.end(),
+        original_tree_.GetNodeBorderNoBoundWalls(neg_child_path.begin(),
+                                                 neg_child_path.end(),
                                                  bounding_box_);
 
       // Move the split wall out of negative_child_walls into split_wall.
-      // Remove the split wall from positive_child_walls.
-      auto split_it = std::partition(
-          negative_child_walls.begin(), negative_child_walls.end(),
-          [this](MutableConvexPolygon<>& wall) {
-            return wall.plane() != original_pos_->split();
-          });
-      assert(split_it + 1 == negative_child_walls.end());
-      split_wall.push_back(std::move(*split_it));
-      negative_child_walls.pop_back();
-      HalfSpace3 neg_split = -original_pos_->split();
-      split_it = std::partition(
-          positive_child_walls.begin(), positive_child_walls.end(),
-          [&neg_split](MutableConvexPolygon<>& wall) {
-            return wall.plane() != neg_split;
-          });
-      assert(split_it + 1 == positive_child_walls.end());
-      positive_child_walls.pop_back();
-
-      negative_child_filter_->SetInputDataObject(
-          WalnutToVTKMesh(negative_child_walls));
+      for (MutableConvexPolygon<>& wall : negative_child_walls) {
+        if (wall.plane() == original_pos_->split()) {
+          split_wall.push_back(std::move(wall));
+        }
+      }
+      assert(split_wall.size() == 1);
       split_filter_->SetInputDataObject(WalnutToVTKMesh(split_wall));
-      positive_child_filter_->SetInputDataObject(
-          WalnutToVTKMesh(positive_child_walls));
     }
 
     std::map<BSPContentId, BuildingContentInfo> content_map;
@@ -312,9 +276,6 @@ class BSPVisualization {
     split_actor_->SetVisibility(!original_pos_->IsLeaf());
     split_wireframe_->SetVisibility(!original_pos_->IsLeaf());
     split_normals_.SetVisibility(!original_pos_->IsLeaf());
-    positive_child_actor_->SetVisibility(!original_pos_->IsLeaf());
-    positive_child_wireframe_->SetVisibility(!original_pos_->IsLeaf());
-    positive_child_normals_.SetVisibility(!original_pos_->IsLeaf());
   }
 
   ContentInfo& GetContentInfo(BSPContentId id) {
@@ -420,20 +381,16 @@ class BSPVisualization {
 
   std::map<BSPContentId, ContentInfo> contents_;
 
-  vtkNew<vtkPassThroughFilter> negative_child_filter_;
+  vtkNew<vtkPassThroughFilter> border_filter;
   vtkNew<vtkPassThroughFilter> split_filter_;
-  vtkNew<vtkPassThroughFilter> positive_child_filter_;
-  vtkSmartPointer<vtkActor> negative_child_actor_;
+  vtkSmartPointer<vtkActor> border_actor_;
   vtkSmartPointer<vtkActor> split_actor_;
-  vtkSmartPointer<vtkActor> positive_child_actor_;
 
-  vtkSmartPointer<vtkActor> negative_child_wireframe_;
+  vtkSmartPointer<vtkActor> border_wireframe_;
   vtkSmartPointer<vtkActor> split_wireframe_;
-  vtkSmartPointer<vtkActor> positive_child_wireframe_;
 
-  NormalsActor negative_child_normals_;
+  NormalsActor border_normals_;
   NormalsActor split_normals_;
-  NormalsActor positive_child_normals_;
 
   ObserverRegistration key_press_listener;
 };
