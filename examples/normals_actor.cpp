@@ -27,6 +27,29 @@ NormalsActor::NormalsActor(VisualizationWindow& window,
     });
 }
 
+NormalsActor::NormalsActor(VisualizationWindow& window,
+                           vtkPolyData* arrow_data,
+                           double scale, bool start3d)
+    : use_3d(start3d), window(&window) {
+  actor_2d = window.AddPointArrows(arrow_data, /*scale=*/scale,
+                                   /*normals3d=*/false);
+  actor_3d = window.AddPointArrows(arrow_data, /*scale=*/scale,
+                                   /*normals3d=*/true);
+
+  actor_2d->SetVisibility(visible && !use_3d);
+  actor_3d->SetVisibility(visible && use_3d);
+  switch_mode = window.AddKeyPressObserver(
+      [this](char key) {
+      if (key == 'n') {
+        use_3d ^= true;
+        actor_2d->SetVisibility(visible && !use_3d);
+        actor_3d->SetVisibility(visible && use_3d);
+        return true;
+      }
+      return false;
+    });
+}
+
 NormalsActor& NormalsActor::operator=(NormalsActor&& other) {
   use_3d = other.use_3d;
   visible = other.visible;

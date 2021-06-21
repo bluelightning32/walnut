@@ -72,8 +72,8 @@ int main(int argc, char *argv[]) {
 
   walnut::VisualizationWindow window;
   walnut::BSPVisualization tree_visualization(window,
-                                              walnut::AABB(-30, -30, -30, 30,
-                                                           30, 30, 1),
+                                              walnut::AABB(-29, -29, -70, 29,
+                                                           29, 70, 1),
                                               tree);
   tree_visualization.AddContent(id, walnut_mesh);
 
@@ -91,6 +91,8 @@ int main(int argc, char *argv[]) {
   // zmax
   bounds[5] = 12;
   window.Axes(bounds, /*padding=*/0);
+
+  window.UseTopDownView(bounds);
   window.Run();
 
   return 0;

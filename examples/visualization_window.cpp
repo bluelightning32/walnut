@@ -90,15 +90,34 @@ VisualizationWindow::VisualizationWindow() :
   auto interactor_style = vtkSmartPointer<vtkInteractorStyleSwitch>::New();
   interactor_style->SetCurrentStyleToTrackballCamera();
   interactor_->SetInteractorStyle(interactor_style);
+
+  switch_projection_ = AddKeyPressObserver(
+      [this](char key) {
+      if (key == 'p') {
+        bool parallel_mode =
+          renderer_->GetActiveCamera()->GetParallelProjection();
+        renderer_->GetActiveCamera()->SetParallelProjection(!parallel_mode);
+        return true;
+      }
+      return false;
+    });
 }
 
 void VisualizationWindow::UseTopDownView() {
+  double bounds[6] = {-1, 1, -1, 1, -1, 1};
+  UseTopDownView(bounds);
+  renderer_->ResetCamera();
+  Zoom(1.2);
+}
+
+void VisualizationWindow::UseTopDownView(double bounds[6]) {
   renderer_->GetActiveCamera()->ParallelProjectionOn();
   renderer_->GetActiveCamera()->SetFocalPoint(0, 0, 0);
   renderer_->GetActiveCamera()->SetPosition(0, 0, 10);
   renderer_->GetActiveCamera()->SetViewUp(0, 1, 0);
-  renderer_->ResetCamera();
+  renderer_->ResetCamera(bounds);
   Zoom(1.2);
+  renderer_->GetActiveCamera()->SetClippingRange(0.1, 1000);
 }
 
 vtkSmartPointer<vtkActor> VisualizationWindow::AddShape(

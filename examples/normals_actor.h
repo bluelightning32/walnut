@@ -9,7 +9,14 @@ struct NormalsActor {
  public:
   NormalsActor() = default;
 
+  NormalsActor(NormalsActor&& other) {
+    *this = std::move(other);
+  }
+
   NormalsActor(VisualizationWindow& window, vtkAlgorithmOutput* shape,
+               double scale=3, bool start3d = false);
+
+  NormalsActor(VisualizationWindow& window, vtkPolyData* arrow_data,
                double scale=3, bool start3d = false);
 
   NormalsActor& operator=(NormalsActor&& other);

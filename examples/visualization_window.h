@@ -53,6 +53,7 @@ class VisualizationWindow {
   // Also switches the camera to use an orthogonal projection instead of a
   // perspective view.
   void UseTopDownView();
+  void UseTopDownView(double bounds[6]);
 
   void Zoom(double factor);
 
@@ -77,6 +78,8 @@ class VisualizationWindow {
   vtkSmartPointer<vtkRenderer> renderer_;
   vtkSmartPointer<vtkRenderWindow> render_window_;
   vtkSmartPointer<vtkRenderWindowInteractor> interactor_;
+
+  ObserverRegistration switch_projection_;
 };
 
 } // walnut

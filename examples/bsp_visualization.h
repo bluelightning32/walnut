@@ -151,8 +151,9 @@ class BSPVisualization {
 
  private:
   struct ContentInfo {
-    ContentInfo(VisualizationWindow& window, double r, double g, double b,
-                double a) {
+    ContentInfo(VisualizationWindow& window, bool start3d, double r, double g,
+                double b, double a)
+        : coincident_arrows(window, coincident_data, /*scale=*/3, start3d) {
       filter->SetInputDataObject(WalnutToVTKMesh(
             std::vector<MutableConvexPolygon<>>{}));
       actor = window.AddShape(filter->GetOutputPort(), r, g, b, a);
@@ -171,8 +172,7 @@ class BSPVisualization {
       coincident_data->SetPoints(coincident_points);
       coincident_data->GetPointData()->SetVectors(coincident_normals);
 
-      coincident_arrows = window.AddPointArrows(coincident_data);
-      coincident_arrows->GetProperty()->SetColor(r / 2, g / 2, b / 2);
+      coincident_arrows.SetColor(r / 2, g / 2, b / 2);
     }
 
     std::vector<const ConvexPolygon<>*> polygons;
@@ -185,11 +185,14 @@ class BSPVisualization {
     // Arrows for the normals of `vertex_last_coincident` and
     // `edge_last_coincident` of the polygons inside the tree.
     vtkNew<vtkPolyData> coincident_data;
-    vtkSmartPointer<vtkActor> coincident_arrows;
+    NormalsActor coincident_arrows;
   };
 
   struct BuildingContentInfo {
-    BuildingContentInfo() = default;
+    BuildingContentInfo() {
+      coincident_normals->SetName("coincident_normals");
+      coincident_normals->SetNumberOfComponents(3);
+    }
 
     BuildingContentInfo(vtkPoints* points) : edges(MakeEdges(points)) {
       coincident_normals->SetName("coincident_normals");
@@ -311,12 +314,11 @@ class BSPVisualization {
     size_t color_id = std::min(static_cast<size_t>(id),
                                static_cast<size_t>(2));
 
-    auto inserted = contents_.emplace(id,
-                                      ContentInfo(window_,
-                                                  /*r=*/colors[color_id][0],
-                                                  /*g=*/colors[color_id][1],
-                                                  /*b=*/colors[color_id][2],
-                                                  /*a=*/colors[color_id][3]));
+    auto inserted = contents_.emplace(
+        id,
+        ContentInfo(window_, /*start3d=*/border_normals_.use_3d,
+                    /*r=*/colors[color_id][0], /*g=*/colors[color_id][1],
+                    /*b=*/colors[color_id][2], /*a=*/colors[color_id][3]));
     assert(inserted.second);
     return inserted.first->second;
   }
