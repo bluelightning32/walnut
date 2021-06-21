@@ -52,6 +52,13 @@ class BSPVisualization {
         /*start3d=*/true);
     split_normals_.SetColor(/*r=*/0.8, /*g=*/1.0, /*b=*/0.0);
 
+    split_intersect_line_filter_->SetInputDataObject(WalnutToVTKMesh(
+          std::vector<MutableConvexPolygon<>>{}));
+    split_intersect_line_actor_ = window.AddShape(
+        split_intersect_line_filter_->GetOutputPort(), /*r=*/0.8, /*g=*/1.0,
+        /*b=*/0.0, /*a=*/1.0);
+    split_intersect_line_actor_->GetProperty()->SetLineWidth(7);
+
     UpdateActorVisibility();
   }
 
@@ -227,6 +234,13 @@ class BSPVisualization {
                                                    bounding_box_));
     border_filter->SetInputDataObject(border);
 
+    std::unordered_map<DoublePoint3, vtkIdType> point_map;
+    vtkNew<vtkPoints> points;
+
+    vtkNew<vtkPolyData> split_lines;
+    split_lines->SetLines(vtkSmartPointer<vtkCellArray>::New());
+    split_lines->SetPoints(points);
+
     if (original_pos_->IsLeaf()) {
       // The split actor will not be shown, but set its input to the border
       // anyway so that it doesn't print warnings about not having any inputs.
@@ -248,11 +262,17 @@ class BSPVisualization {
       }
       assert(split_wall.size() == 1);
       split_filter_->SetInputDataObject(WalnutToVTKMesh(split_wall));
+
+      for (const BSPNodeRep::PolygonRep& polygon : pos_->contents()) {
+        AddSplitOutline(polygon, point_map, points, split_lines);
+      }
+      for (const BSPNodeRep::PolygonRep& polygon : pos_->border_contents()) {
+        AddSplitOutline(polygon, point_map, points, split_lines);
+      }
+      split_intersect_line_filter_->SetInputDataObject(split_lines);
     }
 
     std::map<BSPContentId, BuildingContentInfo> content_map;
-    std::unordered_map<DoublePoint3, vtkIdType> point_map;
-    vtkNew<vtkPoints> points;
     for (const BSPNodeRep::PolygonRep& polygon : pos_->contents()) {
       AddCoincidentEdges(polygon, point_map, points, content_map);
     }
@@ -276,6 +296,7 @@ class BSPVisualization {
     split_actor_->SetVisibility(!original_pos_->IsLeaf());
     split_wireframe_->SetVisibility(!original_pos_->IsLeaf());
     split_normals_.SetVisibility(!original_pos_->IsLeaf());
+    split_intersect_line_actor_->SetVisibility(!original_pos_->IsLeaf());
   }
 
   ContentInfo& GetContentInfo(BSPContentId id) {
@@ -368,6 +389,30 @@ class BSPVisualization {
     }
   }
 
+  void AddSplitOutline(const BSPNodeRep::PolygonRep& polygon,
+                       std::unordered_map<DoublePoint3, vtkIdType> point_map,
+                       vtkPoints* points, vtkPolyData* split_lines) {
+    assert(!original_pos_->IsLeaf());
+
+    ConvexPolygonSplitInfo split_info =
+      polygon.GetSplitInfo(original_pos_->split());
+    if (split_info.ShouldEmitNegativeChild() &&
+        split_info.ShouldEmitPositiveChild()) {
+      const HomoPoint3& start = split_info.has_new_shared_point1 ?
+        split_info.new_shared_point1 :
+        polygon.vertex(split_info.pos_range().second % polygon.vertex_count());
+      const HomoPoint3& end = split_info.has_new_shared_point2 ?
+        split_info.new_shared_point2 :
+        polygon.vertex(split_info.neg_range().second % polygon.vertex_count());
+
+      vtkIdType endpoints[2] = {
+        MapPoint(start.GetDoublePoint3(), point_map, points),
+        MapPoint(end.GetDoublePoint3(), point_map, points)
+      };
+      split_lines->GetLines()->InsertNextCell(2, endpoints);
+    }
+  }
+
   VisualizationWindow& window_;
   AABB bounding_box_;
 
@@ -388,6 +433,11 @@ class BSPVisualization {
 
   vtkSmartPointer<vtkActor> border_wireframe_;
   vtkSmartPointer<vtkActor> split_wireframe_;
+
+  // Outline of where the split plane intersects with the content of the
+  // current node.
+  vtkNew<vtkPassThroughFilter> split_intersect_line_filter_;
+  vtkSmartPointer<vtkActor> split_intersect_line_actor_;
 
   NormalsActor border_normals_;
   NormalsActor split_normals_;
