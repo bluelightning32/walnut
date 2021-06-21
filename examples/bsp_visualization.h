@@ -176,6 +176,11 @@ class BSPVisualization {
     vtkSmartPointer<vtkActor> line_actor;
   };
 
+  struct BuildingContentInfo {
+    std::vector<MutableConvexPolygon<>> facets;
+    vtkNew<vtkPolyData> edges;
+  };
+
   bool KeyPressed(const char* key) {
     if (!std::strcmp(key, "Up")) {
       Up();
@@ -244,24 +249,21 @@ class BSPVisualization {
           WalnutToVTKMesh(positive_child_walls));
     }
 
-    std::map<BSPContentId, std::vector<MutableConvexPolygon<>>> content_map;
-    std::map<BSPContentId, vtkNew<vtkPolyData>> edge_map;
+    std::map<BSPContentId, BuildingContentInfo> content_map;
     std::unordered_map<DoublePoint3, vtkIdType> point_map;
     vtkNew<vtkPoints> points;
     for (const BSPNodeRep::PolygonRep& polygon : pos_->contents()) {
-      content_map[polygon.id].emplace_back(polygon);
-      AddCoincidentEdges(polygon, point_map, points, edge_map);
+      AddCoincidentEdges(polygon, point_map, points, content_map);
     }
     for (const BSPNodeRep::PolygonRep& polygon : pos_->border_contents()) {
-      content_map[polygon.id].emplace_back(polygon);
-      AddCoincidentEdges(polygon, point_map, points, edge_map);
+      AddCoincidentEdges(polygon, point_map, points, content_map);
     }
     for (std::pair<const BSPContentId,
                    ContentInfo>& content_pair : contents_) {
       content_pair.second.filter->SetInputDataObject(WalnutToVTKMesh(
-            content_map[content_pair.first]));
+            content_map[content_pair.first].facets));
       content_pair.second.line_filter->SetInputDataObject(
-          edge_map[content_pair.first]);
+          content_map[content_pair.first].edges);
     }
   }
 
@@ -313,17 +315,23 @@ class BSPVisualization {
       const BSPNodeRep::PolygonRep& polygon,
       std::unordered_map<DoublePoint3, vtkIdType> point_map,
       vtkPoints* points,
-      std::map<BSPContentId, vtkNew<vtkPolyData>>& edge_map) {
-    auto edge_it = edge_map.find(polygon.id);
-    if (edge_it == edge_map.end()) {
+      std::map<BSPContentId, BuildingContentInfo>& content_map) {
+    auto content_it = content_map.find(polygon.id);
+    if (content_it == content_map.end()) {
       vtkNew<vtkPolyData> line_poly_data;
       auto lines = vtkSmartPointer<vtkCellArray>::New();
       line_poly_data->SetPoints(points);
       line_poly_data->SetLines(lines);
-      auto inserted = edge_map.emplace(polygon.id, std::move(line_poly_data));
+      auto inserted = content_map.emplace(polygon.id,
+                                          BuildingContentInfo{
+                                            {},
+                                            std::move(line_poly_data)
+                                          });
       assert(inserted.second);
-      edge_it = inserted.first;
+      content_it = inserted.first;
     }
+    BuildingContentInfo& info = content_it->second;
+    info.facets.emplace_back(polygon);
     for (size_t i = 0; i < polygon.vertex_count(); ++i) {
       const auto& edge = polygon.edge(i);
       if (edge.edge_last_coincident.split != nullptr) {
@@ -333,7 +341,7 @@ class BSPVisualization {
                                   polygon.vertex_count()).GetDoublePoint3(),
                    point_map, points)
         };
-        edge_it->second->GetLines()->InsertNextCell(2, endpoints);
+        info.edges->GetLines()->InsertNextCell(2, endpoints);
       }
     }
   }
