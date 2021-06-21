@@ -35,6 +35,11 @@ class VisualizationWindow {
                                             double scale=3,
                                             bool normals3d=true);
 
+  // Call `GetProperty()->SetColor` on the result to change the color.
+  vtkSmartPointer<vtkActor> AddPointArrows(vtkPolyData* arrow_data,
+                                           double scale=3,
+                                           bool normals3d=true);
+
   // Call `GetBounds` on a previously added actor to get the bounds.
   vtkSmartPointer<vtkCubeAxesActor> Axes(double content_bounds[6],
                                          double padding = 5);

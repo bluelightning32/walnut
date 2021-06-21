@@ -2,7 +2,9 @@
 #define WALNUT_EXAMPLES_BSP_VISUALIZATION_H__
 
 #include <cstring>
+#include <vtkDoubleArray.h>
 #include <vtkPassThroughFilter.h>
+#include <vtkPointData.h>
 #include <vtkProperty.h>
 
 #include "normals_actor.h"
@@ -95,7 +97,7 @@ class BSPVisualization {
     tree_.AddContent(id, polygon);
     UpdateShapes();
   }
-  
+
   // Moves the current position back up the tree.
   //
   // Returns true if the move was performed, or false if the position was
@@ -164,8 +166,20 @@ class BSPVisualization {
 
       line_filter->SetInputDataObject(WalnutToVTKMesh(
             std::vector<MutableConvexPolygon<>>{}));
-      line_actor = window.AddShape(line_filter->GetOutputPort(), r / 2, g / 2, b / 2, 1.0);
+      line_actor = window.AddShape(line_filter->GetOutputPort(),
+                                   r / 2, g / 2, b / 2, 1.0);
       line_actor->GetProperty()->SetLineWidth(7);
+
+      vtkNew<vtkPoints> coincident_points;
+      vtkNew<vtkDoubleArray> coincident_normals;
+      coincident_normals->SetName("coincident_normals");
+      coincident_normals->SetNumberOfComponents(3);
+
+      coincident_data->SetPoints(coincident_points);
+      coincident_data->GetPointData()->SetVectors(coincident_normals);
+
+      coincident_arrows = window.AddPointArrows(coincident_data);
+      coincident_arrows->GetProperty()->SetColor(r / 2, g / 2, b / 2);
     }
 
     std::vector<const ConvexPolygon<>*> polygons;
@@ -174,11 +188,34 @@ class BSPVisualization {
     vtkSmartPointer<vtkActor> actor;
     vtkNew<vtkPassThroughFilter> line_filter;
     vtkSmartPointer<vtkActor> line_actor;
+
+    // Arrows for the normals of `vertex_last_coincident` and
+    // `edge_last_coincident` of the polygons inside the tree.
+    vtkNew<vtkPolyData> coincident_data;
+    vtkSmartPointer<vtkActor> coincident_arrows;
   };
 
   struct BuildingContentInfo {
+    BuildingContentInfo() = default;
+
+    BuildingContentInfo(vtkPoints* points) : edges(MakeEdges(points)) {
+      coincident_normals->SetName("coincident_normals");
+      coincident_normals->SetNumberOfComponents(3);
+    }
+
     std::vector<MutableConvexPolygon<>> facets;
     vtkNew<vtkPolyData> edges;
+    vtkNew<vtkPoints> coincident_points;
+    vtkNew<vtkDoubleArray> coincident_normals;
+
+   private:
+    vtkNew<vtkPolyData> MakeEdges(vtkPoints* points) {
+      vtkNew<vtkPolyData> line_poly_data;
+      auto lines = vtkSmartPointer<vtkCellArray>::New();
+      line_poly_data->SetPoints(points);
+      line_poly_data->SetLines(lines);
+      return line_poly_data;
+    }
   };
 
   bool KeyPressed(const char* key) {
@@ -260,10 +297,14 @@ class BSPVisualization {
     }
     for (std::pair<const BSPContentId,
                    ContentInfo>& content_pair : contents_) {
+      const BuildingContentInfo& info = content_map[content_pair.first];
       content_pair.second.filter->SetInputDataObject(WalnutToVTKMesh(
-            content_map[content_pair.first].facets));
-      content_pair.second.line_filter->SetInputDataObject(
-          content_map[content_pair.first].edges);
+            info.facets));
+      content_pair.second.line_filter->SetInputDataObject(info.edges);
+
+      content_pair.second.coincident_data->SetPoints(info.coincident_points);
+      content_pair.second.coincident_data->GetPointData()->SetVectors(
+          info.coincident_normals);
     }
   }
 
@@ -318,30 +359,50 @@ class BSPVisualization {
       std::map<BSPContentId, BuildingContentInfo>& content_map) {
     auto content_it = content_map.find(polygon.id);
     if (content_it == content_map.end()) {
-      vtkNew<vtkPolyData> line_poly_data;
-      auto lines = vtkSmartPointer<vtkCellArray>::New();
-      line_poly_data->SetPoints(points);
-      line_poly_data->SetLines(lines);
       auto inserted = content_map.emplace(polygon.id,
-                                          BuildingContentInfo{
-                                            {},
-                                            std::move(line_poly_data)
-                                          });
+                                          BuildingContentInfo(points));
       assert(inserted.second);
       content_it = inserted.first;
     }
+
     BuildingContentInfo& info = content_it->second;
     info.facets.emplace_back(polygon);
     for (size_t i = 0; i < polygon.vertex_count(); ++i) {
       const auto& edge = polygon.edge(i);
       if (edge.edge_last_coincident.split != nullptr) {
+        const DoublePoint3 start = edge.vertex().GetDoublePoint3();
+        const DoublePoint3 end =
+          polygon.vertex((i + 1) % polygon.vertex_count()).GetDoublePoint3();
         vtkIdType endpoints[2] = {
-          MapPoint(edge.vertex().GetDoublePoint3(), point_map, points),
-          MapPoint(polygon.vertex((i + 1) %
-                                  polygon.vertex_count()).GetDoublePoint3(),
-                   point_map, points)
+          MapPoint(start, point_map, points),
+          MapPoint(end, point_map, points)
         };
         info.edges->GetLines()->InsertNextCell(2, endpoints);
+
+        info.coincident_points->InsertNextPoint((start.x + end.x) / 2,
+                                                (start.y + end.y) / 2,
+                                                (start.z + end.z) / 2);
+        long double d = (long double)edge.edge_last_coincident.split->d() *
+          (edge.edge_last_coincident.pos_side ? -1 : 1);
+        double normal[3] = {
+          double((long double)edge.edge_last_coincident.split->x() / d),
+          double((long double)edge.edge_last_coincident.split->y() / d),
+          double((long double)edge.edge_last_coincident.split->z() / d)
+        };
+        info.coincident_normals->InsertNextTuple(normal);
+      }
+
+      if (edge.vertex_last_coincident.split != nullptr) {
+        const DoublePoint3 p = edge.vertex().GetDoublePoint3();
+        info.coincident_points->InsertNextPoint(p.x, p.y, p.z);
+        long double d = (long double)edge.vertex_last_coincident.split->d() *
+          (edge.vertex_last_coincident.pos_side ? -1 : 1);
+        double normal[3] = {
+          double((long double)edge.vertex_last_coincident.split->x() / d),
+          double((long double)edge.vertex_last_coincident.split->y() / d),
+          double((long double)edge.vertex_last_coincident.split->z() / d)
+        };
+        info.coincident_normals->InsertNextTuple(normal);
       }
     }
   }

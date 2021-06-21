@@ -168,6 +168,38 @@ vtkSmartPointer<vtkActor> VisualizationWindow::AddShapeNormals(
   return actor;
 }
 
+vtkSmartPointer<vtkActor> VisualizationWindow::AddPointArrows(
+    vtkPolyData* arrow_data, double scale, bool normals3d) {
+  auto arrow = vtkSmartPointer<vtkArrowSource>::New();
+  arrow->Update();
+
+  vtkSmartPointer<vtkGlyph3D> glyph;
+  if (normals3d) {
+    glyph = vtkSmartPointer<vtkGlyph3D>::New();
+  } else {
+    glyph = vtkSmartPointer<vtkGlyph2D>::New();
+  }
+
+  glyph->SetInputDataObject(arrow_data);
+  glyph->SetSourceData(arrow->GetOutput());
+  glyph->SetVectorModeToUseVector();
+  glyph->SetScaleModeToDataScalingOff();
+  glyph->SetScaleFactor(scale);
+  glyph->OrientOn();
+
+  auto mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+  mapper->SetInputConnection(glyph->GetOutputPort());
+
+  auto actor = vtkSmartPointer<vtkActor>::New();
+  actor->SetMapper(mapper);
+  actor->GetProperty()->SetColor(0,0.5,1);
+
+  renderer_->AddActor(actor);
+  renderer_->ResetCamera();
+  Zoom(1.5);
+  return actor;
+}
+
 vtkSmartPointer<vtkCubeAxesActor> VisualizationWindow::Axes(
     double content_bounds[6], double padding) {
   vtkCamera* camera = renderer_->GetActiveCamera();
