@@ -61,8 +61,6 @@ class BSPVisualization {
     split_intersect_line_actor_->GetProperty()->SetLineWidth(7);
 
     labels_actor_ = window.AddPointLabels(labelled_points_data_);
-
-    UpdateActorVisibility();
   }
 
   // Adds content polygons to the visualization.
@@ -124,7 +122,6 @@ class BSPVisualization {
     }
 
     UpdateShapes();
-    UpdateActorVisibility();
     return true;
   }
 
@@ -148,7 +145,6 @@ class BSPVisualization {
       pos_ = pos_->negative_child();
     }
     UpdateShapes();
-    UpdateActorVisibility();
     return true;
   }
 
@@ -267,11 +263,13 @@ class BSPVisualization {
     vtkNew<vtkPolyData> split_lines;
     split_lines->SetLines(vtkSmartPointer<vtkCellArray>::New());
     split_lines->SetPoints(points);
+    split_intersect_line_filter_->SetInputDataObject(split_lines);
 
     if (original_pos_->IsLeaf()) {
-      // The split actor will not be shown, but set its input to the vtk_border
-      // anyway so that it doesn't print warnings about not having any inputs.
-      split_filter_->SetInputDataObject(vtk_border);
+      vtkNew<vtkPolyData> empty;
+      // The split actor will not be shown, but set its input anyway so that it
+      // doesn't print warnings about not having any inputs.
+      split_filter_->SetInputDataObject(empty);
     } else {
       std::vector<bool> neg_child_path(chosen_branches_);
       neg_child_path.push_back(false);
@@ -300,7 +298,6 @@ class BSPVisualization {
       for (const BSPNodeRep::PolygonRep& polygon : pos_->border_contents()) {
         AddSplitOutline(polygon, point_map, points, split_lines);
       }
-      split_intersect_line_filter_->SetInputDataObject(split_lines);
     }
 
     std::map<BSPContentId, BuildingContentInfo> content_map;
@@ -321,13 +318,6 @@ class BSPVisualization {
       content_pair.second.coincident_data->GetPointData()->SetVectors(
           info.coincident_normals);
     }
-  }
-
-  void UpdateActorVisibility() {
-    split_actor_->SetVisibility(!original_pos_->IsLeaf());
-    split_wireframe_->SetVisibility(!original_pos_->IsLeaf());
-    split_normals_.SetVisibility(!original_pos_->IsLeaf());
-    split_intersect_line_actor_->SetVisibility(!original_pos_->IsLeaf());
   }
 
   ContentInfo& GetContentInfo(BSPContentId id) {
