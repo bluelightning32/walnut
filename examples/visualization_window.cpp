@@ -7,6 +7,8 @@
 #include <vtkGlyph2D.h>
 #include <vtkGlyph3D.h>
 #include <vtkInteractorStyleSwitch.h>
+#include <vtkLabelPlacementMapper.h>
+#include <vtkPointSetToLabelHierarchy.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkPolyDataNormals.h>
 #include <vtkProperty.h>
@@ -216,6 +218,31 @@ vtkSmartPointer<vtkActor> VisualizationWindow::AddPointArrows(
   renderer_->AddActor(actor);
   renderer_->ResetCamera();
   Zoom(1.5);
+  return actor;
+}
+
+vtkSmartPointer<vtkActor2D> VisualizationWindow::AddPointLabels(
+    vtkPolyData* point_data, vtkTextProperty* font) {
+  vtkNew<vtkPointSetToLabelHierarchy> hierarchy;
+  hierarchy->SetInputDataObject(point_data);
+  hierarchy->SetLabelArrayName("labels");
+
+  if (font != nullptr) {
+    hierarchy->SetTextProperty(font);
+  } else {
+    vtkNew<vtkTextProperty> font;
+    font->SetFontSize(30);
+    font->SetColor(0.0, 0.0, 0.0);
+    font->SetFontFamilyToArial();
+    hierarchy->SetTextProperty(font);
+  }
+
+  vtkNew<vtkLabelPlacementMapper> mapper;
+  mapper->SetInputConnection(hierarchy->GetOutputPort());
+
+  vtkNew<vtkActor2D> actor;
+  actor->SetMapper(&*mapper);
+  renderer_->AddActor(actor);
   return actor;
 }
 

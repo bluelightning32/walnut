@@ -22,6 +22,7 @@ find_package(VTK REQUIRED COMPONENTS
     vtkRenderingAnnotation
     vtkRenderingCore
     vtkRenderingFreeType
+    vtkRenderingLabel
     vtkRenderingOpenGL2
     vtkViewsInfovis
     NO_MODULE)

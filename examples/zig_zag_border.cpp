@@ -16,22 +16,6 @@
 #include "walnut/point3.h"
 #include "walnut/walnut_to_vtk_mesh.h"
 
-template<typename Polygon>
-walnut::HomoPoint3 GetTopPoint(const std::vector<Polygon>& mesh) {
-  walnut::HomoPoint3 top(0, 0, 0, 0);
-
-  for (const Polygon& polygon : mesh) {
-    for (size_t i = 0; i < polygon.vertex_count(); ++i) {
-      const walnut::HomoPoint3& point = polygon.vertex(i);
-      if (top.w().IsZero() || walnut::HomoPoint3::TopnessLt(top, point)) {
-        top = point;
-      }
-    }
-  }
-  return top;
-}
-
-
 constexpr const double pi = 3.14159265358979323846;
 
 std::vector<walnut::ConnectingVisitorOutputPolygon<>> CreateCellBorder(

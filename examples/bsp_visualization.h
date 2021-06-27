@@ -6,6 +6,7 @@
 #include <vtkPassThroughFilter.h>
 #include <vtkPointData.h>
 #include <vtkProperty.h>
+#include <vtkStringArray.h>
 
 #include "normals_actor.h"
 #include "visualization_window.h"
@@ -58,6 +59,8 @@ class BSPVisualization {
         split_intersect_line_filter_->GetOutputPort(), /*r=*/0.8, /*g=*/1.0,
         /*b=*/0.0, /*a=*/1.0);
     split_intersect_line_actor_->GetProperty()->SetLineWidth(7);
+
+    labels_actor_ = window.AddPointLabels(labelled_points_data_);
 
     UpdateActorVisibility();
   }
@@ -200,8 +203,18 @@ class BSPVisualization {
     }
 
     std::vector<MutableConvexPolygon<>> facets;
+    // Edges of the content polygons that are coincident with a split.
     vtkNew<vtkPolyData> edges;
+    // Origin points for coincident normal arrows
+    //
+    // This contains information about both content vertices that are
+    // coincident with a split plane, and content edges that are coincident
+    // with a split plane. For coincident vertices, this contains their
+    // location. For coincident edges, this contains their midpoint.
     vtkNew<vtkPoints> coincident_points;
+    // The corresponding coincident split plane normal for each entry in
+    // `coincident_points`. Every entry in `coincident_points` has an entry in
+    // `coincident_normals` with the same id.
     vtkNew<vtkDoubleArray> coincident_normals;
 
    private:
@@ -230,12 +243,23 @@ class BSPVisualization {
 
   void UpdateShapes() {
     std::vector<bool> child_path(chosen_branches_);
-    vtkSmartPointer<vtkPolyData> border =
-      WalnutToVTKMesh(
-          original_tree_.GetNodeBorderNoBoundWalls(child_path.begin(),
-                                                   child_path.end(),
-                                                   bounding_box_));
-    border_filter->SetInputDataObject(border);
+    std::vector<MutableConvexPolygon<>> border =
+      original_tree_.GetNodeBorderNoBoundWalls(child_path.begin(),
+                                               child_path.end(),
+                                               bounding_box_);
+    vtkSmartPointer<vtkPolyData> vtk_border = WalnutToVTKMesh(border);
+    border_filter->SetInputDataObject(vtk_border);
+
+    vtkNew<vtkPoints> labelled_points;
+    vtkNew<vtkStringArray> labels;
+    labels->SetName("labels");
+    labelled_points_data_->SetPoints(labelled_points);
+    labelled_points_data_->GetPointData()->RemoveArray("labels");
+    labelled_points_data_->GetPointData()->AddArray(labels);
+
+    DoublePoint3 top = GetTopPoint(border).GetDoublePoint3();
+    labelled_points->InsertNextPoint(top.x, top.y, top.z);
+    labels->InsertNextValue("Top");
 
     std::unordered_map<DoublePoint3, vtkIdType> point_map;
     vtkNew<vtkPoints> points;
@@ -245,9 +269,9 @@ class BSPVisualization {
     split_lines->SetPoints(points);
 
     if (original_pos_->IsLeaf()) {
-      // The split actor will not be shown, but set its input to the border
+      // The split actor will not be shown, but set its input to the vtk_border
       // anyway so that it doesn't print warnings about not having any inputs.
-      split_filter_->SetInputDataObject(border);
+      split_filter_->SetInputDataObject(vtk_border);
     } else {
       std::vector<bool> neg_child_path(chosen_branches_);
       neg_child_path.push_back(false);
@@ -265,6 +289,10 @@ class BSPVisualization {
       }
       assert(split_wall.size() == 1);
       split_filter_->SetInputDataObject(WalnutToVTKMesh(split_wall));
+
+      DoublePoint3 new_top = GetTopPoint(split_wall).GetDoublePoint3();
+      labelled_points->InsertNextPoint(new_top.x, new_top.y, new_top.z);
+      labels->InsertNextValue("Top'");
 
       for (const BSPNodeRep::PolygonRep& polygon : pos_->contents()) {
         AddSplitOutline(polygon, point_map, points, split_lines);
@@ -424,6 +452,9 @@ class BSPVisualization {
   // child was chosen.
   std::vector<bool> chosen_branches_;
   BSPTreeRep tree_;
+  // Position in `tree_` that corresponds to `original_pos_` in
+  // `original_tree_`. This is updated as the user requests to go up and down
+  // the BSP tree.
   BSPNodeRep* pos_;
 
   std::map<BSPContentId, ContentInfo> contents_;
@@ -445,6 +476,17 @@ class BSPVisualization {
   NormalsActor split_normals_;
 
   ObserverRegistration key_press_listener;
+
+  // labelled_points_data_.GetPoints() has the location of every point that
+  // needs a label. labelled_points_data_.GetAbstractArray("labels") contains
+  // the labels for the points.
+  //
+  // The points and labels are on each tree move by replacing the point and
+  // label arrays inside of `labelled_points_data_`.
+  vtkNew<vtkPolyData> labelled_points_data_;
+  // Actor that displays `labelled_points_data_`. The actor will show any
+  // updates to `labelled_points_data_`.
+  vtkSmartPointer<vtkActor2D> labels_actor_;
 };
 
 } // walnut

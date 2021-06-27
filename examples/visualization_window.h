@@ -4,6 +4,7 @@
 #include <functional>
 
 #include <vtkActor.h>
+#include <vtkActor2D.h>
 #include <vtkAlgorithmOutput.h>
 #include <vtkCubeAxesActor.h>
 #include <vtkRenderer.h>
@@ -39,6 +40,9 @@ class VisualizationWindow {
   vtkSmartPointer<vtkActor> AddPointArrows(vtkPolyData* arrow_data,
                                            double scale=3,
                                            bool normals3d=true);
+
+  vtkSmartPointer<vtkActor2D> AddPointLabels(vtkPolyData* point_data,
+                                             vtkTextProperty* font = nullptr);
 
   // Call `GetBounds` on a previously added actor to get the bounds.
   vtkSmartPointer<vtkCubeAxesActor> Axes(double content_bounds[6],

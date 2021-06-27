@@ -1442,6 +1442,21 @@ std::ostream& operator<<(std::ostream& out,
   return out;
 }
 
+template<typename Polygon>
+HomoPoint3 GetTopPoint(const std::vector<Polygon>& mesh) {
+  HomoPoint3 top(0, 0, 0, 0);
+
+  for (const Polygon& polygon : mesh) {
+    for (size_t i = 0; i < polygon.vertex_count(); ++i) {
+      const HomoPoint3& point = polygon.vertex(i);
+      if (top.w().IsZero() || HomoPoint3::TopnessLt(top, point)) {
+        top = point;
+      }
+    }
+  }
+  return top;
+}
+
 }  // walnut
 
 #endif // WALNUT_CONVEX_POLYGON_H__
