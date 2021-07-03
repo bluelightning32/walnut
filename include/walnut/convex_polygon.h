@@ -535,6 +535,14 @@ class ConvexPolygon {
   // data fields.
   std::string ApproximateNoData() const;
 
+  // Returns the signed area of the polygon projected so that `drop_dimension`
+  // is removed.
+  //
+  // A negative area is returned if the polygon is clockwise, or a positive
+  // area is returned if the polygon is counter-clockwise. The first item in
+  // the returned pair is the numerator and the denominator is second.
+  std::pair<BigInt, BigInt> GetProjectedArea(int drop_dimension) const;
+
  protected:
   // Returns the information about an edge and the source vertex for that edge.
   EdgeRep& edge(size_t index) {
@@ -1426,6 +1434,42 @@ std::string ConvexPolygon<EdgeParent>::ApproximateNoData() const {
   }
   out << "]";
   return out.str();
+}
+
+template <typename EdgeParent>
+std::pair<BigInt, BigInt> ConvexPolygon<EdgeParent>::GetProjectedArea(
+    int drop_dimension) const {
+  if (vertex_count() < 3) return std::make_pair(BigInt(0), BigInt(1));
+
+  // Calculate the following formula in an optimized way:
+  //
+  //         to N-1
+  // A = 1/2 sum (x_i/w_i * y_(i+1)/w_(i+1) - x_(i+1)/w_(i+1) * y_i / w_i)
+  //         from i=0
+  const HomoPoint3 &last_vertex = vertex(vertex_count() - 1);
+  BigInt numerator = last_vertex.GetComponentAfterDrop(0, drop_dimension) *
+                     vertex(0).GetComponentAfterDrop(1, drop_dimension) -
+                     vertex(0).GetComponentAfterDrop(0, drop_dimension) *
+                     last_vertex.GetComponentAfterDrop(1, drop_dimension);
+  BigInt denominator = last_vertex.w();
+
+  for (size_t i = 0; i < vertex_count() - 1; ++i) {
+    const HomoPoint3 &v = vertex(i);
+    const HomoPoint3 &next_v = vertex(i + 1);
+    const BigInt gcd = denominator.GetGreatestCommonDivisor(next_v.w());
+    const BigInt numerator_converter = next_v.w() / gcd;
+    const BigInt new_term_converter = denominator / gcd;
+
+    numerator = numerator_converter * numerator + new_term_converter * (
+                  v.GetComponentAfterDrop(0, drop_dimension) *
+                  next_v.GetComponentAfterDrop(1, drop_dimension) -
+                  next_v.GetComponentAfterDrop(0, drop_dimension) *
+                  v.GetComponentAfterDrop(1, drop_dimension));
+
+    denominator = new_term_converter * v.w();
+  }
+  return std::make_pair(std::move(numerator),
+                        denominator * last_vertex.w() * 2);
 }
 
 template <typename EdgeParent>

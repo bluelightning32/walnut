@@ -1922,4 +1922,74 @@ TEST(ConvexPolygon, MergeLastVertex) {
   EXPECT_EQ(polygon1b.vertex_count(), 0);
 }
 
+TEST(ConvexPolygon, GetProjectedAreaRectangle) {
+  // Rectangle that is 3 wide and 5 tall.
+  Point3 input[] = {
+    Point3(2, 2, 10),
+    Point3(5, 2, 10),
+    Point3(5, 7, 10),
+    Point3(2, 7, 10),
+  };
+
+  ConvexPolygon<> polygon = MakeConvexPolygon(input);
+
+  EXPECT_TRUE(
+      rational::Equals(polygon.GetProjectedArea(/*drop_dimension=*/2).first,
+                       polygon.GetProjectedArea(/*drop_dimension=*/2).second, 
+                       BigInt(15), BigInt(1)));
+}
+
+TEST(ConvexPolygon, GetProjectedAreaRectangleClockwise) {
+  // Rectangle that is 3 wide and 5 tall.
+  Point3 input[] = {
+    Point3(2, 7, 10),
+    Point3(5, 7, 10),
+    Point3(5, 2, 10),
+    Point3(2, 2, 10),
+  };
+
+  ConvexPolygon<> polygon = MakeConvexPolygon(input);
+
+  EXPECT_TRUE(
+      rational::Equals(polygon.GetProjectedArea(/*drop_dimension=*/2).first,
+                       polygon.GetProjectedArea(/*drop_dimension=*/2).second, 
+                       BigInt(-15), BigInt(1)));
+}
+
+TEST(ConvexPolygon, GetProjectedAreaSameDenomRectangle) {
+  // Rectangle that is 3 wide and 5 tall.
+  std::vector<HomoPoint3> input{
+    HomoPoint3(20, 20, 0, 10),
+    HomoPoint3(50, 20, 0, 10),
+    HomoPoint3(50, 70, 0, 10),
+    HomoPoint3(20, 70, 0, 10),
+  };
+
+  HalfSpace3 plane(0, 0, 1, 0);
+  ConvexPolygon<> polygon(plane, /*drop_dimension=*/2, input);
+
+  const std::pair<BigInt, BigInt> area =
+    polygon.GetProjectedArea(/*drop_dimension=*/2);
+  EXPECT_TRUE(rational::Equals(area.first, area.second, BigInt(15), BigInt(1)))
+    << "area=" << area.first << "/" << area.second;
+}
+
+TEST(ConvexPolygon, GetProjectedAreaDifferentDenomsTriangle) {
+  // Rectangle that is 3 wide and 5 tall.
+  std::vector<HomoPoint3> input{
+    HomoPoint3(10, 10, 0, 5),
+    HomoPoint3(10, 4, 0, 2),
+    HomoPoint3(25, 35, 0, 5),
+    HomoPoint3(4, 14, 0, 2),
+  };
+
+  HalfSpace3 plane(0, 0, 1, 0);
+  ConvexPolygon<> polygon(plane, /*drop_dimension=*/2, input);
+
+  const std::pair<BigInt, BigInt> area =
+    polygon.GetProjectedArea(/*drop_dimension=*/2);
+  EXPECT_TRUE(rational::Equals(area.first, area.second, BigInt(15), BigInt(1)))
+    << "area=" << area.first << "/" << area.second;
+}
+
 }  // walnut
