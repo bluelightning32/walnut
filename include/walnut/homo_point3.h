@@ -151,7 +151,8 @@ class HomoPoint3 {
     return HomoPoint2(v, w());
   }
 
-  BigInt GetComponentAfterDrop(int component, int drop_dimension) const {
+  const BigInt& GetComponentAfterDrop(int component,
+                                      int drop_dimension) const {
     return vector_from_origin().components()[
       (component + drop_dimension + 1) % 3];
   }

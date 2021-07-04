@@ -543,6 +543,10 @@ class ConvexPolygon {
   // the returned pair is the numerator and the denominator is second.
   std::pair<BigInt, BigInt> GetProjectedArea(int drop_dimension) const;
 
+  // Returns the centroid of the polygon projected so that `drop_dimension`
+  // is removed.
+  HomoPoint2 GetProjectedCentroid(int drop_dimension) const;
+
  protected:
   // Returns the information about an edge and the source vertex for that edge.
   EdgeRep& edge(size_t index) {
@@ -1470,6 +1474,64 @@ std::pair<BigInt, BigInt> ConvexPolygon<EdgeParent>::GetProjectedArea(
   }
   return std::make_pair(std::move(numerator),
                         denominator * last_vertex.w() * 2);
+}
+
+template <typename EdgeParent>
+HomoPoint2 ConvexPolygon<EdgeParent>::GetProjectedCentroid(
+    int drop_dimension) const {
+  if (!vertex_count()) return HomoPoint2(0, 0, 0);
+
+  // Calculate the following formula in an optimized way:
+  //
+  //            to N-1
+  // C.x = 1/6A sum (x_i + x_(i+1))*
+  //                (x_i/w_i * y_(i+1)/w_(i+1) - x_(i+1)/w_(i+1) * y_i / w_i)
+  //            from i=0
+  //
+  //            to N-1
+  // C.y = 1/6A sum (y_i + y_(i+1))*
+  //                (x_i/w_i * y_(i+1)/w_(i+1) - x_(i+1)/w_(i+1) * y_i / w_i)
+  //            from i=0
+  const HomoPoint3 &last_vertex = vertex(vertex_count() - 1);
+  const BigInt &last0 = last_vertex.GetComponentAfterDrop(0, drop_dimension);
+  const BigInt &last1 = last_vertex.GetComponentAfterDrop(1, drop_dimension);
+  const BigInt &first0 = vertex(0).GetComponentAfterDrop(0, drop_dimension);
+  const BigInt &first1 = vertex(0).GetComponentAfterDrop(1, drop_dimension);
+
+  BigInt area_accumulator = last0 * first1 - first0 * last1;
+  BigInt centroid_accumulator0 =
+    (last0 * vertex(0).w() + first0 * last_vertex.w()) * area_accumulator;
+  BigInt centroid_accumulator1 =
+    (last1 * vertex(0).w() + first1 * last_vertex.w()) * area_accumulator;
+  BigInt denominator = last_vertex.w();
+
+  for (size_t i = 0; i < vertex_count() - 1; ++i) {
+    const HomoPoint3 &v = vertex(i);
+    const BigInt &cur0 = v.GetComponentAfterDrop(0, drop_dimension);
+    const BigInt &cur1 = v.GetComponentAfterDrop(1, drop_dimension);
+    const HomoPoint3 &next_v = vertex(i + 1);
+    const BigInt &next0 = next_v.GetComponentAfterDrop(0, drop_dimension);
+    const BigInt &next1 = next_v.GetComponentAfterDrop(1, drop_dimension);
+
+    const BigInt gcd = denominator.GetGreatestCommonDivisor(next_v.w());
+    const BigInt numerator_converter = next_v.w() / gcd;
+    const BigInt new_term_converter = denominator / gcd;
+
+    const BigInt area_term =
+      new_term_converter * (cur0 * next1 - next0 * cur1);
+
+    area_accumulator = numerator_converter * area_accumulator + area_term;
+    const BigInt numerator_converter_sqr =
+      numerator_converter * numerator_converter;
+    centroid_accumulator0 = centroid_accumulator0 * numerator_converter_sqr +
+      (cur0 * next_v.w() + next0 * v.w()) * new_term_converter * area_term;
+    centroid_accumulator1 = centroid_accumulator1 * numerator_converter_sqr +
+      (cur1 * next_v.w() + next1 * v.w()) * new_term_converter * area_term;
+
+    denominator = new_term_converter * v.w();
+  }
+  return HomoPoint2(centroid_accumulator0, centroid_accumulator1,
+                    area_accumulator * 3 * denominator * last_vertex.w());
 }
 
 template <typename EdgeParent>
