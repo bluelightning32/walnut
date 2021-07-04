@@ -151,10 +151,15 @@ class HomoPoint3 {
     return HomoPoint2(v, w());
   }
 
+  BigInt& GetComponentAfterDrop(int component, int drop_dimension) {
+    return vector_from_origin().GetComponentAfterDrop(component,
+                                                      drop_dimension);
+  }
+
   const BigInt& GetComponentAfterDrop(int component,
                                       int drop_dimension) const {
-    return vector_from_origin().components()[
-      (component + drop_dimension + 1) % 3];
+    return vector_from_origin().GetComponentAfterDrop(component,
+                                                      drop_dimension);
   }
 
   DoublePoint3 GetDoublePoint3() const {

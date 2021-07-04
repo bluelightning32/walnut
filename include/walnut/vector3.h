@@ -150,6 +150,15 @@ class Vector3 {
                    components()[(drop_dimension + 2) % 3]);
   }
 
+  const BigInt& GetComponentAfterDrop(int component,
+                                      int drop_dimension) const {
+    return components()[(component + drop_dimension + 1) % 3];
+  }
+
+  BigInt& GetComponentAfterDrop(int component, int drop_dimension) {
+    return components()[(component + drop_dimension + 1) % 3];
+  }
+
   // This function could potentially overflow. The caller must ensure there is
   // sufficient bitspace.
   void Negate() {

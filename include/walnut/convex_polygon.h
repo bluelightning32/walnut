@@ -1450,7 +1450,7 @@ std::pair<BigInt, BigInt> ConvexPolygon<EdgeParent>::GetProjectedArea(
   //         to N-1
   // A = 1/2 sum (x_i/w_i * y_(i+1)/w_(i+1) - x_(i+1)/w_(i+1) * y_i / w_i)
   //         from i=0
-  const HomoPoint3 &last_vertex = vertex(vertex_count() - 1);
+  const HomoPoint3& last_vertex = vertex(vertex_count() - 1);
   BigInt numerator = last_vertex.GetComponentAfterDrop(0, drop_dimension) *
                      vertex(0).GetComponentAfterDrop(1, drop_dimension) -
                      vertex(0).GetComponentAfterDrop(0, drop_dimension) *
@@ -1458,8 +1458,8 @@ std::pair<BigInt, BigInt> ConvexPolygon<EdgeParent>::GetProjectedArea(
   BigInt denominator = last_vertex.w();
 
   for (size_t i = 0; i < vertex_count() - 1; ++i) {
-    const HomoPoint3 &v = vertex(i);
-    const HomoPoint3 &next_v = vertex(i + 1);
+    const HomoPoint3& v = vertex(i);
+    const HomoPoint3& next_v = vertex(i + 1);
     const BigInt gcd = denominator.GetGreatestCommonDivisor(next_v.w());
     const BigInt numerator_converter = next_v.w() / gcd;
     const BigInt new_term_converter = denominator / gcd;
@@ -1492,11 +1492,11 @@ HomoPoint2 ConvexPolygon<EdgeParent>::GetProjectedCentroid(
   // C.y = 1/6A sum (y_i + y_(i+1))*
   //                (x_i/w_i * y_(i+1)/w_(i+1) - x_(i+1)/w_(i+1) * y_i / w_i)
   //            from i=0
-  const HomoPoint3 &last_vertex = vertex(vertex_count() - 1);
-  const BigInt &last0 = last_vertex.GetComponentAfterDrop(0, drop_dimension);
-  const BigInt &last1 = last_vertex.GetComponentAfterDrop(1, drop_dimension);
-  const BigInt &first0 = vertex(0).GetComponentAfterDrop(0, drop_dimension);
-  const BigInt &first1 = vertex(0).GetComponentAfterDrop(1, drop_dimension);
+  const HomoPoint3& last_vertex = vertex(vertex_count() - 1);
+  const BigInt& last0 = last_vertex.GetComponentAfterDrop(0, drop_dimension);
+  const BigInt& last1 = last_vertex.GetComponentAfterDrop(1, drop_dimension);
+  const BigInt& first0 = vertex(0).GetComponentAfterDrop(0, drop_dimension);
+  const BigInt& first1 = vertex(0).GetComponentAfterDrop(1, drop_dimension);
 
   BigInt area_accumulator = last0 * first1 - first0 * last1;
   BigInt centroid_accumulator0 =
@@ -1506,12 +1506,12 @@ HomoPoint2 ConvexPolygon<EdgeParent>::GetProjectedCentroid(
   BigInt denominator = last_vertex.w();
 
   for (size_t i = 0; i < vertex_count() - 1; ++i) {
-    const HomoPoint3 &v = vertex(i);
-    const BigInt &cur0 = v.GetComponentAfterDrop(0, drop_dimension);
-    const BigInt &cur1 = v.GetComponentAfterDrop(1, drop_dimension);
-    const HomoPoint3 &next_v = vertex(i + 1);
-    const BigInt &next0 = next_v.GetComponentAfterDrop(0, drop_dimension);
-    const BigInt &next1 = next_v.GetComponentAfterDrop(1, drop_dimension);
+    const HomoPoint3& v = vertex(i);
+    const BigInt& cur0 = v.GetComponentAfterDrop(0, drop_dimension);
+    const BigInt& cur1 = v.GetComponentAfterDrop(1, drop_dimension);
+    const HomoPoint3& next_v = vertex(i + 1);
+    const BigInt& next0 = next_v.GetComponentAfterDrop(0, drop_dimension);
+    const BigInt& next1 = next_v.GetComponentAfterDrop(1, drop_dimension);
 
     const BigInt gcd = denominator.GetGreatestCommonDivisor(next_v.w());
     const BigInt numerator_converter = next_v.w() / gcd;

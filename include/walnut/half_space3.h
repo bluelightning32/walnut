@@ -234,6 +234,9 @@ class HalfSpace3 {
   // before.
   void Reduce();
 
+  // Projects a 2D point onto the plane by adding `add_dimension` to the point.
+  HomoPoint3 ProjectOntoPlane(const HomoPoint2& p, int add_dimension) const;
+
  private:
   Vector3 normal_;
   BigInt dist_;

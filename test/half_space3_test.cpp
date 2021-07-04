@@ -257,4 +257,24 @@ TEST(HalfSpace3, ExtrudeHalfSpace2X) {
   EXPECT_GT(plane.d(), 0);
 }
 
+TEST(HalfSpace3, ProjectOntoPlaneAddX) {
+  HalfSpace3 plane(/*x=*/1, /*y=*/2, /*z=*/3, /*dist=*/5);
+
+  const HomoPoint2 original = HomoPoint2(7, 11, 13);
+  const HomoPoint3 projected =
+    plane.ProjectOntoPlane(original, /*add_dimension=*/0);
+  EXPECT_EQ(projected.DropDimension(0), original);
+  EXPECT_TRUE(plane.IsCoincident(projected));
+}
+
+TEST(HalfSpace3, ProjectOntoPlaneAddZ) {
+  HalfSpace3 plane(/*x=*/1, /*y=*/2, /*z=*/3, /*dist=*/5);
+
+  const HomoPoint2 original = HomoPoint2(7, 11, 13);
+  const HomoPoint3 projected =
+    plane.ProjectOntoPlane(original, /*add_dimension=*/2);
+  EXPECT_EQ(projected.DropDimension(2), original);
+  EXPECT_TRUE(plane.IsCoincident(projected));
+}
+
 }  // walnut
