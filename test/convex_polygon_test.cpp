@@ -2054,4 +2054,19 @@ TEST(ConvexPolygon, GetProjectedCentroidDifferentDenomsRectangle) {
             HomoPoint2(2 + 5, 2 + 7, 2));
 }
 
+TEST(ConvexPolygon, GetProjectedCentroid) {
+  // Rectangle that is 3 wide and 5 tall.
+  std::vector<HomoPoint3> input{
+    HomoPoint3(10, 10, 5, 5),
+    HomoPoint3(10, 4, 2, 2),
+    HomoPoint3(25, 35, 5, 5),
+    HomoPoint3(4, 14, 2, 2),
+  };
+
+  HalfSpace3 plane(0, 0, 1, 1);
+  ConvexPolygon<> polygon(plane, /*drop_dimension=*/2, input);
+
+  EXPECT_EQ(polygon.GetCentroid(), HomoPoint3(2 + 5, 2 + 7, 2, 2));
+}
+
 }  // walnut

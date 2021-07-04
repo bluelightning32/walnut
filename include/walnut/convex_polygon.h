@@ -547,6 +547,12 @@ class ConvexPolygon {
   // is removed.
   HomoPoint2 GetProjectedCentroid(int drop_dimension) const;
 
+  // Returns the centroid of the polygon.
+  HomoPoint3 GetCentroid() const {
+    return plane_.ProjectOntoPlane(GetProjectedCentroid(drop_dimension_),
+                                   drop_dimension_);
+  }
+
  protected:
   // Returns the information about an edge and the source vertex for that edge.
   EdgeRep& edge(size_t index) {
