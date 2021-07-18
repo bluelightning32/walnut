@@ -171,6 +171,27 @@ HomoPoint3 GetCentroid(const std::vector<Polygon>& mesh) {
                     BigInt(8) * volume_numerator * after_lcm * after_lcm);
 }
 
+// Returns the point out of the mesh that is farthest in the direction v is
+// pointing.
+template<typename Polygon>
+HomoPoint3 GetFarthest(const std::vector<Polygon>& mesh, const Vector3& v) {
+  HomoPoint3 farthest(0, 0, 0, 0);
+  BigInt best_num(0);
+
+  for (const Polygon& polygon : mesh) {
+    for (size_t i = 0; i < polygon.vertex_count(); ++i) {
+      const HomoPoint3& point = polygon.vertex(i);
+      BigInt point_dist = point.vector_from_origin().Dot(v);
+      if (farthest.w().IsZero() ||
+          rational::IsLessThan(best_num, farthest.w(), point_dist, point.w())) {
+        farthest = point;
+        best_num = std::move(point_dist);
+      }
+    }
+  }
+  return farthest;
+}
+
 }  // walnut
 
 #endif // WALNUT_MESH_H__

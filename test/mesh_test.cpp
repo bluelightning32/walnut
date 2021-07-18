@@ -76,4 +76,36 @@ TEST(Mesh, GetCentroidTetrahedronDifferentDenoms) {
   EXPECT_EQ(GetCentroid(mesh), HomoPoint3(3, 3, 3, 4));
 }
 
+TEST(Mesh, GetFarthestOneDenom) {
+  std::vector<HomoPoint3> input{
+    HomoPoint3(2, 2, 10, 1),
+    HomoPoint3(6, 2, 10, 1),
+    HomoPoint3(5, 7, 10, 1),
+    HomoPoint3(2, 7, 10, 1),
+  };
+
+  HalfSpace3 plane(0, 0, 1, 10);
+  ConvexPolygon<> polygon(plane, /*drop_dimension=*/2, input);
+
+  EXPECT_EQ(GetFarthest(std::vector<ConvexPolygon<>>{polygon},
+                        Vector3(1, 0, 0)),
+            HomoPoint3(6, 2, 10, 1));
+}
+
+TEST(Mesh, GetFarthestNegOneDenom) {
+  std::vector<HomoPoint3> input{
+    HomoPoint3(-2, -2, -10, -1),
+    HomoPoint3(-6, -2, -10, -1),
+    HomoPoint3(-5, -7, -10, -1),
+    HomoPoint3(-2, -7, -10, -1),
+  };
+
+  HalfSpace3 plane(0, 0, 1, 10);
+  ConvexPolygon<> polygon(plane, /*drop_dimension=*/2, input);
+
+  EXPECT_EQ(GetFarthest(std::vector<ConvexPolygon<>>{polygon},
+                        Vector3(1, 0, 0)),
+            HomoPoint3(-6, -2, -10, -1));
+}
+
 }  // walnut

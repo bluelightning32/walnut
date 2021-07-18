@@ -85,6 +85,12 @@ class BSPTree {
   GetNodeBorder(Iterator node_path_begin, Iterator node_path_end,
                 const AABB& bounding_box) const;
 
+  // Returns the border of the BSP node at the given path.
+  //
+  // The polygons of the border are truncated at `bounding_box`, but the walls
+  // of the bounding box are not included. So for example, if the BSP node at
+  // the path has one border but is otherwise infinite, the result would be the
+  // one border truncated to fit within `bounding_box`.
   template<typename Iterator>
   std::vector<MutableConvexPolygon<>>
   GetNodeBorderNoBoundWalls(Iterator node_path_begin, Iterator node_path_end,
