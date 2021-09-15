@@ -4,7 +4,6 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "walnut/aabb.h"
 #include "walnut/convex_polygon_factory.h"
 
 namespace walnut {
@@ -2068,31 +2067,6 @@ TEST(ConvexPolygon, GetProjectedCentroid) {
   ConvexPolygon<> polygon(plane, /*drop_dimension=*/2, input);
 
   EXPECT_EQ(polygon.GetCentroid(), HomoPoint3(2 + 5, 2 + 7, 2, 2));
-}
-
-TEST(ConvexPolygonGet3DCentroid, 1x1x1Cube) {
-  AABB box(0, 0, 0, 1, 1, 1, /*denom=*/1);
-  EXPECT_EQ(GetCentroid(box.GetWalls()), HomoPoint3(1, 1, 1, 2));
-}
-
-TEST(ConvexPolygonGet3DCentroid, 1x2x1Cube) {
-  AABB box(0, 0, 0, 1, 2, 1, /*denom=*/1);
-  EXPECT_EQ(GetCentroid(box.GetWalls()), HomoPoint3(1, 2, 1, 2));
-}
-
-TEST(ConvexPolygonGet3DCentroid, 1x1x4Cube) {
-  AABB box(0, 0, 0, 1, 1, 4, /*denom=*/1);
-  EXPECT_EQ(GetCentroid(box.GetWalls()), HomoPoint3(1, 1, 4, 2));
-}
-
-TEST(ConvexPolygonGet3DCentroid, Offset1x1x1Cube) {
-  AABB box(10, 10, 10, 11, 11, 11, /*denom=*/1);
-  EXPECT_EQ(GetCentroid(box.GetWalls()), HomoPoint3(21, 21, 21, 2));
-}
-
-TEST(ConvexPolygonGet3DCentroid, OffsetHalfCube) {
-  AABB box(1, 1, 1, 2, 2, 2, /*denom=*/2);
-  EXPECT_EQ(GetCentroid(box.GetWalls()), HomoPoint3(3, 3, 3, 4));
 }
 
 }  // walnut

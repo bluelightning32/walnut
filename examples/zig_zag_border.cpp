@@ -13,6 +13,7 @@
 #include "walnut/bsp_tree.h"
 #include "walnut/half_space3.h"
 #include "walnut/homo_point3.h"
+#include "walnut/mesh.h"
 #include "walnut/point3.h"
 #include "walnut/walnut_to_vtk_mesh.h"
 

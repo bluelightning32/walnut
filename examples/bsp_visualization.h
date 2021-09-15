@@ -11,6 +11,7 @@
 #include "normals_actor.h"
 #include "visualization_window.h"
 #include "walnut/bsp_tree.h"
+#include "walnut/mesh.h"
 #include "walnut/walnut_to_vtk_mesh.h"
 
 namespace walnut {
