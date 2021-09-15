@@ -86,6 +86,13 @@ class Vector3 {
                    /*z=*/z() + other.z());
   }
 
+  Vector3& operator+=(const Vector3& other) {
+    x() += other.x();
+    y() += other.y();
+    z() += other.z();
+    return *this;
+  }
+
   // Return true if the vectors have the same direction and only differ in
   // magnitude.
   //
@@ -116,6 +123,18 @@ class Vector3 {
         /*x=*/std::move((y()*other.z()).SubtractMultiply(z(), other.y())),
         /*y=*/std::move((z()*other.x()).SubtractMultiply(x(), other.z())),
         /*z=*/std::move((x()*other.y()).SubtractMultiply(y(), other.x())));
+  }
+
+  // Compute the hadamard product
+  Vector3 Hadamard(const Vector3& other) const {
+    return Vector3(/*x=*/x() * other.x(),
+                   /*y=*/y() * other.y(),
+                   /*z=*/z() * other.z());
+  }
+
+  // Compute the hadamard product with itself
+  Vector3 HadamardSquared() const {
+    return Hadamard(*this);
   }
 
   Vector3 Scale(const BigInt& scale) const {
@@ -216,6 +235,10 @@ inline bool Vector3::IsSameOrOppositeDir(const Vector3& other) const {
 }
 
 std::ostream& operator<<(std::ostream& out, const Vector3& v);
+
+inline Vector3 operator*(const BigInt& scale, const Vector3& v) {
+  return v.Scale(scale);
+}
 
 }  // walnut
 

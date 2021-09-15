@@ -479,6 +479,11 @@ class BigInt {
     return *this;
   }
 
+  BigInt& operator*=(const BigInt& other) {
+    *this = *this * other;
+    return *this;
+  }
+
   constexpr bool operator < (const BigInt& other) const {
     if (used_words() < other.used_words()) {
       return 0 <= BigIntWord{other.words_[other.used_words() - 1]};
@@ -795,6 +800,14 @@ class BigInt {
 
     BigInt mod = *this % other;
     return other.GetGreatestCommonDivisor(mod);
+  }
+
+  size_t GetHash() const {
+    BigUIntWord hash(0);
+    for (size_t i = 0; i < used_words(); ++i) {
+      hash ^= word(i);
+    }
+    return hash.low_uint64() + used_words();
   }
 
  protected:
