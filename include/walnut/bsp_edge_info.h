@@ -5,21 +5,9 @@
 #include <ostream>
 
 #include "walnut/edge_info_root.h"
+#include "walnut/split_side.h"
 
 namespace walnut {
-
-struct SplitSide {
-  const HalfSpace3* split = nullptr;
-  bool pos_side = false;
-
-  bool operator==(const SplitSide& other) const {
-    return split == other.split && pos_side == other.pos_side;
-  }
-
-  bool operator!=(const SplitSide& other) const {
-    return split != other.split || pos_side != other.pos_side;
-  }
-};
 
 template <typename ParentTemplate = EdgeInfoRoot>
 class BSPEdgeInfo : public ParentTemplate {
@@ -106,21 +94,6 @@ std::ostream& operator<<(std::ostream& out,
       << ", edge_last_coincident=" << info.edge_last_coincident
       << ", vertex_last_coincident=" << info.vertex_last_coincident
       << " >";
-  return out;
-}
-
-inline std::ostream& operator<<(std::ostream& out, const SplitSide& info) {
-  if (info.split == nullptr) {
-    out << "none";
-  } else {
-    out << "[";
-    if (info.pos_side) {
-      out << "pos";
-    } else {
-      out << "neg";
-    }
-    out << " " << *info.split << "]";
-  }
   return out;
 }
 
