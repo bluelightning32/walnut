@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
   cu->GetOutputPort();
 
   std::vector<walnut::MutableConvexPolygon<>> walnut_mesh =
-    walnut::AABB(0, 0, 0, 10, 10, 10, /*denom=*/1).GetWalls();
+    walnut::AABB(-1, -1, -1, 11, 11, 11, /*denom=*/1).GetWalls();
   walnut::BSPTree<> tree;
   walnut::BSPContentId id = tree.AllocateId();
   tree.AddContents(id, walnut_mesh);

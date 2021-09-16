@@ -238,6 +238,22 @@ class BSPVisualization {
     return false;
   }
 
+  std::string GetPWNString(
+      const std::vector<BSPContentInfo>& content_info_by_id) {
+    std::ostringstream out;
+    out << "(";
+    bool first = true;
+    for (const BSPContentInfo& content : content_info_by_id) {
+      if (!first) {
+        out << ", ";
+      }
+      first = false;
+      out << content.pwn;
+    }
+    out << ")";
+    return out.str();
+  }
+
   void UpdateShapes() {
     std::vector<bool> child_path(chosen_branches_);
     std::vector<MutableConvexPolygon<>> border =
@@ -274,6 +290,8 @@ class BSPVisualization {
     } else {
       std::vector<bool> neg_child_path(chosen_branches_);
       neg_child_path.push_back(false);
+      std::vector<bool> pos_child_path(chosen_branches_);
+      pos_child_path.push_back(true);
       std::vector<MutableConvexPolygon<>> split_wall;
       std::vector<MutableConvexPolygon<>> negative_child_walls =
         original_tree_.GetNodeBorderNoBoundWalls(neg_child_path.begin(),
@@ -292,6 +310,29 @@ class BSPVisualization {
       DoublePoint3 new_top = GetTopPoint(split_wall).GetDoublePoint3();
       labelled_points->InsertNextPoint(new_top.x, new_top.y, new_top.z);
       labels->InsertNextValue("Top'");
+
+      HomoPoint3 neg_center =
+        GetCentroid(original_tree_.GetNodeBorder(neg_child_path.begin(),
+                                                 neg_child_path.end(),
+                                                 bounding_box_));
+      {
+        DoublePoint3 p = neg_center.GetDoublePoint3();
+        labelled_points->InsertNextPoint(p.x, p.y, p.z);
+        labels->InsertNextValue("Neg child PWN: " +
+            GetPWNString(
+              original_pos_->negative_child()->content_info_by_id()));
+      }
+      HomoPoint3 pos_center =
+        GetCentroid(original_tree_.GetNodeBorder(pos_child_path.begin(),
+                                                 pos_child_path.end(),
+                                                 bounding_box_));
+      {
+        DoublePoint3 p = pos_center.GetDoublePoint3();
+        labelled_points->InsertNextPoint(p.x, p.y, p.z);
+        labels->InsertNextValue("Pos child PWN: " +
+            GetPWNString(
+              original_pos_->positive_child()->content_info_by_id()));
+      }
 
       for (const BSPNodeRep::PolygonRep& polygon : pos_->contents()) {
         AddSplitOutline(polygon, point_map, points, split_lines);
