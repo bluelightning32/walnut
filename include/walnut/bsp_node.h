@@ -158,6 +158,24 @@ class BSPNode {
     content_info_by_id_[id].has_polygons++;
   }
 
+  // Determine if a crossing occurs at a vertex.
+  //
+  // `edge_comparison` should be -1 if the edge boundary angle is clockwise
+  // from the split_.normal(), or it should be 1 if it is counter-clockwise.
+  // This function should not be called if the vectors are the same.
+  //
+  // The first field of the returned value is 1 if an entrance crossing
+  // occurred, 0 if no crossing occurred, or -1 if an exit crossing occurred.
+  // The entrance/exit status is flipped if `vertex_edge` refers to the vertex
+  // after `edge_comparison`, instead of before.
+  //
+  // The second field of the returned value is true if the PWN of the positive
+  // child should be updated, or it is false if the negative child's PWN should
+  // be updated.
+  std::pair<int, bool> GetPWNEffectAtVertex(
+      int edge_comparison, const SplitSide& edge_last_coincident,
+      const EdgeRep& vertex_edge) const;
+
  private:
   template <typename OutputPolygonParent>
   friend class BSPTree;
@@ -171,20 +189,6 @@ class BSPNode {
       content_info_by_id_[i].pwn = content_info_by_id[i].pwn;
     }
   }
-
-  // Update the negative and positive child for the crossing (if any) that
-  // occurs at a vertex.
-  //
-  // `edge_comparison` should be -1 if the edge boundary angle is clockwise
-  // from the split_.normal(), or it should be 1 if it is counter-clockwise.
-  // This function should not be called if the vectors are the same.
-  //
-  // crossing_flip should be 1 if the vertex_to_edge direction can be used
-  // directly to update the PWN, or crossing_flip should be -1 if the opposite
-  // should be used.
-  void PushVertexPWNToChildren(BSPContentId polygon_id, int edge_comparison,
-                               const SplitSide& edge_last_coincident,
-                               const EdgeRep& vertex_edge, int crossing_flip);
 
   // Update the children's PWN based on this node's contents.
   //
@@ -253,10 +257,9 @@ const HalfSpace3* BSPNode<OutputPolygonParent>::PickSplitPlane() const {
 }
 
 template <typename OutputPolygonParent>
-void BSPNode<OutputPolygonParent>::PushVertexPWNToChildren(
-    BSPContentId polygon_id, int edge_comparison,
-    const SplitSide& edge_last_coincident, const EdgeRep& vertex_edge,
-    int crossing_flip) {
+std::pair<int, bool> BSPNode<OutputPolygonParent>::GetPWNEffectAtVertex(
+    int edge_comparison, const SplitSide& edge_last_coincident,
+    const EdgeRep& vertex_edge) const {
   const SplitSide& vertex_last_coincident =
     vertex_edge.vertex_last_coincident;
   const int vertex_comparison =
@@ -283,7 +286,6 @@ void BSPNode<OutputPolygonParent>::PushVertexPWNToChildren(
     //   vertex_boundary_angle != edge_boundary_angle
     //   Compare(vertex_boundary_angle, edge_boundary_angle) != 0
     assert(vertex_to_edge != 0);
-    BSPNode<OutputPolygonParent>* push_to_child;
     int side_comparison = vertex_comparison * vertex_to_edge;
     if (side_comparison >= 0) {
       assert (side_comparison == 1);
@@ -291,14 +293,12 @@ void BSPNode<OutputPolygonParent>::PushVertexPWNToChildren(
       // the vertex to current edge rotation.
       assert((vertex_comparison >= 0) == (vertex_to_edge >= 0));
       assert((edge_comparison >= 0) != (vertex_to_edge >= 0));
-      push_to_child = negative_child();
     } else {
       assert (side_comparison == -1);
       // The split normal to vertex rotation is the opposite direction
       // as the vertex to current edge rotation.
       assert((vertex_comparison >= 0) != (vertex_to_edge >= 0));
       assert((edge_comparison >= 0) == (vertex_to_edge >= 0));
-      push_to_child = positive_child();
     }
     assert (vertex_to_edge == 1 || vertex_to_edge == -1);
     int side_comparison2 = split_.Compare(vertex_edge.vertex());
@@ -330,12 +330,11 @@ void BSPNode<OutputPolygonParent>::PushVertexPWNToChildren(
       // = min_max_comparison ^ vertex_comparison
       if ((min_max_comparison ^ vertex_comparison ^
            vertex_edge_side_mult) >= 0) {
-        assert(push_to_child->content_info_by_id_.size() >= polygon_id);
-        push_to_child->content_info_by_id_[polygon_id].pwn +=
-          vertex_to_edge * crossing_flip;
+        return std::make_pair(vertex_to_edge, side_comparison == -1);
       }
     }
   }
+  return std::make_pair(0, false);
 }
 
 template <typename OutputPolygonParent>
@@ -353,15 +352,28 @@ void BSPNode<OutputPolygonParent>::PushContentPWNToChildren() {
         (edge_last_coincident.pos_side ? -1 : 1);
       if (edge_comparison == 0) continue;
 
-      PushVertexPWNToChildren(polygon.id, edge_comparison,
-                              edge_last_coincident, current_edge,
-                              /*crossing_flip=*/1);
+      std::pair<int, bool> push_info =
+        GetPWNEffectAtVertex(edge_comparison, edge_last_coincident,
+                             current_edge);
+      if (push_info.first != 0) {
+        BSPNode<OutputPolygonParent>* push_to_child =
+          push_info.second ? positive_child() : negative_child();
+        assert(push_to_child->content_info_by_id_.size() >= polygon.id);
+        push_to_child->content_info_by_id_[polygon.id].pwn +=
+          push_info.first;
+      }
 
       const EdgeRep& next_edge =
         polygon.const_edge((i + 1)%polygon.vertex_count());
-      PushVertexPWNToChildren(polygon.id, edge_comparison,
-                              edge_last_coincident, next_edge,
-                              /*crossing_flip=*/-1);
+      push_info = GetPWNEffectAtVertex(edge_comparison, edge_last_coincident,
+                                       next_edge);
+      if (push_info.first != 0) {
+        BSPNode<OutputPolygonParent>* push_to_child =
+          push_info.second ? positive_child() : negative_child();
+        assert(push_to_child->content_info_by_id_.size() >= polygon.id);
+        push_to_child->content_info_by_id_[polygon.id].pwn +=
+          -push_info.first;
+      }
     }
   }
 }
