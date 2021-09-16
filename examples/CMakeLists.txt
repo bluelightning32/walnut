@@ -34,6 +34,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/vtk_interface/include)
 
 add_library(examples_helper STATIC
+            bsp_visualization.cpp
             normals_actor.cpp
             observer_registration.cpp
             points_actor.cpp

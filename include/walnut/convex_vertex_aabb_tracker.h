@@ -182,7 +182,7 @@ class ConvexVertexAABBTracker {
   AABB aabb_;
 };
 
-void ConvexVertexAABBTracker::SplitComponent(
+inline void ConvexVertexAABBTracker::SplitComponent(
     size_t component, int min_max_mult,
     const HomoPoint3& shared1, const HomoPoint3& shared2,
     size_t parent_shifted, size_t neg_count, size_t pos_count,
