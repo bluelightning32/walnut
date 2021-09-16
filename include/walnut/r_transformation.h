@@ -22,7 +22,7 @@ namespace walnut {
 //
 // Since this function is likely to overflow the HomoPoint3 precision, this
 // function should only be used for testing purposes.
-HomoPoint3 RTransform(const HomoPoint3& p, const BigInt& eps_inv) {
+inline HomoPoint3 RTransform(const HomoPoint3& p, const BigInt& eps_inv) {
   // Add eps^2 to x and eps to y.
   BigInt eps_inv_squared(eps_inv * eps_inv);
   return HomoPoint3(p.x()*eps_inv_squared + p.w(),
@@ -45,18 +45,7 @@ HomoPoint3 RTransform(const HomoPoint3& p, const BigInt& eps_inv) {
 // * Returns 1 if (v R) is counter-clockwise from (u R)
 //
 // If either vector is 0, then 0 is returned.
-int RXYCompareBivector(const Vector3& u, const Vector3& v) {
-  int comparexy = (u.x()*v.y()).Compare(u.y()*v.x());
-  if (comparexy != 0) {
-    return comparexy;
-  }
-  int comparexz = (u.z()*v.x()).Compare(u.x()*v.z());
-  if (comparexz != 0) {
-    return comparexz;
-  }
-  int compareyz = (u.y()*v.z()).Compare(u.z()*v.y());
-  return compareyz;
-}
+int RXYCompareBivector(const Vector3& u, const Vector3& v);
 
 }  // walnut
 
