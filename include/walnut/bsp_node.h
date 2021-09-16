@@ -115,6 +115,24 @@ class BSPNode {
   // This may be called on leaf or interior nodes.
   void PushContentsToLeaves();
 
+  // Determine if a crossing occurs at a vertex.
+  //
+  // `edge_comparison` should be -1 if the edge boundary angle is clockwise
+  // from the split_.normal(), or it should be 1 if it is counter-clockwise.
+  // This function should not be called if the vectors are the same.
+  //
+  // The first field of the returned value is 1 if an entrance crossing
+  // occurred, 0 if no crossing occurred, or -1 if an exit crossing occurred.
+  // The entrance/exit status is flipped if `vertex_edge` refers to the vertex
+  // after `edge_comparison`, instead of before.
+  //
+  // The second field of the returned value is true if the PWN of the positive
+  // child should be updated, or it is false if the negative child's PWN should
+  // be updated.
+  std::pair<int, bool> GetPWNEffectAtVertex(
+      int edge_comparison, const SplitSide& edge_last_coincident,
+      const EdgeRep& vertex_edge) const;
+
  protected:
   void MakeInterior(const HalfSpace3& half_space, BSPNode* negative_child,
                     BSPNode* positive_child) {
@@ -157,24 +175,6 @@ class BSPNode {
     }
     content_info_by_id_[id].has_polygons++;
   }
-
-  // Determine if a crossing occurs at a vertex.
-  //
-  // `edge_comparison` should be -1 if the edge boundary angle is clockwise
-  // from the split_.normal(), or it should be 1 if it is counter-clockwise.
-  // This function should not be called if the vectors are the same.
-  //
-  // The first field of the returned value is 1 if an entrance crossing
-  // occurred, 0 if no crossing occurred, or -1 if an exit crossing occurred.
-  // The entrance/exit status is flipped if `vertex_edge` refers to the vertex
-  // after `edge_comparison`, instead of before.
-  //
-  // The second field of the returned value is true if the PWN of the positive
-  // child should be updated, or it is false if the negative child's PWN should
-  // be updated.
-  std::pair<int, bool> GetPWNEffectAtVertex(
-      int edge_comparison, const SplitSide& edge_last_coincident,
-      const EdgeRep& vertex_edge) const;
 
  private:
   template <typename OutputPolygonParent>

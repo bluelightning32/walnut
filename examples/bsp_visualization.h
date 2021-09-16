@@ -6,6 +6,7 @@
 #include <vtkPassThroughFilter.h>
 #include <vtkPointData.h>
 #include <vtkProperty.h>
+#include <vtkProperty2D.h>
 #include <vtkStringArray.h>
 
 #include "normals_actor.h"
@@ -26,8 +27,11 @@ class BSPVisualization {
   // `tree` and `window` must remain valid during the lifetime of the
   // BSPVisualization.
   BSPVisualization(VisualizationWindow& window, const AABB& bounding_box,
-                   const BSPTreeRep& tree)
-    : window_(window), bounding_box_(bounding_box), original_tree_(tree),
+                   const AABB& labelling_box, const BSPTreeRep& tree)
+    : window_(window), bounding_box_(bounding_box),
+      labelling_box_(labelling_box),
+      crossing_label_offset_(labelling_box.GetDiagonalLength() / 200),
+      original_tree_(tree),
       original_pos_(&tree.root), pos_(&tree_.root),
       key_press_listener(window.AddKeyPressObserver(
             [this](const char* key) {
@@ -173,6 +177,9 @@ class BSPVisualization {
       coincident_data->GetPointData()->SetVectors(coincident_normals);
 
       coincident_arrows.SetColor(r / 2, g / 2, b / 2);
+
+      labels_actor = window.AddPointLabels(labelled_points_data);
+      labels_actor->GetProperty()->SetColor(r / 2, g / 2, b / 2);
     }
 
     std::vector<const ConvexPolygon<>*> polygons;
@@ -186,17 +193,37 @@ class BSPVisualization {
     // `edge_last_coincident` of the polygons inside the tree.
     vtkNew<vtkPolyData> coincident_data;
     NormalsActor coincident_arrows;
+
+    vtkNew<vtkPolyData> labelled_points_data;
+    // Actor that displays `labelled_points_data_`. The actor will show any
+    // updates to `labelled_points_data_`.
+    vtkSmartPointer<vtkActor2D> labels_actor;
   };
 
   struct BuildingContentInfo {
     BuildingContentInfo() {
       coincident_normals->SetName("coincident_normals");
       coincident_normals->SetNumberOfComponents(3);
+      labels->SetName("labels");
     }
 
     BuildingContentInfo(vtkPoints* points) : edges(MakeEdges(points)) {
       coincident_normals->SetName("coincident_normals");
       coincident_normals->SetNumberOfComponents(3);
+      labels->SetName("labels");
+    }
+
+    void AddCrossing(const HomoPoint3& vertex,
+                     const Vector3& label_offset_direction,
+                     double label_offset_amount, bool pos_child, int type) {
+      DoublePoint3 location = vertex.GetDoublePoint3();
+      if (!pos_child) label_offset_amount *= -1;
+      label_offset_amount /= sqrt((double)label_offset_direction.GetScaleSquared());
+      location.x += (double)label_offset_direction.x() * label_offset_amount;
+      location.y += (double)label_offset_direction.y() * label_offset_amount;
+      location.z += (double)label_offset_direction.z() * label_offset_amount;
+      labelled_points->InsertNextPoint(location.x, location.y, location.z);
+      labels->InsertNextValue(type > 0 ? "+" : "-");
     }
 
     std::vector<MutableConvexPolygon<>> facets;
@@ -213,6 +240,9 @@ class BSPVisualization {
     // `coincident_points`. Every entry in `coincident_points` has an entry in
     // `coincident_normals` with the same id.
     vtkNew<vtkDoubleArray> coincident_normals;
+
+    vtkNew<vtkPoints> labelled_points;
+    vtkNew<vtkStringArray> labels;
 
    private:
     vtkNew<vtkPolyData> MakeEdges(vtkPoints* points) {
@@ -314,7 +344,7 @@ class BSPVisualization {
       HomoPoint3 neg_center =
         GetCentroid(original_tree_.GetNodeBorder(neg_child_path.begin(),
                                                  neg_child_path.end(),
-                                                 bounding_box_));
+                                                 labelling_box_));
       {
         DoublePoint3 p = neg_center.GetDoublePoint3();
         labelled_points->InsertNextPoint(p.x, p.y, p.z);
@@ -325,7 +355,7 @@ class BSPVisualization {
       HomoPoint3 pos_center =
         GetCentroid(original_tree_.GetNodeBorder(pos_child_path.begin(),
                                                  pos_child_path.end(),
-                                                 bounding_box_));
+                                                 labelling_box_));
       {
         DoublePoint3 p = pos_center.GetDoublePoint3();
         labelled_points->InsertNextPoint(p.x, p.y, p.z);
@@ -345,6 +375,7 @@ class BSPVisualization {
     std::map<BSPContentId, BuildingContentInfo> content_map;
     for (const BSPNodeRep::PolygonRep& polygon : pos_->contents()) {
       AddCoincidentEdges(polygon, point_map, points, content_map);
+      AddCrossingLabels(polygon, content_map);
     }
     for (const BSPNodeRep::PolygonRep& polygon : pos_->border_contents()) {
       AddCoincidentEdges(polygon, point_map, points, content_map);
@@ -359,6 +390,13 @@ class BSPVisualization {
       content_pair.second.coincident_data->SetPoints(info.coincident_points);
       content_pair.second.coincident_data->GetPointData()->SetVectors(
           info.coincident_normals);
+
+      content_pair.second.labelled_points_data->SetPoints(
+          info.labelled_points);
+      content_pair.second.labelled_points_data->GetPointData()->RemoveArray(
+          "labels");
+      content_pair.second.labelled_points_data->GetPointData()->AddArray(
+          info.labels);
     }
   }
 
@@ -451,6 +489,48 @@ class BSPVisualization {
     }
   }
 
+  void AddCrossingLabels(
+      const BSPNodeRep::PolygonRep& polygon,
+      std::map<BSPContentId, BuildingContentInfo>& content_map) {
+    auto content_it = content_map.find(polygon.id);
+    assert(content_it != content_map.end());
+
+    BuildingContentInfo& info = content_it->second;
+    for (size_t i = 0; i < polygon.vertex_count(); ++i) {
+      const auto& current_edge = polygon.edge(i);
+
+      const SplitSide& edge_last_coincident =
+        current_edge.edge_last_coincident;
+      if (edge_last_coincident.split == nullptr) continue;
+      int edge_comparison = RXYCompareBivector(original_pos_->split().normal(),
+                                               edge_last_coincident);
+      if (edge_comparison == 0) continue;
+
+      std::pair<int, bool> push_info =
+        original_pos_->GetPWNEffectAtVertex(edge_comparison,
+                                            edge_last_coincident,
+                                            current_edge);
+      if (push_info.first != 0) {
+        info.AddCrossing(current_edge.vertex(),
+                         original_pos_->split().normal(),
+                         crossing_label_offset_, push_info.second,
+                         push_info.first);
+      }
+
+      const auto& next_edge =
+        polygon.const_edge((i + 1)%polygon.vertex_count());
+      push_info = original_pos_->GetPWNEffectAtVertex(edge_comparison,
+                                                      edge_last_coincident,
+                                                      next_edge);
+      if (push_info.first != 0) {
+        info.AddCrossing(next_edge.vertex(),
+                         original_pos_->split().normal(),
+                         crossing_label_offset_, push_info.second,
+                         -push_info.first);
+      }
+    }
+  }
+
   void AddSplitOutline(const BSPNodeRep::PolygonRep& polygon,
                        std::unordered_map<DoublePoint3, vtkIdType> point_map,
                        vtkPoints* points, vtkPolyData* split_lines) {
@@ -477,6 +557,8 @@ class BSPVisualization {
 
   VisualizationWindow& window_;
   AABB bounding_box_;
+  AABB labelling_box_;
+  double crossing_label_offset_;
 
   const BSPTreeRep& original_tree_;
   const BSPNodeRep* original_pos_;

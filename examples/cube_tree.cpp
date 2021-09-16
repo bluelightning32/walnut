@@ -74,6 +74,8 @@ int main(int argc, char *argv[]) {
   walnut::BSPVisualization tree_visualization(window,
                                               walnut::AABB(-29, -29, -70, 29,
                                                            29, 70, 1),
+                                              walnut::AABB(-12, -12, -70, 12,
+                                                           12, 70, 1),
                                               tree);
   tree_visualization.AddContent(id, walnut_mesh);
 

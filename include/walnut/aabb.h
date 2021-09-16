@@ -161,6 +161,14 @@ class AABB {
     return !(*this == other);
   }
 
+  BigInt GetSquaredDiagonalLengthNumerator() const {
+    return (max_point_num() - min_point_num()).GetScaleSquared();
+  }
+
+  double GetDiagonalLength() const {
+    return sqrt((double)GetSquaredDiagonalLengthNumerator() / (double)denom());
+  }
+
  private:
   // min_point_num_/denom_ is part of the prism
   Vector3 min_point_num_;

@@ -7,8 +7,7 @@
 #include <vtkGlyph2D.h>
 #include <vtkGlyph3D.h>
 #include <vtkInteractorStyleSwitch.h>
-#include <vtkLabelPlacementMapper.h>
-#include <vtkPointSetToLabelHierarchy.h>
+#include <vtkLabeledDataMapper.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkPolyDataNormals.h>
 #include <vtkProperty.h>
@@ -223,22 +222,22 @@ vtkSmartPointer<vtkActor> VisualizationWindow::AddPointArrows(
 
 vtkSmartPointer<vtkActor2D> VisualizationWindow::AddPointLabels(
     vtkPolyData* point_data, vtkTextProperty* font) {
-  vtkNew<vtkPointSetToLabelHierarchy> hierarchy;
-  hierarchy->SetInputDataObject(point_data);
-  hierarchy->SetLabelArrayName("labels");
+  vtkNew<vtkLabeledDataMapper> mapper;
+  mapper->SetInputDataObject(point_data);
+  mapper->SetFieldDataName("labels");
+  mapper->SetLabelFormat("%s");
+  mapper->SetLabelModeToLabelFieldData();
 
   if (font != nullptr) {
-    hierarchy->SetTextProperty(font);
+    mapper->SetLabelTextProperty(font);
   } else {
     vtkNew<vtkTextProperty> font;
     font->SetFontSize(30);
     font->SetColor(0.0, 0.0, 0.0);
     font->SetFontFamilyToArial();
-    hierarchy->SetTextProperty(font);
+    font->SetShadow(true);
+    mapper->SetLabelTextProperty(font);
   }
-
-  vtkNew<vtkLabelPlacementMapper> mapper;
-  mapper->SetInputConnection(hierarchy->GetOutputPort());
 
   vtkNew<vtkActor2D> actor;
   actor->SetMapper(&*mapper);
