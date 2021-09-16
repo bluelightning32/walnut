@@ -262,10 +262,8 @@ std::pair<int, bool> BSPNode<OutputPolygonParent>::GetPWNEffectAtVertex(
     const EdgeRep& vertex_edge) const {
   const SplitSide& vertex_last_coincident =
     vertex_edge.vertex_last_coincident;
-  const int vertex_comparison =
-    RXYCompareBivector(split_.normal(),
-                       vertex_last_coincident.split->normal()) *
-    (vertex_last_coincident.pos_side ? -1 : 1);
+  const int vertex_comparison = RXYCompareBivector(split_.normal(),
+                                                   vertex_last_coincident);
 
   // For a crossing at the vertex, the edge boundary angle and the
   // vertex angle must be on opposite sides of the split normal. That
@@ -346,10 +344,8 @@ void BSPNode<OutputPolygonParent>::PushContentPWNToChildren() {
       const SplitSide& edge_last_coincident =
         current_edge.edge_last_coincident;
       if (edge_last_coincident.split == nullptr) continue;
-      int edge_comparison =
-        RXYCompareBivector(split_.normal(),
-                           edge_last_coincident.split->normal()) *
-        (edge_last_coincident.pos_side ? -1 : 1);
+      int edge_comparison = RXYCompareBivector(split_.normal(),
+                                               edge_last_coincident);
       if (edge_comparison == 0) continue;
 
       std::pair<int, bool> push_info =

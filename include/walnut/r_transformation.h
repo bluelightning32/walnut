@@ -14,6 +14,7 @@
 // enough that comparisons of R-transformed values stabilize.
 
 #include "walnut/homo_point3.h"
+#include "walnut/split_side.h"
 #include "walnut/vector3.h"
 
 namespace walnut {
@@ -46,6 +47,21 @@ inline HomoPoint3 RTransform(const HomoPoint3& p, const BigInt& eps_inv) {
 //
 // If either vector is 0, then 0 is returned.
 int RXYCompareBivector(const Vector3& u, const Vector3& v);
+
+// Applies the R transform to a bivector and a split normal and compares the
+// result in the XY plane.
+//
+// The split normal is taken from `v`. If `v.pos_side` is true, the split
+// normal is flipped such that the normal always points away from the point
+// that the `SplitSide` is relative to.
+//
+// * Returns -1 if (v R) is clockwise from (u R)
+// * Returns 0 if u points in the same or opposite direction as v (as do (u R)
+//   and (v R)).
+// * Returns 1 if (v R) is counter-clockwise from (u R)
+//
+// If either vector is 0, then 0 is returned.
+int RXYCompareBivector(const Vector3& u, const SplitSide& v);
 
 }  // walnut
 

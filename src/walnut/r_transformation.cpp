@@ -15,4 +15,8 @@ int RXYCompareBivector(const Vector3& u, const Vector3& v) {
   return compareyz;
 }
 
+int RXYCompareBivector(const Vector3& u, const SplitSide& v) {
+  return RXYCompareBivector(u, v.split->normal()) * (v.pos_side ? -1 : 1);
+}
+
 }  // walnut
