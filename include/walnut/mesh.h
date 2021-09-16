@@ -52,30 +52,21 @@ HomoPoint3 GetCentroid(const std::vector<Polygon>& mesh) {
   std::vector<size_t> denom_indices;
 
   struct DenomValue {
-    DenomValue(const BigInt& up_to_lcm, BigInt&& contribution) :
-      up_to_lcm(up_to_lcm), contribution(std::move(contribution)) {
+    DenomValue(BigInt&& contribution, BigInt&& numerator_multiple) :
+        contribution(std::move(contribution)),
+        numerator_multiple(std::move(numerator_multiple)) {
     }
 
-    // The product `contribution` fields from the prior indices in
-    // `denom_values`.
-    //
-    // This does not include the `contribution` from this index.
-    BigInt up_to_lcm;
     // The contribution of this denominator to the overall least common
     // multiple of all the denominators.
     //
     // Specicifically it is the value of this denominator divided by its
     // greatest common divisor with `up_to_lcm`.
     BigInt contribution;
-    // The product `contribution` fields from the subsequent indices in
-    // `denom_values`.
-    //
-    // This does not include the `contribution` from this index.
-    BigInt after_lcm;
     // lcm / contribution
-    BigInt lcm_except_contribution;
+    BigInt numerator_multiple;
     // (lcm / contribution)^3
-    BigInt lcm_except_contribution_cubed;
+    BigInt numerator_multiple_cubed;
   };
   std::vector<DenomValue> denom_values;
 
@@ -119,7 +110,7 @@ HomoPoint3 GetCentroid(const std::vector<Polygon>& mesh) {
 
           BigInt denom_product = tri_denom[0] * tri_denom[1] * tri_denom[2];
           BigInt gcd = up_to_lcm.GetGreatestCommonDivisor(denom_product);
-          denom_values.emplace_back(up_to_lcm, /*contribution=*/denom_product / gcd);
+          denom_values.emplace_back(/*contribution=*/denom_product / gcd, /*numerator_multiple=*/up_to_lcm / gcd);
           up_to_lcm *= denom_values.back().contribution;
         }
         existing.first->second = canonicalized_existing.first->second;
@@ -129,18 +120,13 @@ HomoPoint3 GetCentroid(const std::vector<Polygon>& mesh) {
   }
   BigInt after_lcm(1);
   for (auto it = denom_values.rbegin(); it != denom_values.rend(); ++it) {
-    it->after_lcm = after_lcm;
+    it->numerator_multiple *= after_lcm;
+    it->numerator_multiple_cubed = it->numerator_multiple *
+                                   it->numerator_multiple *
+                                   it->numerator_multiple;
     after_lcm *= it->contribution;
   }
   assert(up_to_lcm == after_lcm);
-  for (DenomValue& denom : denom_values) {
-    // Multiplication is faster than division, especially for large integers.
-    // So this multiplication avoids a division.
-    denom.lcm_except_contribution = denom.up_to_lcm * denom.after_lcm;
-    denom.lcm_except_contribution_cubed = denom.lcm_except_contribution *
-                                          denom.lcm_except_contribution *
-                                          denom.lcm_except_contribution;
-  }
 
   // volume = volume_numerator / after_lcm / 6
   BigInt volume_numerator(0);
@@ -164,7 +150,7 @@ HomoPoint3 GetCentroid(const std::vector<Polygon>& mesh) {
       const Vector3& point_c_v = point_c.vector_from_origin();
 
       volume_numerator += point_a_v.Dot(point_b_v.Cross(point_c_v)) *
-        denom_values[*denom_index_it].lcm_except_contribution;
+        denom_values[*denom_index_it].numerator_multiple;
 
       centroid_numerator += (
           point_c.w() * point_a_v.Cross(point_b_v) +
@@ -177,7 +163,7 @@ HomoPoint3 GetCentroid(const std::vector<Polygon>& mesh) {
                           point_b.w() * point_c_v)).HadamardSquared() +
           (point_b.w() * (point_a.w() * point_c_v +
                           point_c.w() * point_a_v)).HadamardSquared()) *
-        denom_values[*denom_index_it].lcm_except_contribution_cubed;
+        denom_values[*denom_index_it].numerator_multiple_cubed;
     }
   }
 
