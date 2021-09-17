@@ -215,6 +215,21 @@ class ConcatRangeIteratorHelper {
     return copy;
   }
 
+  ValueType& operator[](size_t index) const {
+    return *(*this + index);
+  }
+
+  ConcatRangeIteratorHelper operator+(size_t index) const {
+    ConcatRangeIteratorHelper copy(*this);
+    while (true) {
+      size_t range_size = copy.range_end() - copy.input_pos();
+      if (index < range_size) break;
+      copy.AdvanceRange();
+      index -= range_size;
+    }
+    return copy;
+  }
+
   template <typename OtherValueType>
   bool operator==(const ConcatRangeIteratorHelper<InputIterator,
                                                   OtherValueType>&

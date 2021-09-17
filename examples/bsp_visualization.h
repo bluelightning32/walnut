@@ -67,6 +67,8 @@ class BSPVisualization {
   // is a leaf (has no children).
   bool Down(bool branch);
 
+  void ResetView();
+
  private:
   struct ContentInfo {
     ContentInfo(VisualizationWindow& window, bool start3d, double r, double g,
@@ -211,6 +213,8 @@ class BSPVisualization {
   // Actor that displays `labelled_points_data_`. The actor will show any
   // updates to `labelled_points_data_`.
   vtkSmartPointer<vtkActor2D> labels_actor_;
+
+  vtkSmartPointer<vtkCubeAxesActor> axes_actor_;
 };
 
 } // walnut

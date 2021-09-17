@@ -77,23 +77,8 @@ int main(int argc, char *argv[]) {
       /*labelling_box=*/walnut::AABB(-12, -12, -20, 12, 12, 20, 1),
       tree);
   tree_visualization.AddContent(id, walnut_mesh);
+  tree_visualization.ResetView();
 
-  double bounds[6];
-  // xmin
-  bounds[0] = -12;
-  // xmax
-  bounds[1] = 12;
-  // ymin
-  bounds[2] = -12;
-  // ymax
-  bounds[3] = 12;
-  // zmin
-  bounds[4] = -12;
-  // zmax
-  bounds[5] = 12;
-  window.Axes(bounds, /*padding=*/0);
-
-  window.UseTopDownView(bounds);
   window.Run();
 
   return 0;

@@ -78,6 +78,10 @@ class VisualizationWindow {
 
   void Redraw();
 
+  void RemoveActor(vtkProp* actor) {
+    renderer_->RemoveActor(actor);
+  }
+
  private:
   vtkSmartPointer<vtkRenderer> renderer_;
   vtkSmartPointer<vtkRenderWindow> render_window_;

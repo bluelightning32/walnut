@@ -1,11 +1,14 @@
 #include "bsp_visualization.h"
 
+// For std::floor and std::ceil
+#include <cmath>
 // For std::strcmp
 #include <cstring>
 #include <vtkPointData.h>
 #include <vtkProperty.h>
 #include <vtkProperty2D.h>
 
+#include "walnut/concat_range.h"
 #include "walnut/mesh.h"
 #include "walnut/walnut_to_vtk_mesh.h"
 
@@ -551,6 +554,44 @@ void BSPVisualization::AddSplitOutline(
     };
     split_lines->GetLines()->InsertNextCell(2, endpoints);
   }
+}
+
+void BSPVisualization::ResetView() {
+  if (axes_actor_) {
+    window_.RemoveActor(axes_actor_);
+    axes_actor_ = nullptr;
+  }
+
+  using VertexIterator = ConvexPolygon<>::ConstVertexIterator;
+  ConcatRange<VertexIterator> all_vertices;
+  for (const std::pair<const BSPContentId, ContentInfo>& content : contents_) {
+    std::vector<const ConvexPolygon<>*> polygons;
+    for (const ConvexPolygon<>* polygon : content.second.polygons) {
+      all_vertices.Append(polygon->vertices_begin(), polygon->vertices_end());
+    }
+  }
+  AABB bounding_box =
+    ConvexVertexAABBTracker(all_vertices.begin(), all_vertices.end()).aabb();
+
+  DoublePoint3 double_min = bounding_box.min_point().GetDoublePoint3();
+  DoublePoint3 double_max = bounding_box.max_point().GetDoublePoint3();
+
+  double bounds[6];
+  // xmin
+  bounds[0] = std::floor(double_min.x);
+  // xmax
+  bounds[1] = std::ceil(double_max.x);
+  // ymin
+  bounds[2] = std::floor(double_min.y);
+  // ymax
+  bounds[3] = std::ceil(double_max.y);
+  // zmin
+  bounds[4] = std::floor(double_min.z);
+  // zmax
+  bounds[5] = std::ceil(double_max.z);
+  axes_actor_ = window_.Axes(bounds, /*padding=*/0);
+
+  window_.UseTopDownView(bounds);
 }
 
 } // walnut
