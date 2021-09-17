@@ -245,4 +245,34 @@ TEST(HomoPoint3, Get2DTwistDirNegNegNegDenom) {
   EXPECT_GT(p2.Get2DTwistDir(/*drop_dimension=*/2, p3, p1), 0);
 }
 
+TEST(HomoPoint3, DifferenceBothPosDenom) {
+  HomoPoint3 p1(/*x=*/1, /*y=*/1, /*z=*/1, /*w=*/2);
+  HomoPoint3 p2(/*x=*/2, /*y=*/2, /*z=*/2, /*w=*/3);
+
+  BigInt denom;
+  Vector3 diff = p2.Difference(p1, denom);
+  if (denom >= 0) {
+    EXPECT_TRUE(diff.IsSameDir(Vector3(1, 1, 1)));
+  } else {
+    EXPECT_TRUE(diff.IsSameDir(-Vector3(1, 1, 1)));
+  }
+  // 2/3 - 1/2 = 4/6 - 3/6 = 1/6
+  EXPECT_EQ(diff.x() * 6, 1 * denom);
+}
+
+TEST(HomoPoint3, DifferenceSecondNegDenom) {
+  HomoPoint3 p1(/*x=*/1, /*y=*/1, /*z=*/1, /*w=*/2);
+  HomoPoint3 p2(/*x=*/2, /*y=*/2, /*z=*/2, /*w=*/-3);
+
+  BigInt denom;
+  Vector3 diff = p2.Difference(p1, denom);
+  if (denom >= 0) {
+    EXPECT_TRUE(diff.IsSameDir(Vector3(-1, -1, -1)));
+  } else {
+    EXPECT_TRUE(diff.IsSameDir(-Vector3(-1, -1, -1)));
+  }
+  // 2/-3 - 1/2 = -4/6 - 3/6 = -7/6
+  EXPECT_EQ(diff.x() * 6, -7 * denom);
+}
+
 }  // walnut

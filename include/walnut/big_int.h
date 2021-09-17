@@ -470,11 +470,11 @@ class BigInt {
     return Multiply(other);
   }
 
-  BigInt operator*(const int other) const {
+  BigInt operator*(int other) const {
     return Multiply(BigInt(other));
   }
 
-  BigInt& operator*=(const int other) {
+  BigInt& operator*=(int other) {
     *this = *this * other;
     return *this;
   }
@@ -861,6 +861,10 @@ class BigInt {
 
   BigIntWords words_;
 };
+
+inline BigInt operator*(int a, const BigInt& b) {
+  return b.Multiply(BigInt(a));
+}
 
 std::ostream& operator<<(std::ostream& out, const BigInt& bigint);
 

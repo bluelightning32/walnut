@@ -93,6 +93,12 @@ class HomoPoint3 {
     return dist_denom_;
   }
 
+  Vector3 Difference(const HomoPoint3& other, BigInt& denom) const {
+    denom = other.dist_denom() * dist_denom();
+    return vector_from_origin() * other.dist_denom() -
+           other.vector_from_origin() * dist_denom();
+  }
+
   Vector3& vector_from_origin() {
     return vector_from_origin_;
   }
