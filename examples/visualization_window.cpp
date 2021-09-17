@@ -121,6 +121,24 @@ void VisualizationWindow::UseTopDownView(double bounds[6]) {
   renderer_->GetActiveCamera()->SetClippingRange(0.1, 1000);
 }
 
+void VisualizationWindow::UseSecondView(
+    const std::array<double, 6>& bounds) {
+  std::array<double, 6> bounds_copy = bounds;
+  /*
+  for (double& d : bounds_copy) {
+    d *= 1.1;
+  }
+  */
+
+  renderer_->GetActiveCamera()->ParallelProjectionOn();
+  renderer_->GetActiveCamera()->SetFocalPoint(0, 0, 0);
+  renderer_->GetActiveCamera()->SetPosition(-1, -2, 4);
+  renderer_->GetActiveCamera()->SetViewUp(0, 0, 1);
+  renderer_->ResetCamera(bounds_copy.data());
+  Zoom(1.0);
+  renderer_->GetActiveCamera()->SetClippingRange(0.1, 1000);
+}
+
 vtkSmartPointer<vtkActor> VisualizationWindow::AddShape(
     vtkPolyData* shape, double r, double g, double b,
     double a) {

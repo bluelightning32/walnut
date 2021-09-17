@@ -67,7 +67,8 @@ class BSPVisualization {
   // is a leaf (has no children).
   bool Down(bool branch);
 
-  void ResetView();
+  void UseTopDownView();
+  void UseSecondView();
 
  private:
   struct ContentInfo {
@@ -130,6 +131,8 @@ class BSPVisualization {
    private:
     vtkNew<vtkPolyData> MakeEdges(vtkPoints* points);
   };
+
+  std::array<double, 6> GetContentBounds() const;
 
   void AdjustNodePathToAvoidPoint(BSPTreeRep& tree_copy,
                                   std::vector<bool>& node_path,

@@ -73,11 +73,11 @@ int main(int argc, char *argv[]) {
   walnut::VisualizationWindow window;
   walnut::BSPVisualization tree_visualization(
       window,
-      /*bounding_box=*/walnut::AABB(-29, -29, -70, 29, 29, 70, 1),
+      /*bounding_box=*/walnut::AABB(-28, -28, -70, 28, 28, 70, 1),
       /*labelling_box=*/walnut::AABB(-12, -12, -20, 12, 12, 20, 1),
       tree);
   tree_visualization.AddContent(id, walnut_mesh);
-  tree_visualization.ResetView();
+  tree_visualization.UseTopDownView();
 
   window.Run();
 

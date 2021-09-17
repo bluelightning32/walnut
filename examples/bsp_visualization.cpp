@@ -163,6 +163,12 @@ bool BSPVisualization::KeyPressed(const char* key) {
   } else if (!std::strcmp(key, "Right")) {
     Down(/*branch=*/true);
     return true;
+  } else if (!std::strcmp(key, "1")) {
+    UseTopDownView();
+    return true;
+  } else if (!std::strcmp(key, "2")) {
+    UseSecondView();
+    return true;
   }
   return false;
 }
@@ -556,12 +562,7 @@ void BSPVisualization::AddSplitOutline(
   }
 }
 
-void BSPVisualization::ResetView() {
-  if (axes_actor_) {
-    window_.RemoveActor(axes_actor_);
-    axes_actor_ = nullptr;
-  }
-
+std::array<double, 6> BSPVisualization::GetContentBounds() const {
   using VertexIterator = ConvexPolygon<>::ConstVertexIterator;
   ConcatRange<VertexIterator> all_vertices;
   for (const std::pair<const BSPContentId, ContentInfo>& content : contents_) {
@@ -576,7 +577,7 @@ void BSPVisualization::ResetView() {
   DoublePoint3 double_min = bounding_box.min_point().GetDoublePoint3();
   DoublePoint3 double_max = bounding_box.max_point().GetDoublePoint3();
 
-  double bounds[6];
+  std::array<double, 6> bounds;
   // xmin
   bounds[0] = std::floor(double_min.x);
   // xmax
@@ -589,9 +590,31 @@ void BSPVisualization::ResetView() {
   bounds[4] = std::floor(double_min.z);
   // zmax
   bounds[5] = std::ceil(double_max.z);
-  axes_actor_ = window_.Axes(bounds, /*padding=*/0);
+  return bounds;
+}
 
-  window_.UseTopDownView(bounds);
+void BSPVisualization::UseTopDownView() {
+  if (axes_actor_) {
+    window_.RemoveActor(axes_actor_);
+    axes_actor_ = nullptr;
+  }
+
+  std::array<double, 6> bounds = GetContentBounds();
+  axes_actor_ = window_.Axes(bounds.data(), /*padding=*/0);
+
+  window_.UseTopDownView(bounds.data());
+}
+
+void BSPVisualization::UseSecondView() {
+  if (axes_actor_) {
+    window_.RemoveActor(axes_actor_);
+    axes_actor_ = nullptr;
+  }
+
+  std::array<double, 6> bounds = GetContentBounds();
+  axes_actor_ = window_.Axes(bounds.data(), /*padding=*/0);
+
+  window_.UseSecondView(bounds);
 }
 
 } // walnut
