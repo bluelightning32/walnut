@@ -92,8 +92,8 @@ inline bool IsHalfRotationLessThan(const BigInt& x1, const BigInt& y1,
   // to negate the first vector.
   bool y1_0_adjust = (y1.GetSign() >= 0) & (x1.GetSign() < 0);
   bool y2_0_adjust = (y2.GetSign() >= 0) & (x2.GetSign() < 0);
-  const bool flip = (y1 - int(y1_0_adjust)).HasDifferentSign(
-      y2 - int(y2_0_adjust));
+  const bool flip = ((y1.GetSign() - y1_0_adjust) ^ (
+      y2.GetSign() - y2_0_adjust)) < 0;
   return y1_x2.LessThan(flip, y2_x1);
 }
 

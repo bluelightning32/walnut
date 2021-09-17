@@ -521,6 +521,10 @@ TEST(BigInt, GetSign) {
   }
 }
 
+TEST(BigInt, GetSign1) {
+  EXPECT_EQ(BigInt{1}.GetSign(), 1);
+}
+
 TEST(BigInt, PrintNeg) {
   std::ostringstream os;
   os << BigInt(-1);

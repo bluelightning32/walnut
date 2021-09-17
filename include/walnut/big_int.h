@@ -748,6 +748,7 @@ class BigInt {
   }
 
   // Returns 0 if this equals 0.
+  // Returns 1 if this equals 1.
   // Returns >0 if this is greater than 0.
   // Returns <0 if this is less than 0.
   constexpr BigIntWord GetSign() const {
