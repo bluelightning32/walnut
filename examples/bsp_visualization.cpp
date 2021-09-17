@@ -169,6 +169,9 @@ bool BSPVisualization::KeyPressed(const char* key) {
   } else if (!std::strcmp(key, "2")) {
     UseSecondView();
     return true;
+  } else if (!std::strcmp(key, "l")) {
+    ShowLabels(!show_labels_);
+    return true;
   }
   return false;
 }
@@ -615,6 +618,14 @@ void BSPVisualization::UseSecondView() {
   axes_actor_ = window_.Axes(bounds.data(), /*padding=*/0);
 
   window_.UseSecondView(bounds);
+}
+
+void BSPVisualization::ShowLabels(bool show) {
+  show_labels_ = show;
+  labels_actor_->SetVisibility(show_labels_);
+  for (std::pair<const BSPContentId, ContentInfo>& content_pair : contents_) {
+    content_pair.second.labels_actor->SetVisibility(show_labels_);
+  }
 }
 
 } // walnut

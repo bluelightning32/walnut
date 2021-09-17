@@ -70,6 +70,8 @@ class BSPVisualization {
   void UseTopDownView();
   void UseSecondView();
 
+  void ShowLabels(bool show);
+
  private:
   struct ContentInfo {
     ContentInfo(VisualizationWindow& window, bool start3d, double r, double g,
@@ -218,6 +220,8 @@ class BSPVisualization {
   vtkSmartPointer<vtkActor2D> labels_actor_;
 
   vtkSmartPointer<vtkCubeAxesActor> axes_actor_;
+
+  bool show_labels_ = true;
 };
 
 } // walnut
