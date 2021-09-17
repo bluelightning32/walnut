@@ -320,6 +320,11 @@ void BSPVisualization::UpdateShapes() {
     // The split actor will not be shown, but set its input anyway so that it
     // doesn't print warnings about not having any inputs.
     split_filter_->SetInputDataObject(empty);
+
+    AddPWNLabel(labels, "Leaf PWN: " +
+                GetPWNString(
+                  original_pos_->content_info_by_id()),
+                labelled_points, chosen_branches_, top, top);
   } else {
     std::vector<bool> neg_child_path(chosen_branches_);
     neg_child_path.push_back(false);
