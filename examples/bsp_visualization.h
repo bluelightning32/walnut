@@ -129,6 +129,15 @@ class BSPVisualization {
     vtkNew<vtkPolyData> MakeEdges(vtkPoints* points);
   };
 
+  void AdjustNodePathToAvoidPoint(BSPTreeRep& tree_copy,
+                                  std::vector<bool>& node_path,
+                                  const HomoPoint3& avoid);
+
+  void AddPWNLabel(vtkStringArray* labels, const std::string& label,
+                   vtkPoints* labelled_points,
+                   const std::vector<bool>& node_path, const HomoPoint3& top,
+                   const HomoPoint3& new_top);
+
   bool KeyPressed(const char* key);
 
   std::string GetPWNString(

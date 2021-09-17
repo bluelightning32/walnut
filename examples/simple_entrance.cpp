@@ -71,27 +71,26 @@ int main(int argc, char *argv[]) {
   }
 
   walnut::VisualizationWindow window;
-  walnut::BSPVisualization tree_visualization(window,
-                                              walnut::AABB(-29, -29, -70, 29,
-                                                           29, 70, 1),
-                                              walnut::AABB(-12, -12, -70, 12,
-                                                           12, 70, 1),
-                                              tree);
+  walnut::BSPVisualization tree_visualization(
+      window,
+      /*bounding_box=*/walnut::AABB(-29, -29, -70, 29, 29, 70, 1),
+      /*labelling_box=*/walnut::AABB(-12, -12, -20, 12, 12, 20, 1),
+      tree);
   tree_visualization.AddContent(id, walnut_mesh);
 
   double bounds[6];
   // xmin
-  bounds[0] = -14;
+  bounds[0] = -12;
   // xmax
-  bounds[1] = 14;
+  bounds[1] = 12;
   // ymin
-  bounds[2] = -14;
+  bounds[2] = -12;
   // ymax
-  bounds[3] = 14;
+  bounds[3] = 12;
   // zmin
-  bounds[4] = -14;
+  bounds[4] = -12;
   // zmax
-  bounds[5] = 14;
+  bounds[5] = 12;
   window.Axes(bounds, /*padding=*/0);
 
   window.UseTopDownView(bounds);

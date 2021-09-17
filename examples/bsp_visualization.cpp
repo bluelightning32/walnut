@@ -180,6 +180,112 @@ std::string BSPVisualization::GetPWNString(
   return out.str();
 }
 
+void BSPVisualization::AdjustNodePathToAvoidPoint(BSPTreeRep& tree_copy,
+                                                  std::vector<bool>& node_path,
+                                                  const HomoPoint3& avoid) {
+  std::vector<ConnectingVisitorOutputPolygon<>> border =
+    tree_copy.GetNodeBorder(node_path.begin(), node_path.end(),
+                            labelling_box_);
+
+  HomoPoint3 center = GetCentroid(border);
+  BigInt denom;
+  Vector3 direction = center.Difference(avoid, denom);
+  if (denom < 0) {
+    direction = -direction;
+    denom = -denom;
+  }
+  // Project the direction onto the XY plane, because we're trying to avoid
+  // `avoid` in the top-down view.
+  direction.z() = 0;
+  HomoPoint3 farthest;
+  BigInt farthest_denom;
+  Vector3 farthest_dir;
+  if (direction.IsZero()) {
+    direction.x() = 1;
+    farthest = GetFarthest(border, direction);
+    farthest_dir = farthest.Difference(avoid, farthest_denom);
+    if (farthest_denom < 0) {
+      farthest_dir = -farthest_dir;
+      farthest_denom = -farthest_denom;
+    }
+    denom = farthest_denom * 10;
+  } else {
+    farthest = GetFarthest(border, direction);
+    farthest_dir = farthest.Difference(avoid, farthest_denom);
+    if (farthest_denom < 0) {
+      farthest_dir = -farthest_dir;
+      farthest_denom = -farthest_denom;
+    }
+  }
+
+  // If the difference between `avoid` and `center` is at least a fifth as far
+  // as it can possibly go in that direction, then that is good enough.
+  //
+  // |direction/denom| > (direction/denom) * (farthest_dir/farthest_denom) / |direction/denom| / 5
+  // (1/denom)^2 * |direction|^2 > direction * (farthest_dir/farthest_denom) / 5 / denom
+  // (1/denom) * |direction|^2 > direction * (farthest_dir/farthest_denom) / 5
+  // |direction|^2 > denom * direction * (farthest_dir/farthest_denom) / 5
+  // farthest_denom * |direction|^2 > denom * direction * farthest_dir / 5
+  // 5 * farthest_denom * |direction|^2 > denom * direction * farthest_dir
+  if (5 * farthest_denom * direction.GetScaleSquared() >
+      denom * direction.Dot(farthest_dir)) {
+    return;
+  }
+
+  BSPNodeRep* copy_pos = &tree_copy.root;
+  for (bool branch : node_path) {
+    if (branch) {
+      copy_pos = copy_pos->positive_child();
+    } else {
+      copy_pos = copy_pos->negative_child();
+    }
+  }
+
+  HomoPoint3 new_split_coincident =
+    avoid.AddOffset(farthest_dir, farthest_denom * 5);
+  farthest_dir.z() = 0;
+  copy_pos->Split(HalfSpace3(farthest_dir, new_split_coincident));
+  node_path.push_back(true);
+}
+
+void BSPVisualization::AddPWNLabel(vtkStringArray* labels,
+                                   const std::string& label,
+                                   vtkPoints* labelled_points,
+                                   const std::vector<bool>& node_path,
+                                   const HomoPoint3& top,
+                                   const HomoPoint3& new_top) {
+  BSPTreeRep tree_copy;
+  const BSPNodeRep* original_pos = &original_tree_.root;
+  BSPNodeRep* copy_pos = &tree_copy.root;
+  for (bool branch : node_path) {
+    copy_pos->Split(original_pos->split());
+    if (branch) {
+      original_pos = original_pos->positive_child();
+      copy_pos = copy_pos->positive_child();
+    } else {
+      original_pos = original_pos->negative_child();
+      copy_pos = copy_pos->negative_child();
+    }
+  }
+  std::vector<bool> path_copy = node_path;
+  if (!top.dist_denom().IsZero()) {
+    AdjustNodePathToAvoidPoint(tree_copy, path_copy, top);
+  }
+  if (!new_top.dist_denom().IsZero()) {
+    AdjustNodePathToAvoidPoint(tree_copy, path_copy, new_top);
+  }
+
+  std::vector<ConnectingVisitorOutputPolygon<>> border =
+    tree_copy.GetNodeBorder(path_copy.begin(), path_copy.end(),
+                            labelling_box_);
+
+  HomoPoint3 center = GetCentroid(border);
+  DoublePoint3 p = center.GetDoublePoint3();
+
+  labelled_points->InsertNextPoint(p.x, p.y, p.z);
+  labels->InsertNextValue(label);
+}
+
 void BSPVisualization::UpdateShapes() {
   std::vector<bool> child_path(chosen_branches_);
   std::vector<MutableConvexPolygon<>> border =
@@ -196,8 +302,9 @@ void BSPVisualization::UpdateShapes() {
   labelled_points_data_->GetPointData()->RemoveArray("labels");
   labelled_points_data_->GetPointData()->AddArray(labels);
 
-  DoublePoint3 top = GetTopPoint(border).GetDoublePoint3();
-  labelled_points->InsertNextPoint(top.x, top.y, top.z);
+  HomoPoint3 top = GetTopPoint(border);
+  DoublePoint3 top_double = top.GetDoublePoint3();
+  labelled_points->InsertNextPoint(top_double.x, top_double.y, top_double.z);
   labels->InsertNextValue("Top");
 
   std::unordered_map<DoublePoint3, vtkIdType> point_map;
@@ -233,32 +340,20 @@ void BSPVisualization::UpdateShapes() {
     assert(split_wall.size() == 1);
     split_filter_->SetInputDataObject(WalnutToVTKMesh(split_wall));
 
-    DoublePoint3 new_top = GetTopPoint(split_wall).GetDoublePoint3();
-    labelled_points->InsertNextPoint(new_top.x, new_top.y, new_top.z);
+    HomoPoint3 new_top = GetTopPoint(split_wall);
+    DoublePoint3 new_top_double = new_top.GetDoublePoint3();
+    labelled_points->InsertNextPoint(new_top_double.x, new_top_double.y,
+                                     new_top_double.z);
     labels->InsertNextValue("Top'");
 
-    HomoPoint3 neg_center =
-      GetCentroid(original_tree_.GetNodeBorder(neg_child_path.begin(),
-                                               neg_child_path.end(),
-                                               labelling_box_));
-    {
-      DoublePoint3 p = neg_center.GetDoublePoint3();
-      labelled_points->InsertNextPoint(p.x, p.y, p.z);
-      labels->InsertNextValue("Neg child PWN: " +
-          GetPWNString(
-            original_pos_->negative_child()->content_info_by_id()));
-    }
-    HomoPoint3 pos_center =
-      GetCentroid(original_tree_.GetNodeBorder(pos_child_path.begin(),
-                                               pos_child_path.end(),
-                                               labelling_box_));
-    {
-      DoublePoint3 p = pos_center.GetDoublePoint3();
-      labelled_points->InsertNextPoint(p.x, p.y, p.z);
-      labels->InsertNextValue("Pos child PWN: " +
-          GetPWNString(
-            original_pos_->positive_child()->content_info_by_id()));
-    }
+    AddPWNLabel(labels, "Neg child PWN: " +
+                GetPWNString(
+                  original_pos_->negative_child()->content_info_by_id()),
+                labelled_points, neg_child_path, top, new_top);
+    AddPWNLabel(labels, "Pos child PWN: " +
+                GetPWNString(
+                  original_pos_->positive_child()->content_info_by_id()),
+                labelled_points, pos_child_path, top, new_top);
 
     for (const BSPNodeRep::PolygonRep& polygon : pos_->contents()) {
       AddSplitOutline(polygon, point_map, points, split_lines);
