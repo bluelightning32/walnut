@@ -20,7 +20,9 @@ namespace walnut {
 
 class VisualizationWindow {
  public:
-  VisualizationWindow();
+  VisualizationWindow() : VisualizationWindow("screenshot") { }
+
+  VisualizationWindow(const char* screenshot_name_prefix);
 
   vtkSmartPointer<vtkActor> AddShape(vtkPolyData* shape,
                                      double r, double g, double b, double a);
@@ -84,12 +86,16 @@ class VisualizationWindow {
     renderer_->RemoveActor(actor);
   }
 
+  void TakeScreenshot();
+
  private:
+  std::string screenshot_name_prefix_;
   vtkSmartPointer<vtkRenderer> renderer_;
   vtkSmartPointer<vtkRenderWindow> render_window_;
   vtkSmartPointer<vtkRenderWindowInteractor> interactor_;
 
   ObserverRegistration switch_projection_;
+  ObserverRegistration take_screenshot_;
 };
 
 } // walnut

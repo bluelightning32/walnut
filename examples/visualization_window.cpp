@@ -8,11 +8,13 @@
 #include <vtkGlyph3D.h>
 #include <vtkInteractorStyleSwitch.h>
 #include <vtkLabeledDataMapper.h>
+#include <vtkPNGWriter.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkPolyDataNormals.h>
 #include <vtkProperty.h>
 #include <vtkProperty2D.h>
 #include <vtkTextProperty.h>
+#include <vtkWindowToImageFilter.h>
 
 #include "function_command.h"
 
@@ -71,11 +73,13 @@ vtkSmartPointer<vtkGlyph3D> GetNormalsGlyph(
   return glyph;
 }
 
-VisualizationWindow::VisualizationWindow() :
+VisualizationWindow::VisualizationWindow(const char* screenshot_name_prefix) :
+    screenshot_name_prefix_(screenshot_name_prefix),
     renderer_(vtkSmartPointer<vtkRenderer>::New()),
     render_window_(vtkSmartPointer<vtkRenderWindow>::New()),
     interactor_(vtkSmartPointer<vtkRenderWindowInteractor>::New()) {
 
+  renderer_->SetUseDepthPeeling(true);
   renderer_->GetActiveCamera()->SetFocalPoint(0, 0, 0);
   renderer_->GetActiveCamera()->SetPosition(10, 10, 10);
   renderer_->GetActiveCamera()->SetViewUp(0, 0, 1);
@@ -98,6 +102,15 @@ VisualizationWindow::VisualizationWindow() :
         bool parallel_mode =
           renderer_->GetActiveCamera()->GetParallelProjection();
         renderer_->GetActiveCamera()->SetParallelProjection(!parallel_mode);
+        return true;
+      }
+      return false;
+    });
+
+  take_screenshot_ = AddKeyPressObserver(
+      [this](char key) {
+      if (key == 'c') {
+        TakeScreenshot();
         return true;
       }
       return false;
@@ -384,6 +397,34 @@ ObserverRegistration VisualizationWindow::AddKeyPressObserver(
 
 void VisualizationWindow::Redraw() {
   render_window_->Render();
+}
+
+void VisualizationWindow::TakeScreenshot() {
+  vtkNew<vtkWindowToImageFilter> capture_screen;
+  capture_screen->SetInput(render_window_);
+  capture_screen->SetInputBufferTypeToRGB();
+  capture_screen->ReadFrontBufferOff();
+  capture_screen->Update();
+
+  std::cout << "Finding unused filename." << std::endl;
+  size_t screenshot_num = 1;
+  std::string filename;
+  while (true) {
+    std::ostringstream out;
+    out << screenshot_name_prefix_ << screenshot_num << ".png";
+    filename = out.str();
+    std::ifstream open_test(filename.c_str());
+    if (!open_test.good()) {
+      break;
+    }
+    ++screenshot_num;
+  }
+  std::cout << "Saving to " << filename << std::endl;
+
+  vtkNew<vtkPNGWriter> writer;
+  writer->SetFileName(filename.c_str());
+  writer->SetInputConnection(capture_screen->GetOutputPort());
+  writer->Write();
 }
 
 } // walnut

@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
     pos = pos->negative_child();
   }
 
-  walnut::VisualizationWindow window;
+  walnut::VisualizationWindow window("simple_entrance");
   walnut::BSPVisualization tree_visualization(
       window,
       /*bounding_box=*/walnut::AABB(-28, -28, -70, 28, 28, 70, 1),
