@@ -61,7 +61,7 @@ target_link_libraries(redundant_faces
                       examples_helper
                       ${GLEW_LIBRARIES} ${VTK_LIBRARIES} )
 
-add_executable(cube_tree cube_tree.cpp)
-target_link_libraries(cube_tree
+add_executable(simple_entrance simple_entrance.cpp)
+target_link_libraries(simple_entrance
                       examples_helper
                       ${GLEW_LIBRARIES} ${VTK_LIBRARIES} )

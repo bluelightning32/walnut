@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
   cu->GetOutputPort();
 
   std::vector<walnut::MutableConvexPolygon<>> walnut_mesh =
-    walnut::AABB(-1, -1, -1, 11, 11, 11, /*denom=*/1).GetWalls();
+    walnut::AABB(-12, -12, -12, 12, 12, 12, /*denom=*/1).GetWalls();
   walnut::BSPTree<> tree;
   walnut::BSPContentId id = tree.AllocateId();
   tree.AddContents(id, walnut_mesh);
@@ -81,17 +81,17 @@ int main(int argc, char *argv[]) {
 
   double bounds[6];
   // xmin
-  bounds[0] = -12;
+  bounds[0] = -14;
   // xmax
-  bounds[1] = 12;
+  bounds[1] = 14;
   // ymin
-  bounds[2] = -12;
+  bounds[2] = -14;
   // ymax
-  bounds[3] = 12;
+  bounds[3] = 14;
   // zmin
-  bounds[4] = -12;
+  bounds[4] = -14;
   // zmax
-  bounds[5] = 12;
+  bounds[5] = 14;
   window.Axes(bounds, /*padding=*/0);
 
   window.UseTopDownView(bounds);
