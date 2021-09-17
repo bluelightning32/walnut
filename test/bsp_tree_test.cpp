@@ -788,4 +788,35 @@ TEST(BSPTree, GetNodeBorder1Split) {
   }
 }
 
+TEST(BSPTree, GetNodeBorderBoundMatchesBorder) {
+  BSPTree<> tree;
+
+  AABB bounding_box(Point3(-1, -1, -1), Point3(2, 2, 2));
+
+  std::vector<MutableConvexPolygon<>> expected_facets =
+    bounding_box.GetWalls();
+  // Split the tree along each of the bounding box walls.
+  BSPNode<>* pos = &tree.root;
+  std::vector<bool> node_path = { };
+  for (const MutableConvexPolygon<>& facet : expected_facets) {
+    pos->Split(facet.plane());
+    pos = pos->negative_child();
+    node_path.push_back(false);
+  }
+
+  std::vector<ConnectingVisitorOutputPolygon<>> facets =
+    tree.GetNodeBorder(node_path.begin(), node_path.end(), bounding_box);
+
+  SortPolygons(expected_facets);
+  SortPolygons(facets);
+  ASSERT_EQ(facets.size(), expected_facets.size());
+  for (size_t i = 0; i < facets.size(); ++i) {
+    EXPECT_EQ(facets[i], expected_facets[i])
+      << "i=" << i << std::endl
+      << "facets[i]=" << facets[i] << std::endl
+      << "facets[i].plane=" << facets[i].plane() << std::endl
+      << "expected_facets[i].plane=" << expected_facets[i].plane();
+  }
+}
+
 }  // walnut

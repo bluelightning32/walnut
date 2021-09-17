@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <set>
 #include <type_traits>
 
 #include "walnut/aabb_convex_polygon.h"
@@ -78,8 +79,7 @@ class BSPTree {
   // node define the polyhedron of the boundary of the input node.
   //
   // In case the BSPNode border is unbounded, `bounding_box` provides an upper
-  // bound for how far the ConvexPolygons will extend. All of `bounding_box`'s
-  // walls must not be coincident with any of the split planes.
+  // bound for how far the ConvexPolygons will extend.
   template<typename Iterator>
   std::vector<ConnectingVisitorOutputPolygon<>>
   GetNodeBorder(Iterator node_path_begin, Iterator node_path_end,
@@ -122,8 +122,10 @@ BSPTree<ConvexPolygonTemplate>::GetNodeBorder(Iterator node_path_begin,
                                               Iterator node_path_end,
                                               const AABB& bounding_box) const {
   BSPNodeRep mapped_root;
+  std::set<HalfSpace3, HalfSpace3Compare> bounding_box_planes;
   for (auto& polygon : bounding_box.GetWalls()) {
     assert(polygon.vertex_count() > 0);
+    bounding_box_planes.insert(polygon.plane());
     mapped_root.AddRootContent(/*id=*/0, std::move(polygon));
   }
   const BSPNodeRep* original_node = &root;
@@ -131,14 +133,20 @@ BSPTree<ConvexPolygonTemplate>::GetNodeBorder(Iterator node_path_begin,
   // mapped_root.
   for (Iterator pos = node_path_begin; pos != node_path_end; ++pos) {
     if (*pos) {
-      mapped_root.AddRootContent(
-          /*id=*/0, bounding_box.IntersectPlane(-original_node->split()));
-      assert(mapped_root.contents().back().vertex_count() > 0);
+      if (bounding_box_planes.find(-original_node->split()) ==
+          bounding_box_planes.end()) {
+        mapped_root.AddRootContent(
+            /*id=*/0, bounding_box.IntersectPlane(-original_node->split()));
+        assert(mapped_root.contents().back().vertex_count() > 0);
+      }
       original_node = original_node->positive_child();
     } else {
-      mapped_root.AddRootContent(
-          /*id=*/0, bounding_box.IntersectPlane(original_node->split()));
-      assert(mapped_root.contents().back().vertex_count() > 0);
+      if (bounding_box_planes.find(original_node->split()) ==
+          bounding_box_planes.end()) {
+        mapped_root.AddRootContent(
+            /*id=*/0, bounding_box.IntersectPlane(original_node->split()));
+        assert(mapped_root.contents().back().vertex_count() > 0);
+      }
       original_node = original_node->negative_child();
     }
   }
