@@ -53,9 +53,9 @@ std::vector<MutableConvexPolygon<>> MakeTriangulatedCuboid(int min_x,
 }
 
 template <typename Polygon>
-std::map<HalfSpace3, std::vector<Polygon>, HalfSpace3ReduceCompare>
+std::map<HalfSpace3, std::vector<Polygon>, HalfSpace3Compare>
 GroupByPlane(const std::vector<Polygon>& polygons) {
-  std::map<HalfSpace3, std::vector<Polygon>, HalfSpace3ReduceCompare> result;
+  std::map<HalfSpace3, std::vector<Polygon>, HalfSpace3Compare> result;
   for (const Polygon& polygon : polygons) {
     result[polygon.plane()].push_back(polygon);
   }
@@ -406,7 +406,7 @@ TEST(BSPTraverser, ConnectUnionCubesWithCornerOverlap) {
   visitor.FilterEmptyPolygons();
   std::map<HalfSpace3,
            std::vector<Visitor::PolygonRep>,
-           HalfSpace3ReduceCompare> planes_to_polygons =
+           HalfSpace3Compare> planes_to_polygons =
              GroupByPlane(visitor.polygons());
   for (const std::pair<const HalfSpace3,
                        std::vector<Visitor::PolygonRep>>& plane_info
@@ -520,7 +520,7 @@ TEST(BSPTraverser, ConnectUnionCubesWithPlaneCornerOverlap) {
   EXPECT_THAT(visitor.polygons(), SizeIs(14));
   std::map<HalfSpace3,
            std::vector<Visitor::PolygonRep>,
-           HalfSpace3ReduceCompare> planes_to_polygons =
+           HalfSpace3Compare> planes_to_polygons =
              GroupByPlane(visitor.polygons());
   for (const std::pair<const HalfSpace3,
                        std::vector<Visitor::PolygonRep>>& plane_info

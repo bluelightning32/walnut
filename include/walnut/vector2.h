@@ -197,7 +197,10 @@ class Vector2 {
   // Returns true if the counter-clockwise angle from the x-axis to `this` is
   // less than the angle from the x-axis to `other`.
   //
-  // Note that this comparison has the transitive property.
+  // The result is undefined if `this` or `other` is the zero vector.
+  //
+  // Note that this comparison has the transitive property, when none of the
+  // vectors are 0.
   bool IsRotationLessThan(const Vector2& other) const;
 
  private:

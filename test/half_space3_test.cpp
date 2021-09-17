@@ -1,8 +1,13 @@
 #include "walnut/half_space3.h"
 
+#include <random>
+
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 namespace walnut {
+
+using testing::UnorderedElementsAreArray;
 
 TEST(HalfSpace3, ComparePoint3) {
   // Anything with x>5 is included in the half space.
@@ -291,6 +296,47 @@ TEST(HalfSpace3, ConstructFromVectorAndHomoPoint3NegDenom) {
   HalfSpace3 plane(v, p);
   EXPECT_TRUE(plane.normal().IsSameDir(v));
   EXPECT_TRUE(plane.IsCoincident(p));
+}
+
+TEST(HalfSpace3, HalfSpace3CompareStoreInSet) {
+  std::vector<HalfSpace3> unique_halfspaces{
+    HalfSpace3(1, 1, 1, 0),
+    HalfSpace3(1, 1, 1, 1),
+    HalfSpace3(1, 1, 1, -1),
+    HalfSpace3(-1, -1, -1, 0),
+    HalfSpace3(-1, -1, -1, 1),
+    HalfSpace3(-1, -1, -1, -1),
+    HalfSpace3(1, 0, 0, -1),
+    HalfSpace3(1, 0, 0, 0),
+    HalfSpace3(1, 0, 0, 1),
+    HalfSpace3(0, 0, 1, -1),
+    HalfSpace3(0, 0, 1, 0),
+    HalfSpace3(0, 0, 1, 1),
+    HalfSpace3(1, 2, 3, 5),
+    HalfSpace3(-1, -2, -3, -5),
+    HalfSpace3(0, 1, 0, 0),
+    HalfSpace3(0, -1, 0, 0),
+  };
+
+  std::mt19937 gen;
+  for (int i = 0; i < 100; ++i) {
+    using Set = std::set<HalfSpace3, HalfSpace3Compare>;
+    Set added;
+    std::vector<HalfSpace3> to_add = unique_halfspaces;
+    while (!to_add.empty()) {
+      size_t selected = gen() % to_add.size();
+      int multiple = (gen() % 3) + 1;
+      HalfSpace3 multiplied(to_add[selected].x() * multiple,
+                            to_add[selected].y() * multiple,
+                            to_add[selected].z() * multiple,
+                            to_add[selected].d() * multiple);
+      EXPECT_EQ(multiplied, to_add[selected]);
+      EXPECT_TRUE(added.insert(multiplied).second);
+      to_add.erase(to_add.begin() + selected);
+    }
+
+    EXPECT_THAT(added, UnorderedElementsAreArray(unique_halfspaces));
+  }
 }
 
 }  // walnut

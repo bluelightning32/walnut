@@ -255,17 +255,23 @@ class HalfSpace3 {
 
 std::ostream& operator<<(std::ostream& out, const HalfSpace3& p);
 
-// An inefficient comparison function for HalfSpace3 that is only useful for
-// tests.
-struct HalfSpace3ReduceCompare {
+// A comparison object for HalfSpace3 that uses an implementation defined
+// order.
+//
+// This is useful for putting `HalfSpace3`s in a std::map or std::set.
+struct HalfSpace3Compare {
   bool operator()(const HalfSpace3& a, const HalfSpace3& b) const {
-    HalfSpace3 a_copy = a;
-    a_copy.Reduce();
-    HalfSpace3 b_copy = b;
-    b_copy.Reduce();
+    BigInt scale_a = (b.x() + b.y() + b.z()).abs();
+    BigInt scale_b = (a.x() + a.y() + a.z()).abs();
 
-    return std::make_tuple(a.x(), a.y(), a.z(), a.d()) <
-           std::make_tuple(b.x(), b.y(), b.z(), b.d());
+    return std::make_tuple(a.x().Multiply(scale_a),
+                           a.y().Multiply(scale_a),
+                           a.z().Multiply(scale_a),
+                           a.d().Multiply(scale_a)) <
+           std::make_tuple(b.x().Multiply(scale_b),
+                           b.y().Multiply(scale_b),
+                           b.z().Multiply(scale_b),
+                           b.d().Multiply(scale_b));
   }
 };
 
