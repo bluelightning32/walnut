@@ -18,7 +18,7 @@ class HalfSpace3 {
   // Leaves the components in an undefined state
   HalfSpace3() = default;
 
-  // Constructs a half-space a the normal and distance from the origin along
+  // Constructs a half-space from a normal and distance from the origin along
   // that normal.
   //
   // normal * dist a vector that goes from the origin to a point on the plane.
@@ -27,6 +27,17 @@ class HalfSpace3 {
   // considered in the negative half-space.
   HalfSpace3(const Vector3& normal, const BigInt& dist) :
     normal_(normal), dist_(dist) { }
+
+  // Constructs a half-space with the given normal and a point that should be
+  // coincident to the plane.
+  HalfSpace3(const Vector3& normal, const HomoPoint3& coincident) {
+    bool was_signed;
+    normal_ = normal * coincident.dist_denom().GetAbs(was_signed);
+    dist_ = normal.Dot(coincident.vector_from_origin());
+    if (was_signed) {
+      dist_ = -dist_;
+    }
+  }
 
   // Constructs a half-space from a normal in component form and distance from
   // the origin along that normal.

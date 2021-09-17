@@ -277,4 +277,20 @@ TEST(HalfSpace3, ProjectOntoPlaneAddZ) {
   EXPECT_TRUE(plane.IsCoincident(projected));
 }
 
+TEST(HalfSpace3, ConstructFromVectorAndHomoPoint3) {
+  Vector3 v(/*x=*/2, /*y=*/3, /*z=*/5);
+  HomoPoint3 p(/*x=*/7, /*y=*/11, /*z=*/13, /*w=*/17);
+  HalfSpace3 plane(v, p);
+  EXPECT_TRUE(plane.normal().IsSameDir(v));
+  EXPECT_TRUE(plane.IsCoincident(p));
+}
+
+TEST(HalfSpace3, ConstructFromVectorAndHomoPoint3NegDenom) {
+  Vector3 v(/*x=*/2, /*y=*/3, /*z=*/5);
+  HomoPoint3 p(/*x=*/7, /*y=*/11, /*z=*/13, /*w=*/-17);
+  HalfSpace3 plane(v, p);
+  EXPECT_TRUE(plane.normal().IsSameDir(v));
+  EXPECT_TRUE(plane.IsCoincident(p));
+}
+
 }  // walnut
