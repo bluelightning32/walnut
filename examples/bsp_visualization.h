@@ -178,14 +178,14 @@ class BSPVisualization {
   AABB labelling_box_;
   double crossing_label_offset_;
 
-  const BSPTreeRep& original_tree_;
-  const BSPNodeRep* original_pos_;
+  const BSPTreeRep& full_tree_;
+  const BSPNodeRep* full_tree_pos_;
   // false means the negative child was chosen, and true means the positive
   // child was chosen.
   std::vector<bool> chosen_branches_;
   BSPTreeRep view_tree_;
-  // Position in `view_tree_` that corresponds to `original_pos_` in
-  // `original_tree_`. This is updated as the user requests to go up and down
+  // Position in `view_tree_` that corresponds to `full_tree_pos_` in
+  // `full_tree_`. This is updated as the user requests to go up and down
   // the BSP tree.
   BSPNodeRep* view_pos_;
 

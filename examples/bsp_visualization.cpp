@@ -21,8 +21,8 @@ BSPVisualization::BSPVisualization(VisualizationWindow& window,
   : window_(window), bounding_box_(bounding_box),
     labelling_box_(labelling_box),
     crossing_label_offset_(labelling_box.GetDiagonalLength() / 200),
-    original_tree_(tree),
-    original_pos_(&tree.root), view_pos_(&view_tree_.root),
+    full_tree_(tree),
+    full_tree_pos_(&tree.root), view_pos_(&view_tree_.root),
     key_press_listener(window.AddKeyPressObserver(
           [this](const char* key) {
             return KeyPressed(key);
@@ -70,15 +70,15 @@ bool BSPVisualization::Up() {
     }
   }
 
-  original_pos_ = &original_tree_.root;
+  full_tree_pos_ = &full_tree_.root;
   view_pos_ = &view_tree_.root;
   for (bool branch : chosen_branches_) {
-    view_pos_->Split(original_pos_->split());
+    view_pos_->Split(full_tree_pos_->split());
     if (branch) {
-      original_pos_ = original_pos_->positive_child();
+      full_tree_pos_ = full_tree_pos_->positive_child();
       view_pos_ = view_pos_->positive_child();
     } else {
-      original_pos_ = original_pos_->negative_child();
+      full_tree_pos_ = full_tree_pos_->negative_child();
       view_pos_ = view_pos_->negative_child();
     }
   }
@@ -88,15 +88,15 @@ bool BSPVisualization::Up() {
 }
 
 bool BSPVisualization::Down(bool branch) {
-  if (original_pos_->IsLeaf()) return false;
+  if (full_tree_pos_->IsLeaf()) return false;
 
   chosen_branches_.push_back(branch);
-  view_pos_->Split(original_pos_->split());
+  view_pos_->Split(full_tree_pos_->split());
   if (branch) {
-    original_pos_ = original_pos_->positive_child();
+    full_tree_pos_ = full_tree_pos_->positive_child();
     view_pos_ = view_pos_->positive_child();
   } else {
-    original_pos_ = original_pos_->negative_child();
+    full_tree_pos_ = full_tree_pos_->negative_child();
     view_pos_ = view_pos_->negative_child();
   }
   UpdateShapes();
@@ -273,7 +273,7 @@ void BSPVisualization::AddPWNLabel(vtkStringArray* labels,
                                    const HomoPoint3& top,
                                    const HomoPoint3& new_top) {
   BSPTreeRep tree_copy;
-  const BSPNodeRep* original_pos = &original_tree_.root;
+  const BSPNodeRep* original_pos = &full_tree_.root;
   BSPNodeRep* copy_pos = &tree_copy.root;
   for (bool branch : node_path) {
     copy_pos->Split(original_pos->split());
@@ -310,7 +310,7 @@ void BSPVisualization::AddPWNLabel(vtkStringArray* labels,
 void BSPVisualization::UpdateShapes() {
   std::vector<bool> child_path(chosen_branches_);
   std::vector<MutableConvexPolygon<>> border =
-    original_tree_.GetNodeBorderNoBoundWalls(child_path.begin(),
+    full_tree_.GetNodeBorderNoBoundWalls(child_path.begin(),
                                              child_path.end(),
                                              bounding_box_);
   vtkSmartPointer<vtkPolyData> vtk_border = WalnutToVTKMesh(border);
@@ -336,7 +336,7 @@ void BSPVisualization::UpdateShapes() {
   split_lines->SetPoints(points);
   split_intersect_line_filter_->SetInputDataObject(split_lines);
 
-  if (original_pos_->IsLeaf()) {
+  if (full_tree_pos_->IsLeaf()) {
     vtkNew<vtkPolyData> empty;
     // The split actor will not be shown, but set its input anyway so that it
     // doesn't print warnings about not having any inputs.
@@ -344,7 +344,7 @@ void BSPVisualization::UpdateShapes() {
 
     AddPWNLabel(labels, "Leaf PWN: " +
                 GetPWNString(
-                  original_pos_->content_info_by_id()),
+                  full_tree_pos_->content_info_by_id()),
                 labelled_points, chosen_branches_, top, top);
   } else {
     std::vector<bool> neg_child_path(chosen_branches_);
@@ -353,13 +353,13 @@ void BSPVisualization::UpdateShapes() {
     pos_child_path.push_back(true);
     std::vector<MutableConvexPolygon<>> split_wall;
     std::vector<MutableConvexPolygon<>> negative_child_walls =
-      original_tree_.GetNodeBorderNoBoundWalls(neg_child_path.begin(),
-                                               neg_child_path.end(),
-                                               bounding_box_);
+      full_tree_.GetNodeBorderNoBoundWalls(neg_child_path.begin(),
+                                           neg_child_path.end(),
+                                           bounding_box_);
 
     // Move the split wall out of negative_child_walls into split_wall.
     for (MutableConvexPolygon<>& wall : negative_child_walls) {
-      if (wall.plane() == original_pos_->split()) {
+      if (wall.plane() == full_tree_pos_->split()) {
         split_wall.push_back(std::move(wall));
       }
     }
@@ -374,11 +374,11 @@ void BSPVisualization::UpdateShapes() {
 
     AddPWNLabel(labels, "Neg child PWN: " +
                 GetPWNString(
-                  original_pos_->negative_child()->content_info_by_id()),
+                  full_tree_pos_->negative_child()->content_info_by_id()),
                 labelled_points, neg_child_path, top, new_top);
     AddPWNLabel(labels, "Pos child PWN: " +
                 GetPWNString(
-                  original_pos_->positive_child()->content_info_by_id()),
+                  full_tree_pos_->positive_child()->content_info_by_id()),
                 labelled_points, pos_child_path, top, new_top);
 
     for (const BSPNodeRep::PolygonRep& polygon : view_pos_->contents()) {
@@ -521,29 +521,29 @@ void BSPVisualization::AddCrossingLabels(
     const SplitSide& edge_last_coincident =
       current_edge.edge_last_coincident;
     if (edge_last_coincident.split == nullptr) continue;
-    int edge_comparison = RXYCompareBivector(original_pos_->split().normal(),
+    int edge_comparison = RXYCompareBivector(full_tree_pos_->split().normal(),
                                              edge_last_coincident);
     if (edge_comparison == 0) continue;
 
     std::pair<int, bool> push_info =
-      original_pos_->GetPWNEffectAtVertex(edge_comparison,
+      full_tree_pos_->GetPWNEffectAtVertex(edge_comparison,
                                           edge_last_coincident,
                                           current_edge);
     if (push_info.first != 0) {
       info.AddCrossing(current_edge.vertex(),
-                       original_pos_->split().normal(),
+                       full_tree_pos_->split().normal(),
                        crossing_label_offset_, push_info.second,
                        push_info.first);
     }
 
     const auto& next_edge =
       polygon.const_edge((i + 1)%polygon.vertex_count());
-    push_info = original_pos_->GetPWNEffectAtVertex(edge_comparison,
+    push_info = full_tree_pos_->GetPWNEffectAtVertex(edge_comparison,
                                                     edge_last_coincident,
                                                     next_edge);
     if (push_info.first != 0) {
       info.AddCrossing(next_edge.vertex(),
-                       original_pos_->split().normal(),
+                       full_tree_pos_->split().normal(),
                        crossing_label_offset_, push_info.second,
                        -push_info.first);
     }
@@ -554,10 +554,10 @@ void BSPVisualization::AddSplitOutline(
     const BSPNodeRep::PolygonRep& polygon,
     std::unordered_map<DoublePoint3, vtkIdType> point_map,
     vtkPoints* points, vtkPolyData* split_lines) {
-  assert(!original_pos_->IsLeaf());
+  assert(!full_tree_pos_->IsLeaf());
 
   ConvexPolygonSplitInfo split_info =
-    polygon.GetSplitInfo(original_pos_->split());
+    polygon.GetSplitInfo(full_tree_pos_->split());
   if (split_info.ShouldEmitNegativeChild() &&
       split_info.ShouldEmitPositiveChild()) {
     const HomoPoint3& start = split_info.has_new_shared_point1 ?
