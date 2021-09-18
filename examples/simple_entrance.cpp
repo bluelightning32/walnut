@@ -48,15 +48,6 @@ std::vector<walnut::HalfSpace3> GetTiltedCubeSplitPlanes() {
 } // namespace
 
 int main(int argc, char *argv[]) {
-  auto cu = vtkSmartPointer<vtkCubeSource>::New();
-  cu->SetXLength(10);
-  cu->SetYLength(5);
-  cu->SetZLength(10);
-  cu->SetCenter(0, -5, 0);
-
-  cu->Update();
-  cu->GetOutputPort();
-
   std::vector<walnut::MutableConvexPolygon<>> walnut_mesh =
     walnut::AABB(-12, -12, -12, 12, 12, 12, /*denom=*/1).GetWalls();
   walnut::BSPTree<> tree;
