@@ -69,6 +69,7 @@ class BSPVisualization {
 
   void UseTopDownView();
   void UseSecondView();
+  void UseFourthView();
 
   void ShowLabels(bool show);
 

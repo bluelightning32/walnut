@@ -169,6 +169,9 @@ bool BSPVisualization::KeyPressed(const char* key) {
   } else if (!std::strcmp(key, "2")) {
     UseSecondView();
     return true;
+  } else if (!std::strcmp(key, "4")) {
+    UseFourthView();
+    return true;
   } else if (!std::strcmp(key, "l")) {
     ShowLabels(!show_labels_);
     return true;
@@ -624,6 +627,18 @@ void BSPVisualization::UseSecondView() {
   axes_actor_ = window_.Axes(bounds.data(), /*padding=*/0);
 
   window_.UseSecondView(bounds);
+}
+
+void BSPVisualization::UseFourthView() {
+  if (axes_actor_) {
+    window_.RemoveActor(axes_actor_);
+    axes_actor_ = nullptr;
+  }
+
+  std::array<double, 6> bounds = GetContentBounds();
+  axes_actor_ = window_.Axes(bounds.data(), /*padding=*/0);
+
+  window_.UseFourthView(bounds);
 }
 
 void BSPVisualization::ShowLabels(bool show) {

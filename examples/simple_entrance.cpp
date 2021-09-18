@@ -70,11 +70,19 @@ int main(int argc, char *argv[]) {
     pos = pos->negative_child();
   }
 
+  walnut::PolygonFilter filter(id);
+  auto error_log = [](const std::string& error) {
+    std::cerr << error << std::endl;
+    assert(false);
+  };
+  walnut::ConnectingVisitor<decltype(filter)> visitor(filter, error_log);
+  tree.Traverse(visitor);
+
   walnut::VisualizationWindow window("simple_entrance");
   walnut::BSPVisualization tree_visualization(
       window,
       /*bounding_box=*/walnut::AABB(-28, -28, -70, 28, 28, 70, 1),
-      /*labelling_box=*/walnut::AABB(-12, -12, -20, 12, 12, 20, 1),
+      /*labelling_box=*/walnut::AABB(-13, -13, -20, 13, 13, 20, 1),
       tree);
   tree_visualization.AddContent(id, walnut_mesh);
   tree_visualization.UseTopDownView();

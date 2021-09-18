@@ -62,6 +62,7 @@ class VisualizationWindow {
   void UseTopDownView(double bounds[6]);
 
   void UseSecondView(const std::array<double, 6>& bounds);
+  void UseFourthView(const std::array<double, 6>& bounds);
 
   void Zoom(double factor);
 
