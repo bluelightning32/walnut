@@ -819,4 +819,19 @@ TEST(BSPTree, GetNodeBorderBoundMatchesBorder) {
   }
 }
 
+TEST(BSPTree, GetNodeBorderSplitOppositeSideOfBorder) {
+  BSPTree<> tree;
+
+  AABB bounding_box(Point3(0, 0, 0), Point3(2, 2, 2));
+
+  BSPNode<>* pos = &tree.root;
+  std::vector<bool> node_path = { false };
+  pos->Split(HalfSpace3(/*x=*/1, /*y=*/0, /*z=*/0, /*d=*/0));
+
+  std::vector<ConnectingVisitorOutputPolygon<>> facets =
+    tree.GetNodeBorder(node_path.begin(), node_path.end(), bounding_box);
+
+  EXPECT_THAT(facets, IsEmpty());
+}
+
 }  // walnut

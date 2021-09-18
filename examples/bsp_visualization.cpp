@@ -198,6 +198,9 @@ void BSPVisualization::AdjustNodePathToAvoidPoint(BSPTreeRep& tree_copy,
   std::vector<ConnectingVisitorOutputPolygon<>> border =
     tree_copy.GetNodeBorder(node_path.begin(), node_path.end(),
                             labelling_box_);
+  if (border.empty()) {
+    return;
+  }
 
   HomoPoint3 center = GetCentroid(border);
   BigInt denom;
@@ -292,6 +295,9 @@ void BSPVisualization::AddPWNLabel(vtkStringArray* labels,
                             labelling_box_);
 
   HomoPoint3 center = GetCentroid(border);
+  if (center.w() == 0) {
+    center = HomoPoint3(0, 0, 0, 1);
+  }
   DoublePoint3 p = center.GetDoublePoint3();
 
   labelled_points->InsertNextPoint(p.x, p.y, p.z);

@@ -123,11 +123,13 @@ BSPTree<ConvexPolygonTemplate>::GetNodeBorder(Iterator node_path_begin,
                                               const AABB& bounding_box) const {
   BSPNodeRep mapped_root;
   std::set<HalfSpace3, HalfSpace3Compare> bounding_box_planes;
+  BSPContentId bounding_box_id = 0;
   for (auto& polygon : bounding_box.GetWalls()) {
     assert(polygon.vertex_count() > 0);
     bounding_box_planes.insert(polygon.plane());
-    mapped_root.AddRootContent(/*id=*/0, std::move(polygon));
+    mapped_root.AddRootContent(bounding_box_id, std::move(polygon));
   }
+  BSPContentId cell_border_id = 1;
   const BSPNodeRep* original_node = &root;
   // Add the split partitions from the node_path of from the original root into
   // mapped_root.
@@ -136,7 +138,8 @@ BSPTree<ConvexPolygonTemplate>::GetNodeBorder(Iterator node_path_begin,
       if (bounding_box_planes.find(-original_node->split()) ==
           bounding_box_planes.end()) {
         mapped_root.AddRootContent(
-            /*id=*/0, bounding_box.IntersectPlane(-original_node->split()));
+            cell_border_id,
+            bounding_box.IntersectPlane(-original_node->split()));
         assert(mapped_root.contents().back().vertex_count() > 0);
       }
       original_node = original_node->positive_child();
@@ -144,7 +147,8 @@ BSPTree<ConvexPolygonTemplate>::GetNodeBorder(Iterator node_path_begin,
       if (bounding_box_planes.find(original_node->split()) ==
           bounding_box_planes.end()) {
         mapped_root.AddRootContent(
-            /*id=*/0, bounding_box.IntersectPlane(original_node->split()));
+            cell_border_id,
+            bounding_box.IntersectPlane(original_node->split()));
         assert(mapped_root.contents().back().vertex_count() > 0);
       }
       original_node = original_node->negative_child();
@@ -155,16 +159,15 @@ BSPTree<ConvexPolygonTemplate>::GetNodeBorder(Iterator node_path_begin,
     std::cerr << error << std::endl;
     assert(false);
   };
-  OddPolygonFilter filter(0);
-  ConnectingVisitor<OddPolygonFilter> visitor(filter, error_log);
+  auto filter = MakeXORFilter(OddPolygonFilter(bounding_box_id),
+                              OddPolygonFilter(cell_border_id));
+  ConnectingVisitor<decltype(filter)> visitor(filter, error_log);
 
   // Split the mapped_root the same way as the original root along the node
   // path.
   original_node = &root;
   std::vector<BSPNodeRep*> mapped_nodes{&mapped_root};
   for (Iterator pos = node_path_begin; pos != node_path_end; ++pos) {
-    visitor.EnterInteriorNode(/*from_partitioner=*/false,
-                              mapped_nodes.back()->split());
     mapped_nodes.back()->Split(original_node->split());
     BSPNodeRep* mapped_child;
     if (*pos) {
@@ -175,6 +178,20 @@ BSPTree<ConvexPolygonTemplate>::GetNodeBorder(Iterator node_path_begin,
       mapped_child = mapped_nodes.back()->negative_child();
     }
     mapped_nodes.push_back(mapped_child);
+  }
+
+  BSPContentInfo node_bounding_box_info =
+    mapped_nodes.back()->GetContentInfoForId(bounding_box_id);
+  if (node_bounding_box_info.pwn < 1 && !node_bounding_box_info.has_polygons) {
+    // The cell is outside of or adjacent to the bounding box. Return an empty
+    // vector to avoid trying to run the traverser when the bounding box is
+    // adjacent to the cell.
+    return visitor.TakePolygons();
+  }
+
+  for (auto it = mapped_nodes.begin(); it + 1 != mapped_nodes.end(); ++it) {
+    visitor.EnterInteriorNode(/*from_partitioner=*/false,
+                              (*it)->split());
   }
 
   // If `bounding_box` is smaller than the last node, then the last node will

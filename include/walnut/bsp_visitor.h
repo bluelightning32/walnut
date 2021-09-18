@@ -152,6 +152,30 @@ class BSPVisitor {
   virtual void Accept(PolygonRep&& polygon) { }
 };
 
+template <typename Filter1, typename Filter2>
+class XORFilter {
+ public:
+  XORFilter(Filter1 filter1, Filter2 filter2)
+    : filter1_(std::move(filter1)), filter2_(std::move(filter2)) { }
+
+  std::pair<bool, bool> operator()(
+      const std::vector<BSPContentInfo>& content_info_by_id) {
+    std::pair<bool, bool> result1 = filter1_(content_info_by_id);
+    std::pair<bool, bool> result2 = filter2_(content_info_by_id);
+    return std::make_pair(result1.first ^ result2.first,
+                          result1.second || result2.second);
+  }
+
+ private:
+  Filter1 filter1_;
+  Filter2 filter2_;
+};
+
+template <typename Filter1, typename Filter2>
+XORFilter<Filter1, Filter2> MakeXORFilter(Filter1 filter1, Filter2 filter2) {
+  return XORFilter<Filter1, Filter2>(std::move(filter1), std::move(filter2));
+}
+
 template <typename PolygonRep, typename FilterTemplate>
 class CollectorVisitor : public BSPVisitor<PolygonRep> {
  public:
