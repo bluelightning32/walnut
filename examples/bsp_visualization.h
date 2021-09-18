@@ -71,10 +71,15 @@ class BSPVisualization {
   bool Down(bool branch);
 
   void UseTopDownView();
+  void UseTopDownView(const std::array<double, 6>& bounds);
   void UseSecondView();
   void UseFourthView();
 
   void ShowLabels(bool show);
+
+  void SetMinAxesBounds(const AABB& aabb) {
+    min_axes_bounds_ = aabb;
+  }
 
   BSPTreeRep& full_tree() {
     return full_tree_;
@@ -131,6 +136,44 @@ class BSPVisualization {
   BSPNode<>* SplitToTiltedCubeBottomPlanes() {
     return SplitToTiltedCubeBottomPlanes(&full_tree_.root);
   }
+
+  // Splits the node with a plane with a normal that is facing south east. The
+  // distance of the split plane is adjusted so that the point ((edge_dest -
+  // edge_start) * edge_dist) is on the split plane. When viewed from the top,
+  // this often creates a split edge that runs through the northwest side.
+  //
+  //        < (edge_dest - edge_start) * edge_dist
+  //  +----s---------+
+  //  |   s          |
+  //  |  s           |
+  //  | s            |
+  //  |s             |
+  //  s              |
+  //  +--------------+
+  //
+  // The child node from that split that is on the north-west side is returned.
+  //
+  // If the input node is the tilted cube, the top path will follow along the
+  // east of the north edge, then to the south-east of the outer north-west
+  // edge.
+  //
+  //         /|\                         |
+  //      --- | ---                      |
+  //     / << |    \                     |
+  //  /-- / ^ |     --\                  |
+  //  |T</  T |       |                  |
+  //  |     _/ \_     |                  |
+  //  |    /     \    |                  |
+  //  | ---       --- |                  |
+  //  |/             \|                  |
+  //  \               /                  |
+  //   ---         ---                   |
+  //      \       /                      |
+  //       --- ---                       |
+  //          v                          |
+  //
+  BSPNode<>* SplitNorthWest(BSPNode<>* start, const Point3& edge_start,
+                            const Point3& edge_dest, double edge_dist);
 
   // These points form an approximated cube that is turned on its point. The
   // cube is approximated, because the coordinates of an exact cube would
@@ -225,12 +268,13 @@ class BSPVisualization {
 
   void AdjustNodePathToAvoidPoint(BSPTreeRep& tree_copy,
                                   std::vector<bool>& node_path,
-                                  const HomoPoint3& avoid);
+                                  const HomoPoint3& avoid) const;
+
+  HomoPoint3 GetLabelLocation(const std::vector<bool>& node_path,
+                              const std::vector<HomoPoint3>& avoid) const;
 
   void AddPWNLabel(vtkStringArray* labels, const std::string& label,
-                   vtkPoints* labelled_points,
-                   const std::vector<bool>& node_path, const HomoPoint3& top,
-                   const HomoPoint3& new_top);
+                   vtkPoints* labelled_points, const HomoPoint3& location);
 
   bool KeyPressed(const char* key);
 
@@ -260,6 +304,7 @@ class BSPVisualization {
   VisualizationWindow& window_;
   AABB bounding_box_;
   AABB labelling_box_;
+  AABB min_axes_bounds_;
   double crossing_label_offset_;
 
   BSPTreeRep full_tree_;

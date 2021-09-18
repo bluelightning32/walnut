@@ -56,6 +56,14 @@ BSPVisualization::BSPVisualization(VisualizationWindow& window,
           [this](const char* key) {
             return KeyPressed(key);
           })) {
+  std::vector<HomoPoint3> cube_points{HomoPoint3(tilted_cube_top),
+                                      HomoPoint3(tilted_cube_bottom)};
+  for (const Point3* point : tilted_cube_peripheral_points) {
+    cube_points.push_back(HomoPoint3(*point));
+  }
+  min_axes_bounds_ = ConvexVertexAABBTracker(cube_points.begin(),
+                                             cube_points.end()).aabb();
+
   UpdateShapes();
   border_actor_ = window.AddShape(border_filter->GetOutputPort(), /*r=*/1.0,
                                   /*g=*/1.0, /*b=*/0.0, /*a=*/0.2);
@@ -230,9 +238,10 @@ std::string BSPVisualization::GetPWNString(
   return out.str();
 }
 
-void BSPVisualization::AdjustNodePathToAvoidPoint(BSPTreeRep& tree_copy,
-                                                  std::vector<bool>& node_path,
-                                                  const HomoPoint3& avoid) {
+void BSPVisualization::AdjustNodePathToAvoidPoint(
+    BSPTreeRep& tree_copy,
+    std::vector<bool>& node_path,
+    const HomoPoint3& avoid) const {
   std::vector<ConnectingVisitorOutputPolygon<>> border =
     tree_copy.GetNodeBorder(node_path.begin(), node_path.end(),
                             labelling_box_);
@@ -301,12 +310,9 @@ void BSPVisualization::AdjustNodePathToAvoidPoint(BSPTreeRep& tree_copy,
   node_path.push_back(true);
 }
 
-void BSPVisualization::AddPWNLabel(vtkStringArray* labels,
-                                   const std::string& label,
-                                   vtkPoints* labelled_points,
-                                   const std::vector<bool>& node_path,
-                                   const HomoPoint3& top,
-                                   const HomoPoint3& new_top) {
+HomoPoint3 BSPVisualization::GetLabelLocation(
+    const std::vector<bool>& node_path,
+    const std::vector<HomoPoint3>& avoid) const {
   BSPTreeRep tree_copy;
   const BSPNodeRep* original_pos = &full_tree_.root;
   BSPNodeRep* copy_pos = &tree_copy.root;
@@ -320,12 +326,12 @@ void BSPVisualization::AddPWNLabel(vtkStringArray* labels,
       copy_pos = copy_pos->negative_child();
     }
   }
+
   std::vector<bool> path_copy = node_path;
-  if (!top.dist_denom().IsZero()) {
-    AdjustNodePathToAvoidPoint(tree_copy, path_copy, top);
-  }
-  if (!new_top.dist_denom().IsZero()) {
-    AdjustNodePathToAvoidPoint(tree_copy, path_copy, new_top);
+  for (const HomoPoint3& avoid_point : avoid) {
+    if (avoid_point.dist_denom().IsZero()) continue;
+
+    AdjustNodePathToAvoidPoint(tree_copy, path_copy, avoid_point);
   }
 
   std::vector<ConnectingVisitorOutputPolygon<>> border =
@@ -336,7 +342,14 @@ void BSPVisualization::AddPWNLabel(vtkStringArray* labels,
   if (center.w() == 0) {
     center = HomoPoint3(0, 0, 0, 1);
   }
-  DoublePoint3 p = center.GetDoublePoint3();
+  return center;
+}
+
+void BSPVisualization::AddPWNLabel(vtkStringArray* labels,
+                                   const std::string& label,
+                                   vtkPoints* labelled_points,
+                                   const HomoPoint3& location) {
+  DoublePoint3 p = location.GetDoublePoint3();
 
   labelled_points->InsertNextPoint(p.x, p.y, p.z);
   labels->InsertNextValue(label);
@@ -377,10 +390,12 @@ void BSPVisualization::UpdateShapes() {
     // doesn't print warnings about not having any inputs.
     split_filter_->SetInputDataObject(empty);
 
+    std::vector<HomoPoint3> avoid { top };
+    HomoPoint3 label_location = GetLabelLocation(chosen_branches_, avoid);
     AddPWNLabel(labels, "Leaf PWN: " +
                 GetPWNString(
                   full_tree_pos_->content_info_by_id()),
-                labelled_points, chosen_branches_, top, top);
+                labelled_points, label_location);
   } else {
     std::vector<bool> neg_child_path(chosen_branches_);
     neg_child_path.push_back(false);
@@ -407,14 +422,19 @@ void BSPVisualization::UpdateShapes() {
                                      new_top_double.z);
     labels->InsertNextValue("Top'");
 
+    std::vector<HomoPoint3> avoid { top, new_top };
+    HomoPoint3 neg_label_location = GetLabelLocation(neg_child_path, avoid);
+    avoid.push_back(neg_label_location);
+    HomoPoint3 pos_label_location = GetLabelLocation(pos_child_path, avoid);
+
     AddPWNLabel(labels, "Neg child PWN: " +
                 GetPWNString(
                   full_tree_pos_->negative_child()->content_info_by_id()),
-                labelled_points, neg_child_path, top, new_top);
+                labelled_points, neg_label_location);
     AddPWNLabel(labels, "Pos child PWN: " +
                 GetPWNString(
                   full_tree_pos_->positive_child()->content_info_by_id()),
-                labelled_points, pos_child_path, top, new_top);
+                labelled_points, pos_label_location);
 
     for (const BSPNodeRep::PolygonRep& polygon : view_pos_->contents()) {
       AddSplitOutline(polygon, point_map, points, split_lines);
@@ -625,19 +645,22 @@ std::array<double, 6> BSPVisualization::GetContentBounds() const {
   DoublePoint3 double_min = bounding_box.min_point().GetDoublePoint3();
   DoublePoint3 double_max = bounding_box.max_point().GetDoublePoint3();
 
+  DoublePoint3 content_min = min_axes_bounds_.min_point().GetDoublePoint3();
+  DoublePoint3 content_max = min_axes_bounds_.max_point().GetDoublePoint3();
+
   std::array<double, 6> bounds;
   // xmin
-  bounds[0] = std::floor(double_min.x);
+  bounds[0] = std::floor(std::min(double_min.x, content_min.x));
   // xmax
-  bounds[1] = std::ceil(double_max.x);
+  bounds[1] = std::ceil(std::max(double_max.x, content_max.x));
   // ymin
-  bounds[2] = std::floor(double_min.y);
+  bounds[2] = std::floor(std::min(double_min.y, content_min.y));
   // ymax
-  bounds[3] = std::ceil(double_max.y);
+  bounds[3] = std::ceil(std::max(double_max.y, content_max.y));
   // zmin
-  bounds[4] = std::floor(double_min.z);
+  bounds[4] = std::floor(std::min(double_min.z, content_min.z));
   // zmax
-  bounds[5] = std::ceil(double_max.z);
+  bounds[5] = std::ceil(std::max(double_max.z, content_max.z));
   return bounds;
 }
 
@@ -716,12 +739,23 @@ BSPNode<>* BSPVisualization::SplitToTiltedCubeBottomPlanes(BSPNode<>* start) {
   UpdateShapes();
   return start;
 }
-    // Splits by the:
-    // 1. north-west facet
-    // 2. south facet
-    // 3. north-east facet
-    // 4. south-west facet
-    // 5. south-east facet
-    // 6. north facet
+
+BSPNode<>* BSPVisualization::SplitNorthWest(BSPNode<>* start,
+                                            const Point3& edge_start,
+                                            const Point3& edge_dest,
+                                            double edge_dist) {
+  assert(start->IsLeaf());
+  Vector3 normal = Vector3(1, -1, 10);
+
+  auto edge_vector = edge_dest - edge_start;
+  double dist = double(normal.x()) * (double(edge_start.x()) +
+                                      double(edge_vector.x()) * edge_dist) +
+                double(normal.y()) * (double(edge_start.y()) +
+                                      double(edge_vector.y()) * edge_dist) +
+                double(normal.z()) * (double(edge_start.z()) +
+                                      double(edge_vector.z()) * edge_dist);
+  start->Split(HalfSpace3(normal, BigInt(long(dist))));
+  return start->negative_child();
+}
 
 } // walnut

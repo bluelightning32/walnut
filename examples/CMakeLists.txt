@@ -65,3 +65,8 @@ add_executable(simple_entrance simple_entrance.cpp)
 target_link_libraries(simple_entrance
                       examples_helper
                       ${GLEW_LIBRARIES} ${VTK_LIBRARIES} )
+
+add_executable(split_before_after_crossing split_before_after_crossing.cpp)
+target_link_libraries(split_before_after_crossing
+                      examples_helper
+                      ${GLEW_LIBRARIES} ${VTK_LIBRARIES} )
