@@ -65,8 +65,8 @@ int main(int argc, char *argv[]) {
 
   std::vector<walnut::HalfSpace3> cube_splits = GetTiltedCubeSplitPlanes();
   walnut::BSPNode<>* pos = &tree.root;
-  for (walnut::HalfSpace3& split_plane : cube_splits) {
-    pos->Split(split_plane);
+  for (int i = 0; i < 3; ++i) {
+    pos->Split(cube_splits[i]);
     pos = pos->negative_child();
   }
 
