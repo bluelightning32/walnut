@@ -35,7 +35,7 @@ class BSPVisualization {
       GetContentInfo(id).polygons;
     for (const InputConvexPolygon& polygon : polygons) {
       contents_vector.push_back(&polygon);
-      tree_.AddContent(id, polygon);
+      view_tree_.AddContent(id, polygon);
     }
     UpdateShapes();
   }
@@ -48,7 +48,7 @@ class BSPVisualization {
   template <typename InputConvexPolygon>
   void AddContent(BSPContentId id, const InputConvexPolygon& polygon) {
     GetContentInfo(id).polygons.push_back(&polygon);
-    tree_.AddContent(id, polygon);
+    view_tree_.AddContent(id, polygon);
     UpdateShapes();
   }
 
@@ -183,11 +183,11 @@ class BSPVisualization {
   // false means the negative child was chosen, and true means the positive
   // child was chosen.
   std::vector<bool> chosen_branches_;
-  BSPTreeRep tree_;
-  // Position in `tree_` that corresponds to `original_pos_` in
+  BSPTreeRep view_tree_;
+  // Position in `view_tree_` that corresponds to `original_pos_` in
   // `original_tree_`. This is updated as the user requests to go up and down
   // the BSP tree.
-  BSPNodeRep* pos_;
+  BSPNodeRep* view_pos_;
 
   std::map<BSPContentId, ContentInfo> contents_;
 

@@ -22,7 +22,7 @@ BSPVisualization::BSPVisualization(VisualizationWindow& window,
     labelling_box_(labelling_box),
     crossing_label_offset_(labelling_box.GetDiagonalLength() / 200),
     original_tree_(tree),
-    original_pos_(&tree.root), pos_(&tree_.root),
+    original_pos_(&tree.root), view_pos_(&view_tree_.root),
     key_press_listener(window.AddKeyPressObserver(
           [this](const char* key) {
             return KeyPressed(key);
@@ -62,24 +62,24 @@ bool BSPVisualization::Up() {
   if (chosen_branches_.empty()) return false;
 
   chosen_branches_.pop_back();
-  tree_.Reset();
+  view_tree_.Reset();
   for (const std::pair<const BSPContentId,
                        ContentInfo>& content_pair : contents_) {
     for (const ConvexPolygon<>* polygon : content_pair.second.polygons) {
-      tree_.AddContent(content_pair.first, *polygon);
+      view_tree_.AddContent(content_pair.first, *polygon);
     }
   }
 
   original_pos_ = &original_tree_.root;
-  pos_ = &tree_.root;
+  view_pos_ = &view_tree_.root;
   for (bool branch : chosen_branches_) {
-    pos_->Split(original_pos_->split());
+    view_pos_->Split(original_pos_->split());
     if (branch) {
       original_pos_ = original_pos_->positive_child();
-      pos_ = pos_->positive_child();
+      view_pos_ = view_pos_->positive_child();
     } else {
       original_pos_ = original_pos_->negative_child();
-      pos_ = pos_->negative_child();
+      view_pos_ = view_pos_->negative_child();
     }
   }
 
@@ -91,13 +91,13 @@ bool BSPVisualization::Down(bool branch) {
   if (original_pos_->IsLeaf()) return false;
 
   chosen_branches_.push_back(branch);
-  pos_->Split(original_pos_->split());
+  view_pos_->Split(original_pos_->split());
   if (branch) {
     original_pos_ = original_pos_->positive_child();
-    pos_ = pos_->positive_child();
+    view_pos_ = view_pos_->positive_child();
   } else {
     original_pos_ = original_pos_->negative_child();
-    pos_ = pos_->negative_child();
+    view_pos_ = view_pos_->negative_child();
   }
   UpdateShapes();
   return true;
@@ -381,20 +381,21 @@ void BSPVisualization::UpdateShapes() {
                   original_pos_->positive_child()->content_info_by_id()),
                 labelled_points, pos_child_path, top, new_top);
 
-    for (const BSPNodeRep::PolygonRep& polygon : pos_->contents()) {
+    for (const BSPNodeRep::PolygonRep& polygon : view_pos_->contents()) {
       AddSplitOutline(polygon, point_map, points, split_lines);
     }
-    for (const BSPNodeRep::PolygonRep& polygon : pos_->border_contents()) {
+    for (const BSPNodeRep::PolygonRep& polygon :
+         view_pos_->border_contents()) {
       AddSplitOutline(polygon, point_map, points, split_lines);
     }
   }
 
   std::map<BSPContentId, BuildingContentInfo> content_map;
-  for (const BSPNodeRep::PolygonRep& polygon : pos_->contents()) {
+  for (const BSPNodeRep::PolygonRep& polygon : view_pos_->contents()) {
     AddCoincidentEdges(polygon, point_map, points, content_map);
     AddCrossingLabels(polygon, content_map);
   }
-  for (const BSPNodeRep::PolygonRep& polygon : pos_->border_contents()) {
+  for (const BSPNodeRep::PolygonRep& polygon : view_pos_->border_contents()) {
     AddCoincidentEdges(polygon, point_map, points, content_map);
   }
   for (std::pair<const BSPContentId,
