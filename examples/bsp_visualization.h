@@ -21,34 +21,37 @@ class BSPVisualization {
   // `tree` and `window` must remain valid during the lifetime of the
   // BSPVisualization.
   BSPVisualization(VisualizationWindow& window, const AABB& bounding_box,
-                   const AABB& labelling_box, const BSPTreeRep& tree);
+                   const AABB& labelling_box);
+
+  ~BSPVisualization();
+
+  BSPContentId AllocateId() {
+    return full_tree_.AllocateId();
+  }
 
   // Adds content polygons to the visualization.
-  //
-  // Content polygons should be added directly to the original tree, then they
-  // also need to be added to the visualization in order for them to show up in
-  // the visualization.
   template <typename InputConvexPolygon>
   void AddContent(BSPContentId id,
                   const std::vector<InputConvexPolygon>& polygons) {
-    std::vector<const ConvexPolygon<>*>& contents_vector =
+    std::vector<ConvexPolygon<>>& contents_vector =
       GetContentInfo(id).polygons;
     for (const InputConvexPolygon& polygon : polygons) {
-      contents_vector.push_back(&polygon);
+      contents_vector.push_back(polygon);
       view_tree_.AddContent(id, polygon);
+      full_tree_.AddContent(id, polygon);
     }
     UpdateShapes();
   }
 
+  // Adds the walls of a `aabb` to the visualization.
+  void AddContent(BSPContentId id, const AABB& aabb);
+
   // Adds a content polygons to the visualization.
-  //
-  // Content polygons should be added directly to the original tree, then they
-  // also need to be added to the visualization in order for them to show up in
-  // the visualization.
   template <typename InputConvexPolygon>
   void AddContent(BSPContentId id, const InputConvexPolygon& polygon) {
     GetContentInfo(id).polygons.push_back(&polygon);
     view_tree_.AddContent(id, polygon);
+    full_tree_.AddContent(id, polygon);
     UpdateShapes();
   }
 
@@ -73,12 +76,103 @@ class BSPVisualization {
 
   void ShowLabels(bool show);
 
+  BSPTreeRep& full_tree() {
+    return full_tree_;
+  }
+
+  template <typename Filter>
+  void FinishSplitting(Filter&& filter) {
+    auto error_log = [](const std::string& error) {
+      std::cerr << error << std::endl;
+      assert(false);
+    };
+    walnut::ConnectingVisitor<Filter> visitor(filter, error_log);
+    full_tree_.Traverse(visitor);
+    UpdateShapes();
+  }
+
+  void UpdateShapes();
+
+  // Splits by the:
+  // 1. north-west facet
+  // 2. south facet
+  // 3. north-east facet
+  // 4. south-west facet
+  // 5. south-east facet
+  // 6. north facet
+  //
+  // Returns the newly created node.
+  BSPNode<>* SplitToTiltedCube(BSPNode<>* start);
+
+  BSPNode<>* SplitToTiltedCube() {
+    return SplitToTiltedCube(&full_tree_.root);
+  }
+
+  // Splits by the:
+  // 1. north-west facet
+  // 2. south facet
+  // 3. north-east facet
+  //
+  // Returns the newly created node.
+  BSPNode<>* SplitToTiltedCubeTopPlanes(BSPNode<>* start);
+
+  BSPNode<>* SplitToTiltedCubeTopPlanes() {
+    return SplitToTiltedCubeTopPlanes(&full_tree_.root);
+  }
+
+  // Splits by the:
+  // 1. south-west facet
+  // 2. south-east facet
+  // 3. north facet
+  //
+  // Returns the newly created node.
+  BSPNode<>* SplitToTiltedCubeBottomPlanes(BSPNode<>* start);
+
+  BSPNode<>* SplitToTiltedCubeBottomPlanes() {
+    return SplitToTiltedCubeBottomPlanes(&full_tree_.root);
+  }
+
+  // These points form an approximated cube that is turned on its point. The
+  // cube is approximated, because the coordinates of an exact cube would
+  // contain either sqrt(2) or sqrt(3).
+  //
+  //                  north                          |
+  //                   /|\                           |
+  //                --- | ---                        |
+  //  north_west   /    |    \   north_east          |
+  //            /--     |     --\                    |
+  //            |      top &    |                    |
+  //            |     bottom    |                    |
+  //            |    /     \    |                    |
+  //            | ---       --- |                    |
+  //            |/             \|                    |
+  // south_west \               / south_east         |
+  //             ---         ---                     |
+  //                \       /                        |
+  //                 --- ---                         |
+  //                    v                            |
+  //                  south                          |
+  //
+  static const Point3 tilted_cube_top;
+  static const Point3 tilted_cube_bottom;
+  static const Point3 tilted_cube_north;
+  static const Point3 tilted_cube_north_west;
+  static const Point3 tilted_cube_south_west;
+  static const Point3 tilted_cube_south;
+  static const Point3 tilted_cube_south_east;
+  static const Point3 tilted_cube_north_east;
+
+  // Contains pointers to the tilted cube points, except for the top and
+  // bottom. The first entry is `tilted_cube_north`, and the subsequent ones go
+  // counter-clockwise around the tilted cube.
+  static const Point3* tilted_cube_peripheral_points[6];
+
  private:
   struct ContentInfo {
     ContentInfo(VisualizationWindow& window, bool start3d, double r, double g,
                 double b, double a);
 
-    std::vector<const ConvexPolygon<>*> polygons;
+    std::vector<ConvexPolygon<>> polygons;
 
     vtkNew<vtkPassThroughFilter> filter;
     vtkSmartPointer<vtkActor> actor;
@@ -97,17 +191,9 @@ class BSPVisualization {
   };
 
   struct BuildingContentInfo {
-    BuildingContentInfo() {
-      coincident_normals->SetName("coincident_normals");
-      coincident_normals->SetNumberOfComponents(3);
-      labels->SetName("labels");
-    }
+    BuildingContentInfo();
 
-    BuildingContentInfo(vtkPoints* points) : edges(MakeEdges(points)) {
-      coincident_normals->SetName("coincident_normals");
-      coincident_normals->SetNumberOfComponents(3);
-      labels->SetName("labels");
-    }
+    BuildingContentInfo(vtkPoints* points);
 
     void AddCrossing(const HomoPoint3& vertex,
                      const Vector3& label_offset_direction,
@@ -151,8 +237,6 @@ class BSPVisualization {
   std::string GetPWNString(
       const std::vector<BSPContentInfo>& content_info_by_id);
 
-  void UpdateShapes();
-
   ContentInfo& GetContentInfo(BSPContentId id);
 
   vtkIdType MapPoint(const DoublePoint3& point,
@@ -178,7 +262,7 @@ class BSPVisualization {
   AABB labelling_box_;
   double crossing_label_offset_;
 
-  const BSPTreeRep& full_tree_;
+  BSPTreeRep full_tree_;
   const BSPNodeRep* full_tree_pos_;
   // false means the negative child was chosen, and true means the positive
   // child was chosen.

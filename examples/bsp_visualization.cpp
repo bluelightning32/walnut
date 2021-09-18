@@ -14,15 +14,44 @@
 
 namespace walnut {
 
+const Point3 BSPVisualization::tilted_cube_top(0, 0, 11);
+const Point3 BSPVisualization::tilted_cube_bottom(0, 0, -11);
+const Point3 BSPVisualization::tilted_cube_north(0, 10, 3);
+const Point3 BSPVisualization::tilted_cube_north_west(-9, 5, -4);
+const Point3 BSPVisualization::tilted_cube_south_west(-9, -5, 4);
+const Point3 BSPVisualization::tilted_cube_south(0, -10, -3);
+const Point3 BSPVisualization::tilted_cube_south_east(9, -5, 4);
+const Point3 BSPVisualization::tilted_cube_north_east(9, 5, -4);
+
+const Point3* BSPVisualization::tilted_cube_peripheral_points[6] = {
+  &tilted_cube_north,
+  &tilted_cube_north_west,
+  &tilted_cube_south_west,
+  &tilted_cube_south,
+  &tilted_cube_south_east,
+  &tilted_cube_north_east,
+};
+
+BSPVisualization::BuildingContentInfo::BuildingContentInfo() {
+  coincident_normals->SetName("coincident_normals");
+  coincident_normals->SetNumberOfComponents(3);
+  labels->SetName("labels");
+}
+
+BSPVisualization::BuildingContentInfo::BuildingContentInfo(vtkPoints* points)
+    : edges(MakeEdges(points)) {
+  coincident_normals->SetName("coincident_normals");
+  coincident_normals->SetNumberOfComponents(3);
+  labels->SetName("labels");
+}
+
 BSPVisualization::BSPVisualization(VisualizationWindow& window,
                                    const AABB& bounding_box,
-                                   const AABB& labelling_box,
-                                   const BSPTreeRep& tree)
+                                   const AABB& labelling_box)
   : window_(window), bounding_box_(bounding_box),
     labelling_box_(labelling_box),
     crossing_label_offset_(labelling_box.GetDiagonalLength() / 200),
-    full_tree_(tree),
-    full_tree_pos_(&tree.root), view_pos_(&view_tree_.root),
+    full_tree_pos_(&full_tree_.root), view_pos_(&view_tree_.root),
     key_press_listener(window.AddKeyPressObserver(
           [this](const char* key) {
             return KeyPressed(key);
@@ -58,6 +87,12 @@ BSPVisualization::BSPVisualization(VisualizationWindow& window,
   labels_actor_ = window.AddPointLabels(labelled_points_data_);
 }
 
+BSPVisualization::~BSPVisualization() = default;
+
+void BSPVisualization::AddContent(BSPContentId id, const AABB& aabb) {
+  AddContent(id, aabb.GetWalls());
+}
+
 bool BSPVisualization::Up() {
   if (chosen_branches_.empty()) return false;
 
@@ -65,8 +100,8 @@ bool BSPVisualization::Up() {
   view_tree_.Reset();
   for (const std::pair<const BSPContentId,
                        ContentInfo>& content_pair : contents_) {
-    for (const ConvexPolygon<>* polygon : content_pair.second.polygons) {
-      view_tree_.AddContent(content_pair.first, *polygon);
+    for (const ConvexPolygon<>& polygon : content_pair.second.polygons) {
+      view_tree_.AddContent(content_pair.first, polygon);
     }
   }
 
@@ -580,8 +615,8 @@ std::array<double, 6> BSPVisualization::GetContentBounds() const {
   ConcatRange<VertexIterator> all_vertices;
   for (const std::pair<const BSPContentId, ContentInfo>& content : contents_) {
     std::vector<const ConvexPolygon<>*> polygons;
-    for (const ConvexPolygon<>* polygon : content.second.polygons) {
-      all_vertices.Append(polygon->vertices_begin(), polygon->vertices_end());
+    for (const ConvexPolygon<>& polygon : content.second.polygons) {
+      all_vertices.Append(polygon.vertices_begin(), polygon.vertices_end());
     }
   }
   AABB bounding_box =
@@ -649,5 +684,44 @@ void BSPVisualization::ShowLabels(bool show) {
     content_pair.second.labels_actor->SetVisibility(show_labels_);
   }
 }
+
+BSPNode<>* BSPVisualization::SplitToTiltedCube(BSPNode<>* start) {
+  return SplitToTiltedCubeBottomPlanes(SplitToTiltedCubeTopPlanes(start));
+}
+
+BSPNode<>* BSPVisualization::SplitToTiltedCubeTopPlanes(BSPNode<>* start) {
+  assert(start->IsLeaf());
+
+  for (int i = 0; i < 6; i += 2) {
+    const Point3* this_point = tilted_cube_peripheral_points[i];
+    const Point3* next_point = tilted_cube_peripheral_points[(i + 2)%6];
+
+    start->Split(HalfSpace3(*this_point, *next_point, tilted_cube_top));
+    start = start->negative_child();
+  }
+  UpdateShapes();
+  return start;
+}
+
+BSPNode<>* BSPVisualization::SplitToTiltedCubeBottomPlanes(BSPNode<>* start) {
+  assert(start->IsLeaf());
+
+  for (int i = 1; i < 6; i += 2) {
+    const Point3* this_point = tilted_cube_peripheral_points[i];
+    const Point3* next_point = tilted_cube_peripheral_points[(i + 2)%6];
+
+    start->Split(HalfSpace3(*next_point, *this_point, tilted_cube_bottom));
+    start = start->negative_child();
+  }
+  UpdateShapes();
+  return start;
+}
+    // Splits by the:
+    // 1. north-west facet
+    // 2. south facet
+    // 3. north-east facet
+    // 4. south-west facet
+    // 5. south-east facet
+    // 6. north facet
 
 } // walnut
