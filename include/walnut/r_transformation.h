@@ -21,13 +21,13 @@ namespace walnut {
 
 // R transforms a point. Epsilon is specified by 1/eps_inv.
 //
-// Since this function is likely to overflow the HomoPoint3 precision, this
+// Since this function is likely to produce a huge number of bits, this
 // function should only be used for testing purposes.
 inline HomoPoint3 RTransform(const HomoPoint3& p, const BigInt& eps_inv) {
-  // Add eps^2 to x and eps to y.
   BigInt eps_inv_squared(eps_inv * eps_inv);
-  return HomoPoint3(p.x()*eps_inv_squared + p.w(),
-                    p.y()*eps_inv_squared + eps_inv * p.w(),
+  // x and y stay the same. z' = z + y/eps + x/eps^2.
+  return HomoPoint3(p.x()*eps_inv_squared,
+                    p.y()*eps_inv_squared,
                     (p.z()*eps_inv + p.y())*eps_inv + p.x(),
                     p.w()*eps_inv_squared);
 }
