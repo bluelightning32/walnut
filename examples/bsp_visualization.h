@@ -138,6 +138,8 @@ class BSPVisualization {
     return SplitToTiltedCubeBottomPlanes(&full_tree_.root);
   }
 
+  void FocusContent(int new_focus);
+
   // Splits the node with a plane with a normal that is facing south east. The
   // distance of the split plane is adjusted so that the point ((edge_dest -
   // edge_start) * edge_dist) is on the split plane. When viewed from the top,
@@ -241,7 +243,8 @@ class BSPVisualization {
 
     void AddCrossing(const HomoPoint3& vertex,
                      const Vector3& label_offset_direction,
-                     double label_offset_amount, bool pos_child, int type);
+                     double label_offset_amount, bool pos_child,
+                     BSPContentId polygon_id, int type);
 
     std::vector<MutableConvexPolygon<>> facets;
     // Edges of the content polygons that are coincident with a split.
@@ -296,7 +299,8 @@ class BSPVisualization {
 
   void AddCrossingLabels(
       const BSPNodeRep::PolygonRep& polygon,
-      std::map<BSPContentId, BuildingContentInfo>& content_map);
+      std::map<BSPContentId, BuildingContentInfo>& content_map,
+      size_t& crossing_num);
 
   void AddSplitOutline(const BSPNodeRep::PolygonRep& polygon,
                        std::unordered_map<DoublePoint3, vtkIdType> point_map,
@@ -355,6 +359,8 @@ class BSPVisualization {
   bool show_labels_ = true;
   // Ignore the contents when setting the axes bounds.
   bool ignore_contents_ = false;
+
+  int focus_content_ = -1;
 };
 
 } // walnut

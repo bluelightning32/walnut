@@ -41,6 +41,11 @@ add_library(examples_helper STATIC
             visualization_window.cpp)
 target_link_libraries(examples_helper walnut_vtk)
 
+add_executable(kerf_effect kerf_effect.cpp)
+target_link_libraries(kerf_effect
+                      examples_helper
+                      ${GLEW_LIBRARIES} ${VTK_LIBRARIES} )
+
 add_executable(min_max_check min_max_check.cpp)
 target_link_libraries(min_max_check
                       examples_helper

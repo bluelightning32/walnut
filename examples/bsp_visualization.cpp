@@ -65,31 +65,31 @@ BSPVisualization::BSPVisualization(VisualizationWindow& window,
                                              cube_points.end()).aabb();
 
   UpdateShapes();
-  border_actor_ = window.AddShape(border_filter->GetOutputPort(), /*r=*/1.0,
-                                  /*g=*/1.0, /*b=*/0.0, /*a=*/0.2);
+  border_actor_ = window.AddShape(border_filter->GetOutputPort(), /*r=*/0.2,
+                                  /*g=*/0.2, /*b=*/0.2, /*a=*/0.3);
   split_actor_ = window.AddShape(
-      split_filter_->GetOutputPort(), /*r=*/0.5, /*g=*/1.0,
-      /*b=*/0.0, /*a=*/0.4);
+      split_filter_->GetOutputPort(), /*r=*/0.1, /*g=*/0.5,
+      /*b=*/0.1, /*a=*/0.4);
 
   border_wireframe_ = window.AddWireframe(border_filter->GetOutputPort());
-  border_wireframe_->GetProperty()->SetColor(/*r=*/1.0, /*g=*/1.0,
-                                             /*b=*/0.0);
+  border_wireframe_->GetProperty()->SetColor(/*r=*/0.2, /*g=*/0.2,
+                                             /*b=*/0.2);
   split_wireframe_ = window.AddWireframe(split_filter_->GetOutputPort());
-  split_wireframe_->GetProperty()->SetColor(/*r=*/0.8, /*g=*/1.0, /*b=*/0.0);
+  split_wireframe_->GetProperty()->SetColor(/*r=*/0.1, /*g=*/0.5, /*b=*/0.1);
 
   border_normals_ = NormalsActor(window, border_filter->GetOutputPort(),
                                  /*scale=*/3, /*start3d=*/true);
-  border_normals_.SetColor(/*r=*/1.0, /*g=*/1.0, /*b=*/0.0);
+  border_normals_.SetColor(/*r=*/0.2, /*g=*/0.2, /*b=*/0.2);
   split_normals_ = NormalsActor(
       window, split_filter_->GetOutputPort(), /*scale=*/3,
       /*start3d=*/true);
-  split_normals_.SetColor(/*r=*/0.8, /*g=*/1.0, /*b=*/0.0);
+  split_normals_.SetColor(/*r=*/0.1, /*g=*/0.5, /*b=*/0.1);
 
   split_intersect_line_filter_->SetInputDataObject(WalnutToVTKMesh(
         std::vector<MutableConvexPolygon<>>{}));
   split_intersect_line_actor_ = window.AddShape(
-      split_intersect_line_filter_->GetOutputPort(), /*r=*/0.8, /*g=*/1.0,
-      /*b=*/0.0, /*a=*/1.0);
+      split_intersect_line_filter_->GetOutputPort(), /*r=*/0.1, /*g=*/0.5,
+      /*b=*/0.1, /*a=*/1.0);
   split_intersect_line_actor_->GetProperty()->SetLineWidth(7);
 
   labels_actor_ = window.AddPointLabels(labelled_points_data_);
@@ -176,7 +176,8 @@ BSPVisualization::ContentInfo::ContentInfo(VisualizationWindow& window,
 
 void BSPVisualization::BuildingContentInfo::AddCrossing(
     const HomoPoint3& vertex, const Vector3& label_offset_direction,
-    double label_offset_amount, bool pos_child, int type) {
+    double label_offset_amount, bool pos_child, BSPContentId polygon_id,
+    int type) {
   DoublePoint3 location = vertex.GetDoublePoint3();
   if (!pos_child) label_offset_amount *= -1;
   label_offset_amount /= sqrt((double)label_offset_direction.GetScaleSquared());
@@ -184,7 +185,8 @@ void BSPVisualization::BuildingContentInfo::AddCrossing(
   location.y += (double)label_offset_direction.y() * label_offset_amount;
   location.z += (double)label_offset_direction.z() * label_offset_amount;
   labelled_points->InsertNextPoint(location.x, location.y, location.z);
-  labels->InsertNextValue(type > 0 ? "+" : "-");
+  labels->InsertNextValue(
+    (std::ostringstream() << (type > 0 ? "+" : "-")).str());
 }
 
 vtkNew<vtkPolyData> BSPVisualization::BuildingContentInfo::MakeEdges(
@@ -217,6 +219,11 @@ bool BSPVisualization::KeyPressed(const char* key) {
     return true;
   } else if (!std::strcmp(key, "l")) {
     ShowLabels(!show_labels_);
+    return true;
+  } else if (!std::strcmp(key, "h")) {
+    int next_focus = focus_content_ + 1;
+    if (next_focus == static_cast<int>(contents_.size())) next_focus = -1;
+    FocusContent(next_focus);
     return true;
   }
   return false;
@@ -446,9 +453,10 @@ void BSPVisualization::UpdateShapes() {
   }
 
   std::map<BSPContentId, BuildingContentInfo> content_map;
+  size_t crossing_num = 0;
   for (const BSPNodeRep::PolygonRep& polygon : view_pos_->contents()) {
     AddCoincidentEdges(polygon, point_map, points, content_map);
-    AddCrossingLabels(polygon, content_map);
+    AddCrossingLabels(polygon, content_map, crossing_num);
   }
   for (const BSPNodeRep::PolygonRep& polygon : view_pos_->border_contents()) {
     AddCoincidentEdges(polygon, point_map, points, content_map);
@@ -478,13 +486,15 @@ BSPVisualization::ContentInfo& BSPVisualization::GetContentInfo(
   auto it = contents_.find(id);
   if (it != contents_.end()) return it->second;
 
-  double colors[2][4] = {
-    {1, 0.8, 0.8, 0.6},
+  double colors[4][4] = {
+    {1, 0.5, 0.2, 0.6},
     {0.2, 0.2, 1, 0.6},
+    {0.6, 0.3, 0.6, 0.6},
+    {0.75, 0.6, 0.0, 0.6},
   };
 
   size_t color_id = std::min(static_cast<size_t>(id),
-                             static_cast<size_t>(2));
+                             static_cast<size_t>(3));
 
   auto inserted = contents_.emplace(
       id,
@@ -563,7 +573,8 @@ void BSPVisualization::AddCoincidentEdges(
 
 void BSPVisualization::AddCrossingLabels(
     const BSPNodeRep::PolygonRep& polygon,
-    std::map<BSPContentId, BuildingContentInfo>& content_map) {
+    std::map<BSPContentId, BuildingContentInfo>& content_map,
+    size_t& crossing_num) {
   auto content_it = content_map.find(polygon.id);
   assert(content_it != content_map.end());
 
@@ -583,10 +594,11 @@ void BSPVisualization::AddCrossingLabels(
                                           edge_last_coincident,
                                           current_edge);
     if (push_info.first != 0) {
+      ++crossing_num;
       info.AddCrossing(current_edge.vertex(),
                        full_tree_pos_->split().normal(),
-                       crossing_label_offset_, push_info.second,
-                       push_info.first);
+                       crossing_label_offset_ * crossing_num,
+                       push_info.second, polygon.id, push_info.first);
     }
 
     const auto& next_edge =
@@ -595,10 +607,11 @@ void BSPVisualization::AddCrossingLabels(
                                                     edge_last_coincident,
                                                     next_edge);
     if (push_info.first != 0) {
+      ++crossing_num;
       info.AddCrossing(next_edge.vertex(),
                        full_tree_pos_->split().normal(),
-                       crossing_label_offset_, push_info.second,
-                       -push_info.first);
+                       crossing_label_offset_ * crossing_num,
+                       push_info.second, polygon.id, -push_info.first);
     }
   }
 }
@@ -712,8 +725,11 @@ void BSPVisualization::UseFourthView() {
 void BSPVisualization::ShowLabels(bool show) {
   show_labels_ = show;
   labels_actor_->SetVisibility(show_labels_);
+  int i = 0;
   for (std::pair<const BSPContentId, ContentInfo>& content_pair : contents_) {
-    content_pair.second.labels_actor->SetVisibility(show_labels_);
+    bool show = focus_content_ == -1 || focus_content_ == i;
+    content_pair.second.labels_actor->SetVisibility(show_labels_ && show);
+    ++i;
   }
 }
 
@@ -765,6 +781,19 @@ BSPNode<>* BSPVisualization::SplitNorthWest(BSPNode<>* start,
                                       double(edge_vector.z()) * edge_dist);
   start->Split(HalfSpace3(normal, BigInt(long(dist))));
   return start->negative_child();
+}
+
+void BSPVisualization::FocusContent(int new_focus) {
+  focus_content_ = new_focus;
+  int i = 0;
+  for (std::pair<const BSPContentId, ContentInfo>& content_pair : contents_) {
+    bool show = focus_content_ == -1 || focus_content_ == i;
+    content_pair.second.labels_actor->SetVisibility(show_labels_ && show);
+    content_pair.second.actor->SetVisibility(show);
+    content_pair.second.line_actor->SetVisibility(show);
+    content_pair.second.coincident_arrows.SetVisibility(show);
+    ++i;
+  }
 }
 
 } // walnut
