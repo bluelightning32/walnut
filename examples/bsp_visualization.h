@@ -77,7 +77,8 @@ class BSPVisualization {
 
   void ShowLabels(bool show);
 
-  void SetMinAxesBounds(const AABB& aabb) {
+  void SetMinAxesBounds(const AABB& aabb, bool ignore_contents = true) {
+    ignore_contents_ = ignore_contents;
     min_axes_bounds_ = aabb;
   }
 
@@ -352,6 +353,8 @@ class BSPVisualization {
   vtkSmartPointer<vtkCubeAxesActor> axes_actor_;
 
   bool show_labels_ = true;
+  // Ignore the contents when setting the axes bounds.
+  bool ignore_contents_ = false;
 };
 
 } // walnut

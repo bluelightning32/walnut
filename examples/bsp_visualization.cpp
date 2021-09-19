@@ -480,7 +480,7 @@ BSPVisualization::ContentInfo& BSPVisualization::GetContentInfo(
 
   double colors[2][4] = {
     {1, 0.8, 0.8, 0.6},
-    {0.8, 1, 0.8, 0.6},
+    {0.2, 0.2, 1, 0.6},
   };
 
   size_t color_id = std::min(static_cast<size_t>(id),
@@ -629,6 +629,20 @@ void BSPVisualization::AddSplitOutline(
 }
 
 std::array<double, 6> BSPVisualization::GetContentBounds() const {
+  DoublePoint3 content_min = min_axes_bounds_.min_point().GetDoublePoint3();
+  DoublePoint3 content_max = min_axes_bounds_.max_point().GetDoublePoint3();
+
+  if (ignore_contents_) {
+    std::array<double, 6> bounds;
+    bounds[0] = content_min.x;
+    bounds[1] = content_max.x;
+    bounds[2] = content_min.y;
+    bounds[3] = content_max.y;
+    bounds[4] = content_min.z;
+    bounds[5] = content_max.z;
+    return bounds;
+  }
+
   using VertexIterator = ConvexPolygon<>::ConstVertexIterator;
   ConcatRange<VertexIterator> all_vertices;
   for (const std::pair<const BSPContentId, ContentInfo>& content : contents_) {
@@ -642,9 +656,6 @@ std::array<double, 6> BSPVisualization::GetContentBounds() const {
 
   DoublePoint3 double_min = bounding_box.min_point().GetDoublePoint3();
   DoublePoint3 double_max = bounding_box.max_point().GetDoublePoint3();
-
-  DoublePoint3 content_min = min_axes_bounds_.min_point().GetDoublePoint3();
-  DoublePoint3 content_max = min_axes_bounds_.max_point().GetDoublePoint3();
 
   std::array<double, 6> bounds;
   // xmin
