@@ -538,12 +538,11 @@ void BSPVisualization::AddCoincidentEdges(
       info.coincident_points->InsertNextPoint((start.x + end.x) / 2,
                                               (start.y + end.y) / 2,
                                               (start.z + end.z) / 2);
-      long double d = (long double)edge.edge_last_coincident.split->d() *
-        (edge.edge_last_coincident.pos_side ? -1 : 1);
+      int d = edge.edge_last_coincident.pos_side ? -1 : 1;
       double normal[3] = {
-        double((long double)edge.edge_last_coincident.split->x() / d),
-        double((long double)edge.edge_last_coincident.split->y() / d),
-        double((long double)edge.edge_last_coincident.split->z() / d)
+        double(edge.edge_last_coincident.split->x() * d),
+        double(edge.edge_last_coincident.split->y() * d),
+        double(edge.edge_last_coincident.split->z() * d)
       };
       info.coincident_normals->InsertNextTuple(normal);
     }
@@ -551,12 +550,11 @@ void BSPVisualization::AddCoincidentEdges(
     if (edge.vertex_last_coincident.split != nullptr) {
       const DoublePoint3 p = edge.vertex().GetDoublePoint3();
       info.coincident_points->InsertNextPoint(p.x, p.y, p.z);
-      long double d = (long double)edge.vertex_last_coincident.split->d() *
-        (edge.vertex_last_coincident.pos_side ? -1 : 1);
+      int d = edge.vertex_last_coincident.pos_side ? -1 : 1;
       double normal[3] = {
-        double((long double)edge.vertex_last_coincident.split->x() / d),
-        double((long double)edge.vertex_last_coincident.split->y() / d),
-        double((long double)edge.vertex_last_coincident.split->z() / d)
+        double(edge.vertex_last_coincident.split->x() * d),
+        double(edge.vertex_last_coincident.split->y() * d),
+        double(edge.vertex_last_coincident.split->z() * d)
       };
       info.coincident_normals->InsertNextTuple(normal);
     }
