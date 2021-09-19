@@ -66,6 +66,11 @@ target_link_libraries(self_intersection
                       examples_helper
                       ${GLEW_LIBRARIES} ${VTK_LIBRARIES} )
 
+add_executable(r_transformation_effect r_transformation_effect.cpp)
+target_link_libraries(r_transformation_effect
+                      examples_helper
+                      ${GLEW_LIBRARIES} ${VTK_LIBRARIES} )
+
 add_executable(redundant_faces redundant_faces.cpp)
 target_link_libraries(redundant_faces
                       examples_helper
