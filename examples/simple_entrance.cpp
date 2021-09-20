@@ -7,7 +7,7 @@ int main(int argc, char *argv[]) {
   walnut::VisualizationWindow window("simple_entrance");
   walnut::BSPVisualization tree_visualization(
       window,
-      /*bounding_box=*/walnut::AABB(-28, -28, -70, 28, 28, 70, 1),
+      /*bounding_box=*/walnut::AABB(-16, -16, -70, 16, 16, 70, 1),
       /*labelling_box=*/walnut::AABB(-13, -13, -20, 13, 13, 20, 1));
   walnut::BSPContentId id = tree_visualization.AllocateId();
   tree_visualization.AddContent(id, walnut::AABB(-12, -12, -12, 12, 12, 12, /*denom=*/1));
