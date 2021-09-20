@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
   cleaner->SetToleranceIsAbsolute(true);
   cleaner->SetAbsoluteTolerance(0.000001);
 
-  walnut::VisualizationWindow window;
+  walnut::VisualizationWindow window("zig_zag_border");
   auto actor = window.AddShape(cleaner->GetOutputPort(), 1, 0.8, 0.8, 0.6);
   window.AddWireframe(cleaner->GetOutputPort());
   walnut::NormalsActor normals(window, cleaner->GetOutputPort(), /*scale=*/1);
