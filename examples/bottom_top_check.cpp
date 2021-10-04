@@ -6,7 +6,7 @@
 using namespace walnut;
 
 int main(int argc, char *argv[]) {
-  VisualizationWindow window("min_max_check");
+  VisualizationWindow window("bottom_top_check");
   BSPVisualization tree_visualization(
       window,
       /*bounding_box=*/AABB(-28, -28, -70, 28, 28, 70, 1),

@@ -46,8 +46,8 @@ target_link_libraries(kerf_effect
                       examples_helper
                       ${GLEW_LIBRARIES} ${VTK_LIBRARIES} )
 
-add_executable(min_max_check min_max_check.cpp)
-target_link_libraries(min_max_check
+add_executable(bottom_top_check bottom_top_check.cpp)
+target_link_libraries(bottom_top_check
                       examples_helper
                       ${GLEW_LIBRARIES} ${VTK_LIBRARIES} )
 
