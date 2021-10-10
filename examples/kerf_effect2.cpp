@@ -6,7 +6,7 @@
 using namespace walnut;
 
 int main(int argc, char *argv[]) {
-  VisualizationWindow window("kerf_effect");
+  VisualizationWindow window("kerf_effect2");
   BSPVisualization tree_visualization(
       window,
       /*bounding_box=*/AABB(-22, -22, -70, 22, 22, 70, 1),

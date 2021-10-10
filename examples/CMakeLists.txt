@@ -46,8 +46,8 @@ target_link_libraries(kerf_effect1
                       examples_helper
                       ${GLEW_LIBRARIES} ${VTK_LIBRARIES} )
 
-add_executable(kerf_effect kerf_effect.cpp)
-target_link_libraries(kerf_effect
+add_executable(kerf_effect2 kerf_effect2.cpp)
+target_link_libraries(kerf_effect2
                       examples_helper
                       ${GLEW_LIBRARIES} ${VTK_LIBRARIES} )
 
