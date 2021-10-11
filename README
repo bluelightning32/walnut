@@ -12,7 +12,8 @@ build with the -DUSE_VTK=OFF option to cmake.
 The -L option lists other common options.
   cmake ../ -L
 
-For regular development, a debug release type is recommended. The debug release has the asserts enabled, and it has full debug symbols.
+For regular development, a debug release type is recommended. The debug release
+has the asserts enabled, and it has full debug symbols.
   cmake ../ -DCMAKE_BUILD_TYPE=Debug
 
 To get started using it, take a look at the examples/union.cpp file. The
@@ -37,8 +38,15 @@ These are the key parts of the program:
   bool_filter->SetOperationToIntersection();
   bool_filter->SetOperationToDifference();
 
-The example performs boolean operations between 2 rectangular prisms and a cylinder. The cylinder and one rectangular prism overlap. The second rectangular prism is disconnected to show how Walnut can handle disconnected meshes. For illustrative purposes, the example program shows the facet normals, and the facet edges (even of coplanar facets).
+The example performs boolean operations between 2 rectangular prisms and a
+cylinder. The cylinder and one rectangular prism overlap. The second
+rectangular prism is disconnected to show how Walnut can handle disconnected
+meshes. For illustrative purposes, the example program shows the facet normals,
+and the facet edges (even of coplanar facets).
 
-When running the example, use the ‘m’ key to cycle between 3 different boolean operations: union, intersection, and set difference. When the program first starts up, it shows a union of the 3 objects.
+When running the example, use the ‘m’ key to cycle between 3 different boolean
+operations: union, intersection, and set difference. When the program first
+starts up, it shows a union of the 3 objects.
 
-There are several other programs in the examples directory. Most of the example programs illustrate some internal part of how Walnut works.
+There are several other programs in the examples directory. Most of the example
+programs illustrate some internal part of how Walnut works.
