@@ -22,6 +22,17 @@ class VTK_EXPORT vtkWalnutBooleanFilter : public vtkPolyDataAlgorithm {
                    /*max=*/OperationType::VTK_DIFFERENCE);
   vtkGetMacro(/*name=*/Operation, /*type=*/OperationType);
 
+
+  // Quantize the input VTK coordinates to 2^min_exponent. By default
+  // `min_exponent` is set to `INT_MIN` to disable quantization.
+  //
+  // This is used for converting from VTK’s double floating point to Walnut’s
+  // internal exact rational format. This does not affect output conversion
+  // from Walnut to VTK.
+  //
+  // By default quantization is disabled and the doubles are converted exactly.
+  // However, often the input data already has small rounding errors, and
+  // representing these exactly in Walnut slows down the algorithm.
   vtkSetClampMacro(/*name=*/MinExponent, /*type=*/int,
                    /*min=*/std::numeric_limits<int>::min(), /*max=*/0);
   vtkGetMacro(/*name=*/MinExponent, /*type=*/int);

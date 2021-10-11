@@ -23,10 +23,16 @@ int main(int argc, char *argv[]) {
   cu2->SetZLength(10);
   cu2->SetCenter(0, 6, 0);
 
+  // Instantiate the boolean filter adapter
   auto bool_filter = vtkSmartPointer<walnut::vtkWalnutBooleanFilter>::New();
+  // Give the boolean filter one or more other objects to perform the boolean
+  // operation on.
   bool_filter->AddInputConnection(cu->GetOutputPort());
   bool_filter->AddInputConnection(cyl->GetOutputPort());
   bool_filter->AddInputConnection(cu2->GetOutputPort());
+  // Enable the optional input quantization to speed up the Walnut algorithm.
+  // Setting -8 means that the input coordinates are rounded to the nearest
+  // multiple of 2^-8.
   bool_filter->SetMinExponent(-8);
 
   walnut::VisualizationWindow window;

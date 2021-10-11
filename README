@@ -14,3 +14,31 @@ The -L option lists other common options.
 
 For regular development, a debug release type is recommended. The debug release has the asserts enabled, and it has full debug symbols.
   cmake ../ -DCMAKE_BUILD_TYPE=Debug
+
+To get started using it, take a look at the examples/union.cpp file. The
+example uses the VTK adapter to Walnut, which is not required to use Walnut,
+but it is the simplest way to use Walnut.
+
+These are the key parts of the program:
+  // Instantiate the boolean filter adapter
+  auto bool_filter = vtkSmartPointer<walnut::vtkWalnutBooleanFilter>::New();
+  // Give the boolean filter one or more other objects to perform the boolean
+  // operation on.
+  bool_filter->AddInputConnection(cu->GetOutputPort());
+  bool_filter->AddInputConnection(cyl->GetOutputPort());
+  bool_filter->AddInputConnection(cu2->GetOutputPort());
+  // Enable the optional input quantization to speed up the Walnut algorithm.
+  // Setting -8 means that the input coordinates are rounded to the nearest
+  // multiple of 2^-8.
+  bool_filter->SetMinExponent(-8);
+
+  // Call one of the following functions to select the boolean operation.
+  bool_filter->SetOperationToUnion();
+  bool_filter->SetOperationToIntersection();
+  bool_filter->SetOperationToDifference();
+
+The example performs boolean operations between 2 rectangular prisms and a cylinder. The cylinder and one rectangular prism overlap. The second rectangular prism is disconnected to show how Walnut can handle disconnected meshes. For illustrative purposes, the example program shows the facet normals, and the facet edges (even of coplanar facets).
+
+When running the example, use the ‘m’ key to cycle between 3 different boolean operations: union, intersection, and set difference. When the program first starts up, it shows a union of the 3 objects.
+
+There are several other programs in the examples directory. Most of the example programs illustrate some internal part of how Walnut works.
