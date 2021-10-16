@@ -14,10 +14,13 @@ else()
 endif()
 
 option(WALNUT_USE_VTK "Build targets that depend on VTK" ON)
+option(WALNUT_BUILD_EXAMPLES "Build the examples (also requires WALNUT_USE_VTK)" ON)
 
 if(WALNUT_USE_VTK)
   add_subdirectory(vtk_interface)
-  add_subdirectory(examples)
+  if(WALNUT_BUILD_EXAMPLES)
+    add_subdirectory(examples)
+  endif()
 endif()
 
 add_subdirectory("${PROJECT_SOURCE_DIR}/extern/googletest" "extern/googletest"
