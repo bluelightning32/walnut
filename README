@@ -50,3 +50,6 @@ starts up, it shows a union of the 3 objects.
 
 There are several other programs in the examples directory. Most of the example
 programs illustrate some internal part of how Walnut works.
+
+A design doc for how the internals of Walnut work is available at:
+https://docs.google.com/document/d/1G9616Bs4OURC1fKEUgY0b25A_Wra7Mn9mVxW1SmjVRY/edit?usp=sharing
