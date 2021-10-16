@@ -1,13 +1,15 @@
 #include "walnut/vtkWalnutBooleanFilter.h"
 
 #include <chrono>
+#include <vtkInformation.h>
+#include <vtkInformationVector.h>
 
 #include "walnut/boolean_operation_filter.h"
 #include "walnut/bsp_tree.h"
 #include "walnut/vtk_to_walnut_mesh.h"
 #include "walnut/walnut_to_vtk_mesh.h"
 
-#define PRINT_TIMING 1
+#define PRINT_TIMING 0
 
 namespace walnut {
 
@@ -25,7 +27,9 @@ inline int vtkWalnutBooleanFilter::FillInputPortInformation(int port,
 int vtkWalnutBooleanFilter::RequestData(vtkInformation* request,
                                         vtkInformationVector** input_vector,
                                         vtkInformationVector* output_vector) {
+#if PRINT_TIMING
   auto start = std::chrono::steady_clock::now();
+#endif
 
   int num_connections = input_vector[0]->GetNumberOfInformationObjects();
   BSPTree<> tree;

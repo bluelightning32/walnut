@@ -4,8 +4,6 @@
 #include <limits>
 
 #include <vtkBooleanOperationPolyDataFilter.h>
-#include <vtkInformation.h>
-#include <vtkInformationVector.h>
 #include <vtkPolyDataAlgorithm.h>
 #include <vtkSetGet.h>
 
