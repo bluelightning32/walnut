@@ -20,12 +20,6 @@ if(USE_VTK)
   add_subdirectory(examples)
 endif()
 
-option(PACKAGE_TESTS "Build the tests" ON)
-if(PACKAGE_TESTS)
-    enable_testing()
-    include(GoogleTest)
-endif()
- 
 add_subdirectory("${PROJECT_SOURCE_DIR}/extern/googletest" "extern/googletest"
                  EXCLUDE_FROM_ALL)
 
