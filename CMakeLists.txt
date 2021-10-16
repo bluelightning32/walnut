@@ -13,9 +13,9 @@ else()
     add_compile_options(-Wall -Werror)
 endif()
 
-option(USE_VTK "Build targets that depend on VTK" ON)
+option(WALNUT_USE_VTK "Build targets that depend on VTK" ON)
 
-if(USE_VTK)
+if(WALNUT_USE_VTK)
   add_subdirectory(vtk_interface)
   add_subdirectory(examples)
 endif()
@@ -34,8 +34,8 @@ set_target_properties(gtest_main PROPERTIES FOLDER extern)
 set_target_properties(gmock PROPERTIES FOLDER extern)
 set_target_properties(gmock_main PROPERTIES FOLDER extern)
 
-option(BUILD_TESTS "Build the tests as part of the default target." ON)
-option(RUN_TESTS
+option(WALNUT_BUILD_TESTS "Build the tests as part of the default target." ON)
+option(WALNUT_RUN_TESTS
 "Whenever a test file is changed (or any of its dependencies), run the test \
 as part of the default build target. Set this to OFF to disable building and \
 running the unit tests." ON)
@@ -106,7 +106,7 @@ set_target_properties(walnut PROPERTIES
                       PUBLIC_HEADER "${WALNUT_PUBLIC_HEADERS}")
 install(TARGETS walnut PUBLIC_HEADER DESTINATION "include/walnut")
 
-if(BUILD_TESTS)
+if(WALNUT_BUILD_TESTS)
     enable_testing()
     include(GoogleTest)
   macro(package_add_test TESTNAME)
@@ -132,7 +132,7 @@ if(BUILD_TESTS)
           DEPENDS ${TESTNAME}
           USES_TERMINAL
       )
-      if(RUN_TESTS)
+      if(WALNUT_RUN_TESTS)
         add_custom_target(run_${TESTNAME} ALL DEPENDS ${TESTNAME}_results.json)
       endif()
   endmacro()
