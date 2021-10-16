@@ -26,11 +26,9 @@ find_package(VTK REQUIRED COMPONENTS
 
 include(${VTK_USE_FILE})
 
-include_directories(${CMAKE_SOURCE_DIR}/include)
-include_directories(${CMAKE_SOURCE_DIR}/vtk_interface/include)
-
 add_library(walnut_vtk STATIC
             src/vtkWalnutBooleanFilter.cpp)
+target_include_directories(walnut_vtk PUBLIC include)
 target_link_libraries(walnut_vtk walnut ${VTK_LIBRARIES})
 
 set(WALNUT_VTK_PUBLIC_HEADERS
