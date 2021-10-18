@@ -51,6 +51,12 @@ class BigUIntWordBase {
 
   explicit constexpr BigUIntWordBase(BigIntWord i) : i_(i) { }
 
+  // This constructor is only used on 32 bit platforms.
+  template <typename Long = long,
+            std::enable_if_t<!std::is_same<BigIntWord, Long>::value,
+                             bool> = true>
+  explicit constexpr BigUIntWordBase(Long i) : i_(i) { }
+
   explicit constexpr BigUIntWordBase(uint32_t i) : i_(i) { }
 
   constexpr ImplType& operator = (int v) {

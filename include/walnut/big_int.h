@@ -39,6 +39,14 @@ class BigInt {
     words_[0] = BigUIntWord{value};
   }
 
+  // This constructor is only used on 32 bit platforms.
+  template <typename Long = long,
+          std::enable_if_t<!std::is_same<BigIntWord, Long>::value,
+                           bool> = true>
+  explicit constexpr BigInt(Long value) {
+    words_[0] = BigUIntWord{value};
+  }
+
   BigInt(const BigInt&) = default;
   constexpr BigInt(BigInt&&) = default;
 
