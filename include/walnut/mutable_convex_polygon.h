@@ -51,6 +51,7 @@ class MutableConvexPolygon : public ConvexPolygon<EdgeParent> {
   using Parent::CreateSplitChildren;
   using Parent::SplitEdge;
   using Parent::TryMergePolygon;
+  using Parent::Invert;
 
   RValueKey<MutableConvexPolygon> GetRValueKey() && {
     return RValueKey<MutableConvexPolygon>(std::move(*this));

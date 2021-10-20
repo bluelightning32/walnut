@@ -155,6 +155,11 @@ class PluckerLine {
   // before.
   void Reduce();
 
+  void Negate() {
+    d_.Negate();
+    m_.Negate();
+  }
+
  private:
   Vector3 d_;
   Vector3 m_;

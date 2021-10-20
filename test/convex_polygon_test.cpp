@@ -1,5 +1,7 @@
 #include "walnut/convex_polygon.h"
 
+// For std::reverse
+#include <algorithm>
 #include <iterator>
 
 #include "gmock/gmock.h"
@@ -2067,6 +2069,43 @@ TEST(ConvexPolygon, GetProjectedCentroid) {
   ConvexPolygon<> polygon(plane, /*drop_dimension=*/2, input);
 
   EXPECT_EQ(polygon.GetCentroid(), HomoPoint3(2 + 5, 2 + 7, 2, 2));
+}
+
+TEST(ConvexPolygon, InvertQuadrilateral) {
+  std::vector<HomoPoint3> input{
+    HomoPoint3(10, 10, 5, 5),
+    HomoPoint3(10, 4, 2, 2),
+    HomoPoint3(25, 35, 5, 5),
+    HomoPoint3(3, 14, 2, 2),
+  };
+
+  HalfSpace3 plane(0, 0, 1, 1);
+  MutableConvexPolygon<> polygon(plane, /*drop_dimension=*/2, input);
+  std::reverse(input.begin(), input.end());
+  MutableConvexPolygon<> inverted(-plane, /*drop_dimension=*/2, input);
+
+  EXPECT_NE(polygon, inverted);
+  polygon.Invert();
+  EXPECT_EQ(polygon, inverted);
+  EXPECT_TRUE(polygon.IsValidState());
+}
+
+TEST(ConvexPolygon, InvertTriangle) {
+  std::vector<HomoPoint3> input{
+    HomoPoint3(10, 10, 5, 5),
+    HomoPoint3(10, 4, 2, 2),
+    HomoPoint3(25, 35, 5, 5),
+  };
+
+  HalfSpace3 plane(0, 0, 1, 1);
+  MutableConvexPolygon<> polygon(plane, /*drop_dimension=*/2, input);
+  std::reverse(input.begin(), input.end());
+  MutableConvexPolygon<> inverted(-plane, /*drop_dimension=*/2, input);
+
+  EXPECT_NE(polygon, inverted);
+  polygon.Invert();
+  EXPECT_EQ(polygon, inverted);
+  EXPECT_TRUE(polygon.IsValidState());
 }
 
 }  // walnut

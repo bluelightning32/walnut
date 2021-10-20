@@ -787,6 +787,33 @@ class ConvexPolygon {
                                   ConvexPolygon& neg_child,
                                   ConvexPolygon& pos_child);
 
+  // Reverse the vertices and flip the normal of the polygon.
+  void Invert() {
+    if (vertex_count() == 0) return;
+
+    // Reverse vertices [1, n)
+    using EdgeIterator = typename EdgeVector::iterator;
+    for (EdgeIterator i = edges_.begin() + 1, j = edges_.end() - 1; i < j;
+         ++i, --j) {
+      using std::swap;
+      swap(i->vertex_, j->vertex_);
+    }
+
+    // Reverse edges [0, n)
+    for (EdgeIterator i = edges_.begin(), j = edges_.end() - 1; i < j;
+         ++i, --j) {
+      using std::swap;
+      swap(i->line_, j->line_);
+    }
+
+    // Negate the edges
+    for (AssignableWrapper<EdgeRep>& edge : edges_) {
+      edge.line_.Negate();
+    }
+
+    plane_.Negate();
+  }
+
  private:
   template <typename OtherEdgeParent>
   friend class ConvexPolygon;
