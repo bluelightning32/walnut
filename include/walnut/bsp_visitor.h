@@ -37,6 +37,35 @@ class PolygonFilter {
 
 // Filters out all polygons except for the ones that have the requested id.
 //
+// All points with a PWN greater than or equal to 0 for the given id are
+// considered as inside the shape. In practice this means that only the
+// polygons for the transition from -1 to 0 for the given id are considered part
+// of the border that is accepted.
+class InvertedPolygonFilter {
+ public:
+  InvertedPolygonFilter(BSPContentId accept_id) : accept_id_(accept_id) { }
+
+  // Specifically the first returned bool is true if the PWN is inside the
+  // polyhedron defined by this visitor. The second returned bool is true if
+  // the sideness could change as subnodes of this branch of the BSP tree is
+  // visited, given which polygons have not been visited yet in this subtree
+  // (the `has_polygons` field).
+  std::pair<bool, bool> operator()(
+      const std::vector<BSPContentInfo>& content_info_by_id) {
+    if (accept_id_ >= content_info_by_id.size()) {
+      return std::make_pair(false, false);
+    } else {
+      return std::make_pair(content_info_by_id[accept_id_].pwn >= 0,
+                            content_info_by_id[accept_id_].has_polygons);
+    }
+  }
+
+ private:
+  BSPContentId accept_id_;
+};
+
+// Filters out all polygons except for the ones that have the requested id.
+//
 // All points with an odd PWN for the given id are considered as inside the
 // shape.
 class OddPolygonFilter {
@@ -115,6 +144,36 @@ template <typename Filter1, typename Filter2>
 UnionFilter<Filter1, Filter2> MakeUnionFilter(Filter1 filter1,
                                               Filter2 filter2) {
   return UnionFilter<Filter1, Filter2>(std::move(filter1), std::move(filter2));
+}
+
+template <typename Filter1, typename Filter2>
+class SubtractionFilter {
+ public:
+  // Filter2 must produce an inverted mesh. For example, to subtract a cube,
+  // all of the faces of the inverted cube should be in clockwise order.
+  SubtractionFilter(Filter1 filter1, Filter2 filter2)
+    : filter1_(std::move(filter1)), filter2_(std::move(filter2)) { }
+
+  std::pair<bool, bool> operator()(
+      const std::vector<BSPContentInfo>& content_info_by_id) {
+    std::pair<bool, bool> result1 = filter1_(content_info_by_id);
+    std::pair<bool, bool> result2 = filter2_(content_info_by_id);
+    return std::make_pair(result1.first && result2.first,
+                          (result1.first || result1.second) &&
+                          (result2.first || result2.second) &&
+                          (result1.second || result2.second));
+  }
+
+ private:
+  Filter1 filter1_;
+  Filter2 filter2_;
+};
+
+template <typename Filter1, typename Filter2>
+SubtractionFilter<Filter1, Filter2> MakeSubtractionFilter(Filter1 filter1,
+                                                          Filter2 filter2) {
+  return SubtractionFilter<Filter1, Filter2>(std::move(filter1),
+	                                         std::move(filter2));
 }
 
 template <typename PolygonRepTemplate>
