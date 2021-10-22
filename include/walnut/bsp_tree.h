@@ -10,7 +10,6 @@
 #include "walnut/bsp_node.h"
 #include "walnut/bsp_traverser.h"
 #include "walnut/connecting_visitor.h"
-#include "walnut/double.h"
 
 namespace walnut {
 
@@ -30,7 +29,6 @@ class BSPTree {
   template <typename InputConvexPolygon>
   void AddContent(BSPContentId id, InputConvexPolygon&& polygon) {
     root.AddRootContent(id, std::forward<InputConvexPolygon>(polygon));
-    std::cout << "Pushing mesh to leaves " << UsedMemory() << std::endl;
     root.PushContentsToLeaves();
   }
 
@@ -45,7 +43,6 @@ class BSPTree {
     for (const InputConvexPolygon& polygon : polygons) {
       root.AddRootContent(id, polygon);
     }
-    std::cout << "Pushing mesh to leaves, polygon_count=" << root.contents().size() << ", used_memory=" << UsedMemory() << std::endl;
     root.PushContentsToLeaves();
   }
 
