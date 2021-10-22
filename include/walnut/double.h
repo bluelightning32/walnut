@@ -8,7 +8,7 @@
 
 namespace walnut {
 
-// Decomposes `input` into a mantissa an exponent.
+// Decomposes `input` into a mantissa and exponent.
 //
 // The return value and exponent meet this criteria:
 //   ret * 2^exp = input
