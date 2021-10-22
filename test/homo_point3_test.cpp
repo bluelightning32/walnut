@@ -160,6 +160,30 @@ TEST(HomoPoint3, FromDoublesExactNextAfter0) {
   EXPECT_EQ(p.GetDoublePoint3(), DoublePoint3(d, d, d));
 }
 
+TEST(HomoPoint3, FromDoublesRoundPosToward0) {
+  HomoPoint3 p = HomoPoint3::FromDoubles(/*min_exponent=*/-1,
+                                         /*x=*/0.001,
+                                         /*y=*/0.001,
+                                         /*z=*/0.001);
+
+  EXPECT_EQ(p.x(), 0);
+  EXPECT_EQ(p.y(), 0);
+  EXPECT_EQ(p.z(), 0);
+  EXPECT_NE(p.w(), 0);
+}
+
+TEST(HomoPoint3, FromDoublesRoundNegToward0) {
+  HomoPoint3 p = HomoPoint3::FromDoubles(/*min_exponent=*/-1,
+                                         /*x=*/-0.001,
+                                         /*y=*/-0.001,
+                                         /*z=*/-0.001);
+
+  EXPECT_EQ(p.x(), 0);
+  EXPECT_EQ(p.y(), 0);
+  EXPECT_EQ(p.z(), 0);
+  EXPECT_NE(p.w(), 0);
+}
+
 TEST(HomoPoint3, GetDoublePoint3) {
   DoublePoint3 input{10, 0.1, 0.01};
   HomoPoint3 p = HomoPoint3::FromDoublesExact(input.x, input.y, input.z);

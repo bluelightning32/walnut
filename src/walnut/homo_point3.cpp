@@ -14,7 +14,8 @@ BigInt SafeShiftLeft(int64_t value, int shift) {
 
   if (-shift >= (int)BigInt::bits_per_word) return BigInt(0);
 
-  return BigInt(value >> -shift);
+  const int64_t rounding_adjust = (value >> (-shift - 1)) & 1;
+  return BigInt((value >> -shift) + rounding_adjust);
 }
 
 } // namespace
