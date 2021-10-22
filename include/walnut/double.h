@@ -3,10 +3,37 @@
 
 #include <cfloat>
 #include <cmath>
+#include <emscripten/emscripten.h>
+#include <unistd.h>
 
 #include "walnut/big_uint_word.h"
 
 namespace walnut {
+
+
+  struct s_mallinfo {
+	int arena;    /* non-mmapped space allocated from system */
+	int ordblks;  /* number of free chunks */
+	int smblks;   /* always 0 */
+	int hblks;    /* always 0 */
+	int hblkhd;   /* space in mmapped regions */
+	int usmblks;  /* maximum total allocated space */
+	int fsmblks;  /* always 0 */
+	int uordblks; /* total allocated space */
+	int fordblks; /* total free space */
+	int keepcost; /* releasable (via malloc_trim) space */
+};
+
+extern "C" {
+	extern s_mallinfo mallinfo();
+}
+
+inline unsigned int UsedMemory()
+{
+	s_mallinfo i = mallinfo();
+	unsigned int dynamicTop = (unsigned int)sbrk(0);
+	return dynamicTop - i.fordblks;
+}
 
 // Decomposes `input` into a mantissa and exponent.
 //

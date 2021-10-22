@@ -11,6 +11,7 @@
 #include "walnut/bsp_content_info.h"
 #include "walnut/bsp_edge_info.h"
 #include "walnut/bsp_polygon.h"
+#include "walnut/double.h"
 #include "walnut/half_space3.h"
 #include "walnut/r_transformation.h"
 

@@ -20,7 +20,15 @@ class BSPTraverser {
 
     if (!node.contents().empty()) {
       if (node.IsLeaf()) {
+        //std::cout << "Splitting leaf. Had contents=" << node.contents().size() << " " << node.border_contents().size()
+         // << " pwn=" << node.GetContentInfoForId(0).pwn << std::endl;
         node.Split();
+        //std::cout << "Neg child has contents=" << node.negative_child()->contents().size() << " " << node.negative_child()->border_contents().size()
+          //<< " pwn=" << node.negative_child()->GetContentInfoForId(0).pwn << std::endl;
+        //std::cout << "Pos child has contents=" << node.positive_child()->contents().size() << " " << node.positive_child()->border_contents().size()
+          //<< " pwn=" << node.positive_child()->GetContentInfoForId(0).pwn << std::endl;
+        //std::cout << "Parent now has contents=" << node.contents().size() << " " << node.border_contents().size()
+          //<< " pwn=" << node.GetContentInfoForId(0).pwn << std::endl;
       } else {
         node.PushContentsToChildren();
       }

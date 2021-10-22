@@ -553,6 +553,10 @@ class ConvexPolygon {
                                    drop_dimension_);
   }
 
+  void ReducePlaneNormal() {
+    plane_.Reduce();
+  }
+
  protected:
   // Returns the information about an edge and the source vertex for that edge.
   EdgeRep& edge(size_t index) {
