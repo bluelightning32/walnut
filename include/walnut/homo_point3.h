@@ -238,17 +238,13 @@ class HomoPoint3 {
   BigInt dist_denom_;
 };
 
-// This hasher only works for points that have been reduced.
+// This hasher only produces the same hash value if the two points are exactly
+// equal, including `w`.
 //
 // If the points have not been reduced, two equal points could end up with
 // different hashes.
 struct ReducedHomoPoint3Hasher {
   size_t operator()(const HomoPoint3& p) const {
-#ifndef NDEBUG
-    HomoPoint3 reduced(p);
-    reduced.Reduce();
-    assert(p.w() == reduced.w());
-#endif
     size_t raw_hashes[4] {
       p.x().GetHash(),
       p.y().GetHash(),
