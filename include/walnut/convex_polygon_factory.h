@@ -18,44 +18,47 @@ class ConvexPolygonFactory :
   using InputPoint3 = InputPoint3Template;
   using ConvexPolygonRep = ConvexPolygonTemplate;
 
-  // `Point3Iterator` should produce Point3Reps.
+  // `Point3Iterator` should produce Point3Reps or HomoPoint3Reps.
   template <typename Point3Iterator>
   void Build(Point3Iterator begin, Point3Iterator end) {
     using PlanarRangeRep = PlanarRange<Point3Iterator>;
     PlanarRangeRep planar_range;
-    using MonotoneRangeRep =
-      MonotoneRange<typename PlanarRangeRep::OutputIterator>;
-    MonotoneRangeRep monotone_range;
 
     while (begin != end) {
       planar_range.Build(begin, end);
-      plane_ = planar_range.plane();
-      drop_dimension_ = plane_.normal().GetFirstNonzeroDimension();
-      // drop_dimension_ is -1 if the points are collinear.
-      if (drop_dimension_ == -1) continue;
-      int monotone_dimension = (~drop_dimension_) & 1;
-      plane_orientation_ =
-        GetPlaneOrientationAfterProjection(plane_.normal(), drop_dimension_);
-      typename PlanarRangeRep::OutputIterator planar_begin =
-        planar_range.begin();
-      typename PlanarRangeRep::OutputIterator planar_end =
-        planar_range.end();
+      Build(planar_range.plane(), planar_range.begin(), planar_range.end());
+    }
+  }
 
-      while (planar_begin != planar_end) {
-        monotone_range.Build(monotone_dimension, planar_begin, planar_end);
+  // `Point3Iterator` should produce Point3Reps or HomoPoint3Reps.
+  template <typename Point3Iterator>
+  void Build(const HalfSpace3& plane, Point3Iterator planar_begin,
+             Point3Iterator planar_end) {
+    using MonotoneRangeRep = MonotoneRange<Point3Iterator>;
+    MonotoneRangeRep monotone_range;
 
-        using Chain1Iterator =
-          typename MonotoneRangeRep::ConcatRangeRep::const_iterator;
-        using Chain2Iterator =
-          typename MonotoneRangeRep::ConcatRangeRep::const_reverse_iterator;
-        Chain1Iterator chain1_begin, chain1_end;
-        Chain2Iterator chain2_begin, chain2_end;
+    plane_ = plane;
+    drop_dimension_ = plane_.normal().GetFirstNonzeroDimension();
+    // drop_dimension_ is -1 if the points are collinear.
+    if (drop_dimension_ == -1) return;
+    int monotone_dimension = (~drop_dimension_) & 1;
+    plane_orientation_ =
+      GetPlaneOrientationAfterProjection(plane_.normal(), drop_dimension_);
 
-        monotone_range.GetChains(chain1_begin, chain1_end,
-                                 chain2_begin, chain2_end);
-        Parent::Build(drop_dimension_, monotone_dimension, chain1_begin,
-                      chain1_end, chain2_begin, chain2_end);
-      }
+    while (planar_begin != planar_end) {
+      monotone_range.Build(monotone_dimension, planar_begin, planar_end);
+
+      using Chain1Iterator =
+        typename MonotoneRangeRep::ConcatRangeRep::const_iterator;
+      using Chain2Iterator =
+        typename MonotoneRangeRep::ConcatRangeRep::const_reverse_iterator;
+      Chain1Iterator chain1_begin, chain1_end;
+      Chain2Iterator chain2_begin, chain2_end;
+
+      monotone_range.GetChains(chain1_begin, chain1_end,
+                               chain2_begin, chain2_end);
+      Parent::Build(drop_dimension_, monotone_dimension, chain1_begin,
+                    chain1_end, chain2_begin, chain2_end);
     }
   }
 
