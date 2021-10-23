@@ -26,7 +26,7 @@ class NudgingPlaneBuilder {
   // This may only be called after 3 or more calls to `AddUnconstrained` and
   // `TryAddConstrained`.
   HalfSpace3 Build() const& {
-    if (constrained_count_ == 3) {
+    if (plane_set_) {
       return plane_;
     } else {
       return BuildFromPlaneInfo();
@@ -38,12 +38,14 @@ class NudgingPlaneBuilder {
   // This may only be called after 3 or more calls to `AddUnconstrained` and
   // `TryAddConstrained`.
   HalfSpace3 Build() && {
-    if (constrained_count_ == 3) {
+    if (plane_set_) {
       return std::move(plane_);
     } else {
       return BuildFromPlaneInfo();
     }
   }
+
+  bool HasLargePlane();
 
  private:
   // This may only be called if `plane_info_used_` >= 3.
@@ -58,6 +60,7 @@ class NudgingPlaneBuilder {
   size_t constrained_count_ = 0;
   // This is only initialized if constrained_count_ == 3.
   HalfSpace3 plane_;
+  bool plane_set_ = false;
 };
 
 inline void NudgingPlaneBuilder::AddUnconstrained(const HomoPoint3* vertex) {
@@ -77,11 +80,25 @@ inline bool NudgingPlaneBuilder::TryAddConstrained(const HomoPoint3* vertex) {
 
     if (constrained_count_ == 3) {
       plane_ = BuildFromPlaneInfo();
+      plane_set_ = true;
     }
     return true;
   } else {
     return plane_.IsCoincident(*vertex);
   }
+}
+
+inline bool NudgingPlaneBuilder::HasLargePlane() {
+  if (plane_info_used_ < 3) return false;
+
+  if (!plane_set_) {
+    plane_ = BuildFromPlaneInfo();
+    plane_set_ = true;
+  }
+  return plane_.x().used_words() +
+         plane_.y().used_words() +
+         plane_.z().used_words() +
+         plane_.d().used_words() > 4;
 }
 
 }  // walnut

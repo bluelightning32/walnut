@@ -87,6 +87,9 @@ HalfSpace3 MeshPlaneRepairerBase::GetNextPlanarRange(
   for (; first != last; ++first) {
     VertexInfo& vertex = **first;
     if (vertex.CanAddAdjacent()) {
+      if (plane_builder.HasLargePlane()) {
+        break;
+      }
       plane_builder.AddUnconstrained(&vertex.point);
     } else if (!plane_builder.TryAddConstrained(&vertex.point)) {
       // This vertex was rejected, which means the plane is set. Try adding as
@@ -94,6 +97,9 @@ HalfSpace3 MeshPlaneRepairerBase::GetNextPlanarRange(
       for (; ; --last) {
         VertexInfo& vertex = **(last - 1);
         if (vertex.CanAddAdjacent()) {
+          if (plane_builder.HasLargePlane()) {
+            break;
+          }
           plane_builder.AddUnconstrained(&vertex.point);
         } else if (!plane_builder.TryAddConstrained(&vertex.point)) {
           break;

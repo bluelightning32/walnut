@@ -23,8 +23,10 @@ HalfSpace3 NudgingPlaneBuilder::BuildFromPlaneInfo() const {
       ++accepted;
     }
   }
-  return HalfSpace3(*filtered_vertices[0], *filtered_vertices[1],
+  HalfSpace3 result(*filtered_vertices[0], *filtered_vertices[1],
                     *filtered_vertices[2]);
+  result.Reduce();
+  return result;
 }
 
 }  // walnut
