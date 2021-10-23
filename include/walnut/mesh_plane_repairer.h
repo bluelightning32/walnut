@@ -139,8 +139,7 @@ class MeshPlaneRepairerProducer {
   using Polygon = typename MeshPlaneRepairer<PolygonData>::Polygon;
   using VertexInfo = MeshPlaneRepairerBase::VertexInfo;
   struct VertexIteratorTransformer {
-    const HomoPoint3& operator()(
-        const VertexInfo* entry) const {
+    const HomoPoint3& operator()(const VertexInfo* entry) const {
       return entry->point;
     }
   };

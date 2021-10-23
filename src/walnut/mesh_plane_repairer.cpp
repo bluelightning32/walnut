@@ -10,10 +10,16 @@ void MeshPlaneRepairerBase::VertexInfo::TryAddAdjacent(
   if (plane_count < 3) {
     // Don't allow duplicate planes
     for (size_t i = 0; i < plane_count; ++i) {
-      if (adjacent[i]->IsSameOrOpposite(*polygon)) return;
+      if (adjacent[i]->IsSameOrOpposite(*polygon)) {
+        return;
+      }
     }
     adjacent[plane_count] = polygon;
     ++plane_count;
+
+    if (plane_count == 3) {
+      Finalize();
+    }
   }
 }
 
@@ -30,7 +36,7 @@ MeshPlaneRepairerBase::VertexInfo* MeshPlaneRepairerBase::AddVertexInfo(
   }
   HomoPoint3 reduced(vertex);
   reduced.Reduce();
-  it = vertex_info_map_.find(vertex);
+  it = vertex_info_map_.find(reduced);
   if (it != vertex_info_map_.end()) {
     vertex_info_map_.emplace(vertex, it->second);
     return it->second;
@@ -49,7 +55,7 @@ MeshPlaneRepairerBase::VertexInfo* MeshPlaneRepairerBase::AddVertexInfo(
   }
   HomoPoint3 reduced(vertex);
   reduced.Reduce();
-  it = vertex_info_map_.find(vertex);
+  it = vertex_info_map_.find(reduced);
   if (it != vertex_info_map_.end()) {
     vertex_info_map_.emplace(std::move(vertex), it->second);
     return it->second;
@@ -101,7 +107,7 @@ HalfSpace3 MeshPlaneRepairerBase::GetNextPlanarRange(
 
 void MeshPlaneRepairerBase::FinalizeVertices() {
   for (VertexInfo& vertex : vertex_info_storage_) {
-    vertex.Finalize();
+    if (vertex.plane_count != 3) vertex.Finalize();
   }
 }
 
@@ -115,12 +121,17 @@ void MeshPlaneRepairerBase::VertexInfo::Finalize() {
     if (!adjacent[i]->IsCoincident(point)) break;
   }
 
-  assert(plane_count >= 2);
-  PluckerLine line(*adjacent[0], *adjacent[1]);
-  if (plane_count == 3) {
-    point = line.Intersect(*adjacent[2]);
+  assert(plane_count >= 1);
+  if (plane_count == 1) {
+    PluckerLine line(point, point.AddOffset(adjacent[0]->normal(), BigInt(1)));
+    point = line.Intersect(*adjacent[0]);
   } else {
-    point = line.Intersect(HalfSpace3(line.d(), point));
+    PluckerLine line(*adjacent[0], *adjacent[1]);
+    if (plane_count == 3) {
+      point = line.Intersect(*adjacent[2]);
+    } else {
+      point = line.Intersect(HalfSpace3(line.d(), point));
+    }
   }
   point.Reduce();
 }

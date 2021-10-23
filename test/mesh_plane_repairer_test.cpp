@@ -1,5 +1,7 @@
 #include "walnut/mesh_plane_repairer.h"
 
+#include <unordered_set>
+
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
@@ -72,15 +74,20 @@ void NudgeAndExpectSamePolygonCount(
           Nudge(nudged[l], 29, 31, 37);
 
           MeshPlaneRepairer<> builder;
+          int multiple = 1;
           for (const std::vector<size_t>& polygon : indices) {
             for (const size_t vertex_index : polygon) {
-              builder.AddVertex(nudged[vertex_index]);
+              builder.AddVertex(HomoPoint3(
+                    nudged[vertex_index].vector_from_origin().Scale(multiple),
+                    nudged[vertex_index].w()*multiple));
             }
+            ++multiple;
             builder.FinishFacet();
           }
           MeshPlaneRepairerProducer<> output_polygons =
             std::move(builder).FinalizeMesh();
 
+          std::unordered_set<HomoPoint3, ReducedHomoPoint3Hasher> found_points;
           for (const std::vector<size_t>& polygon : indices) {
             ASSERT_TRUE(output_polygons.HasMorePolygons());
 
@@ -89,6 +96,9 @@ void NudgeAndExpectSamePolygonCount(
               output_polygons.GetNextPolygon(pos, last_vertex);
             for (const size_t vertex_index : polygon) {
               ASSERT_NE(pos, last_vertex);
+              HomoPoint3 reduced(*pos);
+              reduced.Reduce();
+              found_points.insert(reduced);
               BigInt denom;
               Vector3 difference = pos->Difference(nudged[vertex_index],
                                                    denom);
@@ -100,6 +110,7 @@ void NudgeAndExpectSamePolygonCount(
               ++pos;
             }
           }
+          EXPECT_EQ(found_points.size(), vertices.size());
         }
       }
     }
@@ -277,6 +288,7 @@ TEST(MeshPlaneRepairer, SplitUnrepairableHexagon) {
       ++pos;
     }
   }
+  EXPECT_GT(top_polygon_count, 1);
   EXPECT_EQ(top_vertex_count - top_polygon_count*2, 4)
     << "top_vertex_count=" << top_vertex_count
     << " top_polygon_count=" << top_polygon_count;
