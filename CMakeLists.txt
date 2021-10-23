@@ -90,6 +90,7 @@ set(WALNUT_PUBLIC_HEADERS
     "include/walnut/monotone_range.h"
     "include/walnut/monotone_triangulator.h"
     "include/walnut/mutable_convex_polygon.h"
+    "include/walnut/nudging_plane_builder.h"
     "include/walnut/orienting_monotone_decomposer.h"
     "include/walnut/planar_range.h"
     "include/walnut/plane_partitioner.h"
@@ -173,6 +174,7 @@ package_add_test(mesh_test test/mesh_test.cpp)
 package_add_test(monotone_decomposer_test test/monotone_decomposer_test.cpp)
 package_add_test(monotone_range_test test/monotone_range_test.cpp)
 package_add_test(monotone_triangulator_test test/monotone_triangulator_test.cpp)
+package_add_test(nudging_plane_builder_test test/nudging_plane_builder_test.cpp)
 package_add_test(orienting_monotone_decomposer_test test/orienting_monotone_decomposer_test.cpp)
 package_add_test(planar_range_test test/planar_range_test.cpp)
 package_add_test(plane_partitioner_test test/plane_partitioner_test.cpp)
