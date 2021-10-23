@@ -28,20 +28,20 @@ void NudgeAndExpectPerfectRepair(
           Nudge(nudged[k], 17, 19, 23);
           Nudge(nudged[l], 29, 31, 37);
 
-          MeshPlaneRepairer builder;
+          MeshPlaneRepairer<> builder;
           for (const std::vector<size_t>& polygon : indices) {
             for (const size_t vertex_index : polygon) {
               builder.AddVertex(nudged[vertex_index]);
             }
             builder.FinishFacet();
           }
-          MeshPlaneRepairerProducer output_polygons =
+          MeshPlaneRepairerProducer<> output_polygons =
             std::move(builder).FinalizeMesh();
 
           for (const std::vector<size_t>& polygon : indices) {
             ASSERT_TRUE(output_polygons.HasMorePolygons());
 
-            MeshPlaneRepairerProducer::VertexIterator pos, last_vertex;
+            MeshPlaneRepairerProducer<>::VertexIterator pos, last_vertex;
             HalfSpace3 plane =
               output_polygons.GetNextPolygon(pos, last_vertex);
             for (const size_t vertex_index : polygon) {
@@ -71,20 +71,20 @@ void NudgeAndExpectSamePolygonCount(
           Nudge(nudged[k], 17, 19, 23);
           Nudge(nudged[l], 29, 31, 37);
 
-          MeshPlaneRepairer builder;
+          MeshPlaneRepairer<> builder;
           for (const std::vector<size_t>& polygon : indices) {
             for (const size_t vertex_index : polygon) {
               builder.AddVertex(nudged[vertex_index]);
             }
             builder.FinishFacet();
           }
-          MeshPlaneRepairerProducer output_polygons =
+          MeshPlaneRepairerProducer<> output_polygons =
             std::move(builder).FinalizeMesh();
 
           for (const std::vector<size_t>& polygon : indices) {
             ASSERT_TRUE(output_polygons.HasMorePolygons());
 
-            MeshPlaneRepairerProducer::VertexIterator pos, last_vertex;
+            MeshPlaneRepairerProducer<>::VertexIterator pos, last_vertex;
             HalfSpace3 plane =
               output_polygons.GetNextPolygon(pos, last_vertex);
             for (const size_t vertex_index : polygon) {
@@ -171,7 +171,7 @@ TEST(MeshPlaneRepairer, SplitUnrepairableHexagon) {
                                                   /*z=*/0));
   }
 
-  MeshPlaneRepairer builder;
+  MeshPlaneRepairer<> builder;
   // Add the bottom facet
   for (size_t i = ring_count; i > 0; ) {
     --i;
@@ -201,9 +201,9 @@ TEST(MeshPlaneRepairer, SplitUnrepairableHexagon) {
   }
   builder.FinishFacet();
 
-  MeshPlaneRepairerProducer output_polygons =
+  MeshPlaneRepairerProducer<> output_polygons =
     std::move(builder).FinalizeMesh();
-  MeshPlaneRepairerProducer::VertexIterator pos, last_vertex;
+  MeshPlaneRepairerProducer<>::VertexIterator pos, last_vertex;
 
   // Validate the bottom facet
   ASSERT_TRUE(output_polygons.HasMorePolygons());
