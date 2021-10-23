@@ -1,5 +1,7 @@
 #include "walnut/homo_point3.h"
 
+#include <unordered_map>
+
 #include "gtest/gtest.h"
 
 namespace walnut {
@@ -297,6 +299,28 @@ TEST(HomoPoint3, DifferenceSecondNegDenom) {
   }
   // 2/-3 - 1/2 = -4/6 - 3/6 = -7/6
   EXPECT_EQ(diff.x() * 6, -7 * denom);
+}
+
+TEST(ReducedHomoPoint3Hasher, UseInUnorderedMap) {
+  std::vector<HomoPoint3> points{
+    HomoPoint3(/*x=*/1, /*y=*/1, /*z=*/1, /*w=*/2),
+    HomoPoint3(/*x=*/1, /*y=*/1, /*z=*/1, /*w=*/3),
+    HomoPoint3(/*x=*/1, /*y=*/1, /*z=*/1, /*w=*/4),
+  };
+  for (size_t i = 1; i < 5; ++i) {
+    points.emplace_back(/*x=*/i, /*y=*/0, /*z=*/0, /*w=*/1);
+    points.emplace_back(/*x=*/0, /*y=*/i, /*z=*/0, /*w=*/1);
+    points.emplace_back(/*x=*/0, /*y=*/0, /*z=*/i, /*w=*/1);
+    points.emplace_back(/*x=*/i, /*y=*/i, /*z=*/0, /*w=*/1);
+  }
+
+  std::unordered_map<HomoPoint3, size_t, ReducedHomoPoint3Hasher> map;
+  for (size_t i = 0; i < points.size(); ++i) {
+    map[points[i]] = i;
+  }
+  for (size_t i = 0; i < points.size(); ++i) {
+    EXPECT_EQ(map[points[i]], i);
+  }
 }
 
 }  // walnut

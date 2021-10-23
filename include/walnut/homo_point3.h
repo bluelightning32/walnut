@@ -238,6 +238,31 @@ class HomoPoint3 {
   BigInt dist_denom_;
 };
 
+// This hasher only works for points that have been reduced.
+//
+// If the points have not been reduced, two equal points could end up with
+// different hashes.
+struct ReducedHomoPoint3Hasher {
+  size_t operator()(const HomoPoint3& p) const {
+#ifndef NDEBUG
+    HomoPoint3 reduced(p);
+    reduced.Reduce();
+    assert(p.w() == reduced.w());
+#endif
+    size_t raw_hashes[4] {
+      p.x().GetHash(),
+      p.y().GetHash(),
+      p.z().GetHash(),
+      p.w().GetHash(),
+    };
+    constexpr int size_t_bits = sizeof(size_t)*8;
+    return raw_hashes[0] ^
+           ((raw_hashes[1] << 1) | (raw_hashes[1] >> (size_t_bits - 1))) ^
+           ((raw_hashes[2] << 2) | (raw_hashes[2] >> (size_t_bits - 2))) ^
+           ((raw_hashes[3] << 3) | (raw_hashes[3] >> (size_t_bits - 3)));
+  }
+};
+
 inline HomoPoint3 HomoPoint3::AddOffset(const Vector3& direction,
                                         const BigInt& direction_denom) const {
   return HomoPoint3(/*x=*/x()*direction_denom + direction.x()*w(),
