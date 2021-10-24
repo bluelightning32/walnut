@@ -10,10 +10,10 @@ namespace walnut {
 using ::testing::Contains;
 
 void Nudge(HomoPoint3& p, int x, int y, int z) {
-  p.w() *= 1000;
-  p.x() = p.x()*1000 + x;
-  p.y() = p.y()*1000 + y;
-  p.z() = p.z()*1000 + z;
+  p.w() *= 200;
+  p.x() = p.x()*200 + x;
+  p.y() = p.y()*200 + y;
+  p.z() = p.z()*200 + z;
 }
 
 void NudgeAndExpectPerfectRepair(
@@ -62,56 +62,53 @@ void NudgeAndExpectPerfectRepair(
 void NudgeAndExpectSamePolygonCount(
     const std::vector<HomoPoint3>& vertices,
     const std::vector<std::vector<size_t>>& indices) {
-  // Nudge up to 4 vertices
+  // Nudge up to 3 vertices
   for (size_t i = 0; i < vertices.size(); ++i) {
     for (size_t j = i; j < vertices.size(); ++j) {
       for (size_t k = j; k < vertices.size(); ++k) {
-        for (size_t l = k; l < vertices.size(); ++l) {
-          std::vector<HomoPoint3> nudged = vertices;
-          Nudge(nudged[i], 2, 3, 5);
-          Nudge(nudged[j], 7, 11, 13);
-          Nudge(nudged[k], 17, 19, 23);
-          Nudge(nudged[l], 29, 31, 37);
+        std::vector<HomoPoint3> nudged = vertices;
+        Nudge(nudged[i], 2, 3, 5);
+        Nudge(nudged[j], 7, 11, 13);
+        Nudge(nudged[k], 17, 19, 23);
 
-          MeshPlaneRepairer<> builder;
-          int multiple = 1;
-          for (const std::vector<size_t>& polygon : indices) {
-            for (const size_t vertex_index : polygon) {
-              builder.AddVertex(HomoPoint3(
-                    nudged[vertex_index].vector_from_origin().Scale(multiple),
-                    nudged[vertex_index].w()*multiple));
-            }
-            ++multiple;
-            builder.FinishFacet();
+        MeshPlaneRepairer<> builder;
+        int multiple = 1;
+        for (const std::vector<size_t>& polygon : indices) {
+          for (const size_t vertex_index : polygon) {
+            builder.AddVertex(HomoPoint3(
+                  nudged[vertex_index].vector_from_origin().Scale(multiple),
+                  nudged[vertex_index].w()*multiple));
           }
-          MeshPlaneRepairerProducer<> output_polygons =
-            std::move(builder).FinalizeMesh();
-
-          std::unordered_set<HomoPoint3, ReducedHomoPoint3Hasher> found_points;
-          for (const std::vector<size_t>& polygon : indices) {
-            ASSERT_TRUE(output_polygons.HasMorePolygons());
-
-            MeshPlaneRepairerProducer<>::VertexIterator pos, last_vertex;
-            HalfSpace3 plane =
-              output_polygons.GetNextPolygon(pos, last_vertex);
-            for (const size_t vertex_index : polygon) {
-              ASSERT_NE(pos, last_vertex);
-              HomoPoint3 reduced(*pos);
-              reduced.Reduce();
-              found_points.insert(reduced);
-              BigInt denom;
-              Vector3 difference = pos->Difference(nudged[vertex_index],
-                                                   denom);
-              EXPECT_LT(double(difference.GetScaleSquared())/
-                        double(denom*denom), 0.1)
-                << "before=" << nudged[vertex_index].GetDoublePoint3()
-                << " fixed=" << pos->GetDoublePoint3();
-              EXPECT_TRUE(plane.IsCoincident(*pos));
-              ++pos;
-            }
-          }
-          EXPECT_EQ(found_points.size(), vertices.size());
+          ++multiple;
+          builder.FinishFacet();
         }
+        MeshPlaneRepairerProducer<> output_polygons =
+          std::move(builder).FinalizeMesh();
+
+        std::unordered_set<HomoPoint3, ReducedHomoPoint3Hasher> found_points;
+        for (const std::vector<size_t>& polygon : indices) {
+          ASSERT_TRUE(output_polygons.HasMorePolygons());
+
+          MeshPlaneRepairerProducer<>::VertexIterator pos, last_vertex;
+          HalfSpace3 plane =
+            output_polygons.GetNextPolygon(pos, last_vertex);
+          for (const size_t vertex_index : polygon) {
+            ASSERT_NE(pos, last_vertex);
+            HomoPoint3 reduced(*pos);
+            reduced.Reduce();
+            found_points.insert(reduced);
+            BigInt denom;
+            Vector3 difference = pos->Difference(nudged[vertex_index],
+                                                 denom);
+            EXPECT_LT(double(difference.GetScaleSquared())/
+                      double(denom*denom), 0.1)
+              << "before=" << nudged[vertex_index].GetDoublePoint3()
+              << " fixed=" << pos->GetDoublePoint3();
+            EXPECT_TRUE(plane.IsCoincident(*pos));
+            ++pos;
+          }
+        }
+        EXPECT_EQ(found_points.size(), vertices.size());
       }
     }
   }

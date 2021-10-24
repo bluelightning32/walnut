@@ -95,10 +95,8 @@ inline bool NudgingPlaneBuilder::HasLargePlane() {
     plane_ = BuildFromPlaneInfo();
     plane_set_ = true;
   }
-  return plane_.x().used_words() +
-         plane_.y().used_words() +
-         plane_.z().used_words() +
-         plane_.d().used_words() > 4;
+  return !BigInt::AllHalfWords(plane_.x(), plane_.y(), plane_.z()) ||
+         !plane_.d().IsHalfWord();
 }
 
 }  // walnut
