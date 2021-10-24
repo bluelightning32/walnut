@@ -39,16 +39,20 @@ class BSPNode {
   //
   // The contents of this node will be pushed into the new child nodes.
   void Split(const HalfSpace3& half_space) {
+    Split(HalfSpace3(half_space));
+  }
+
+  void Split(HalfSpace3&& half_space) {
     assert(half_space.IsValid());
-    MakeInterior(half_space, new BSPNode(), new BSPNode());
+    MakeInterior(std::move(half_space), new BSPNode(), new BSPNode());
     PushContentsToChildren();
   }
 
   void Split() {
     assert(!contents_.empty());
-    const HalfSpace3* half_space = PickSplitPlane();
-    assert(half_space != nullptr);
-    Split(*half_space);
+    HalfSpace3 half_space = PickSplitPlane();
+    assert(half_space.IsValid());
+    Split(std::move(half_space));
   }
 
   // Returns a plane that can divide contents_. The chosen plane is guaranteed
@@ -58,7 +62,7 @@ class BSPNode {
   // Currently this function picks an entry from contents_ that belongs to the
   // polyhedron with the fewest facets in this node. However, this algorithm
   // could be changed in the future.
-  const HalfSpace3* PickSplitPlane() const;
+  HalfSpace3 PickSplitPlane() const;
 
   bool IsLeaf() const {
     return !split().IsValid();
@@ -134,10 +138,10 @@ class BSPNode {
       const EdgeRep& vertex_edge) const;
 
  protected:
-  void MakeInterior(const HalfSpace3& half_space, BSPNode* negative_child,
+  void MakeInterior(HalfSpace3&& half_space, BSPNode* negative_child,
                     BSPNode* positive_child) {
     assert(IsLeaf());
-    split_ = half_space;
+    split_ = std::move(half_space);
     negative_child_ = std::unique_ptr<BSPNode>(negative_child);
     positive_child_ = std::unique_ptr<BSPNode>(positive_child);
 
@@ -222,10 +226,10 @@ class BSPNode {
 };
 
 template <typename OutputPolygonParent>
-const HalfSpace3* BSPNode<OutputPolygonParent>::PickSplitPlane() const {
+HalfSpace3 BSPNode<OutputPolygonParent>::PickSplitPlane() const {
   assert(IsLeaf());
   if (contents_.empty()) {
-    return nullptr;
+    return HalfSpace3();
   }
 
   // Search for the polygon with the lowest count. If there are multiple
@@ -236,7 +240,7 @@ const HalfSpace3* BSPNode<OutputPolygonParent>::PickSplitPlane() const {
   size_t mid = contents_.size() / 2;
   const PolygonRep* split = &contents_[mid];
   if (contents_.size() == 1) {
-    return &split->plane();
+    return split->plane();
   }
   size_t offset = 1;
   auto consider_split = [this, &split](const PolygonRep &polygon) {
@@ -253,7 +257,7 @@ const HalfSpace3* BSPNode<OutputPolygonParent>::PickSplitPlane() const {
   if (contents_.size() & 1) {
     consider_split(contents_[mid + offset]);
   }
-  return &split->plane();
+  return split->plane();
 }
 
 template <typename OutputPolygonParent>

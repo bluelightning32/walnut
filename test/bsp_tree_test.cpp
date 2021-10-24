@@ -112,7 +112,7 @@ TEST(BSPTree, AddContentsToLeaf) {
 
 TEST(BSPTree, PickSplitPlaneEmpty) {
   BSPTree<> tree;
-  EXPECT_EQ(tree.root.PickSplitPlane(), nullptr);
+  EXPECT_EQ(tree.root.PickSplitPlane(), HalfSpace3());
 }
 
 TEST(BSPTree, PickSplitPlaneSinglePolygon) {
@@ -127,7 +127,7 @@ TEST(BSPTree, PickSplitPlaneSinglePolygon) {
 
   BSPTree<> tree;
   tree.AddContent(polygon);
-  EXPECT_TRUE(tree.root.PickSplitPlane()->IsSameOrOpposite(polygon.plane()));
+  EXPECT_TRUE(tree.root.PickSplitPlane().IsSameOrOpposite(polygon.plane()));
 }
 
 TEST(BSPTree, PickSplitPlanePickLowestCount) {
@@ -154,7 +154,7 @@ TEST(BSPTree, PickSplitPlanePickLowestCount) {
     tree.AddContent(id, polygon);
   }
 
-  EXPECT_TRUE(tree.root.PickSplitPlane()->IsSameOrOpposite(expected_plane));
+  EXPECT_TRUE(tree.root.PickSplitPlane().IsSameOrOpposite(expected_plane));
 }
 
 TEST(BSPTree, PickSplitPlaneSplitInTwo) {
@@ -172,7 +172,7 @@ TEST(BSPTree, PickSplitPlaneSplitInTwo) {
     tree.AddContent(id, polygon);
   }
 
-  tree.root.Split(*tree.root.PickSplitPlane());
+  tree.root.Split(tree.root.PickSplitPlane());
   EXPECT_TRUE(!tree.root.negative_child()->contents().empty() ||
               !tree.root.negative_child()->border_contents().empty() ||
               !tree.root.positive_child()->border_contents().empty());
