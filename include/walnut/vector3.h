@@ -192,6 +192,12 @@ class Vector3 {
     return Vector3(-x(), -y(), -z());
   }
 
+  // Reduce the vector to the lowest vector that points in the same direction.
+  //
+  // The resulting vector will point in the same direction, but have a lower
+  // magnitude.
+  void Reduce();
+
  private:
   std::array<BigInt, 3> components_;
 };

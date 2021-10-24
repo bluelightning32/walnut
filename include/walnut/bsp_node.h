@@ -64,6 +64,18 @@ class BSPNode {
   // could be changed in the future.
   HalfSpace3 PickSplitPlane() const;
 
+  // Given the index of a polygon from contents_, returns a plane with a
+  // normal that is a quarter turn away from the input. A distance along that
+  // normal is chosen such that about half of the polygons of the same content
+  // type are on the same side, or at least straddling.
+  //
+  // This plane selection tends to better subdivide a large group of polygons,
+  // but it also introduces more split polygons.
+  //
+  // This may only be called if there is more than 1 content polygon with the
+  // same id.
+  HalfSpace3 PickQuarterTurnSplitPlane(size_t first_content_index) const;
+
   bool IsLeaf() const {
     return !split().IsValid();
   }
@@ -257,7 +269,79 @@ HalfSpace3 BSPNode<OutputPolygonParent>::PickSplitPlane() const {
   if (contents_.size() & 1) {
     consider_split(contents_[mid + offset]);
   }
+  if (content_info_by_id_[split->id].has_polygons > 40) {
+    // There are enough polygons remaining that it is worth trying to more
+    // evenly divide them, at the cost of creating more split polygons.
+    return PickQuarterTurnSplitPlane(split - contents_.data());
+  }
   return split->plane();
+}
+
+template <typename OutputPolygonParent>
+HalfSpace3 BSPNode<OutputPolygonParent>::PickQuarterTurnSplitPlane(
+    size_t first_content_index) const {
+  const PolygonRep& seed = contents_[first_content_index];
+  const PolygonRep* second_seed;
+  for (size_t i = 0; ; ++i) {
+    if (i == contents_.size() - 1) {
+      // All of the polygons for this content id are on the same plane.
+      return seed.plane();
+    }
+    second_seed = &contents_[(first_content_index + i + 1) % contents_.size()];
+    if (second_seed->id == seed.id &&
+        !second_seed->plane().normal().IsSameOrOppositeDir(
+          seed.plane().normal())) {
+      break;
+    }
+  }
+  const Vector3& a = seed.plane().normal();
+  const Vector3& b = second_seed->plane().normal();
+  Vector3 turned = a.Scale(a.Dot(b)) - b.Scale(a.Dot(a));
+  turned.Reduce();
+
+  std::vector<std::pair<BigInt, const BigInt*>> distances;
+
+  for (const PolygonRep& content : contents_) {
+    if (content.id == seed.id) {
+      assert(content.vertex_count() >= 3);
+      distances.emplace_back(
+          turned.Dot(content.vertex(0).vector_from_origin()),
+          &content.vertex(0).w());
+    }
+  }
+  assert(distances.size() >= 1);
+
+  auto compare = [](const std::pair<BigInt, const BigInt*>& a,
+                    const std::pair<BigInt, const BigInt*>& b) {
+    return rational::IsLessThan(/*num1=*/a.first, /*denom1=*/*a.second,
+                                /*num2=*/b.first, /*denom2=*/*b.second);
+  };
+  auto middle = distances.begin() + distances.size()/2;
+
+  auto equals_middle = [&middle](const std::pair<BigInt, const BigInt*>& a) {
+    return rational::Equals(/*num1=*/a.first, /*denom1=*/*a.second,
+                            /*num2=*/middle->first,
+                            /*denom2=*/*middle->second);
+  };
+
+  std::nth_element(distances.begin(), middle, distances.end(), compare);
+  if (std::all_of(distances.begin(), middle, equals_middle)) {
+    // The middle is really a minimum element. Give up.
+    return seed.plane();
+  }
+  if (std::all_of(middle + 1, distances.end(), equals_middle)) {
+    // The middle is really a maximum element. Give up.
+    return seed.plane();
+  }
+
+  Vector3 scaled_vector = turned.Scale(*middle->second);
+  if (middle->second->SignExtension() < 0) {
+    middle->first.Negate();
+    scaled_vector.Negate();
+  }
+  HalfSpace3 plane(std::move(scaled_vector), std::move(middle->first));
+  plane.Reduce();
+  return plane;
 }
 
 template <typename OutputPolygonParent>
