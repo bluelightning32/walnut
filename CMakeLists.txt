@@ -92,6 +92,7 @@ set(WALNUT_PUBLIC_HEADERS
     "include/walnut/monotone_range.h"
     "include/walnut/monotone_triangulator.h"
     "include/walnut/mutable_convex_polygon.h"
+    "include/walnut/m_log_n_estimator.h"
     "include/walnut/nudging_plane_builder.h"
     "include/walnut/orienting_monotone_decomposer.h"
     "include/walnut/planar_range.h"
