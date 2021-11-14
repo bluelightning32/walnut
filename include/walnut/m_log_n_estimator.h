@@ -12,8 +12,6 @@ namespace walnut {
 class MLogNEstimator {
   public:
    size_t Estimate(size_t m, size_t n) {
-     if (n == 0) return 0;
-
      if (n >> last_n_bits_ != 1) {
        last_n_bits_ = BigUIntWord(n).GetHighestSetBit() - 1;
      }
