@@ -207,6 +207,9 @@ class HomoPoint3 {
   // Returns >0 if the component is larger in this than other.
   int CompareComponent(size_t component, const HomoPoint3& other) const;
 
+  // Returns true when CompareComponent < 0.
+  bool IsLessThanComponent(size_t component, const HomoPoint3& other) const;
+
   // Returns true if `component` from this and `other` are equivalent, taking w
   // and other.w into account.
   bool IsEquivalentComponent(size_t component, const HomoPoint3& other) const;
@@ -288,6 +291,14 @@ inline int HomoPoint3::CompareComponent(size_t component,
   auto scaled_other =
     other.vector_from_origin().components()[component] * w();
   return scaled_this.Compare(scaled_other) * other.w().GetAbsMult(w());
+}
+
+inline bool HomoPoint3::IsLessThanComponent(size_t component,
+                                     const HomoPoint3& other) const {
+  return rational::IsLessThan(
+      /*num1=*/vector_from_origin().components()[component], /*denom1=*/w(),
+      /*num2=*/other.vector_from_origin().components()[component],
+      /*denom2=*/other.w());
 }
 
 inline bool HomoPoint3::IsEquivalentComponent(size_t component,

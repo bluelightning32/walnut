@@ -110,6 +110,28 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
     return aabb_tracker_.aabb();
   }
 
+  // Returns the vertex of this polygon that is furthest in the positive
+  // direction along the `dimension` axis. Technically the vertex is not
+  // necessarily on the axis, but just coincident with the furthest plane
+  // perpendicular to the axis.
+  //
+  // The caller must ensure that the polygon has at least 1 vertex.
+  const HomoPoint3& max_vertex(int dimension) const {
+    assert(vertex_count() > 0);
+    return vertex(aabb_tracker_.max_indices()[dimension]);
+  }
+
+  // Returns the vertex of this polygon that is furthest in the negative
+  // direction along the `dimension` axis. Technically the vertex is not
+  // necessarily on the axis, but just coincident with the furthest plane
+  // perpendicular to the axis.
+  //
+  // The caller must ensure that the polygon has at least 1 vertex.
+  const HomoPoint3& min_vertex(int dimension) const {
+    assert(vertex_count() > 0);
+    return vertex(aabb_tracker_.min_indices()[dimension]);
+  }
+
   // Overrides the non-virtual function from ConvexPolygon.
   void SortVertices() {
     RotateEdges(Parent::GetMinimumIndex());
