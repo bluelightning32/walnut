@@ -238,6 +238,9 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
   }
 
  private:
+  template <typename OtherEdgeParent>
+  friend class AABBConvexPolygon;
+
   ConvexVertexAABBTracker aabb_tracker_;
 };
 

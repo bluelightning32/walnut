@@ -5,6 +5,8 @@
 #include <algorithm>
 
 #include "walnut/aabb_convex_polygon.h"
+#include "walnut/bsp_polygon.h"
+#include "walnut/m_log_n_estimator.h"
 
 namespace walnut {
 
@@ -15,9 +17,9 @@ struct PolygonEventPoint {
   // where `partner` is set for start events and `content` is set for end
   // events.
   template <typename ParentPolygon=ConvexPolygon<>>
-  const AABBConvexPolygon<ParentPolygon>& GetPolygon(
+  const BSPPolygon<AABBConvexPolygon<ParentPolygon>>& GetPolygon(
       const PolygonEventPoint* event_points,
-      const AABBConvexPolygon<ParentPolygon>* polygons) const {
+      const BSPPolygon<AABBConvexPolygon<ParentPolygon>>* polygons) const {
     if (start) {
       return polygons[event_points[index.partner].index.content];
     } else {
@@ -34,7 +36,7 @@ struct PolygonEventPoint {
   const HomoPoint3& GetLocation(
       size_t dimension,
       const PolygonEventPoint* event_points,
-      const AABBConvexPolygon<ParentPolygon>* polygons) const {
+      const BSPPolygon<AABBConvexPolygon<ParentPolygon>>* polygons) const {
     if (start) {
       assert(!event_points[index.partner].start);
       return polygons[event_points[index.partner].index.content].min_vertex(dimension);
@@ -74,9 +76,10 @@ struct PolygonEventPoint {
 // that share the same location, end event_points are ordered before start
 // points.
 template <typename ParentPolygon=ConvexPolygon<>>
-void MakeEventPoints(size_t dimension, size_t polygon_count,
-                     const AABBConvexPolygon<ParentPolygon>* polygons,
-                     PolygonEventPoint* event_points) {
+void MakeEventPoints(
+    size_t dimension, size_t polygon_count,
+    const BSPPolygon<AABBConvexPolygon<ParentPolygon>>* polygons,
+    PolygonEventPoint* event_points) {
   // Create a heap of the remaining event points. Initially this contains only
   // the end events. As the end events are removed from the heap, their partner
   // start events are added.
@@ -148,6 +151,51 @@ void MakeEventPoints(size_t dimension, size_t polygon_count,
             event_points[i].GetLocation(dimension, event_points, polygons));
     }
   }
+}
+
+// Finds the split location with the lowest estimated cost.
+// 
+// Returns the event point index of a point coincident with the lowest cost
+// split plane, along with the estimated cost.
+//
+// `exclude_id` may be the id of a mesh to exclude from the log_2 part of the
+// cost estimation, in which case `exclude_count` must be the number of
+// polygons with that id in the mesh. `exclude_id` may be set to -1 to not
+// exclude any meshes.
+template <typename ParentPolygon=ConvexPolygon<>>
+std::pair<size_t, size_t> GetLowestCost(
+    size_t polygon_count, size_t exclude_id, size_t exclude_count,
+    const BSPPolygon<AABBConvexPolygon<ParentPolygon>>* polygons,
+    const PolygonEventPoint* event_points) {
+  size_t neg_total = 0;
+  size_t pos_total = polygon_count;
+  size_t neg_log_count = 1;
+  size_t pos_log_count = polygon_count - exclude_count + 1;
+  size_t best_cost = -1;
+  size_t best_index = -1;
+  MLogNEstimator neg_estimator, pos_estimator;
+  for (size_t i = 0; i < polygon_count*2; ++i) {
+    const PolygonEventPoint& event_point = event_points[i];
+    if (event_point.start) {
+      ++neg_total;
+      if (polygons[event_points[event_point.index.partner].index.content].id !=
+          exclude_id) {
+        ++neg_log_count;
+      }
+    } else {
+      --pos_total;
+      if (polygons[event_point.index.content].id != exclude_id) {
+        --pos_log_count;
+      }
+    }
+    const size_t cost = neg_estimator.Estimate(neg_total, neg_log_count) +
+                        pos_estimator.Estimate(pos_total, pos_log_count);
+    if (cost < best_cost) {
+      best_cost = cost;
+      best_index = i;
+    }
+  }
+  return std::make_pair(best_index, best_cost);
 }
 
 }  // walnut

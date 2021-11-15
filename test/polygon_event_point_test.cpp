@@ -5,8 +5,11 @@
 
 namespace walnut {
 
-AABBConvexPolygon<> MakeTriangleForInterval(const HomoPoint3& start,
-                                            const HomoPoint3& end) {
+using testing::AnyOf;
+using testing::Eq;
+
+BSPPolygon<AABBConvexPolygon<>> MakeTriangleForInterval(
+    BSPContentId id, const HomoPoint3& start, const HomoPoint3& end) {
   std::vector<HomoPoint3> vertices;
   vertices.push_back(start);
   // Find 2 components that are different in `start` and `end`, and copy one
@@ -28,18 +31,21 @@ AABBConvexPolygon<> MakeTriangleForInterval(const HomoPoint3& start,
   vertices.push_back(end);
   HalfSpace3 plane(vertices[0], vertices[1], vertices[2]);
   int drop_dimension = plane.normal().GetFirstNonzeroDimension();
-  return AABBConvexPolygon<>(std::move(plane), drop_dimension, std::move(vertices));
+  return BSPPolygon<AABBConvexPolygon<>>(
+      id, /*on_node_plane=*/nullptr, /*pos_side=*/false,
+      AABBConvexPolygon<>(std::move(plane), drop_dimension, std::move(vertices)));
 }
 
 TEST(MakeEventPoints, ConstructEmpty) {
   MakeEventPoints<ConvexPolygon<>>(/*dimension=*/0, /*polygon_count=*/0,
-                                   /*polygons=*/nullptr, /*event_points=*/nullptr);
+                                   /*polygons=*/nullptr,
+                                   /*event_points=*/nullptr);
 }
 
 void CheckSorted(size_t dimension, size_t polygon_count,
-                 const AABBConvexPolygon<>* polygons,
+                 const BSPPolygon<AABBConvexPolygon<>>* polygons,
                  const PolygonEventPoint* event_points) {
-  std::map<const AABBConvexPolygon<>*, size_t> seen;
+  std::map<const BSPPolygon<AABBConvexPolygon<>>*, size_t> seen;
   const HomoPoint3* prev = nullptr;
   bool seen_start_points = false;
   for (size_t i = 0; i < polygon_count*2; ++i) {
@@ -71,12 +77,12 @@ void CheckSorted(size_t dimension, size_t polygon_count,
 }
 
 TEST(MakeEventPoints, ThreeOverlaps) {
-  std::vector<AABBConvexPolygon<>> polygons;
-  polygons.push_back(MakeTriangleForInterval(Point3(0, 0, 0),
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> polygons;
+  polygons.push_back(MakeTriangleForInterval(0, Point3(0, 0, 0),
                                              Point3(5, 5, 5)));
-  polygons.push_back(MakeTriangleForInterval(Point3(1, 1, 1),
+  polygons.push_back(MakeTriangleForInterval(0, Point3(1, 1, 1),
                                              Point3(4, 4, 4)));
-  polygons.push_back(MakeTriangleForInterval(Point3(2, 2, 2),
+  polygons.push_back(MakeTriangleForInterval(0, Point3(2, 2, 2),
                                              Point3(3, 3, 3)));
 
   for (size_t dimension = 0; dimension < 3; ++dimension) {
@@ -87,10 +93,10 @@ TEST(MakeEventPoints, ThreeOverlaps) {
 }
 
 TEST(MakeEventPoints, EndBeforeStart) {
-  std::vector<AABBConvexPolygon<>> polygons;
-  polygons.push_back(MakeTriangleForInterval(Point3(0, 0, 0),
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> polygons;
+  polygons.push_back(MakeTriangleForInterval(0, Point3(0, 0, 0),
                                              Point3(1, 1, 1)));
-  polygons.push_back(MakeTriangleForInterval(Point3(1, 1, 1),
+  polygons.push_back(MakeTriangleForInterval(0, Point3(1, 1, 1),
                                              Point3(2, 2, 2)));
 
   for (size_t dimension = 0; dimension < 3; ++dimension) {
@@ -102,14 +108,14 @@ TEST(MakeEventPoints, EndBeforeStart) {
 
 // Tests two sets of intervals, where the two sets do not touch in the middle.
 TEST(MakeEventPoints, Discontinuity) {
-  std::vector<AABBConvexPolygon<>> polygons;
-  polygons.push_back(MakeTriangleForInterval(Point3(0, 0, 0),
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> polygons;
+  polygons.push_back(MakeTriangleForInterval(0, Point3(0, 0, 0),
                                              Point3(2, 2, 2)));
-  polygons.push_back(MakeTriangleForInterval(Point3(1, 1, 1),
+  polygons.push_back(MakeTriangleForInterval(0, Point3(1, 1, 1),
                                              Point3(2, 2, 2)));
-  polygons.push_back(MakeTriangleForInterval(Point3(3, 3, 3),
+  polygons.push_back(MakeTriangleForInterval(0, Point3(3, 3, 3),
                                              Point3(5, 5, 5)));
-  polygons.push_back(MakeTriangleForInterval(Point3(4, 4, 4),
+  polygons.push_back(MakeTriangleForInterval(0, Point3(4, 4, 4),
                                              Point3(5, 5, 5)));
 
   for (size_t dimension = 0; dimension < 3; ++dimension) {
@@ -121,12 +127,12 @@ TEST(MakeEventPoints, Discontinuity) {
 
 // The polygons are sorted in different orders in different dimensions.
 TEST(MakeEventPoints, DifferentDimensionSort) {
-  std::vector<AABBConvexPolygon<>> polygons;
-  polygons.push_back(MakeTriangleForInterval(Point3(0, 0, 0),
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> polygons;
+  polygons.push_back(MakeTriangleForInterval(0, Point3(0, 0, 0),
                                              Point3(1, 1, 1)));
-  polygons.push_back(MakeTriangleForInterval(Point3(1, 2, 2),
+  polygons.push_back(MakeTriangleForInterval(0, Point3(1, 2, 2),
                                              Point3(2, 3, 3)));
-  polygons.push_back(MakeTriangleForInterval(Point3(2, 1, 1),
+  polygons.push_back(MakeTriangleForInterval(0, Point3(2, 1, 1),
                                              Point3(3, 2, 2)));
 
   for (size_t dimension = 0; dimension < 3; ++dimension) {
@@ -134,6 +140,146 @@ TEST(MakeEventPoints, DifferentDimensionSort) {
     MakeEventPoints(dimension, polygons.size(), polygons.data(), event_points);
     CheckSorted(dimension, polygons.size(), polygons.data(), event_points);
   }
+}
+
+TEST(GetLowestCost, SplitMiddleNoExclude) {
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> polygons;
+  for (size_t i = 0; i < 10; ++i) {
+    polygons.push_back(MakeTriangleForInterval(0, Point3(i, i, i),
+                                               Point3(i + 1, i + 1, i + 1)));
+  }
+  PolygonEventPoint event_points[20];
+  MakeEventPoints(/*dimension=*/0, polygons.size(), polygons.data(),
+                  event_points);
+  CheckSorted(/*dimension=*/0, polygons.size(), polygons.data(), event_points);
+
+  size_t best_index, cost;
+  std::tie(best_index, cost) = GetLowestCost(polygons.size(),
+                                             /*exclude_id=*/-1,
+                                             /*exclude_count=*/0,
+                                             polygons.data(), event_points);
+  ASSERT_LT(best_index, polygons.size() * 2);
+  EXPECT_EQ(event_points[best_index].GetLocation(/*dimension=*/0, event_points,
+                                                 polygons.data()),
+            Point3(5, 5, 5));
+
+  EXPECT_EQ(cost, GetSplitCost(/*neg_total=*/5, /*neg_exclude=*/0,
+                               /*pos_total=*/5, /*pos_exclude=*/0));
+}
+
+TEST(GetLowestCost, AvoidOverlapNoExclude) {
+  /*  0 1 2 3 4 5 6
+   *  |-|-| |-|-|-|
+   *      |-----|
+   *
+   *      ^
+   *      |
+   */
+
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> polygons;
+  for (size_t i = 0; i < 6; ++i) {
+    if (i == 2) continue;
+    polygons.push_back(MakeTriangleForInterval(0, Point3(i, i, i),
+                                               Point3(i + 1, i + 1, i + 1)));
+  }
+  polygons.push_back(MakeTriangleForInterval(0, Point3(2, 2, 2),
+                                             Point3(5, 5, 5)));
+  PolygonEventPoint event_points[12];
+  MakeEventPoints(/*dimension=*/0, polygons.size(), polygons.data(),
+                  event_points);
+  CheckSorted(/*dimension=*/0, polygons.size(), polygons.data(), event_points);
+
+  size_t best_index, cost;
+  std::tie(best_index, cost) = GetLowestCost(polygons.size(),
+                                             /*exclude_id=*/-1,
+                                             /*exclude_count=*/0,
+                                             polygons.data(), event_points);
+  ASSERT_LT(best_index, polygons.size() * 2);
+  EXPECT_EQ(event_points[best_index].GetLocation(/*dimension=*/0, event_points,
+                                                 polygons.data()),
+            Point3(2, 2, 2));
+
+  EXPECT_EQ(cost, GetSplitCost(/*neg_total=*/2, /*neg_exclude=*/0,
+                               /*pos_total=*/4, /*pos_exclude=*/0));
+}
+
+TEST(GetLowestCost, OverlapCompromiseNoExclude) {
+  /*  0 1 2 3 4 5 6 7 8 9
+   *  |---|---|---|---|
+   *    |---|---|---|---|
+   *
+   *          ^ ^
+   *          | |
+   *    either is best
+   */
+
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> polygons;
+  for (size_t i = 0; i < 8; ++i) {
+    polygons.push_back(MakeTriangleForInterval(0, Point3(i, i, i),
+                                               Point3(i + 2, i + 2, i + 2)));
+  }
+  PolygonEventPoint event_points[16];
+  MakeEventPoints(/*dimension=*/0, polygons.size(), polygons.data(),
+                  event_points);
+  CheckSorted(/*dimension=*/0, polygons.size(), polygons.data(), event_points);
+
+  size_t best_index, cost;
+  std::tie(best_index, cost) = GetLowestCost(polygons.size(),
+                                             /*exclude_id=*/-1,
+                                             /*exclude_count=*/0,
+                                             polygons.data(), event_points);
+  ASSERT_LT(best_index, polygons.size() * 2);
+  EXPECT_THAT(event_points[best_index].GetLocation(/*dimension=*/0,
+                                                   event_points,
+                                                   polygons.data()),
+              AnyOf(Eq(Point3(4, 4, 4)), Eq(Point3(5, 5, 5))));
+
+  EXPECT_EQ(cost, GetSplitCost(/*neg_total=*/4, /*neg_exclude=*/0,
+                               /*pos_total=*/5, /*pos_exclude=*/0));
+}
+
+TEST(GetLowestCost, PartitionsExcludeId) {
+  /*  0 1 2 3 4 5 6 7 8 9 0 1 2
+   *  |-|-|-|-|-|-|-|-|
+   *  mesh0
+   *
+   *                  |-|-|-|-|
+   *                  mesh1
+   *
+   *                  ^
+   *                  |
+   *                best
+   */
+
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> polygons;
+  for (size_t i = 0; i < 8; ++i) {
+    polygons.push_back(MakeTriangleForInterval(0, Point3(i, i, i),
+                                               Point3(i + 1, i + 1, i + 1)));
+  }
+  for (size_t i = 8; i < 12; ++i) {
+    polygons.push_back(MakeTriangleForInterval(1, Point3(i, i, i),
+                                               Point3(i + 1, i + 1, i + 1)));
+  }
+  std::vector<PolygonEventPoint> event_points(polygons.size());
+  MakeEventPoints(/*dimension=*/0, polygons.size(), polygons.data(),
+                  event_points.data());
+  CheckSorted(/*dimension=*/0, polygons.size(), polygons.data(),
+              event_points.data());
+
+  size_t best_index, cost;
+  std::tie(best_index, cost) = GetLowestCost(polygons.size(),
+                                             /*exclude_id=*/0,
+                                             /*exclude_count=*/8,
+                                             polygons.data(),
+                                             event_points.data());
+  ASSERT_LT(best_index, polygons.size() * 2);
+  EXPECT_EQ(event_points[best_index].GetLocation(/*dimension=*/0,
+                                                 event_points.data(),
+                                                 polygons.data()),
+            Point3(8, 8, 8));
+
+  EXPECT_EQ(cost, GetSplitCost(/*neg_total=*/8, /*neg_exclude=*/8,
+                               /*pos_total=*/4, /*pos_exclude=*/0));
 }
 
 }  // walnut
