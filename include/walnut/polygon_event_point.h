@@ -64,6 +64,24 @@ struct PolygonEventPoint {
   } index;
 };
 
+struct PolygonEventPointPartition {
+  // The index of the event point that defines the split plane.
+  //
+  // This is also the number of events from the beginning of the event point
+  // array should go to the negative child only.
+  size_t split_index;
+
+  size_t cost;
+
+  // The number of polygons that go to the negative child (including polygons
+  // that are split in two).
+  size_t neg_poly_count;
+
+  // The number of polygons that go to the positive child (including polygons
+  // that are split in two).
+  size_t pos_poly_count;
+};
+
 // Fills in `event_points` with the sorted order of `polygons` in `dimension`.
 //
 // Every entry in `polygons` must have 1 or more vertices.
@@ -163,7 +181,7 @@ void MakeEventPoints(
 // polygons with that id in the mesh. `exclude_id` may be set to -1 to not
 // exclude any meshes.
 template <typename ParentPolygon=ConvexPolygon<>>
-std::pair<size_t, size_t> GetLowestCost(
+PolygonEventPointPartition GetLowestCost(
     size_t polygon_count, size_t exclude_id, size_t exclude_count,
     const BSPPolygon<AABBConvexPolygon<ParentPolygon>>* polygons,
     const PolygonEventPoint* event_points) {
@@ -171,8 +189,9 @@ std::pair<size_t, size_t> GetLowestCost(
   size_t pos_total = polygon_count;
   size_t neg_log_count = 1;
   size_t pos_log_count = polygon_count - exclude_count + 1;
-  size_t best_cost = -1;
-  size_t best_index = -1;
+  PolygonEventPointPartition best;
+  best.cost = -1;
+  best.split_index = -1;
   MLogNEstimator neg_estimator, pos_estimator;
   for (size_t i = 0; i < polygon_count*2; ++i) {
     const PolygonEventPoint& event_point = event_points[i];
@@ -190,12 +209,14 @@ std::pair<size_t, size_t> GetLowestCost(
     }
     const size_t cost = neg_estimator.Estimate(neg_total, neg_log_count) +
                         pos_estimator.Estimate(pos_total, pos_log_count);
-    if (cost < best_cost) {
-      best_cost = cost;
-      best_index = i;
+    if (cost < best.cost) {
+      best.cost = cost;
+      best.split_index = i;
+      best.neg_poly_count = neg_total;
+      best.pos_poly_count = pos_total;
     }
   }
-  return std::make_pair(best_index, best_cost);
+  return best;
 }
 
 }  // walnut
