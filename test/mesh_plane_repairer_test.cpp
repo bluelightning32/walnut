@@ -37,6 +37,7 @@ void NudgeAndExpectPerfectRepair(
             }
             builder.FinishFacet();
           }
+          EXPECT_EQ(builder.GetUniqueVertexCount(), vertices.size());
           MeshPlaneRepairerProducer<> output_polygons =
             std::move(builder).FinalizeMesh();
 
@@ -72,12 +73,21 @@ void NudgeAndExpectSamePolygonCount(
         Nudge(nudged[k], 17, 19, 23);
 
         MeshPlaneRepairer<> builder;
+        std::set<size_t> used_indices;
         int multiple = 1;
         for (const std::vector<size_t>& polygon : indices) {
           for (const size_t vertex_index : polygon) {
+            bool matched_before = builder.GetUniqueVertexCount() == used_indices.size();
+            used_indices.insert(vertex_index);
             builder.AddVertex(HomoPoint3(
                   nudged[vertex_index].vector_from_origin().Scale(multiple),
                   nudged[vertex_index].w()*multiple));
+            if (matched_before) {
+              EXPECT_EQ(builder.GetUniqueVertexCount(), used_indices.size())
+                << "Vertex was not properly deduplicated"
+                << ", vertex_index=" << vertex_index
+                << " nudged=" << nudged[vertex_index];
+            }
           }
           ++multiple;
           builder.FinishFacet();
@@ -85,7 +95,8 @@ void NudgeAndExpectSamePolygonCount(
         MeshPlaneRepairerProducer<> output_polygons =
           std::move(builder).FinalizeMesh();
 
-        std::unordered_set<HomoPoint3, ReducedHomoPoint3Hasher> found_points;
+        const HomoPoint3 unset_value(1, 1, 1, 1 << 20);
+        std::vector<HomoPoint3> repaired(vertices.size(), unset_value);
         for (const std::vector<size_t>& polygon : indices) {
           ASSERT_TRUE(output_polygons.HasMorePolygons());
 
@@ -96,7 +107,14 @@ void NudgeAndExpectSamePolygonCount(
             ASSERT_NE(pos, last_vertex);
             HomoPoint3 reduced(*pos);
             reduced.Reduce();
-            found_points.insert(reduced);
+            if (repaired[vertex_index] == unset_value) {
+              repaired[vertex_index] = reduced;
+            } else {
+              EXPECT_EQ(reduced, repaired[vertex_index])
+                << "vertex_index=" << vertex_index
+                << " nudged=" << nudged[vertex_index]
+                << " original=" << vertices[vertex_index];
+            }
             BigInt denom;
             Vector3 difference = pos->Difference(nudged[vertex_index],
                                                  denom);
@@ -108,7 +126,6 @@ void NudgeAndExpectSamePolygonCount(
             ++pos;
           }
         }
-        EXPECT_EQ(found_points.size(), vertices.size());
       }
     }
   }

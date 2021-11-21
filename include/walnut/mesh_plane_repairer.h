@@ -39,6 +39,14 @@ class MeshPlaneRepairerBase {
     HomoPoint3 point;
   };
 
+  size_t GetUniqueVertexCount() const {
+    return vertex_info_storage_.size();
+  }
+
+  bool HasVertex(const HomoPoint3& vertex) const;
+
+  bool IsValidState() const;
+
  protected:
   using ActiveVertexIterator = std::vector<VertexInfo*>::iterator;
 
@@ -70,8 +78,8 @@ class MeshPlaneRepairerBase {
   // `std::deque` is used because entries in `vertex_info_map_` point to elements
   // in here.
   std::deque<VertexInfo> vertex_info_storage_;
-  std::unordered_map<HomoPoint3, VertexInfo*, ReducedHomoPoint3Hasher>
-    vertex_info_map_;
+  std::unordered_map<HomoPoint3, VertexInfo*, ReducedHomoPoint3Hasher,
+                     HomoPoint3StrictEq> vertex_info_map_;
 };
 
 template <typename PolygonData = std::tuple<>>

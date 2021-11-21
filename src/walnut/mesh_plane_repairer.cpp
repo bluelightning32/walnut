@@ -28,6 +28,25 @@ void MeshPlaneRepairerBase::Clear() {
   vertex_info_map_.clear();
 }
 
+bool MeshPlaneRepairerBase::HasVertex(const HomoPoint3& vertex) const {
+  auto it = vertex_info_map_.find(vertex);
+  if (it != vertex_info_map_.end()) {
+    return true;
+  }
+  HomoPoint3 reduced(vertex);
+  reduced.Reduce();
+  return vertex_info_map_.find(reduced) != vertex_info_map_.end();
+}
+
+bool MeshPlaneRepairerBase::IsValidState() const {
+  for (const std::pair<const HomoPoint3, VertexInfo*>& p : vertex_info_map_) {
+    if (vertex_info_map_.find(p.first) == vertex_info_map_.end()) {
+      return false;
+    }
+  }
+  return true;
+}
+
 MeshPlaneRepairerBase::VertexInfo* MeshPlaneRepairerBase::AddVertexInfo(
     const HomoPoint3& vertex) {
   auto it = vertex_info_map_.find(vertex);

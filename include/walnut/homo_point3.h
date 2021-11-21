@@ -259,6 +259,16 @@ struct ReducedHomoPoint3Hasher {
   }
 };
 
+// Considers two HomoPoint3s as equal only if all of their coordinates exactly
+// match. Unlike the standard equality operator, HomoPoint3s that are multiples
+// of each other are not considered equal here.
+struct HomoPoint3StrictEq {
+  bool operator()(const HomoPoint3& a, const HomoPoint3& b) const {
+    return a.x() == b.x() && a.y() == b.y() && a.z() == b.z() &&
+           a.w() == b.w();
+  }
+};
+
 inline HomoPoint3 HomoPoint3::AddOffset(const Vector3& direction,
                                         const BigInt& direction_denom) const {
   return HomoPoint3(/*x=*/x()*direction_denom + direction.x()*w(),
