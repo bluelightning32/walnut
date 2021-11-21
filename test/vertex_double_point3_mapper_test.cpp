@@ -9,19 +9,33 @@
 
 namespace walnut {
 
+// Returns a new numerator that barely satisfies:
+//   (long double)ret/(long double)denom == (long double)num/(long double)denom
+BigInt GetCloseToBoundary(BigInt num, BigInt denom) {
+  DoublePoint3 unadjusted = HomoPoint3(num, num, num, denom).GetDoublePoint3();
+  for (int i = num.used_words() * BigInt::bits_per_word; i >= 0; --i) {
+    if (unadjusted == HomoPoint3(num + (BigInt(1) << i), num, num,
+                                 denom).GetDoublePoint3()) {
+      num += BigInt(1) << i;
+    }
+  }
+  return num;
+}
+
 // Returns a vector of equivalent HomoPoint3s that each have a different
 // DoublePoint3 representation.
 //
-// This can create up to 6 equivalent HomoPoint3s. Every coordinate (along with
-// the denominator) is greater than 2 in the returned HomoPoint3s.
+// This can create at least 3 equivalent HomoPoint3s. Every coordinate (along
+// with the denominator) is greater than 2 in the returned HomoPoint3s.
 std::vector<HomoPoint3> MakePointsWithDifferentReps(size_t count) {
   std::vector<HomoPoint3> result;
   if (count == 0) return result;
 
-  HomoPoint3 canonical((BigInt(1) << 53) - 1,
-                       (BigInt(3) << 52) - 1,
-                       (BigInt(5) << 50) - 1,
-                       (BigInt(1) << 51) - 1);
+  BigInt w(BigInt(37) << 60);
+  HomoPoint3 canonical(GetCloseToBoundary(BigInt(251) << 63, w),
+                       GetCloseToBoundary(BigInt(251) << 62, w),
+                       GetCloseToBoundary(BigInt(251) << 61, w),
+                       w);
 
   std::unordered_set<DoublePoint3> found;
   found.insert(canonical.GetDoublePoint3());
@@ -31,6 +45,7 @@ std::vector<HomoPoint3> MakePointsWithDifferentReps(size_t count) {
   while (result.size() < count) {
     HomoPoint3 newpoint(canonical.x() * multiple, canonical.y() * multiple,
                         canonical.z() * multiple, canonical.w() * multiple);
+    if (!std::isfinite(newpoint.GetDoublePoint3().x)) break;
     if (found.insert(newpoint.GetDoublePoint3()).second) {
       result.push_back(newpoint);
     }
@@ -43,10 +58,14 @@ std::vector<HomoPoint3> MakePointsWithDifferentReps(size_t count) {
 // different double representations.
 TEST(VertexDoublePoint3Mapper, ThreeRepsExist) {
   std::vector<HomoPoint3> found = MakePointsWithDifferentReps(3);
+  EXPECT_EQ(found.size(), 3);
   for (const HomoPoint3& p : found) {
-    EXPECT_TRUE(std::isfinite(p.GetDoublePoint3().x));
-    EXPECT_TRUE(std::isfinite(p.GetDoublePoint3().y));
-    EXPECT_TRUE(std::isfinite(p.GetDoublePoint3().z));
+    EXPECT_TRUE(std::isfinite(p.GetDoublePoint3().x))
+      << "x=" << (long double)p.x() << " w=" << (long double)p.w();
+    EXPECT_TRUE(std::isfinite(p.GetDoublePoint3().y))
+      << "y=" << (long double)p.x() << " w=" << (long double)p.w();
+    EXPECT_TRUE(std::isfinite(p.GetDoublePoint3().z))
+      << "z=" << (long double)p.x() << " w=" << (long double)p.w();
   }
 }
 
