@@ -37,18 +37,18 @@ BSPPolygon<AABBConvexPolygon<>> MakeTriangleForInterval(
 }
 
 TEST(MakeEventPoints, ConstructEmpty) {
-  MakeEventPoints<ConvexPolygon<>>(/*dimension=*/0, /*polygon_count=*/0,
-                                   /*polygons=*/nullptr,
-                                   /*event_points=*/nullptr);
+  MakeEventPoints(/*dimension=*/0,
+                  /*polygons=*/std::vector<BSPPolygon<AABBConvexPolygon<>>>(),
+                  /*event_points=*/nullptr);
 }
 
-void CheckSorted(size_t dimension, size_t polygon_count,
-                 const BSPPolygon<AABBConvexPolygon<>>* polygons,
+void CheckSorted(size_t dimension,
+                 const std::vector<BSPPolygon<AABBConvexPolygon<>>>& polygons,
                  const PolygonEventPoint* event_points) {
   std::map<const BSPPolygon<AABBConvexPolygon<>>*, size_t> seen;
   const HomoPoint3* prev = nullptr;
   bool seen_start_points = false;
-  for (size_t i = 0; i < polygon_count*2; ++i) {
+  for (size_t i = 0; i < polygons.size()*2; ++i) {
     size_t& seen_polygon =
       seen[&event_points[i].GetPolygon(event_points, polygons)];
     EXPECT_EQ(event_points[i].start, seen_polygon == 0);
@@ -71,7 +71,7 @@ void CheckSorted(size_t dimension, size_t polygon_count,
     }
     prev = &location;
   }
-  for (size_t i = 0; i < polygon_count; ++i) {
+  for (size_t i = 0; i < polygons.size(); ++i) {
     EXPECT_EQ(seen[&polygons[i]], 2);
   }
 }
@@ -87,8 +87,8 @@ TEST(MakeEventPoints, ThreeOverlaps) {
 
   for (size_t dimension = 0; dimension < 3; ++dimension) {
     PolygonEventPoint event_points[6];
-    MakeEventPoints(dimension, polygons.size(), polygons.data(), event_points);
-    CheckSorted(dimension, polygons.size(), polygons.data(), event_points);
+    MakeEventPoints(dimension, polygons, event_points);
+    CheckSorted(dimension, polygons, event_points);
   }
 }
 
@@ -101,8 +101,8 @@ TEST(MakeEventPoints, EndBeforeStart) {
 
   for (size_t dimension = 0; dimension < 3; ++dimension) {
     PolygonEventPoint event_points[6];
-    MakeEventPoints(dimension, polygons.size(), polygons.data(), event_points);
-    CheckSorted(dimension, polygons.size(), polygons.data(), event_points);
+    MakeEventPoints(dimension, polygons, event_points);
+    CheckSorted(dimension, polygons, event_points);
   }
 }
 
@@ -120,8 +120,8 @@ TEST(MakeEventPoints, Discontinuity) {
 
   for (size_t dimension = 0; dimension < 3; ++dimension) {
     PolygonEventPoint event_points[8];
-    MakeEventPoints(dimension, polygons.size(), polygons.data(), event_points);
-    CheckSorted(dimension, polygons.size(), polygons.data(), event_points);
+    MakeEventPoints(dimension, polygons, event_points);
+    CheckSorted(dimension, polygons, event_points);
   }
 }
 
@@ -137,8 +137,8 @@ TEST(MakeEventPoints, DifferentDimensionSort) {
 
   for (size_t dimension = 0; dimension < 3; ++dimension) {
     PolygonEventPoint event_points[8];
-    MakeEventPoints(dimension, polygons.size(), polygons.data(), event_points);
-    CheckSorted(dimension, polygons.size(), polygons.data(), event_points);
+    MakeEventPoints(dimension, polygons, event_points);
+    CheckSorted(dimension, polygons, event_points);
   }
 }
 
@@ -149,21 +149,19 @@ TEST(GetLowestCost, SplitMiddleNoExclude) {
                                                Point3(i + 1, i + 1, i + 1)));
   }
   PolygonEventPoint event_points[20];
-  MakeEventPoints(/*dimension=*/0, polygons.size(), polygons.data(),
-                  event_points);
-  CheckSorted(/*dimension=*/0, polygons.size(), polygons.data(), event_points);
+  MakeEventPoints(/*dimension=*/0, polygons, event_points);
+  CheckSorted(/*dimension=*/0, polygons, event_points);
 
-  PolygonEventPointPartition best = GetLowestCost(polygons.size(),
-                                                  /*exclude_id=*/-1,
+  PolygonEventPointPartition best = GetLowestCost(/*exclude_id=*/-1,
                                                   /*exclude_count=*/0,
-                                                  polygons.data(),
+                                                  polygons,
                                                   event_points);
   ASSERT_LT(best.split_index, polygons.size() * 2);
   EXPECT_EQ(best.neg_poly_count, 5);
   EXPECT_EQ(best.pos_poly_count, 5);
   EXPECT_EQ(event_points[best.split_index].GetLocation(/*dimension=*/0,
                                                        event_points,
-                                                       polygons.data()),
+                                                       polygons),
             Point3(5, 5, 5));
 
   EXPECT_EQ(best.cost, GetSplitCost(/*neg_total=*/5, /*neg_exclude=*/0,
@@ -188,19 +186,17 @@ TEST(GetLowestCost, AvoidOverlapNoExclude) {
   polygons.push_back(MakeTriangleForInterval(0, Point3(2, 2, 2),
                                              Point3(5, 5, 5)));
   PolygonEventPoint event_points[12];
-  MakeEventPoints(/*dimension=*/0, polygons.size(), polygons.data(),
-                  event_points);
-  CheckSorted(/*dimension=*/0, polygons.size(), polygons.data(), event_points);
+  MakeEventPoints(/*dimension=*/0, polygons, event_points);
+  CheckSorted(/*dimension=*/0, polygons, event_points);
 
-  PolygonEventPointPartition best = GetLowestCost(polygons.size(),
-                                                  /*exclude_id=*/-1,
+  PolygonEventPointPartition best = GetLowestCost(/*exclude_id=*/-1,
                                                   /*exclude_count=*/0,
-                                                  polygons.data(),
+                                                  polygons,
                                                   event_points);
   ASSERT_LT(best.split_index, polygons.size() * 2);
   EXPECT_EQ(event_points[best.split_index].GetLocation(/*dimension=*/0,
                                                        event_points,
-                                                       polygons.data()),
+                                                       polygons),
             Point3(2, 2, 2));
   EXPECT_EQ(best.neg_poly_count, 2);
   EXPECT_EQ(best.pos_poly_count, 4);
@@ -225,19 +221,17 @@ TEST(GetLowestCost, OverlapCompromiseNoExclude) {
                                                Point3(i + 2, i + 2, i + 2)));
   }
   PolygonEventPoint event_points[16];
-  MakeEventPoints(/*dimension=*/0, polygons.size(), polygons.data(),
-                  event_points);
-  CheckSorted(/*dimension=*/0, polygons.size(), polygons.data(), event_points);
+  MakeEventPoints(/*dimension=*/0, polygons, event_points);
+  CheckSorted(/*dimension=*/0, polygons, event_points);
 
-  PolygonEventPointPartition best = GetLowestCost(polygons.size(),
-                                                  /*exclude_id=*/-1,
+  PolygonEventPointPartition best = GetLowestCost(/*exclude_id=*/-1,
                                                   /*exclude_count=*/0,
-                                                  polygons.data(),
+                                                  polygons,
                                                   event_points);
   ASSERT_LT(best.split_index, polygons.size() * 2);
   EXPECT_THAT(event_points[best.split_index].GetLocation(/*dimension=*/0,
                                                          event_points,
-                                                         polygons.data()),
+                                                         polygons),
               AnyOf(Eq(Point3(4, 4, 4)), Eq(Point3(5, 5, 5))));
 
   EXPECT_EQ(best.neg_poly_count + best.pos_poly_count, 9);
@@ -270,20 +264,17 @@ TEST(GetLowestCost, PartitionsExcludeId) {
                                                Point3(i + 1, i + 1, i + 1)));
   }
   std::vector<PolygonEventPoint> event_points(polygons.size());
-  MakeEventPoints(/*dimension=*/0, polygons.size(), polygons.data(),
-                  event_points.data());
-  CheckSorted(/*dimension=*/0, polygons.size(), polygons.data(),
-              event_points.data());
+  MakeEventPoints(/*dimension=*/0, polygons, event_points.data());
+  CheckSorted(/*dimension=*/0, polygons, event_points.data());
 
-  PolygonEventPointPartition best = GetLowestCost(polygons.size(),
-                                                  /*exclude_id=*/0,
+  PolygonEventPointPartition best = GetLowestCost(/*exclude_id=*/0,
                                                   /*exclude_count=*/8,
-                                                  polygons.data(),
+                                                  polygons,
                                                   event_points.data());
   ASSERT_LT(best.split_index, polygons.size() * 2);
   EXPECT_EQ(event_points[best.split_index].GetLocation(/*dimension=*/0,
                                                        event_points.data(),
-                                                       polygons.data()),
+                                                       polygons),
             Point3(8, 8, 8));
 
   EXPECT_EQ(best.neg_poly_count, 8);

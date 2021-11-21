@@ -19,7 +19,8 @@ struct PolygonEventPoint {
   template <typename ParentPolygon=ConvexPolygon<>>
   const BSPPolygon<AABBConvexPolygon<ParentPolygon>>& GetPolygon(
       const PolygonEventPoint* event_points,
-      const BSPPolygon<AABBConvexPolygon<ParentPolygon>>* polygons) const {
+      const std::vector<BSPPolygon<AABBConvexPolygon<ParentPolygon>>>&
+        polygons) const {
     if (start) {
       return polygons[event_points[index.partner].index.content];
     } else {
@@ -36,7 +37,8 @@ struct PolygonEventPoint {
   const HomoPoint3& GetLocation(
       size_t dimension,
       const PolygonEventPoint* event_points,
-      const BSPPolygon<AABBConvexPolygon<ParentPolygon>>* polygons) const {
+      const std::vector<BSPPolygon<AABBConvexPolygon<ParentPolygon>>>&
+        polygons) const {
     if (start) {
       assert(!event_points[index.partner].start);
       return polygons[event_points[index.partner].index.content].min_vertex(dimension);
@@ -86,26 +88,25 @@ struct PolygonEventPointPartition {
 //
 // Every entry in `polygons` must have 1 or more vertices.
 //
-// `polygons` must have `polygon_count` entries in it. On input, `event_points`
-// must have polygon_count*2 entries in it. On output, all entries of
-// `event_points` will be initialized.
+// On input, `event_points` must have polygons.size()*2 entries in it. On
+// output, all entries of `event_points` will be initialized.
 //
 // The event_points are first ordered by their location. Between event_points
 // that share the same location, end event_points are ordered before start
 // points.
 template <typename ParentPolygon=ConvexPolygon<>>
 void MakeEventPoints(
-    size_t dimension, size_t polygon_count,
-    const BSPPolygon<AABBConvexPolygon<ParentPolygon>>* polygons,
+    size_t dimension,
+    const std::vector<BSPPolygon<AABBConvexPolygon<ParentPolygon>>>& polygons,
     PolygonEventPoint* event_points) {
   // Create a heap of the remaining event points. Initially this contains only
   // the end events. As the end events are removed from the heap, their partner
   // start events are added.
   //
   // Specifically `heap_last` points to one after the end of the heap.
-  PolygonEventPoint* heap_last = event_points + polygon_count;
+  PolygonEventPoint* heap_last = event_points + polygons.size();
   // Fill in the end events in an unsorted order.
-  for (size_t i = 0; i < polygon_count; ++i) {
+  for (size_t i = 0; i < polygons.size(); ++i) {
     event_points[i].start = false;
     event_points[i].index.content = i;
   }
@@ -140,7 +141,7 @@ void MakeEventPoints(
   };
   // Points to the first vertex in `event_points` that is in its final
   // position.
-  PolygonEventPoint* finished_begin = event_points + 2*polygon_count;
+  PolygonEventPoint* finished_begin = event_points + 2*polygons.size();
 
   while (finished_begin != event_points) {
     --finished_begin;
@@ -160,9 +161,9 @@ void MakeEventPoints(
   assert(heap_last == event_points);
 
   // Now set `new_location` to the correct value.
-  if (polygon_count > 0) {
+  if (polygons.size() > 0) {
     event_points[0].new_location = true;
-    for (size_t i = 1; i < polygon_count*2; ++i) {
+    for (size_t i = 1; i < polygons.size()*2; ++i) {
       event_points[i].new_location =
         event_points[i - 1].GetLocation(dimension, event_points, polygons).
         IsLessThanComponent(dimension,
@@ -182,18 +183,18 @@ void MakeEventPoints(
 // exclude any meshes.
 template <typename ParentPolygon=ConvexPolygon<>>
 PolygonEventPointPartition GetLowestCost(
-    size_t polygon_count, size_t exclude_id, size_t exclude_count,
-    const BSPPolygon<AABBConvexPolygon<ParentPolygon>>* polygons,
+    size_t exclude_id, size_t exclude_count,
+    const std::vector<BSPPolygon<AABBConvexPolygon<ParentPolygon>>>& polygons,
     const PolygonEventPoint* event_points) {
   size_t neg_total = 0;
-  size_t pos_total = polygon_count;
+  size_t pos_total = polygons.size();
   size_t neg_log_count = 1;
-  size_t pos_log_count = polygon_count - exclude_count + 1;
+  size_t pos_log_count = polygons.size() - exclude_count + 1;
   PolygonEventPointPartition best;
   best.cost = -1;
   best.split_index = -1;
   MLogNEstimator neg_estimator, pos_estimator;
-  for (size_t i = 0; i < polygon_count*2; ++i) {
+  for (size_t i = 0; i < polygons.size()*2; ++i) {
     const PolygonEventPoint& event_point = event_points[i];
     if (event_point.start) {
       ++neg_total;
