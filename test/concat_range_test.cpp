@@ -1,5 +1,6 @@
 #include "walnut/concat_range.h"
 
+#include <array>
 #include <deque>
 
 #include "gmock/gmock.h"
