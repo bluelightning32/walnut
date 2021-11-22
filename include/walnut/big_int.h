@@ -115,8 +115,7 @@ class BigInt {
     return used_words() == 1 && CanTrimLastHalf(word(0));
   }
 
-  constexpr BigInt& operator = (
-      const BigInt& other) {
+  constexpr BigInt& operator=(const BigInt& other) {
     words_.Assign(other.words_, other.used_words());
     this->Trim();
     return *this;
@@ -766,6 +765,10 @@ class BigInt {
 
   constexpr bool IsZero() const {
     return GetSign() == 0;
+  }
+
+  constexpr bool IsNegative() const {
+    return SignExtension() < 0;
   }
 
   // Returns 1 if this is greater than or equal to 0.
