@@ -28,6 +28,9 @@ class HalfSpace3 {
   HalfSpace3(const Vector3& normal, const BigInt& dist) :
     normal_(normal), dist_(dist) { }
 
+  HalfSpace3(Vector3&& normal, BigInt&& dist) :
+    normal_(std::move(normal)), dist_(std::move(dist)) { }
+
   // Constructs a half-space with the given normal and a point that should be
   // coincident to the plane.
   HalfSpace3(const Vector3& normal, const HomoPoint3& coincident) {
@@ -89,6 +92,20 @@ class HalfSpace3 {
     assert(add_dimension < 3);
     normal_.components()[(add_dimension + 1)%3] = projection.normal().x();
     normal_.components()[(add_dimension + 2)%3] = projection.normal().y();
+  }
+
+  // Creates a HalfSpace3 that is perpendicular to `dimension`.
+  //
+  // If `denominator` is positive, then the created positive half-space
+  // includes all points that are further than numerator/denominator in
+  // the `dimension` axis. Otherwise, the negative half-space includes all
+  // points that are further than numerator/denominator in the `dimension`
+  // axis.
+  static HalfSpace3 GetAxisAligned(int dimension, BigInt numerator,
+                                   BigInt denominator) {
+    Vector3 normal = Vector3::Zero();
+    normal.components()[dimension] = std::move(denominator);
+    return HalfSpace3(std::move(normal), std::move(numerator));
   }
 
   HalfSpace3& operator=(const HalfSpace3&) = default;

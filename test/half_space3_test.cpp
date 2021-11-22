@@ -339,4 +339,24 @@ TEST(HalfSpace3, HalfSpace3CompareStoreInSet) {
   }
 }
 
+TEST(HalfSpace3, GetAxisAlignedPosDenom) {
+  HalfSpace3 half_space = HalfSpace3::GetAxisAligned(/*dimension=*/0,
+                                                     /*numerator=*/BigInt(2),
+                                                     /*denominator=*/BigInt(3));
+  EXPECT_LT(half_space.Compare(Point3(0, 0, 0)), 0);
+  EXPECT_EQ(half_space.Compare(HomoPoint3(/*x=*/2, /*y=*/100, /*z=*/100,
+                                          /*w=*/3)), 0);
+  EXPECT_GT(half_space.Compare(Point3(1, 0, 0)), 0);
+}
+
+TEST(HalfSpace3, GetAxisAlignedNegDenom) {
+  HalfSpace3 half_space = HalfSpace3::GetAxisAligned(/*dimension=*/0,
+                                                     /*numerator=*/BigInt(-2),
+                                                     /*denominator=*/BigInt(-3));
+  EXPECT_GT(half_space.Compare(Point3(0, 0, 0)), 0);
+  EXPECT_EQ(half_space.Compare(HomoPoint3(/*x=*/2, /*y=*/100, /*z=*/100,
+                                          /*w=*/3)), 0);
+  EXPECT_LT(half_space.Compare(Point3(1, 0, 0)), 0);
+}
+
 }  // walnut
