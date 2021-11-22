@@ -175,7 +175,8 @@ void MakeEventPoints(
 // Finds the split location with the lowest estimated cost.
 // 
 // Returns the event point index of a point coincident with the lowest cost
-// split plane, along with the estimated cost.
+// split plane, along with the estimated cost. If there is at least one event
+// point, then the split index will point to an end event point.
 //
 // `exclude_id` may be the id of a mesh to exclude from the log_2 part of the
 // cost estimation, in which case `exclude_count` must be the number of
@@ -194,9 +195,22 @@ PolygonEventPointPartition GetLowestCost(
   best.cost = -1;
   best.split_index = -1;
   MLogNEstimator neg_estimator, pos_estimator;
-  for (size_t i = 0; i < polygons.size()*2; ++i) {
+  bool last_event_was_end = false;
+  size_t i;
+  for (i = 0; i < polygons.size()*2; ++i) {
     const PolygonEventPoint& event_point = event_points[i];
     if (event_point.start) {
+      if (last_event_was_end) {
+        const size_t cost = neg_estimator.Estimate(neg_total, neg_log_count) +
+                            pos_estimator.Estimate(pos_total, pos_log_count);
+        if (cost < best.cost) {
+          best.cost = cost;
+          best.split_index = i - 1;
+          best.neg_poly_count = neg_total;
+          best.pos_poly_count = pos_total;
+        }
+        last_event_was_end = false;
+      }
       ++neg_total;
       if (polygons[event_points[event_point.index.partner].index.content].id !=
           exclude_id) {
@@ -207,7 +221,10 @@ PolygonEventPointPartition GetLowestCost(
       if (polygons[event_point.index.content].id != exclude_id) {
         --pos_log_count;
       }
+      last_event_was_end = true;
     }
+  }
+  if (last_event_was_end) {
     const size_t cost = neg_estimator.Estimate(neg_total, neg_log_count) +
                         pos_estimator.Estimate(pos_total, pos_log_count);
     if (cost < best.cost) {
