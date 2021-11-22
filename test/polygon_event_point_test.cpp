@@ -263,7 +263,7 @@ TEST(GetLowestCost, PartitionsExcludeId) {
     polygons.push_back(MakeTriangleForInterval(1, Point3(i, i, i),
                                                Point3(i + 1, i + 1, i + 1)));
   }
-  std::vector<PolygonEventPoint> event_points(polygons.size());
+  std::vector<PolygonEventPoint> event_points(polygons.size()*2);
   MakeEventPoints(/*dimension=*/0, polygons, event_points.data());
   CheckSorted(/*dimension=*/0, polygons, event_points.data());
 
