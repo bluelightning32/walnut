@@ -142,6 +142,8 @@ struct PolygonEventPointPartition {
   size_t split_index;
 
   size_t cost;
+  size_t neg_cost;
+  size_t pos_cost;
 
   // The number of polygons that go to the negative child (including polygons
   // that are split in two).
@@ -376,6 +378,8 @@ PolygonEventPointPartition GetLowestCost(
   size_t neg_log_count = 1;
   size_t pos_log_count = polygons.size() - exclude_count + 1;
   PolygonEventPointPartition best;
+  best.neg_cost = -1;
+  best.pos_cost = -1;
   best.cost = -1;
   best.split_index = -1;
   MLogNEstimator neg_estimator, pos_estimator;
@@ -385,10 +389,13 @@ PolygonEventPointPartition GetLowestCost(
     const PolygonEventPoint& event_point = event_points[i];
     if (event_point.start) {
       if (last_event_was_end) {
-        const size_t cost = neg_estimator.Estimate(neg_total, neg_log_count) +
-                            pos_estimator.Estimate(pos_total, pos_log_count);
+        const size_t neg_cost = neg_estimator.Estimate(neg_total, neg_log_count);
+        const size_t pos_cost = pos_estimator.Estimate(pos_total, pos_log_count);
+        const size_t cost = neg_cost + pos_cost;
         if (cost < best.cost) {
           best.cost = cost;
+          best.neg_cost = neg_cost;
+          best.pos_cost = pos_cost;
           best.split_index = i - 1;
           best.neg_poly_count = neg_total;
           best.pos_poly_count = pos_total;
@@ -409,10 +416,13 @@ PolygonEventPointPartition GetLowestCost(
     }
   }
   if (last_event_was_end) {
-    const size_t cost = neg_estimator.Estimate(neg_total, neg_log_count) +
-                        pos_estimator.Estimate(pos_total, pos_log_count);
+    const size_t neg_cost = neg_estimator.Estimate(neg_total, neg_log_count);
+    const size_t pos_cost = pos_estimator.Estimate(pos_total, pos_log_count);
+    const size_t cost = neg_cost + pos_cost;
     if (cost < best.cost) {
       best.cost = cost;
+      best.neg_cost = neg_cost;
+      best.pos_cost = pos_cost;
       best.split_index = i;
       best.neg_poly_count = neg_total;
       best.pos_poly_count = pos_total;
