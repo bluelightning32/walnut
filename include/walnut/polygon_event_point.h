@@ -153,8 +153,18 @@ struct PolygonEventPointPartition {
   // that are split in two).
   size_t pos_poly_count;
 
+  // The number of border polygons that will be removed by the partition.
+  size_t border_poly_count = 0;
+
+  // The index of the first event that shares the same location as
+  // `split_index`.
+  size_t split_location_begin;
+  // The index of the first event that has the location after `split_index`.
+  size_t split_location_end;
+
   size_t GetExtraPolygonCount(size_t parent_poly_count) const {
-    return neg_poly_count + pos_poly_count - parent_poly_count;
+    return neg_poly_count + pos_poly_count + border_poly_count -
+           parent_poly_count;
   }
 
   size_t GetNegEventPointCount() const {
@@ -164,6 +174,14 @@ struct PolygonEventPointPartition {
   size_t GetPosEventPointCount() const {
     return pos_poly_count * 2;
   }
+
+  // Removes the border polygons from `neg_poly_count` and `pos_poly_count`.
+  //
+  // Also sets `split_location_begin` and `split_location_end`.
+  //
+  // `cost` is not updated.
+  void DiscountBorderPolygons(const PolygonEventPoint* event_points,
+                              size_t parent_poly_count);
 
   template <typename ParentPolygon=ConvexPolygon<>>
   HalfSpace3 GetSplitPlane(
@@ -190,6 +208,9 @@ struct PolygonEventPointPartition {
   // `dimension` must match the value passed to `GetLowestCost` to get this
   // `PolygonEventPointPartition`.
   //
+  // `DiscountBorderPolygons` must be called after `GetLowestCost` and before
+  // this function.
+  //
   // On input `event_points` are the event points for that dimension. On
   // output, it becomes event points for the positive child. Only the first
   // `split.GetPosEventPointCount` entries are valid on output.
@@ -214,8 +235,11 @@ struct PolygonEventPointPartition {
       size_t* polygon_index_map,
       PolygonEventPoint* neg_event_points,
       std::vector<BSPPolygon<AABBConvexPolygon<ParentPolygon>>>& neg_polygons,
+      std::vector<BSPPolygon<AABBConvexPolygon<ParentPolygon>>>& pos_polygons,
       std::vector<BSPPolygon<AABBConvexPolygon<ParentPolygon>>>&
-        pos_polygons) const;
+        neg_border_polygons,
+      std::vector<BSPPolygon<AABBConvexPolygon<ParentPolygon>>>&
+        pos_border_polygons) const;
 
   // Splits the parent polygon list into two children.
   //
@@ -431,6 +455,32 @@ PolygonEventPointPartition GetLowestCost(
   return best;
 }
 
+inline void PolygonEventPointPartition::DiscountBorderPolygons(
+    const PolygonEventPoint* event_points,
+    size_t parent_poly_count) {
+  // Go through all of the events before the split. `split_index` itself points
+  // to the last end event in the neg child.
+  split_location_begin = split_index;
+  while (!event_points[split_location_begin].new_location) {
+    assert(split_location_begin > 0);
+    --split_location_begin;
+    if (event_points[split_location_begin].start) {
+      // This event points to a border polygon, not a neg polygon.
+      --neg_poly_count;
+      ++border_poly_count;
+    }
+  }
+  split_location_end = split_index + 1;
+  while (split_location_end < parent_poly_count*2 &&
+         !event_points[split_location_end].new_location) {
+    if (!event_points[split_location_end].start) {
+      --pos_poly_count;
+      ++border_poly_count;
+    }
+    ++split_location_end;
+  }
+}
+
 template <typename ParentPolygon>
 void PolygonEventPointPartition::ApplyPrimary(
     int dimension,
@@ -439,10 +489,15 @@ void PolygonEventPointPartition::ApplyPrimary(
     size_t* polygon_index_map,
     PolygonEventPoint* neg_event_points,
     std::vector<BSPPolygon<AABBConvexPolygon<ParentPolygon>>>& neg_polygons,
+    std::vector<BSPPolygon<AABBConvexPolygon<ParentPolygon>>>& pos_polygons,
     std::vector<BSPPolygon<AABBConvexPolygon<ParentPolygon>>>&
-      pos_polygons) const {
+      neg_border_polygons,
+    std::vector<BSPPolygon<AABBConvexPolygon<ParentPolygon>>>&
+      pos_border_polygons) const {
+  using PolygonRep = BSPPolygon<AABBConvexPolygon<ParentPolygon>>;
   assert(split_index < polygons.size()*2);
   assert(!event_points[split_index].start);
+
   neg_polygons.reserve(neg_poly_count);
   pos_polygons.reserve(pos_poly_count);
   const size_t extra_count = GetExtraPolygonCount(polygons.size());
@@ -474,7 +529,8 @@ void PolygonEventPointPartition::ApplyPrimary(
   // 2b.Start point processed, but not end point, polygon in pos child
   //    polygon:                  in pos_child
   //    event_points.start:       possibly overwritten by pos_event_points
-  //    event_points.end:         index of start event in pos_event_points
+  //    event_points.end:         index of start event in pos_event_points +
+  //                              neg_poly_count*2
   //    pos_event_points.start:   index of polygon in `pos_child`
   //    pos_event_points.end:     not created yet
   //    polygon_index_map:        pos_child index + neg_poly_count*2
@@ -497,83 +553,10 @@ void PolygonEventPointPartition::ApplyPrimary(
   //    child_event_point.end:    child index of polygon
   //    polygon_index_map:        child index of polygon
 
-  // This will be initialized when the first event point is processed.
+  // These will be initialized when the first event point is processed.
   bool neg_new_location;
-  bool pos_new_location = true;
-  // Go through all of the events before the split. `split_index` itself points
-  // to the last end event in the neg child.
+  bool pos_new_location;
   size_t i = 0;
-  for (; i <= split_index; ++i) {
-    const PolygonEventPoint& event = event_points[i];
-    if (event.new_location) {
-      neg_new_location = true;
-    }
-    if (event.start) {
-      const size_t poly_index =
-        event_points[event.index.partner].index.content;
-      if (event.index.partner <= split_index) {
-        // Goes to just the negative child
-        event_points[event.index.partner].index.partner = neg_used;
-        polygon_index_map[poly_index] = neg_polygons.size();
-        PolygonEventPoint& child_event = neg_event_points[neg_used];
-        ++neg_used;
-        child_event.index.content = neg_polygons.size();
-        neg_polygons.push_back(std::move(polygons[poly_index]));
-        child_event.new_location = neg_new_location;
-        neg_new_location = false;
-        child_event.start = true;
-      } else {
-        // Goes to both children
-        auto child_polygons =
-          std::move(polygons[poly_index]).CreateSplitChildren(
-              polygons[poly_index].GetSplitInfo(split_plane));
-        neg_polygons[used_extra] = std::move(child_polygons.first);
-        pos_polygons[used_extra] = std::move(child_polygons.second);
-        polygon_index_map[poly_index] = used_extra;
-
-        // Add the negative end event.
-        const size_t neg_end_event_index = neg_poly_count*2 - used_extra - 1;
-        PolygonEventPoint& neg_end_event =
-          neg_event_points[neg_end_event_index];
-        neg_end_event.start = false;
-        neg_end_event.new_location = false;
-        neg_end_event.index.content = used_extra;
-
-        // Add the negative start event.
-        PolygonEventPoint& neg_start_event = neg_event_points[neg_used];
-        ++neg_used;
-        neg_start_event.start = true;
-        neg_start_event.index.partner = neg_end_event_index;
-        neg_start_event.new_location = neg_new_location;
-        neg_new_location = false;
-
-        // Add the positive start event.
-        event_points[event.index.partner].index.partner = pos_used;
-        PolygonEventPoint& pos_start_event = event_points[pos_used];
-        ++pos_used;
-        pos_start_event.start = true;
-        pos_start_event.index.content = used_extra;
-        pos_start_event.new_location = pos_new_location;
-        pos_new_location = false;
-
-        ++used_extra;
-      }
-    } else {
-      // In this loop, all end events are for polygons that are just in the
-      // neg_child.
-      const size_t start_event_index = event.index.partner;
-      assert(start_event_index < neg_used);
-      PolygonEventPoint& child_event = neg_event_points[neg_used];
-
-      child_event.start = false;
-      child_event.new_location = neg_new_location;
-      neg_new_location = false;
-      child_event.index.content =
-        neg_event_points[start_event_index].index.content;
-      neg_event_points[start_event_index].index.partner = neg_used;
-      ++neg_used;
-    }
-  }
   for (; i < polygons.size()*2; ++i) {
     const PolygonEventPoint& event = event_points[i];
     if (event.new_location) {
@@ -583,29 +566,118 @@ void PolygonEventPointPartition::ApplyPrimary(
     if (event.start) {
       const size_t poly_index =
         event_points[event.index.partner].index.content;
-      // Start events after the split index go to just the positive child
-      event_points[event.index.partner].index.partner = pos_used;
-      polygon_index_map[poly_index] = pos_polygons.size() + neg_poly_count;
-      PolygonEventPoint& child_event = event_points[pos_used];
-      ++pos_used;
-      child_event.index.content = pos_polygons.size();
-      pos_polygons.push_back(std::move(polygons[poly_index]));
-      child_event.new_location = pos_new_location;
-      pos_new_location = false;
-      child_event.start = true;
+      PolygonRep& polygon = polygons[poly_index];
+      // True if the start of the polygon is on the positive side or on the
+      // split plane.
+      bool start_pos_side = i >= split_location_begin;
+      // True if the end of the polygon is on the negative side or on the split
+      // plane.
+      bool end_neg_side = event.index.partner < split_location_end;
+      if (start_pos_side) {
+        if (end_neg_side) {
+          // It's coincident with the split plane. Use the polygon normal to
+          // determine which side the border polygon goes to.
+          bool pos_child =
+            polygon.plane().normal().components()[dimension].IsNegative();
+          if (pos_child) {
+            pos_border_polygons.push_back(std::move(polygon));
+          } else {
+            neg_border_polygons.push_back(std::move(polygon));
+          }
+          polygon_index_map[poly_index] = -1;
+          event_points[event.index.partner].index.partner = -1;
+        } else {
+          event_points[event.index.partner].index.partner =
+            pos_used + neg_polygons.size()*2;
+          polygon_index_map[poly_index] = pos_polygons.size() + neg_poly_count;
+          PolygonEventPoint& child_event = event_points[pos_used];
+          ++pos_used;
+          child_event.index.content = pos_polygons.size();
+          pos_polygons.push_back(std::move(polygon));
+          child_event.new_location = pos_new_location;
+          pos_new_location = false;
+          child_event.start = true;
+        }
+      } else {
+        if (!end_neg_side) {
+          // Goes to both children
+          auto child_polygons =
+            std::move(polygon).CreateSplitChildren(
+                polygon.GetSplitInfo(split_plane));
+          neg_polygons[used_extra] = std::move(child_polygons.first);
+          pos_polygons[used_extra] = std::move(child_polygons.second);
+          polygon_index_map[poly_index] = used_extra;
+
+          // Add the negative end event.
+          const size_t neg_end_event_index = neg_poly_count*2 - used_extra - 1;
+          PolygonEventPoint& neg_end_event =
+            neg_event_points[neg_end_event_index];
+          neg_end_event.start = false;
+          neg_end_event.new_location = false;
+          neg_end_event.index.content = used_extra;
+
+          // Add the negative start event.
+          PolygonEventPoint& neg_start_event = neg_event_points[neg_used];
+          ++neg_used;
+          neg_start_event.start = true;
+          neg_start_event.index.partner = neg_end_event_index;
+          neg_start_event.new_location = neg_new_location;
+          neg_new_location = false;
+
+          // Add the positive start event.
+          event_points[event.index.partner].index.partner =
+            pos_used + neg_polygons.size()*2;
+          PolygonEventPoint& pos_start_event = event_points[pos_used];
+          ++pos_used;
+          pos_start_event.start = true;
+          pos_start_event.index.content = used_extra;
+          pos_start_event.new_location = pos_new_location;
+          pos_new_location = false;
+
+          ++used_extra;
+        } else {
+          // Goes to just the negative child
+          event_points[event.index.partner].index.partner = neg_used;
+          polygon_index_map[poly_index] = neg_polygons.size();
+          PolygonEventPoint& child_event = neg_event_points[neg_used];
+          ++neg_used;
+          child_event.index.content = neg_polygons.size();
+          neg_polygons.push_back(std::move(polygon));
+          child_event.new_location = neg_new_location;
+          neg_new_location = false;
+          child_event.start = true;
+        }
+      }
     } else {
       size_t start_event_index = event.index.partner;
-      // This is an end event for the positive child.
-      assert(start_event_index < pos_used);
-      PolygonEventPoint& child_event = event_points[pos_used];
+      if (start_event_index == static_cast<size_t>(-1)) {
+        // The start event was from a border polygon.
+      } else if (start_event_index < neg_polygons.size()*2) {
+        // The start event belongs to a negative polygon.
+        assert(start_event_index < neg_used);
+        PolygonEventPoint& child_event = neg_event_points[neg_used];
 
-      child_event.start = false;
-      child_event.new_location = pos_new_location;
-      pos_new_location = false;
-      child_event.index.content =
-        event_points[start_event_index].index.content;
-      event_points[start_event_index].index.partner = pos_used;
-      ++pos_used;
+        child_event.start = false;
+        child_event.new_location = neg_new_location;
+        neg_new_location = false;
+        child_event.index.content =
+          neg_event_points[start_event_index].index.content;
+        neg_event_points[start_event_index].index.partner = neg_used;
+        ++neg_used;
+      } else {
+        start_event_index -= neg_polygons.size()*2;
+        // This is an end event for the positive child.
+        assert(start_event_index < pos_used);
+        PolygonEventPoint& child_event = event_points[pos_used];
+
+        child_event.start = false;
+        child_event.new_location = pos_new_location;
+        pos_new_location = false;
+        child_event.index.content =
+          event_points[start_event_index].index.content;
+        event_points[start_event_index].index.partner = pos_used;
+        ++pos_used;
+      }
     }
   }
   polygons.clear();

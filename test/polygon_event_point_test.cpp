@@ -321,16 +321,22 @@ TEST(PolygonEventPointPartition, ApplyPrimaryNoOverlap) {
   partition.split_index = 7;
   partition.neg_poly_count = 4;
   partition.pos_poly_count = 6;
+  partition.DiscountBorderPolygons(event_points, polygons.size());
+  ASSERT_EQ(partition.neg_poly_count, 4);
+  ASSERT_EQ(partition.pos_poly_count, 6);
 
   // `ApplyPrimary` will clear `polygons`.
   std::vector<BSPPolygon<AABBConvexPolygon<>>> polygons_copy(polygons);
   std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_polygons;
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_border_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(10);
   PolygonEventPoint neg_event_points[8];
   partition.ApplyPrimary(/*dimension=*/0, event_points, polygons,
                          polygon_index_map.data(), neg_event_points,
-                         neg_polygons, pos_polygons);
+                         neg_polygons, pos_polygons, neg_border_polygons,
+                         pos_border_polygons);
 
   EXPECT_THAT(polygons, IsEmpty());
   ASSERT_THAT(neg_polygons, SizeIs(4));
@@ -370,14 +376,20 @@ TEST(PolygonEventPointPartition, ApplyPrimarySingleOverlap) {
   partition.split_index = 2;
   partition.neg_poly_count = 2;
   partition.pos_poly_count = 1;
+  partition.DiscountBorderPolygons(event_points, polygons.size());
+  ASSERT_EQ(partition.neg_poly_count, 2);
+  ASSERT_EQ(partition.pos_poly_count, 1);
 
   std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_polygons;
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_border_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(2);
   PolygonEventPoint neg_event_points[4];
   partition.ApplyPrimary(/*dimension=*/0, event_points, polygons,
                          polygon_index_map.data(), neg_event_points,
-                         neg_polygons, pos_polygons);
+                         neg_polygons, pos_polygons, neg_border_polygons,
+                         pos_border_polygons);
 
   EXPECT_THAT(polygons, IsEmpty());
   EXPECT_THAT(neg_polygons, SizeIs(2));
@@ -422,14 +434,18 @@ TEST(PolygonEventPointPartition, ApplyPrimaryTwoOverlaps) {
   partition.split_index = 3;
   partition.neg_poly_count = 3;
   partition.pos_poly_count = 2;
+  partition.DiscountBorderPolygons(event_points, polygons.size());
 
   std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_polygons;
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_border_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(3);
   PolygonEventPoint neg_event_points[6];
   partition.ApplyPrimary(/*dimension=*/0, event_points, polygons,
                          polygon_index_map.data(), neg_event_points,
-                         neg_polygons, pos_polygons);
+                         neg_polygons, pos_polygons, neg_border_polygons,
+                         pos_border_polygons);
 
   EXPECT_THAT(polygons, IsEmpty());
   EXPECT_THAT(neg_polygons, SizeIs(3));
@@ -462,14 +478,18 @@ TEST(PolygonEventPointPartition, ApplyPrimaryGapAtSplit) {
   partition.split_index = 1;
   partition.neg_poly_count = 1;
   partition.pos_poly_count = 2;
+  partition.DiscountBorderPolygons(event_points, polygons.size());
 
   std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_polygons;
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_border_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(3);
   PolygonEventPoint neg_event_points[2];
   partition.ApplyPrimary(/*dimension=*/0, event_points, polygons,
                          polygon_index_map.data(), neg_event_points,
-                         neg_polygons, pos_polygons);
+                         neg_polygons, pos_polygons, neg_border_polygons,
+                         pos_border_polygons);
 
   EXPECT_THAT(polygons, IsEmpty());
   EXPECT_THAT(neg_polygons, SizeIs(1));
@@ -477,6 +497,82 @@ TEST(PolygonEventPointPartition, ApplyPrimaryGapAtSplit) {
 
   CheckSorted(/*dimension=*/0, neg_polygons, neg_event_points);
   CheckSorted(/*dimension=*/0, pos_polygons, event_points);
+}
+
+TEST(PolygonEventPointPartition, ApplyPrimaryCoincidentPolygons) {
+  /*  x-view:
+   *
+   *  0 1 2 3 4
+   *  |-|-|-|-|
+   *
+   *        ^
+   *        |
+   *
+   *  y-view:
+   *  2  -
+   *     |
+   *  1---  <- 0 height interval
+   *   |
+   *  0-
+   *
+   *
+   */
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> polygons;
+  polygons.push_back(MakeTriangle(0, Point3(0, 0, 0),
+                                     Point3(1, 1, 0),
+                                     Point3(1, 1, 1)));
+  polygons.push_back(MakeTriangle(0, Point3(1, 1, 1),
+                                     Point3(2, 1, 1),
+                                     Point3(2, 1, 2)));
+  polygons.push_back(MakeTriangle(0, Point3(3, 1, 3),
+                                     Point3(3, 1, 2),
+                                     Point3(2, 1, 2)));
+  polygons.push_back(MakeTriangle(0, Point3(3, 1, 3),
+                                     Point3(4, 2, 3),
+                                     Point3(4, 2, 4)));
+  PolygonEventPoint event_points[8];
+  MakeEventPoints(/*dimension=*/1, polygons, event_points);
+  CheckSorted(/*dimension=*/1, polygons, event_points);
+
+  PolygonEventPointPartition partition;
+  partition.split_index = 5;
+  partition.neg_poly_count = 3;
+  partition.pos_poly_count = 1;
+  partition.DiscountBorderPolygons(event_points, polygons.size());
+  ASSERT_EQ(partition.neg_poly_count, 1);
+  ASSERT_EQ(partition.pos_poly_count, 1);
+
+  const HalfSpace3 split_plane =
+    partition.GetSplitPlane(/*dimension=*/1, event_points, polygons);
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_border_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
+  std::vector<size_t> polygon_index_map(4);
+  PolygonEventPoint neg_event_points[2];
+  partition.ApplyPrimary(/*dimension=*/1, event_points, polygons,
+                         polygon_index_map.data(), neg_event_points,
+                         neg_polygons, pos_polygons, neg_border_polygons,
+                         pos_border_polygons);
+
+  EXPECT_THAT(neg_polygons, SizeIs(1));
+  EXPECT_THAT(pos_polygons, SizeIs(1));
+  EXPECT_THAT(neg_border_polygons, SizeIs(1));
+  EXPECT_THAT(pos_border_polygons, SizeIs(1));
+  for (const BSPPolygon<AABBConvexPolygon<>>& polygon : neg_polygons) {
+    EXPECT_FALSE(polygon.plane().IsSameOrOpposite(split_plane));
+  }
+  for (const BSPPolygon<AABBConvexPolygon<>>& polygon : pos_polygons) {
+    EXPECT_FALSE(polygon.plane().IsSameOrOpposite(split_plane));
+  }
+  for (const BSPPolygon<AABBConvexPolygon<>>& polygon : neg_border_polygons) {
+    EXPECT_EQ(polygon.plane(), split_plane);
+  }
+  for (const BSPPolygon<AABBConvexPolygon<>>& polygon : pos_border_polygons) {
+    EXPECT_EQ(polygon.plane(), -split_plane);
+  }
+  CheckSorted(/*dimension=*/1, neg_polygons, neg_event_points);
+  CheckSorted(/*dimension=*/1, pos_polygons, event_points);
 }
 
 TEST(PolygonEventPointPartition, ApplySecondaryNoOverlap) {
@@ -496,15 +592,19 @@ TEST(PolygonEventPointPartition, ApplySecondaryNoOverlap) {
   partition.split_index = 7;
   partition.neg_poly_count = 4;
   partition.pos_poly_count = 6;
+  partition.DiscountBorderPolygons(primary_event_points, polygons.size());
 
   std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_polygons;
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_border_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(10);
   PolygonEventPoint primary_neg_event_points[8];
   const size_t parent_polygon_count = polygons.size();
   partition.ApplyPrimary(/*dimension=*/0, primary_event_points, polygons,
                          polygon_index_map.data(), primary_neg_event_points,
-                         neg_polygons, pos_polygons);
+                         neg_polygons, pos_polygons, neg_border_polygons,
+                         pos_border_polygons);
 
   PolygonEventPoint secondary_neg_event_points[8];
   PolygonEventPoint secondary_pos_event_points[12];
@@ -537,15 +637,19 @@ TEST(PolygonEventPointPartition, ApplySecondaryReverseNoOverlap) {
   partition.split_index = 7;
   partition.neg_poly_count = 4;
   partition.pos_poly_count = 6;
+  partition.DiscountBorderPolygons(primary_event_points, polygons.size());
 
   std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_polygons;
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_border_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(10);
   PolygonEventPoint primary_neg_event_points[8];
   const size_t parent_polygon_count = polygons.size();
   partition.ApplyPrimary(/*dimension=*/0, primary_event_points, polygons,
                          polygon_index_map.data(), primary_neg_event_points,
-                         neg_polygons, pos_polygons);
+                         neg_polygons, pos_polygons, neg_border_polygons,
+                         pos_border_polygons);
 
   PolygonEventPoint secondary_neg_event_points[8];
   PolygonEventPoint secondary_pos_event_points[12];
@@ -588,14 +692,18 @@ TEST(PolygonEventPointPartition, ApplySecondaryTwoOverlaps) {
   partition.split_index = 3;
   partition.neg_poly_count = 3;
   partition.pos_poly_count = 2;
+  partition.DiscountBorderPolygons(event_points, polygons.size());
 
   std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_polygons;
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_border_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(3);
   PolygonEventPoint neg_event_points[6];
   partition.ApplyPrimary(/*dimension=*/0, event_points, polygons,
                          polygon_index_map.data(), neg_event_points,
-                         neg_polygons, pos_polygons);
+                         neg_polygons, pos_polygons, neg_border_polygons,
+                         pos_border_polygons);
 
   EXPECT_THAT(neg_polygons, SizeIs(3));
   EXPECT_THAT(pos_polygons, SizeIs(2));
@@ -642,14 +750,18 @@ TEST(PolygonEventPointPartition, ApplySecondaryTwoOverlapsRightAngleDown) {
   partition.split_index = 3;
   partition.neg_poly_count = 3;
   partition.pos_poly_count = 2;
+  partition.DiscountBorderPolygons(event_points, polygons.size());
 
   std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_polygons;
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_border_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(3);
   PolygonEventPoint neg_event_points[6];
   partition.ApplyPrimary(/*dimension=*/0, event_points, polygons,
                          polygon_index_map.data(), neg_event_points,
-                         neg_polygons, pos_polygons);
+                         neg_polygons, pos_polygons, neg_border_polygons,
+                         pos_border_polygons);
 
   EXPECT_THAT(neg_polygons, SizeIs(3));
   EXPECT_THAT(pos_polygons, SizeIs(2));
@@ -713,14 +825,18 @@ TEST(PolygonEventPointPartition, ApplySecondaryTwoOverlapsSkewedDown) {
   partition.split_index = 3;
   partition.neg_poly_count = 3;
   partition.pos_poly_count = 2;
+  partition.DiscountBorderPolygons(event_points, polygons.size());
 
   std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_polygons;
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_border_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(3);
   PolygonEventPoint neg_event_points[6];
   partition.ApplyPrimary(/*dimension=*/0, event_points, polygons,
                          polygon_index_map.data(), neg_event_points,
-                         neg_polygons, pos_polygons);
+                         neg_polygons, pos_polygons, neg_border_polygons,
+                         pos_border_polygons);
 
   EXPECT_THAT(neg_polygons, SizeIs(3));
   EXPECT_THAT(pos_polygons, SizeIs(2));
@@ -774,14 +890,18 @@ TEST(PolygonEventPointPartition, ApplySecondaryTwoOverlapsHorzFlipped) {
   partition.split_index = 3;
   partition.neg_poly_count = 3;
   partition.pos_poly_count = 2;
+  partition.DiscountBorderPolygons(event_points, polygons.size());
 
   std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_polygons;
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_border_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(3);
   PolygonEventPoint neg_event_points[6];
   partition.ApplyPrimary(/*dimension=*/0, event_points, polygons,
                          polygon_index_map.data(), neg_event_points,
-                         neg_polygons, pos_polygons);
+                         neg_polygons, pos_polygons, neg_border_polygons,
+                         pos_border_polygons);
 
   EXPECT_THAT(neg_polygons, SizeIs(3));
   EXPECT_THAT(pos_polygons, SizeIs(2));
@@ -835,14 +955,18 @@ TEST(PolygonEventPointPartition, ApplySecondaryTwoOverlapsSkewedDownMore) {
   partition.split_index = 3;
   partition.neg_poly_count = 3;
   partition.pos_poly_count = 2;
+  partition.DiscountBorderPolygons(event_points, polygons.size());
 
   std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_polygons;
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_border_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(3);
   PolygonEventPoint neg_event_points[6];
   partition.ApplyPrimary(/*dimension=*/0, event_points, polygons,
                          polygon_index_map.data(), neg_event_points,
-                         neg_polygons, pos_polygons);
+                         neg_polygons, pos_polygons, neg_border_polygons,
+                         pos_border_polygons);
 
   EXPECT_THAT(neg_polygons, SizeIs(3));
   EXPECT_THAT(pos_polygons, SizeIs(2));
@@ -891,14 +1015,18 @@ TEST(PolygonEventPartition, ApplySecondaryOneOverlap) {
   partition.split_index = 6;
   partition.neg_poly_count = 4;
   partition.pos_poly_count = 3;
+  partition.DiscountBorderPolygons(event_points, polygons.size());
 
   std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_polygons;
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_border_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(6);
   PolygonEventPoint neg_event_points[8];
   partition.ApplyPrimary(/*dimension=*/0, event_points, polygons,
                          polygon_index_map.data(), neg_event_points,
-                         neg_polygons, pos_polygons);
+                         neg_polygons, pos_polygons, neg_border_polygons,
+                         pos_border_polygons);
 
   EXPECT_THAT(neg_polygons, SizeIs(4));
   EXPECT_THAT(pos_polygons, SizeIs(3));
@@ -956,14 +1084,18 @@ TEST(PolygonEventPointPartition, ApplySecondaryEmptyInterval) {
   partition.split_index = 5;
   partition.neg_poly_count = 3;
   partition.pos_poly_count = 1;
+  partition.DiscountBorderPolygons(event_points, polygons.size());
 
   std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_polygons;
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_border_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(4);
   PolygonEventPoint neg_event_points[6];
   partition.ApplyPrimary(/*dimension=*/0, event_points, polygons,
                          polygon_index_map.data(), neg_event_points,
-                         neg_polygons, pos_polygons);
+                         neg_polygons, pos_polygons, neg_border_polygons,
+                         pos_border_polygons);
 
   EXPECT_THAT(neg_polygons, SizeIs(3));
   EXPECT_THAT(pos_polygons, SizeIs(1));
