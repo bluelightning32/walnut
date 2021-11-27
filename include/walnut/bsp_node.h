@@ -506,16 +506,14 @@ void BSPNode<OutputPolygonParent>::PushContentsToChildren() {
       polygon.SetBoundaryAngles(SplitSide{&split_, pos_child},
                                 /*coincident_begin=*/0,
                                 /*coincident_end=*/polygon.vertex_count() + 1);
+      polygon.on_node_plane.split = &split_;
+      polygon.on_node_plane.pos_side = pos_child;
       if (pos_child) {
         positive_child_->content_info_by_id_[polygon.id].has_polygons++;
-        positive_child_->border_contents_.emplace_back(&split_,
-                                                       /*pos_side=*/true,
-                                                       std::move(polygon));
+        positive_child_->border_contents_.push_back(std::move(polygon));
       } else {
         negative_child_->content_info_by_id_[polygon.id].has_polygons++;
-        negative_child_->border_contents_.emplace_back(&split_,
-                                                       /*pos_side=*/false,
-                                                       std::move(polygon));
+        negative_child_->border_contents_.push_back(std::move(polygon));
       }
     }
   }
