@@ -217,6 +217,9 @@ struct PolygonEventPointPartition {
   //
   // `neg_event_points` must be allocated with `split.GetNegEventPointCount` entries.
   //
+  // `split_plane` will be initialized on output. Pointers to that split_plane
+  // will be stored inside the child polygons.
+  //
   // On output `polygon_index_map` maps indices from `polygons` into indices in
   // `neg_polygons` and/or `pos_polygons`. `polygon_index_map` must be
   // allocated with `polygons.size()` entries. `polygon_index_map` is indexed
@@ -231,6 +234,7 @@ struct PolygonEventPointPartition {
   void ApplyPrimary(
       int dimension,
       PolygonEventPoint* event_points,
+      HalfSpace3* split_plane,
       std::vector<BSPPolygon<AABBConvexPolygon<ParentPolygon>>>& polygons,
       size_t* polygon_index_map,
       PolygonEventPoint* neg_event_points,
@@ -485,6 +489,7 @@ template <typename ParentPolygon>
 void PolygonEventPointPartition::ApplyPrimary(
     int dimension,
     PolygonEventPoint* event_points,
+    HalfSpace3* split_plane,
     std::vector<BSPPolygon<AABBConvexPolygon<ParentPolygon>>>& polygons,
     size_t* polygon_index_map,
     PolygonEventPoint* neg_event_points,
@@ -504,8 +509,7 @@ void PolygonEventPointPartition::ApplyPrimary(
   neg_polygons.resize(extra_count);
   pos_polygons.resize(extra_count);
   size_t used_extra = 0;
-  const HalfSpace3 split_plane =
-    GetSplitPlane(dimension, event_points, polygons);
+  *split_plane = GetSplitPlane(dimension, event_points, polygons);
   size_t neg_used = 0;
   size_t pos_used = 0;
 
@@ -603,7 +607,7 @@ void PolygonEventPointPartition::ApplyPrimary(
           // Goes to both children
           auto child_polygons =
             std::move(polygon).CreateSplitChildren(
-                polygon.GetSplitInfo(split_plane));
+                polygon.GetSplitInfo(*split_plane));
           neg_polygons[used_extra] = std::move(child_polygons.first);
           pos_polygons[used_extra] = std::move(child_polygons.second);
           polygon_index_map[poly_index] = used_extra;
