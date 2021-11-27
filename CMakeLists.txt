@@ -87,7 +87,7 @@ set(WALNUT_PUBLIC_HEADERS
     "include/walnut/homo_point3.h"
     "include/walnut/member_forward.h"
     "include/walnut/mesh.h"
-    "include/walnut/mesh_plane_repairer_test.h"
+    "include/walnut/mesh_plane_repairer.h"
     "include/walnut/monotone_decomposer.h"
     "include/walnut/monotone_range.h"
     "include/walnut/monotone_triangulator.h"
@@ -154,6 +154,7 @@ package_add_test(assignable_wrapper_test test/assignable_wrapper_test.cpp)
 package_add_test(big_int_test test/big_int_test.cpp)
 package_add_test(big_int_words_test test/big_int_words_test.cpp)
 package_add_test(big_uint_word_test test/big_uint_word_test.cpp)
+package_add_test(bsp_polygon_test test/bsp_polygon_test.cpp)
 package_add_test(bsp_traverser_test test/bsp_traverser_test.cpp)
 package_add_test(bsp_tree_test test/bsp_tree_test.cpp)
 package_add_test(bsp_tree_pwn_test test/bsp_tree_pwn_test.cpp)

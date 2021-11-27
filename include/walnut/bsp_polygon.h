@@ -184,6 +184,41 @@ class BSPPolygon :
                       this->vertex_count() + exclude_range.first);
   }
 
+  // Sets the boundary angles in the adjacent edges and vertices that are
+  // coincident to the split plane.
+  //
+  // `adjacent` must be coincident with `coincident_info.split`. That vertex is
+  // used as a seed for the range of coincident vertices. That range is
+  // expanded on the beginning and end until a non-coincident vertex is found
+  // on both sides of the range. The boundary angles are updated for all
+  // vertices and edges in that range.
+  void SetAdjacentBoundaryAngles(SplitSide coincident_info, size_t adjacent) {
+    size_t coincident_begin = adjacent + this->vertex_count() - 1;
+    while (true) {
+      if (coincident_begin == adjacent) {
+        // Everything is coincident
+        SetBoundaryAngles(coincident_info, /*coincident_begin=*/0,
+                          /*coincident_end=*/this->vertex_count() + 1);
+        on_node_plane = coincident_info;
+        return;
+      }
+      if (!coincident_info.split->IsCoincident(
+            this->vertex(coincident_begin % this->vertex_count()))) {
+        break;
+      }
+      --coincident_begin;
+    }
+    ++coincident_begin;
+    coincident_begin %= this->vertex_count();
+    size_t coincident_end = adjacent + this->vertex_count() + 1;
+    while (coincident_info.split->IsCoincident(
+             this->vertex(coincident_end % this->vertex_count()))) {
+      ++coincident_end;
+    }
+    SetBoundaryAngles(coincident_info, coincident_begin,
+                      (coincident_end - coincident_begin) %
+                        this->vertex_count() + coincident_begin);
+  }
 
   // Updates the boundary angles on the BSPPolygon children created by
   // `CreateSplitChildren`.
