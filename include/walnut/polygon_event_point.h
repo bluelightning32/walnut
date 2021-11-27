@@ -765,6 +765,28 @@ void PolygonEventPointPartition::ApplySecondary(
   size_t pos_used = 0;
   while (event_points_pos < event_points_end) {
     assert(event_points_pos->new_location);
+    // Skip main events for border polygons
+    while (event_points_pos < event_points_end) {
+      if (event_points_pos->start) {
+        const size_t end_event_index = event_points_pos->index.partner;
+        const size_t mapped_index =
+          polygon_index_map[event_points[end_event_index].index.content];
+        if (mapped_index == static_cast<size_t>(-1)) {
+          event_points[end_event_index].index.partner = -2;
+          ++event_points_pos;
+        } else {
+          break;
+        }
+      } else {
+        size_t child_start_event_index = event_points_pos->index.partner;
+        if (child_start_event_index == static_cast<size_t>(-2)) {
+          ++event_points_pos;
+        } else {
+          break;
+        }
+      }
+    }
+    if (event_points_pos == event_points_end) break;
     bool neg_new_location = true;
     bool pos_new_location = true;
     const HomoPoint3* heap_location;
@@ -823,7 +845,9 @@ void PolygonEventPointPartition::ApplySecondary(
       // Process the main end events at the location.
       while (process_main_events && !event_points_pos->start) {
         size_t child_start_event_index = event_points_pos->index.partner;
-        if (child_start_event_index < neg_polygons.size()*2) {
+        if (child_start_event_index == static_cast<size_t>(-2)) {
+          // Skip end events from border polygons
+        } else if (child_start_event_index < neg_polygons.size()*2) {
           assert(child_start_event_index < neg_used);
           PolygonEventPoint& child_event = neg_event_points[neg_used];
           const size_t poly_index =
@@ -905,7 +929,10 @@ void PolygonEventPointPartition::ApplySecondary(
         const size_t end_event_index = event_points_pos->index.partner;
         const size_t mapped_index =
           polygon_index_map[event_points[end_event_index].index.content];
-        if (mapped_index < extra_poly_count) {
+        if (mapped_index == static_cast<size_t>(-1)) {
+          // Skip start events from border polygons
+          event_points[end_event_index].index.partner = -2;
+        } else if (mapped_index < extra_poly_count) {
           // This polygon was split into both children.
           const BSPPolygon<AABBConvexPolygon<ParentPolygon>>& neg_polygon =
             neg_polygons[mapped_index];
