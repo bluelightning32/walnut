@@ -57,7 +57,7 @@ void CheckSorted(size_t dimension,
                  const PolygonEventPoint* event_points) {
   std::map<const BSPPolygon<AABBConvexPolygon<>>*, size_t> seen;
   const HomoPoint3* prev = nullptr;
-  bool seen_start_points = false;
+  std::set<size_t> open_polygons_at_location;
   for (size_t i = 0; i < polygons.size()*2; ++i) {
     size_t& seen_polygon =
       seen[&event_points[i].GetPolygon(event_points, polygons)];
@@ -72,15 +72,24 @@ void CheckSorted(size_t dimension,
     if (i > 0) {
       EXPECT_NE(event_points[i].new_location,
                 prev->IsEquivalentComponent(dimension, location));
-      EXPECT_LE(prev->CompareComponent(dimension, location), 0);
+      EXPECT_LE(prev->CompareComponent(dimension, location), 0)
+        << "i=" << i << " prev=" << *prev << " location=" << location;
     } else {
       EXPECT_TRUE(event_points[0].new_location);
     }
-    if (event_points[i].new_location) seen_start_points = false;
+    if (event_points[i].new_location) open_polygons_at_location.clear();
     if (event_points[i].start) {
-      seen_start_points = true;
+      EXPECT_TRUE(
+          open_polygons_at_location.insert(
+            event_points[event_points[i].index.partner].index.content).second);
     } else {
-      EXPECT_FALSE(seen_start_points);
+      auto open_it =
+        open_polygons_at_location.find(event_points[i].index.content);
+      if (open_it != open_polygons_at_location.end()) {
+        open_polygons_at_location.erase(open_it);
+      } else {
+        EXPECT_TRUE(open_polygons_at_location.empty());
+      }
     }
     prev = &location;
   }
@@ -853,7 +862,7 @@ TEST(PolygonEventPointPartition, ApplySecondaryTwoOverlapsSkewedDownMore) {
   CheckSorted(/*dimension=*/1, pos_polygons, secondary_pos_event_points);
 }
 
-TEST(GetLowestCost, ApplySecondaryOneOverlap) {
+TEST(PolygonEventPartition, ApplySecondaryOneOverlap) {
   /*  0 1 2 3 4 5 6
    *  |-|-| |-|-|-|
    *      |-----|
@@ -896,6 +905,71 @@ TEST(GetLowestCost, ApplySecondaryOneOverlap) {
 
   PolygonEventPoint secondary_neg_event_points[8];
   PolygonEventPoint secondary_pos_event_points[6];
+  std::vector<PolygonMergeEvent> merge_heap;
+  partition.ApplySecondary(/*dimension=*/1, polygon_index_map.size(),
+                           neg_polygons, pos_polygons,
+                           polygon_index_map.data(), secondary_event_points,
+                           secondary_neg_event_points,
+                           secondary_pos_event_points, merge_heap);
+  ASSERT_TRUE(secondary_neg_event_points[0].start);
+  ASSERT_TRUE(secondary_pos_event_points[0].start);
+
+  CheckSorted(/*dimension=*/1, neg_polygons, secondary_neg_event_points);
+  CheckSorted(/*dimension=*/1, pos_polygons, secondary_pos_event_points);
+}
+
+TEST(PolygonEventPointPartition, ApplySecondaryEmptyInterval) {
+  /*  x-view:
+   *
+   *  0 1 2 3 4
+   *  |-|-|-|-|
+   *
+   *        ^
+   *        |
+   *
+   *  y-view:
+   *  2  -
+   *     |
+   *  1---  <- 0 height interval
+   *   |
+   *  0-
+   *
+   *
+   */
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> polygons;
+  polygons.push_back(MakeTriangleForInterval(0, Point3(0, 0, 0),
+                                             Point3(1, 1, 1)));
+  polygons.push_back(MakeTriangleForInterval(0, Point3(1, 1, 1),
+                                             Point3(2, 1, 2)));
+  polygons.push_back(MakeTriangleForInterval(0, Point3(2, 1, 2),
+                                             Point3(3, 1, 3)));
+  polygons.push_back(MakeTriangleForInterval(0, Point3(3, 1, 3),
+                                             Point3(4, 2, 4)));
+  PolygonEventPoint event_points[8];
+  MakeEventPoints(/*dimension=*/0, polygons, event_points);
+  CheckSorted(/*dimension=*/0, polygons, event_points);
+  PolygonEventPoint secondary_event_points[8];
+  MakeEventPoints(/*dimension=*/1, polygons, secondary_event_points);
+  CheckSorted(/*dimension=*/1, polygons, secondary_event_points);
+
+  PolygonEventPointPartition partition;
+  partition.split_index = 5;
+  partition.neg_poly_count = 3;
+  partition.pos_poly_count = 1;
+
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_polygons;
+  std::vector<size_t> polygon_index_map(4);
+  PolygonEventPoint neg_event_points[6];
+  partition.ApplyPrimary(/*dimension=*/0, event_points, polygons,
+                         polygon_index_map.data(), neg_event_points,
+                         neg_polygons, pos_polygons);
+
+  EXPECT_THAT(neg_polygons, SizeIs(3));
+  EXPECT_THAT(pos_polygons, SizeIs(1));
+
+  PolygonEventPoint secondary_neg_event_points[6];
+  PolygonEventPoint secondary_pos_event_points[2];
   std::vector<PolygonMergeEvent> merge_heap;
   partition.ApplySecondary(/*dimension=*/1, polygon_index_map.size(),
                            neg_polygons, pos_polygons,

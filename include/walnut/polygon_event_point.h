@@ -693,186 +693,155 @@ void PolygonEventPointPartition::ApplySecondary(
   size_t pos_used = 0;
   while (event_points_pos < event_points_end) {
     assert(event_points_pos->new_location);
-    PolygonEventPoint* const first_at_location = event_points_pos;
     bool neg_new_location = true;
     bool pos_new_location = true;
-    bool location_end = false;
-    int merge_main_comparison;
     const HomoPoint3* heap_location;
+    bool process_heap_events;
+    bool process_main_events;
     if (heap_start != heap_end) {
       heap_location = &heap_start->GetLocation(dimension, neg_polygons,
                                                pos_polygons);
-      merge_main_comparison = CompareHeapLocationToMain(dimension,
-                                                        *heap_location,
-                                                        *event_points_pos,
-                                                        extra_poly_count,
-                                                        event_points,
-                                                        neg_polygons,
-                                                        pos_polygons,
-                                                        polygon_index_map,
-                                                        neg_event_points,
-                                                        pos_event_points);
+      int merge_main_comparison = CompareHeapLocationToMain(dimension,
+                                                            *heap_location,
+                                                            *event_points_pos,
+                                                            extra_poly_count,
+                                                            event_points,
+                                                            neg_polygons,
+                                                            pos_polygons,
+                                                            polygon_index_map,
+                                                            neg_event_points,
+                                                            pos_event_points);
+      process_heap_events = merge_main_comparison <= 0;
+      process_main_events = merge_main_comparison >= 0;
     } else {
-      merge_main_comparison = 1;
+      process_heap_events = false;
+      process_main_events = true;
     }
-    // Process the merge end events up to and at the main event location.
-    while (merge_main_comparison <= 0 && !heap_start->start) {
-      if (heap_start->pos_child) {
-        assert(pos_used < pos_polygons.size()*2);
-        pos_event_points[heap_start->partner_index].index.partner = pos_used;
-        PolygonEventPoint& child_event = pos_event_points[pos_used];
-        child_event.start = false;
-        child_event.index.content = heap_start->polygon_index;
-        child_event.new_location = pos_new_location;
-        pos_new_location = false;
-        ++pos_used;
-      } else {
-        neg_event_points[heap_start->partner_index].index.partner = neg_used;
-        PolygonEventPoint& child_event = neg_event_points[neg_used];
-        child_event.start = false;
-        child_event.index.content = heap_start->polygon_index;
-        child_event.new_location = neg_new_location;
-        neg_new_location = false;
-        ++neg_used;
-      }
-      std::pop_heap(heap_start, heap_end, heap_compare);
-      --heap_end;
-      if (heap_start == heap_end ||
-          !heap_location->IsEquivalentComponent(dimension,
-            heap_start->GetLocation(dimension, neg_polygons, pos_polygons))) {
-        if (merge_main_comparison < 0) {
-          location_end = true;
-        }
-        merge_main_comparison = 1;
-      }
-    }
-    if (location_end) continue;
-    // Process the main end events at the location.
-    while (merge_main_comparison >= 0 && event_points_pos < event_points_end &&
-           !event_points_pos->start &&
-           (event_points_pos == first_at_location ||
-            !event_points_pos->new_location)) {
-      size_t child_start_event_index = event_points_pos->index.partner;
-      if (child_start_event_index < neg_polygons.size()*2) {
-        assert(child_start_event_index < neg_used);
-        PolygonEventPoint& child_event = neg_event_points[neg_used];
-        const size_t poly_index =
-          neg_event_points[child_start_event_index].index.content;
-        neg_event_points[child_start_event_index].index.partner = neg_used;
-        ++neg_used;
-        child_event.start = false;
-        child_event.index.content = poly_index;
-        child_event.new_location = neg_new_location;
-        neg_new_location = false;
-      } else {
-        assert(pos_used < pos_polygons.size()*2);
-        child_start_event_index -= neg_polygons.size()*2;
-        assert(child_start_event_index < pos_used);
-        PolygonEventPoint& child_event = pos_event_points[pos_used];
-        const size_t poly_index =
-          pos_event_points[child_start_event_index].index.content;
-        pos_event_points[child_start_event_index].index.partner = pos_used;
-        ++pos_used;
-        child_event.start = false;
-        child_event.index.content = poly_index;
-        child_event.new_location = pos_new_location;
-        pos_new_location = false;
-      }
-      ++event_points_pos;
-    }
-    // Process the merge start events up to and at the main event location.
-    while (merge_main_comparison <= 0 && heap_start->start) {
-      if (heap_start->pos_child) {
-        assert(pos_used < pos_polygons.size()*2);
-        if (heap_start->partner_index != static_cast<size_t>(-1)) {
-          assert(!event_points[heap_start->partner_index].start);
-          event_points[heap_start->partner_index].index.partner =
-            neg_polygons.size()*2 + pos_used;
+    // Process all points events at the location.
+    while (process_heap_events || process_main_events) {
+      // Process the merge end events up to and at the main event location.
+      while (process_heap_events && !heap_start->start) {
+        if (heap_start->pos_child) {
+          assert(pos_used < pos_polygons.size()*2);
+          pos_event_points[heap_start->partner_index].index.partner = pos_used;
+          PolygonEventPoint& child_event = pos_event_points[pos_used];
+          child_event.start = false;
+          child_event.index.content = heap_start->polygon_index;
+          child_event.new_location = pos_new_location;
+          pos_new_location = false;
+          ++pos_used;
         } else {
-          heap_start->start = false;
-          heap_start->partner_index = pos_used;
-        }
-        PolygonEventPoint& child_event = pos_event_points[pos_used];
-        child_event.start = true;
-        child_event.index.content = heap_start->polygon_index;
-        child_event.new_location = pos_new_location;
-        pos_new_location = false;
-        ++pos_used;
-      } else {
-        if (heap_start->partner_index != static_cast<size_t>(-1)) {
-          event_points[heap_start->partner_index].index.partner = neg_used;
-        } else {
-          heap_start->start = false;
-          heap_start->partner_index = neg_used;
-        }
-        PolygonEventPoint& child_event = neg_event_points[neg_used];
-        child_event.start = true;
-        child_event.index.content = heap_start->polygon_index;
-        child_event.new_location = neg_new_location;
-        neg_new_location = false;
-        ++neg_used;
-      }
-      std::pop_heap(heap_start, heap_end, heap_compare);
-      --heap_end;
-      if (!heap_end->start) {
-        // Re-add the merge event for the end event.
-        ++heap_end;
-        std::push_heap(heap_start, heap_end, heap_compare);
-      }
-      if (heap_start == heap_end ||
-          !heap_location->IsEquivalentComponent(dimension,
-            heap_start->GetLocation(dimension, neg_polygons, pos_polygons))) {
-        if (merge_main_comparison < 0) {
-          location_end = true;
-        }
-        merge_main_comparison = 1;
-      }
-    }
-    if (location_end) continue;
-    // Process the main start events at the location.
-    while (merge_main_comparison >= 0 && event_points_pos < event_points_end &&
-           event_points_pos->start &&
-           (event_points_pos == first_at_location ||
-            !event_points_pos->new_location)) {
-      const size_t end_event_index = event_points_pos->index.partner;
-      const size_t mapped_index =
-        polygon_index_map[event_points[end_event_index].index.content];
-      if (mapped_index < extra_poly_count) {
-        // This polygon was split into both children.
-        const BSPPolygon<AABBConvexPolygon<ParentPolygon>>& neg_polygon =
-          neg_polygons[mapped_index];
-        const BSPPolygon<AABBConvexPolygon<ParentPolygon>>& pos_polygon =
-          pos_polygons[mapped_index];
-        const int start_comparison =
-          neg_polygon.min_vertex(dimension).CompareComponent(
-              dimension, pos_polygon.min_vertex(dimension));
-        const int end_comparison =
-          neg_polygon.max_vertex(dimension).CompareComponent(
-              dimension, pos_polygon.max_vertex(dimension));
-        if (start_comparison <= 0) {
-          // Add the negative child start event.
-          PolygonEventPoint& neg_event = neg_event_points[neg_used];
-          neg_event.start = true;
-          neg_event.index.content = mapped_index;
-          neg_event.new_location = neg_new_location;
+          neg_event_points[heap_start->partner_index].index.partner = neg_used;
+          PolygonEventPoint& child_event = neg_event_points[neg_used];
+          child_event.start = false;
+          child_event.index.content = heap_start->polygon_index;
+          child_event.new_location = neg_new_location;
           neg_new_location = false;
-          if (end_comparison > 0) {
-            // The negative child end event is at the same location as the
-            // parent end event. Tell the parent end event to update the
-            // negative start event.
-            event_points[end_event_index].index.partner = neg_used;
-          } else {
-            // The negative end event comes before the parent end event. Track
-            // it in the heap.
-            heap_end->start = false;
-            heap_end->pos_child = false;
-            heap_end->polygon_index = mapped_index;
-            heap_end->partner_index = neg_used;
-            ++heap_end;
-            std::push_heap(heap_start, heap_end, heap_compare);
-          }
           ++neg_used;
+        }
+        std::pop_heap(heap_start, heap_end, heap_compare);
+        --heap_end;
+        if (heap_start == heap_end ||
+            !heap_location->IsEquivalentComponent(dimension,
+              heap_start->GetLocation(dimension, neg_polygons,
+                                      pos_polygons))) {
+          process_heap_events = false;
+        }
+      }
+      // Process the main end events at the location.
+      while (process_main_events && !event_points_pos->start) {
+        size_t child_start_event_index = event_points_pos->index.partner;
+        if (child_start_event_index < neg_polygons.size()*2) {
+          assert(child_start_event_index < neg_used);
+          PolygonEventPoint& child_event = neg_event_points[neg_used];
+          const size_t poly_index =
+            neg_event_points[child_start_event_index].index.content;
+          neg_event_points[child_start_event_index].index.partner = neg_used;
+          ++neg_used;
+          child_event.start = false;
+          child_event.index.content = poly_index;
+          child_event.new_location = neg_new_location;
+          neg_new_location = false;
         } else {
+          assert(pos_used < pos_polygons.size()*2);
+          child_start_event_index -= neg_polygons.size()*2;
+          assert(child_start_event_index < pos_used);
+          PolygonEventPoint& child_event = pos_event_points[pos_used];
+          const size_t poly_index =
+            pos_event_points[child_start_event_index].index.content;
+          pos_event_points[child_start_event_index].index.partner = pos_used;
+          ++pos_used;
+          child_event.start = false;
+          child_event.index.content = poly_index;
+          child_event.new_location = pos_new_location;
+          pos_new_location = false;
+        }
+        ++event_points_pos;
+        if (event_points_pos == event_points_end ||
+            event_points_pos->new_location) {
+          process_main_events = false;
+        }
+      }
+      // Process the merge start events up to and at the main event location.
+      while (process_heap_events && heap_start->start) {
+        if (heap_start->pos_child) {
+          assert(pos_used < pos_polygons.size()*2);
+          if (heap_start->partner_index != static_cast<size_t>(-1)) {
+            assert(!event_points[heap_start->partner_index].start);
+            event_points[heap_start->partner_index].index.partner =
+              neg_polygons.size()*2 + pos_used;
+          } else {
+            heap_start->start = false;
+            heap_start->partner_index = pos_used;
+          }
+          PolygonEventPoint& child_event = pos_event_points[pos_used];
+          child_event.start = true;
+          child_event.index.content = heap_start->polygon_index;
+          child_event.new_location = pos_new_location;
+          pos_new_location = false;
+          ++pos_used;
+        } else {
+          if (heap_start->partner_index != static_cast<size_t>(-1)) {
+            event_points[heap_start->partner_index].index.partner = neg_used;
+          } else {
+            heap_start->start = false;
+            heap_start->partner_index = neg_used;
+          }
+          PolygonEventPoint& child_event = neg_event_points[neg_used];
+          child_event.start = true;
+          child_event.index.content = heap_start->polygon_index;
+          child_event.new_location = neg_new_location;
+          neg_new_location = false;
+          ++neg_used;
+        }
+        std::pop_heap(heap_start, heap_end, heap_compare);
+        --heap_end;
+        if (!heap_end->start) {
+          // Re-add the merge event for the end event.
+          ++heap_end;
+          std::push_heap(heap_start, heap_end, heap_compare);
+        }
+        if (heap_start == heap_end ||
+            !heap_location->IsEquivalentComponent(dimension,
+              heap_start->GetLocation(dimension, neg_polygons,
+                                      pos_polygons))) {
+          process_heap_events = false;
+        }
+      }
+      // Process the main start events at the location.
+      while (process_main_events && event_points_pos->start) {
+        const size_t end_event_index = event_points_pos->index.partner;
+        const size_t mapped_index =
+          polygon_index_map[event_points[end_event_index].index.content];
+        if (mapped_index < extra_poly_count) {
+          // This polygon was split into both children.
+          const BSPPolygon<AABBConvexPolygon<ParentPolygon>>& neg_polygon =
+            neg_polygons[mapped_index];
+          const BSPPolygon<AABBConvexPolygon<ParentPolygon>>& pos_polygon =
+            pos_polygons[mapped_index];
+          const int end_comparison =
+            neg_polygon.max_vertex(dimension).CompareComponent(
+                dimension, pos_polygon.max_vertex(dimension));
           // Add the negative child start event to the heap.
           heap_end->start = true;
           heap_end->pos_child = false;
@@ -881,37 +850,9 @@ void PolygonEventPointPartition::ApplySecondary(
             heap_end->partner_index = -1;
           } else {
             heap_end->partner_index = end_event_index;
-            event_points[end_event_index].index.partner = -1;
           }
           ++heap_end;
           std::push_heap(heap_start, heap_end, heap_compare);
-        }
-        if (start_comparison >= 0) {
-          // Add the positive child start event.
-          assert(pos_used < pos_polygons.size()*2);
-          PolygonEventPoint& pos_event = pos_event_points[pos_used];
-          pos_event.start = true;
-          pos_event.index.content = mapped_index;
-          pos_event.new_location = pos_new_location;
-          pos_new_location = false;
-          if (end_comparison <= 0) {
-            // The positive child end event is at the same location as the
-            // parent end event. Tell the parent end event to update the
-            // positive start event.
-            event_points[end_event_index].index.partner =
-              neg_polygons.size()*2 + pos_used;
-          } else {
-            // The positive end event comes before the parent end event. Track
-            // it in the heap.
-            heap_end->start = false;
-            heap_end->pos_child = true;
-            heap_end->polygon_index = mapped_index;
-            heap_end->partner_index = pos_used;
-            ++heap_end;
-            std::push_heap(heap_start, heap_end, heap_compare);
-          }
-          ++pos_used;
-        } else {
           // Add the positive child start event to the heap.
           heap_end->start = true;
           heap_end->pos_child = true;
@@ -920,39 +861,46 @@ void PolygonEventPointPartition::ApplySecondary(
             heap_end->partner_index = -1;
           } else {
             heap_end->partner_index = end_event_index;
-            event_points[end_event_index].index.partner = -1;
           }
           ++heap_end;
           std::push_heap(heap_start, heap_end, heap_compare);
+          event_points[end_event_index].index.partner = -1;
+          assert(static_cast<size_t>(heap_end - heap_start) <=
+                 2*extra_poly_count);
+          process_heap_events = true;
+          heap_location = &heap_start->GetLocation(dimension, neg_polygons,
+                                                   pos_polygons);
+        } else if (mapped_index < neg_polygons.size()) {
+          // This polygon went into only the negative child. Add the negative
+          // child start event.
+          PolygonEventPoint& neg_event = neg_event_points[neg_used];
+          neg_event.start = true;
+          neg_event.index.content = mapped_index;
+          neg_event.new_location = neg_new_location;
+          neg_new_location = false;
+          // Tell the parent end event to update the negative start event.
+          event_points[end_event_index].index.partner = neg_used;
+          ++neg_used;
+        } else {
+          // This polygon went into only the positive child. Add the positive
+          // child start event.
+          assert(pos_used < pos_polygons.size()*2);
+          PolygonEventPoint& pos_event = pos_event_points[pos_used];
+          pos_event.start = true;
+          pos_event.index.content = mapped_index - neg_polygons.size();
+          pos_event.new_location = pos_new_location;
+          pos_new_location = false;
+          // Tell the parent end event to update the positive start event.
+          event_points[end_event_index].index.partner =
+            pos_used + neg_polygons.size()*2;
+          ++pos_used;
         }
-        assert(static_cast<size_t>(heap_end - heap_start) <=
-               2*extra_poly_count);
-      } else if (mapped_index < neg_polygons.size()) {
-        // This polygon went into only the negative child. Add the negative
-        // child start event.
-        PolygonEventPoint& neg_event = neg_event_points[neg_used];
-        neg_event.start = true;
-        neg_event.index.content = mapped_index;
-        neg_event.new_location = neg_new_location;
-        neg_new_location = false;
-        // Tell the parent end event to update the negative start event.
-        event_points[end_event_index].index.partner = neg_used;
-        ++neg_used;
-      } else {
-        // This polygon went into only the positive child. Add the positive
-        // child start event.
-        assert(pos_used < pos_polygons.size()*2);
-        PolygonEventPoint& pos_event = pos_event_points[pos_used];
-        pos_event.start = true;
-        pos_event.index.content = mapped_index - neg_polygons.size();
-        pos_event.new_location = pos_new_location;
-        pos_new_location = false;
-        // Tell the parent end event to update the positive start event.
-        event_points[end_event_index].index.partner =
-          pos_used + neg_polygons.size()*2;
-        ++pos_used;
+        ++event_points_pos;
+        if (event_points_pos == event_points_end ||
+            event_points_pos->new_location) {
+          process_main_events = false;
+        }
       }
-      ++event_points_pos;
     }
   }
   assert(heap_start == heap_end);
