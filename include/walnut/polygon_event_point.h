@@ -565,7 +565,11 @@ void PolygonEventPointPartition::ApplyPrimary(
     const PolygonEventPoint& event = event_points[i];
     if (event.new_location) {
       neg_new_location = true;
-      pos_new_location = true;
+      if (i == split_location_begin) {
+        pos_new_location = used_extra == 0;
+      } else {
+        pos_new_location = true;
+      }
     }
     if (event.start) {
       const size_t poly_index =
@@ -650,8 +654,7 @@ void PolygonEventPointPartition::ApplyPrimary(
           ++pos_used;
           pos_start_event.start = true;
           pos_start_event.index.content = used_extra;
-          pos_start_event.new_location = pos_new_location;
-          pos_new_location = false;
+          pos_start_event.new_location = used_extra == 0;
 
           ++used_extra;
         } else {

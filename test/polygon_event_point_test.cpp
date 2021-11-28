@@ -1122,6 +1122,8 @@ TEST(PolygonEventPointPartition, ApplySecondaryOneOverlap) {
                          polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
                          pos_border_polygons);
+  CheckSorted(/*dimension=*/0, neg_polygons, neg_event_points);
+  CheckSorted(/*dimension=*/0, pos_polygons, event_points);
   CheckCoincidentVerticesAndEdges(&split_plane, false, neg_polygons);
   CheckCoincidentVerticesAndEdges(&split_plane, true, pos_polygons);
 
