@@ -12,6 +12,7 @@
 #include "walnut/bsp_edge_info.h"
 #include "walnut/bsp_polygon.h"
 #include "walnut/half_space3.h"
+#include "walnut/polygon_event_point.h"
 #include "walnut/r_transformation.h"
 
 namespace walnut {
@@ -53,6 +54,44 @@ class BSPNode {
     HalfSpace3 half_space = PickSplitPlane();
     assert(half_space.IsValid());
     Split(std::move(half_space));
+  }
+
+  // Split this polygon based on `partition` in `dimension`.
+  //
+  // On input, `event_points` must be the event points from the same call to
+  // `GetLowestCost` that produced `partition`.
+  //
+  // On output, the positive child event points are stored in `event_points`,
+  // and the negative child event points are stored in `neg_event_points`.
+  //
+  // On output, `polygon_index_map` contains the mapping from parent polygon
+  // index to child polygon index.
+  void Split(const PolygonEventPointPartition& partition, int dimension,
+             std::vector<PolygonEventPoint>& event_points,
+             std::vector<size_t>& polygon_index_map,
+             std::vector<PolygonEventPoint>& neg_event_points) {
+    negative_child_ = std::make_unique<BSPNode>();
+    positive_child_ = std::make_unique<BSPNode>();
+    negative_child_->SetPWN(content_info_by_id_);
+    positive_child_->SetPWN(content_info_by_id_);
+    split_ = partition.GetSplitPlane(dimension, event_points.data(),
+                                     contents_);
+    PushContentPWNToChildren();
+
+    polygon_index_map.resize(contents_.size());
+    neg_event_points.resize(partition.GetNegEventPointCount());
+    partition.ApplyPrimary(dimension, event_points.data(), &split_,
+                           contents_, polygon_index_map.data(),
+                           neg_event_points.data(), negative_child_->contents_,
+                           positive_child_->contents_,
+                           negative_child_->border_contents_,
+                           positive_child_->border_contents_);
+    contents_.shrink_to_fit();
+
+    negative_child_->SetPolygonCountFromContents();
+    positive_child_->SetPolygonCountFromContents();
+
+    PushBorderContentsToChildren();
   }
 
   // Returns a plane that can divide contents_. The chosen plane is guaranteed
@@ -149,6 +188,28 @@ class BSPNode {
       int edge_comparison, const SplitSide& edge_last_coincident,
       const EdgeRep& vertex_edge) const;
 
+  // If the node has ids for more than one mesh, the most populous mesh is
+  // returned along with its count.
+  std::pair<BSPContentId, size_t> GetCostExclude() const {
+    std::pair<BSPContentId, size_t> best(-1, 0);
+    size_t count = 0;
+    for (size_t id = 0; id < content_info_by_id_.size(); ++id) {
+      if (content_info_by_id_[id].has_polygons) {
+        ++count;
+
+        if (content_info_by_id_[id].has_polygons > best.second) {
+          best.first = id;
+          best.second = content_info_by_id_[id].has_polygons;
+        }
+      }
+    }
+    if (count > 1) {
+      return best;
+    } else {
+      return std::pair<BSPContentId, size_t>(-1, 0);
+    }
+  }
+
  protected:
   void MakeInterior(HalfSpace3&& half_space, BSPNode* negative_child,
                     BSPNode* positive_child) {
@@ -206,10 +267,22 @@ class BSPNode {
     }
   }
 
+  void SetPolygonCountFromContents() {
+    for (PolygonRep& polygon : contents_) {
+      content_info_by_id_[polygon.id].has_polygons++;
+    }
+    for (PolygonRep& polygon : border_contents_) {
+      content_info_by_id_[polygon.id].has_polygons++;
+    }
+  }
+
   // Update the children's PWN based on this node's contents.
   //
   // This may only be called on an interior node.
   void PushContentPWNToChildren();
+
+  // Push the border_contents_ of an interior node to the children.
+  void PushBorderContentsToChildren();
 
   // For a leaf node, these are the polygons that are inside the cell. They may
   // possibly be touching the cell border, but they are not on the border.
@@ -425,6 +498,7 @@ std::pair<int, bool> BSPNode<OutputPolygonParent>::GetPWNEffectAtVertex(
 
 template <typename OutputPolygonParent>
 void BSPNode<OutputPolygonParent>::PushContentPWNToChildren() {
+  assert(split_.IsValid());
   for (PolygonRep& polygon : contents_) {
     for (size_t i = 0; i < polygon.vertex_count(); ++i) {
       const EdgeRep& current_edge = polygon.const_edge(i);
@@ -460,6 +534,64 @@ void BSPNode<OutputPolygonParent>::PushContentPWNToChildren() {
       }
     }
   }
+}
+
+template <typename OutputPolygonParent>
+void BSPNode<OutputPolygonParent>::PushBorderContentsToChildren() {
+  assert(!IsLeaf());
+
+  for (PolygonRep& polygon : border_contents_) {
+    assert(polygon.vertex_count() > 0);
+    ConvexPolygonSplitInfo info = polygon.GetSplitInfo(split_);
+
+    if (info.ShouldEmitNegativeChild()) {
+      if (info.ShouldEmitPositiveChild()) {
+        std::pair<PolygonRep, PolygonRep> children =
+          std::move(polygon).CreateSplitChildren(std::move(info));
+        PolygonRep::SetChildBoundaryAngles(children, split_);
+        negative_child_->content_info_by_id_[polygon.id].has_polygons++;
+        negative_child_->border_contents_.push_back(std::move(children.first));
+        positive_child_->content_info_by_id_[polygon.id].has_polygons++;
+        positive_child_->border_contents_.push_back(
+            std::move(children.second));
+      } else {
+        polygon.SetBoundaryAngles(SplitSide{&split_, /*pos_child=*/false},
+                                  /*exclude_range=*/info.neg_range());
+        negative_child_->content_info_by_id_[polygon.id].has_polygons++;
+        negative_child_->border_contents_.push_back(std::move(polygon));
+      }
+    } else if (info.ShouldEmitPositiveChild()) {
+      polygon.SetBoundaryAngles(SplitSide{&split_, /*pos_child=*/true},
+                                /*exclude_range=*/info.pos_range());
+      positive_child_->content_info_by_id_[polygon.id].has_polygons++;
+      positive_child_->border_contents_.push_back(std::move(polygon));
+    } else {
+      assert(info.ShouldEmitOnPlane());
+      // This branch only runs if this node is being split on the same plane as
+      // an ancestor node, which should not happen.
+      assert(false);
+      // If polygon.plane().normal() and split_.normal() point in the same
+      // direction, put polygon in the negative child.
+      const int drop_dimension = polygon.drop_dimension();
+      bool pos_child =
+        polygon.plane().normal().components()[drop_dimension].HasDifferentSign(
+            split_.normal().components()[drop_dimension]);
+      polygon.SetBoundaryAngles(SplitSide{&split_, pos_child},
+                                /*coincident_begin=*/0,
+                                /*coincident_end=*/polygon.vertex_count() + 1);
+      polygon.on_node_plane.split = &split_;
+      polygon.on_node_plane.pos_side = pos_child;
+      if (pos_child) {
+        positive_child_->content_info_by_id_[polygon.id].has_polygons++;
+        positive_child_->border_contents_.push_back(std::move(polygon));
+      } else {
+        negative_child_->content_info_by_id_[polygon.id].has_polygons++;
+        negative_child_->border_contents_.push_back(std::move(polygon));
+      }
+    }
+  }
+  border_contents_.clear();
+  border_contents_.shrink_to_fit();
 }
 
 template <typename OutputPolygonParent>
@@ -506,70 +638,23 @@ void BSPNode<OutputPolygonParent>::PushContentsToChildren() {
       polygon.SetBoundaryAngles(SplitSide{&split_, pos_child},
                                 /*coincident_begin=*/0,
                                 /*coincident_end=*/polygon.vertex_count() + 1);
-      polygon.on_node_plane.split = &split_;
-      polygon.on_node_plane.pos_side = pos_child;
       if (pos_child) {
         positive_child_->content_info_by_id_[polygon.id].has_polygons++;
-        positive_child_->border_contents_.push_back(std::move(polygon));
+        positive_child_->border_contents_.emplace_back(&split_,
+                                                       /*pos_side=*/true,
+                                                       std::move(polygon));
       } else {
         negative_child_->content_info_by_id_[polygon.id].has_polygons++;
-        negative_child_->border_contents_.push_back(std::move(polygon));
+        negative_child_->border_contents_.emplace_back(&split_,
+                                                       /*pos_side=*/false,
+                                                       std::move(polygon));
       }
     }
   }
   contents_.clear();
   contents_.shrink_to_fit();
 
-  for (PolygonRep& polygon : border_contents_) {
-    assert(polygon.vertex_count() > 0);
-    ConvexPolygonSplitInfo info = polygon.GetSplitInfo(split_);
-
-    if (info.ShouldEmitNegativeChild()) {
-      if (info.ShouldEmitPositiveChild()) {
-        std::pair<PolygonRep, PolygonRep> children =
-          std::move(polygon).CreateSplitChildren(std::move(info));
-        PolygonRep::SetChildBoundaryAngles(children, split_);
-        negative_child_->content_info_by_id_[polygon.id].has_polygons++;
-        negative_child_->border_contents_.push_back(std::move(children.first));
-        positive_child_->content_info_by_id_[polygon.id].has_polygons++;
-        positive_child_->border_contents_.push_back(
-            std::move(children.second));
-      } else {
-        polygon.SetBoundaryAngles(SplitSide{&split_, /*pos_child=*/false},
-                                  /*exclude_range=*/info.neg_range());
-        negative_child_->content_info_by_id_[polygon.id].has_polygons++;
-        negative_child_->border_contents_.push_back(std::move(polygon));
-      }
-    } else if (info.ShouldEmitPositiveChild()) {
-      polygon.SetBoundaryAngles(SplitSide{&split_, /*pos_child=*/true},
-                                /*exclude_range=*/info.pos_range());
-      positive_child_->content_info_by_id_[polygon.id].has_polygons++;
-      positive_child_->border_contents_.push_back(std::move(polygon));
-    } else {
-      assert(info.ShouldEmitOnPlane());
-      // This branch only runs if this node is being split on the same plane as
-      // an ancestor node, which should not happen.
-      assert(false);
-      // If polygon.plane().normal() and split_.normal() point in the same
-      // direction, put polygon in the negative child.
-      const int drop_dimension = polygon.drop_dimension();
-      bool pos_child =
-        polygon.plane().normal().components()[drop_dimension].HasDifferentSign(
-            split_.normal().components()[drop_dimension]);
-      polygon.SetBoundaryAngles(SplitSide{&split_, pos_child},
-                                /*coincident_begin=*/0,
-                                /*coincident_end=*/polygon.vertex_count() + 1);
-      if (pos_child) {
-        positive_child_->content_info_by_id_[polygon.id].has_polygons++;
-        positive_child_->border_contents_.push_back(std::move(polygon));
-      } else {
-        negative_child_->content_info_by_id_[polygon.id].has_polygons++;
-        negative_child_->border_contents_.push_back(std::move(polygon));
-      }
-    }
-  }
-  border_contents_.clear();
-  border_contents_.shrink_to_fit();
+  PushBorderContentsToChildren();
 }
 
 template <typename OutputPolygonParent>

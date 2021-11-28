@@ -62,19 +62,21 @@ GroupByPlane(const std::vector<Polygon>& polygons) {
   return result;
 }
 
+class BSPTraverserTest : public testing::TestWithParam<size_t> {
+};
 
-TEST(BSPTraverser, EmptyInput) {
+TEST_P(BSPTraverserTest, EmptyInput) {
   BSPTree<> tree;
 
   using OutputPolygon = BSPTree<>::OutputPolygon;
   CollectorVisitor<OutputPolygon, PolygonFilter> visitor(PolygonFilter(0));
 
-  tree.Traverse(visitor);
+  tree.Traverse(visitor, GetParam());
 
   EXPECT_THAT(visitor.polygons(), IsEmpty());
 }
 
-TEST(BSPTraverser, AcceptSingleCube) {
+TEST_P(BSPTraverserTest, AcceptSingleCube) {
   BSPTree<> tree;
   BSPContentId id = tree.AllocateId();
   std::vector<MutableConvexPolygon<>> cube = MakeCuboid(/*min_x=*/0,
@@ -88,12 +90,12 @@ TEST(BSPTraverser, AcceptSingleCube) {
   using OutputPolygon = BSPTree<>::OutputPolygon;
   CollectorVisitor<OutputPolygon, PolygonFilter> visitor((PolygonFilter(id)));
 
-  tree.Traverse(visitor);
+  tree.Traverse(visitor, GetParam());
 
   EXPECT_THAT(visitor.polygons(), UnorderedPointwise(Eq(), cube));
 }
 
-TEST(BSPTraverser, AcceptSingleTriangulatedCube) {
+TEST_P(BSPTraverserTest, AcceptSingleTriangulatedCube) {
   BSPTree<> tree;
   BSPContentId id = tree.AllocateId();
   std::vector<MutableConvexPolygon<>> triangulated_cube =
@@ -105,12 +107,12 @@ TEST(BSPTraverser, AcceptSingleTriangulatedCube) {
   using OutputPolygon = BSPTree<>::OutputPolygon;
   CollectorVisitor<OutputPolygon, PolygonFilter> visitor((PolygonFilter(id)));
 
-  tree.Traverse(visitor);
+  tree.Traverse(visitor, GetParam());
 
   EXPECT_THAT(visitor.polygons(), UnorderedPointwise(Eq(), triangulated_cube));
 }
 
-TEST(BSPTraverser, AcceptOneOfTwoCubes) {
+TEST_P(BSPTraverserTest, AcceptOneOfTwoCubes) {
   BSPTree<> tree;
   std::vector<MutableConvexPolygon<>> cube = MakeCuboid(/*min_x=*/0,
                                                         /*min_y=*/0,
@@ -128,12 +130,12 @@ TEST(BSPTraverser, AcceptOneOfTwoCubes) {
   using OutputPolygon = BSPTree<>::OutputPolygon;
   CollectorVisitor<OutputPolygon, PolygonFilter> visitor((PolygonFilter(id)));
 
-  tree.Traverse(visitor);
+  tree.Traverse(visitor, GetParam());
 
   EXPECT_THAT(visitor.polygons(), UnorderedPointwise(Eq(), cube));
 }
 
-TEST(BSPTraverser, IntersectExactlyMatchingCubes) {
+TEST_P(BSPTraverserTest, IntersectExactlyMatchingCubes) {
   // Two cubes are added with the exact same walls. The intersection should
   // return only 1.
   BSPTree<> tree;
@@ -152,12 +154,12 @@ TEST(BSPTraverser, IntersectExactlyMatchingCubes) {
   auto filter = MakeIntersectionFilter(PolygonFilter(id1), PolygonFilter(id2));
   CollectorVisitor<OutputPolygon, decltype(filter)> visitor(filter);
 
-  tree.Traverse(visitor);
+  tree.Traverse(visitor, GetParam());
 
   EXPECT_THAT(visitor.polygons(), UnorderedPointwise(Eq(), cube));
 }
 
-TEST(BSPTraverser, UnionExactlyMatchingCubes) {
+TEST_P(BSPTraverserTest, UnionExactlyMatchingCubes) {
   // Two cubes are added with the exact same walls. The intersection should
   // return only 1.
   BSPTree<> tree;
@@ -176,12 +178,12 @@ TEST(BSPTraverser, UnionExactlyMatchingCubes) {
   auto filter = MakeUnionFilter(PolygonFilter(id1), PolygonFilter(id2));
   CollectorVisitor<OutputPolygon, decltype(filter)> visitor(filter);
 
-  tree.Traverse(visitor);
+  tree.Traverse(visitor, GetParam());
 
   EXPECT_THAT(visitor.polygons(), UnorderedPointwise(Eq(), cube));
 }
 
-TEST(BSPTraverser, IntersectCubesWithCornerOverlap) {
+TEST_P(BSPTraverserTest, IntersectCubesWithCornerOverlap) {
   // Intersect two cubes that only overlap in their corners. The two cubes do
   // not share any walls.
   BSPTree<> tree;
@@ -206,7 +208,7 @@ TEST(BSPTraverser, IntersectCubesWithCornerOverlap) {
   auto filter = MakeIntersectionFilter(PolygonFilter(id1), PolygonFilter(id2));
   CollectorVisitor<OutputPolygon, decltype(filter)> visitor(filter);
 
-  tree.Traverse(visitor);
+  tree.Traverse(visitor, GetParam());
 
   std::vector<MutableConvexPolygon<>> expected = MakeCuboid(/*min_x=*/0,
                                                             /*min_y=*/0,
@@ -217,7 +219,7 @@ TEST(BSPTraverser, IntersectCubesWithCornerOverlap) {
   EXPECT_THAT(visitor.polygons(), UnorderedPointwise(Eq(), expected));
 }
 
-TEST(BSPTraverser, IntersectCubesWithWallOverlap) {
+TEST_P(BSPTraverserTest, IntersectCubesWithWallOverlap) {
   // Intersect two cubes that have some walls that overlap.
   BSPTree<> tree;
   std::vector<MutableConvexPolygon<>> cube1 = MakeCuboid(/*min_x=*/0,
@@ -241,7 +243,7 @@ TEST(BSPTraverser, IntersectCubesWithWallOverlap) {
   auto filter = MakeIntersectionFilter(PolygonFilter(id1), PolygonFilter(id2));
   CollectorVisitor<OutputPolygon, decltype(filter)> visitor(filter);
 
-  tree.Traverse(visitor);
+  tree.Traverse(visitor, GetParam());
 
   std::vector<MutableConvexPolygon<>> expected = MakeCuboid(/*min_x=*/1,
                                                             /*min_y=*/0,
@@ -252,7 +254,7 @@ TEST(BSPTraverser, IntersectCubesWithWallOverlap) {
   EXPECT_THAT(visitor.polygons(), UnorderedPointwise(Eq(), expected));
 }
 
-TEST(BSPTraverser, MergeCubeAfterExtraSplits) {
+TEST_P(BSPTraverserTest, MergeCubeAfterExtraSplits) {
   // First a cube is added to the BSP tree and the BSP is partitioned at the
   // top and bottom of the cube. That promotes the top and bottom of the cube
   // to border contents, and it ensures that the edge_first_coincident field is
@@ -322,7 +324,7 @@ TEST(BSPTraverser, MergeCubeAfterExtraSplits) {
     std::cout << error << std::endl;
   };
   ConnectingVisitor<decltype(filter)> visitor(filter, error_log);
-  tree.Traverse(visitor);
+  tree.Traverse(visitor, GetParam());
 
   EXPECT_FALSE(errored);
   EXPECT_GT(visitor.polygons().size(), cube1.size());
@@ -330,7 +332,7 @@ TEST(BSPTraverser, MergeCubeAfterExtraSplits) {
   EXPECT_THAT(visitor.polygons(), UnorderedPointwise(Eq(), cube1));
 }
 
-TEST(BSPTraverser, ConnectIntersectCubesWithCornerOverlap) {
+TEST_P(BSPTraverserTest, ConnectIntersectCubesWithCornerOverlap) {
   // Intersect two cubes that only overlap in their corners. The two cubes do
   // not share any walls.
   BSPTree<> tree;
@@ -358,7 +360,7 @@ TEST(BSPTraverser, ConnectIntersectCubesWithCornerOverlap) {
     std::cout << error << std::endl;
   };
   ConnectingVisitor<decltype(filter)> visitor(filter, error_log);
-  tree.Traverse(visitor);
+  tree.Traverse(visitor, GetParam());
 
   EXPECT_FALSE(errored);
   std::vector<MutableConvexPolygon<>> expected = MakeCuboid(/*min_x=*/0,
@@ -370,7 +372,7 @@ TEST(BSPTraverser, ConnectIntersectCubesWithCornerOverlap) {
   EXPECT_THAT(visitor.polygons(), UnorderedPointwise(Eq(), expected));
 }
 
-TEST(BSPTraverser, ConnectUnionCubesWithCornerOverlap) {
+TEST_P(BSPTraverserTest, ConnectUnionCubesWithCornerOverlap) {
   // Union two cubes that only overlap in their corners. The two cubes do not
   // share any walls.
   BSPTree<> tree;
@@ -399,7 +401,7 @@ TEST(BSPTraverser, ConnectUnionCubesWithCornerOverlap) {
   };
   using Visitor = ConnectingVisitor<decltype(filter)>;
   Visitor visitor(filter, error_log);
-  tree.Traverse(visitor);
+  tree.Traverse(visitor, GetParam());
 
   EXPECT_FALSE(errored);
 
@@ -441,7 +443,7 @@ TEST(BSPTraverser, ConnectUnionCubesWithCornerOverlap) {
   }
 }
 
-TEST(BSPTraverser, ConnectUnionCubesIntoCubiod) {
+TEST_P(BSPTraverserTest, ConnectUnionCubesIntoCubiod) {
   // Union two cubes that together form a rectangular prism.
   BSPTree<> tree;
   std::vector<MutableConvexPolygon<>> cube1 = MakeCuboid(/*min_x=*/0,
@@ -469,7 +471,7 @@ TEST(BSPTraverser, ConnectUnionCubesIntoCubiod) {
   };
   using Visitor = ConnectingVisitor<decltype(filter)>;
   Visitor visitor(filter, error_log);
-  tree.Traverse(visitor);
+  tree.Traverse(visitor, GetParam());
 
   EXPECT_FALSE(errored);
 
@@ -483,7 +485,7 @@ TEST(BSPTraverser, ConnectUnionCubesIntoCubiod) {
   EXPECT_THAT(visitor.polygons(), UnorderedPointwise(Eq(), expected));
 }
 
-TEST(BSPTraverser, ConnectUnionCubesWithPlaneCornerOverlap) {
+TEST_P(BSPTraverserTest, ConnectUnionCubesWithPlaneCornerOverlap) {
   // Union two cubes whose corners overlap, and both cubes have the same start
   // and height in the z component.
   BSPTree<> tree;
@@ -512,7 +514,7 @@ TEST(BSPTraverser, ConnectUnionCubesWithPlaneCornerOverlap) {
   };
   using Visitor = ConnectingVisitor<decltype(filter)>;
   Visitor visitor(filter, error_log);
-  tree.Traverse(visitor);
+  tree.Traverse(visitor, GetParam());
 
   EXPECT_FALSE(errored);
 
@@ -553,5 +555,9 @@ TEST(BSPTraverser, ConnectUnionCubesWithPlaneCornerOverlap) {
     }
   }
 }
+
+INSTANTIATE_TEST_SUITE_P(KdStrategyBound,
+                         BSPTraverserTest,
+                         testing::Values(-1, 6, 2));
 
 }  // walnut

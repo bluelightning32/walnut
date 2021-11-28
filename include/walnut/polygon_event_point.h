@@ -328,7 +328,7 @@ void MakeEventPoints(
 
   // A Compare that ignores `start` and assumes everything is an end event.
   auto end_point_compare =
-    [polygons, dimension](const PolygonEventPoint& a,
+    [&polygons, dimension](const PolygonEventPoint& a,
                           const PolygonEventPoint& b) -> bool {
     assert(a.start == false);
     assert(b.start == false);
@@ -340,8 +340,8 @@ void MakeEventPoints(
 
   // A Compare that works for start and end events.
   auto event_point_compare =
-    [event_points, polygons, dimension](const PolygonEventPoint& a,
-                                        const PolygonEventPoint& b) -> bool {
+    [event_points, &polygons, dimension](const PolygonEventPoint& a,
+                                         const PolygonEventPoint& b) -> bool {
     const HomoPoint3& a_location =
       a.GetLocation(dimension, event_points, polygons);
     const HomoPoint3& b_location =
@@ -463,8 +463,6 @@ PolygonEventPointPartition GetLowestCost(
 inline void PolygonEventPointPartition::DiscountBorderPolygons(
     const PolygonEventPoint* event_points,
     size_t parent_poly_count) {
-  // Go through all of the events before the split. `split_index` itself points
-  // to the last end event in the neg child.
   split_location_begin = split_index;
   while (!event_points[split_location_begin].new_location) {
     assert(split_location_begin > 0);
@@ -563,10 +561,10 @@ void PolygonEventPointPartition::ApplyPrimary(
   //    child_event_point.end:    child index of polygon
   //    polygon_index_map:        child index of polygon
 
-  // These will be initialized when the first event point is processed.
-  bool neg_new_location;
-  bool pos_new_location;
+  bool neg_new_location = true;
+  bool pos_new_location = true;
   size_t i = 0;
+  assert(IsNewLocationCorrect(dimension, event_points, polygons));
   for (; i < polygons.size()*2; ++i) {
     const PolygonEventPoint& event = event_points[i];
     if (event.new_location) {
@@ -597,6 +595,8 @@ void PolygonEventPointPartition::ApplyPrimary(
       // True if the end of the polygon is on the negative side or on the split
       // plane.
       bool end_neg_side = event.index.partner < split_location_end;
+      assert(end_neg_side ==
+             (split_plane->Compare(polygon.max_vertex(dimension)) <= 0));
       if (start_pos_side) {
         if (end_neg_side) {
           // It's coincident with the split plane. Use the polygon normal to
@@ -638,9 +638,12 @@ void PolygonEventPointPartition::ApplyPrimary(
       } else {
         if (!end_neg_side) {
           // Goes to both children
+          ConvexPolygonSplitInfo split_info =
+            polygon.GetSplitInfo(*split_plane);
+          assert(split_info.ShouldEmitNegativeChild());
+          assert(split_info.ShouldEmitPositiveChild());
           auto child_polygons =
-            std::move(polygon).CreateSplitChildren(
-                polygon.GetSplitInfo(*split_plane));
+            std::move(polygon).CreateSplitChildren(std::move(split_info));
           PolygonRep::SetChildBoundaryAngles(child_polygons, *split_plane);
           neg_polygons[used_extra] = std::move(child_polygons.first);
           pos_polygons[used_extra] = std::move(child_polygons.second);
@@ -716,7 +719,6 @@ void PolygonEventPointPartition::ApplyPrimary(
         // This is an end event for the positive child.
         assert(start_event_index < pos_used);
         PolygonEventPoint& child_event = event_points[pos_used];
-
         child_event.start = false;
         child_event.new_location = pos_new_location;
         pos_new_location = false;
@@ -731,6 +733,8 @@ void PolygonEventPointPartition::ApplyPrimary(
 
   assert(neg_used + used_extra == neg_polygons.size()*2);
   assert(pos_used == pos_polygons.size()*2);
+  assert(IsNewLocationCorrect(dimension, neg_event_points, neg_polygons));
+  assert(IsNewLocationCorrect(dimension, event_points, pos_polygons));
 }
 
 template <typename ParentPolygon>
@@ -841,7 +845,7 @@ void PolygonEventPointPartition::ApplySecondary(
     if (event_points_pos == event_points_end) break;
     bool neg_new_location = true;
     bool pos_new_location = true;
-    const HomoPoint3* heap_location;
+    const HomoPoint3* heap_location = nullptr;
     bool process_heap_events;
     bool process_main_events;
     if (heap_start != heap_end) {
@@ -1061,6 +1065,33 @@ void PolygonEventPointPartition::ApplySecondary(
     }
   }
   assert(heap_start == heap_end);
+  assert(IsNewLocationCorrect(dimension, neg_event_points, neg_polygons));
+  assert(IsNewLocationCorrect(dimension, pos_event_points, pos_polygons));
+}
+
+template <typename ParentPolygon>
+bool IsNewLocationCorrect(
+    size_t dimension,
+    const PolygonEventPoint* event_points,
+    const std::vector<BSPPolygon<AABBConvexPolygon<ParentPolygon>>>&
+      polygons) {
+  if (polygons.empty()) return true;
+  assert(event_points[0].new_location);
+
+  const HomoPoint3* prev_location =
+    &event_points[0].GetLocation(dimension, event_points, polygons);
+  for (size_t i = 1; i < polygons.size()*2; ++i) {
+    const HomoPoint3* location =
+      &event_points[i].GetLocation(dimension, event_points, polygons);
+    assert(prev_location->CompareComponent(dimension, *location) <= 0);
+    if (event_points[i].new_location ==
+        location->IsEquivalentComponent(dimension, *prev_location)) {
+      return false;
+    }
+
+    prev_location = location;
+  }
+  return true;
 }
 
 }  // walnut

@@ -62,9 +62,10 @@ class BSPTree {
   // traversed, if any leaf nodes with non-border polygons are encountered,
   // they are split before being passed to `visitor`.
   template <typename VisitorPolygon>
-  void Traverse(BSPVisitor<VisitorPolygon>& visitor) {
+  void Traverse(BSPVisitor<VisitorPolygon>& visitor,
+                size_t kd_strategy_poly_lower_bound = 6) {
     BSPTraverser<BSPNodeRep, VisitorPolygon> traverser;
-    traverser.Run(root, visitor);
+    traverser.Run(root, visitor, kd_strategy_poly_lower_bound);
   }
 
   // Returns a BSPNodeRep containing the polyhedron boundary of a BSPNode.
