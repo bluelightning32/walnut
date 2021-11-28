@@ -100,7 +100,7 @@ class PluckerLine {
 
   // Returns true if the line is on the plane.
   bool IsCoincident(const HalfSpace3& p) const {
-    return d().Dot(p.normal()).IsZero();
+    return d().Scale(p.d()) == m().Cross(p.normal());
   }
 
   // Returns true when the lines match
