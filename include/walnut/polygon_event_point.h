@@ -217,8 +217,9 @@ struct PolygonEventPointPartition {
   //
   // `neg_event_points` must be allocated with `split.GetNegEventPointCount` entries.
   //
-  // `split_plane` will be initialized on output. Pointers to that split_plane
-  // will be stored inside the child polygons.
+  // `split_plane` must be initialized with the output of `GetSplitPlane`
+  // before calling this function. Pointers to `split_plane` will be stored
+  // inside the child polygons.
   //
   // On output `polygon_index_map` maps indices from `polygons` into indices in
   // `neg_polygons` and/or `pos_polygons`. `polygon_index_map` must be
@@ -234,7 +235,7 @@ struct PolygonEventPointPartition {
   void ApplyPrimary(
       int dimension,
       PolygonEventPoint* event_points,
-      HalfSpace3* split_plane,
+      const HalfSpace3* split_plane,
       std::vector<BSPPolygon<AABBConvexPolygon<ParentPolygon>>>& polygons,
       size_t* polygon_index_map,
       PolygonEventPoint* neg_event_points,
@@ -494,7 +495,7 @@ template <typename ParentPolygon>
 void PolygonEventPointPartition::ApplyPrimary(
     int dimension,
     PolygonEventPoint* event_points,
-    HalfSpace3* split_plane,
+    const HalfSpace3* split_plane,
     std::vector<BSPPolygon<AABBConvexPolygon<ParentPolygon>>>& polygons,
     size_t* polygon_index_map,
     PolygonEventPoint* neg_event_points,
@@ -514,7 +515,7 @@ void PolygonEventPointPartition::ApplyPrimary(
   neg_polygons.resize(extra_count);
   pos_polygons.resize(extra_count);
   size_t used_extra = 0;
-  *split_plane = GetSplitPlane(dimension, event_points, polygons);
+  assert(*split_plane == GetSplitPlane(dimension, event_points, polygons));
   size_t neg_used = 0;
   size_t pos_used = 0;
 

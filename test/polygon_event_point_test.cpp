@@ -363,7 +363,8 @@ TEST(PolygonEventPointPartition, ApplyPrimaryNoOverlap) {
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(10);
   PolygonEventPoint neg_event_points[8];
-  HalfSpace3 split_plane;
+  HalfSpace3 split_plane = partition.GetSplitPlane(/*dimension=*/0,
+                                                   event_points, polygons);
   partition.ApplyPrimary(/*dimension=*/0, event_points, &split_plane, polygons,
                          polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
@@ -419,7 +420,8 @@ TEST(PolygonEventPointPartition, ApplyPrimarySingleOverlap) {
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(2);
   PolygonEventPoint neg_event_points[4];
-  HalfSpace3 split_plane;
+  HalfSpace3 split_plane = partition.GetSplitPlane(/*dimension=*/0,
+                                                   event_points, polygons);
   partition.ApplyPrimary(/*dimension=*/0, event_points, &split_plane, polygons,
                          polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
@@ -478,7 +480,8 @@ TEST(PolygonEventPointPartition, ApplyPrimaryTwoOverlaps) {
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(3);
   PolygonEventPoint neg_event_points[6];
-  HalfSpace3 split_plane;
+  HalfSpace3 split_plane = partition.GetSplitPlane(/*dimension=*/0,
+                                                   event_points, polygons);
   partition.ApplyPrimary(/*dimension=*/0, event_points, &split_plane, polygons,
                          polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
@@ -525,7 +528,8 @@ TEST(PolygonEventPointPartition, ApplyPrimaryGapAtSplit) {
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(3);
   PolygonEventPoint neg_event_points[2];
-  HalfSpace3 split_plane;
+  HalfSpace3 split_plane = partition.GetSplitPlane(/*dimension=*/0,
+                                                   event_points, polygons);
   partition.ApplyPrimary(/*dimension=*/0, event_points, &split_plane, polygons,
                          polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
@@ -572,7 +576,8 @@ TEST(PolygonEventPointPartition, ApplyPrimaryBorderPolygonAtSplit) {
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(2);
   PolygonEventPoint neg_event_points[2];
-  HalfSpace3 split_plane;
+  HalfSpace3 split_plane = partition.GetSplitPlane(/*dimension=*/0,
+                                                   event_points, polygons);
   partition.ApplyPrimary(/*dimension=*/0, event_points, &split_plane, polygons,
                          polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
@@ -619,7 +624,8 @@ TEST(PolygonEventPointPartition, ApplyPrimaryAllNegPolygonsAreBorder) {
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(2);
   PolygonEventPoint neg_event_points[0];
-  HalfSpace3 split_plane;
+  HalfSpace3 split_plane = partition.GetSplitPlane(/*dimension=*/0,
+                                                   event_points, polygons);
   partition.ApplyPrimary(/*dimension=*/0, event_points, &split_plane, polygons,
                          polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
@@ -694,7 +700,8 @@ TEST(PolygonEventPointPartition, ApplyPrimaryBorderStartsBeforeEnds) {
     std::vector<size_t> polygon_index_map(8);
     std::vector<PolygonEventPoint> neg_event_points;
     neg_event_points.resize(best.GetNegEventPointCount());
-    HalfSpace3 split_plane;
+    HalfSpace3 split_plane = best.GetSplitPlane(/*dimension=*/0,
+                                                event_points, polygons);
     best.ApplyPrimary(/*dimension=*/0, event_points, &split_plane, polygons,
                       polygon_index_map.data(), neg_event_points.data(),
                       neg_polygons, pos_polygons, neg_border_polygons,
@@ -765,7 +772,9 @@ TEST(PolygonEventPointPartition, ApplyBorderPolygons) {
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(4);
   PolygonEventPoint primary_neg_event_points[2];
-  HalfSpace3 split_plane;
+  HalfSpace3 split_plane = partition.GetSplitPlane(/*dimension=*/1,
+                                                   primary_event_points,
+                                                   polygons);
   partition.ApplyPrimary(/*dimension=*/1, primary_event_points, &split_plane,
                          polygons, polygon_index_map.data(),
                          primary_neg_event_points, neg_polygons, pos_polygons,
@@ -847,7 +856,9 @@ TEST(PolygonEventPointPartition, ApplySecondaryNoOverlap) {
   std::vector<size_t> polygon_index_map(10);
   PolygonEventPoint primary_neg_event_points[8];
   const size_t parent_polygon_count = polygons.size();
-  HalfSpace3 split_plane;
+  HalfSpace3 split_plane = partition.GetSplitPlane(/*dimension=*/0,
+                                                   primary_event_points,
+                                                   polygons);
   partition.ApplyPrimary(/*dimension=*/0, primary_event_points, &split_plane,
                          polygons, polygon_index_map.data(),
                          primary_neg_event_points, neg_polygons, pos_polygons,
@@ -895,7 +906,9 @@ TEST(PolygonEventPointPartition, ApplySecondaryReverseNoOverlap) {
   std::vector<size_t> polygon_index_map(10);
   PolygonEventPoint primary_neg_event_points[8];
   const size_t parent_polygon_count = polygons.size();
-  HalfSpace3 split_plane;
+  HalfSpace3 split_plane = partition.GetSplitPlane(/*dimension=*/0,
+                                                   primary_event_points,
+                                                   polygons);
   partition.ApplyPrimary(/*dimension=*/0, primary_event_points, &split_plane,
                          polygons, polygon_index_map.data(),
                          primary_neg_event_points, neg_polygons, pos_polygons,
@@ -952,7 +965,8 @@ TEST(PolygonEventPointPartition, ApplySecondaryTwoOverlaps) {
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(3);
   PolygonEventPoint neg_event_points[6];
-  HalfSpace3 split_plane;
+  HalfSpace3 split_plane = partition.GetSplitPlane(/*dimension=*/0,
+                                                   event_points, polygons);
   partition.ApplyPrimary(/*dimension=*/0, event_points, &split_plane,
                          polygons, polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
@@ -1013,7 +1027,8 @@ TEST(PolygonEventPointPartition, ApplySecondaryTwoOverlapsRightAngleDown) {
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(3);
   PolygonEventPoint neg_event_points[6];
-  HalfSpace3 split_plane;
+  HalfSpace3 split_plane = partition.GetSplitPlane(/*dimension=*/0,
+                                                   event_points, polygons);
   partition.ApplyPrimary(/*dimension=*/0, event_points, &split_plane, polygons,
                          polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
@@ -1091,7 +1106,8 @@ TEST(PolygonEventPointPartition, ApplySecondaryTwoOverlapsSkewedDown) {
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(3);
   PolygonEventPoint neg_event_points[6];
-  HalfSpace3 split_plane;
+  HalfSpace3 split_plane = partition.GetSplitPlane(/*dimension=*/0,
+                                                   event_points, polygons);
   partition.ApplyPrimary(/*dimension=*/0, event_points, &split_plane, polygons,
                          polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
@@ -1159,7 +1175,8 @@ TEST(PolygonEventPointPartition, ApplySecondaryTwoOverlapsHorzFlipped) {
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(3);
   PolygonEventPoint neg_event_points[6];
-  HalfSpace3 split_plane;
+  HalfSpace3 split_plane = partition.GetSplitPlane(/*dimension=*/0,
+                                                   event_points, polygons);
   partition.ApplyPrimary(/*dimension=*/0, event_points, &split_plane, polygons,
                          polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
@@ -1227,7 +1244,8 @@ TEST(PolygonEventPointPartition, ApplySecondaryTwoOverlapsSkewedDownMore) {
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(3);
   PolygonEventPoint neg_event_points[6];
-  HalfSpace3 split_plane;
+  HalfSpace3 split_plane = partition.GetSplitPlane(/*dimension=*/0,
+                                                   event_points, polygons);
   partition.ApplyPrimary(/*dimension=*/0, event_points, &split_plane, polygons,
                          polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
@@ -1290,7 +1308,8 @@ TEST(PolygonEventPointPartition, ApplySecondaryOneOverlap) {
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(6);
   PolygonEventPoint neg_event_points[8];
-  HalfSpace3 split_plane;
+  HalfSpace3 split_plane = partition.GetSplitPlane(/*dimension=*/0,
+                                                   event_points, polygons);
   partition.ApplyPrimary(/*dimension=*/0, event_points, &split_plane, polygons,
                          polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
@@ -1364,7 +1383,8 @@ TEST(PolygonEventPointPartition, ApplySecondaryEmptyInterval) {
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(4);
   PolygonEventPoint neg_event_points[6];
-  HalfSpace3 split_plane;
+  HalfSpace3 split_plane = partition.GetSplitPlane(/*dimension=*/0,
+                                                   event_points, polygons);
   partition.ApplyPrimary(/*dimension=*/0, event_points, &split_plane, polygons,
                          polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
@@ -1427,7 +1447,8 @@ TEST(PolygonEventPointPartition, ApplySecondaryOverlapGapAtSplit) {
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(4);
   PolygonEventPoint neg_event_points[4];
-  HalfSpace3 split_plane;
+  HalfSpace3 split_plane = partition.GetSplitPlane(/*dimension=*/0,
+                                                   event_points, polygons);
   partition.ApplyPrimary(/*dimension=*/0, event_points, &split_plane, polygons,
                          polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
@@ -1484,7 +1505,8 @@ TEST(PolygonEventPointPartition, ApplySecondarySplitEmptyInterval) {
   std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
   std::vector<size_t> polygon_index_map(2);
   PolygonEventPoint neg_event_points[4];
-  HalfSpace3 split_plane;
+  HalfSpace3 split_plane = partition.GetSplitPlane(/*dimension=*/0,
+                                                   event_points, polygons);
   partition.ApplyPrimary(/*dimension=*/0, event_points, &split_plane, polygons,
                          polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
