@@ -583,6 +583,12 @@ void PolygonEventPointPartition::ApplyPrimary(
           // determine which side the border polygon goes to.
           bool pos_child =
             polygon.plane().normal().components()[dimension].IsNegative();
+          polygon.SetBoundaryAngles(
+              SplitSide{split_plane, pos_child},
+              /*coincident_begin=*/0,
+              /*coincident_end=*/polygon.vertex_count() + 1);
+          polygon.on_node_plane.split = split_plane;
+          polygon.on_node_plane.pos_side = pos_child;
           if (pos_child) {
             pos_border_polygons.push_back(std::move(polygon));
           } else {
@@ -597,6 +603,13 @@ void PolygonEventPointPartition::ApplyPrimary(
           PolygonEventPoint& child_event = event_points[pos_used];
           ++pos_used;
           child_event.index.content = pos_polygons.size();
+          if (i < split_location_end) {
+            // The start interval of the polygon is coincident with the split
+            // plane.
+            polygon.SetAdjacentBoundaryAngles(
+                SplitSide{split_plane, /*pos_child=*/true},
+                /*adjacent=*/polygon.min_vertex_index(dimension));
+          }
           pos_polygons.push_back(std::move(polygon));
           child_event.new_location = pos_new_location;
           pos_new_location = false;
@@ -608,6 +621,7 @@ void PolygonEventPointPartition::ApplyPrimary(
           auto child_polygons =
             std::move(polygon).CreateSplitChildren(
                 polygon.GetSplitInfo(*split_plane));
+          PolygonRep::SetChildBoundaryAngles(child_polygons, *split_plane);
           neg_polygons[used_extra] = std::move(child_polygons.first);
           pos_polygons[used_extra] = std::move(child_polygons.second);
           polygon_index_map[poly_index] = used_extra;
@@ -646,6 +660,13 @@ void PolygonEventPointPartition::ApplyPrimary(
           PolygonEventPoint& child_event = neg_event_points[neg_used];
           ++neg_used;
           child_event.index.content = neg_polygons.size();
+          if (event.index.partner >= split_location_begin) {
+            // The end interval of the polygon is coincident with the split
+            // plane.
+            polygon.SetAdjacentBoundaryAngles(
+                SplitSide{split_plane, /*pos_child=*/false},
+                /*adjacent=*/polygon.max_vertex_index(dimension));
+          }
           neg_polygons.push_back(std::move(polygon));
           child_event.new_location = neg_new_location;
           neg_new_location = false;

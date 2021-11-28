@@ -306,6 +306,34 @@ TEST(GetLowestCost, PartitionsExcludeId) {
                                     /*pos_total=*/4, /*pos_exclude=*/0));
 }
 
+void CheckCoincidentVerticesAndEdges(
+    const HalfSpace3* split_plane,
+    bool pos_side,
+    const std::vector<BSPPolygon<AABBConvexPolygon<>>>& polygons) {
+  for (const BSPPolygon<AABBConvexPolygon<>>& polygon : polygons) {
+    EXPECT_EQ(polygon.on_node_plane, SplitSide{});
+    for (const auto& edge : polygon.edges()) {
+      if (edge.line().IsCoincident(*split_plane)) {
+        EXPECT_TRUE(split_plane->IsCoincident(edge.vertex()))
+          << " split_plane=" << split_plane << std::endl;
+        EXPECT_EQ(edge.edge_first_coincident, (SplitSide{split_plane,
+                                                         pos_side}));
+        EXPECT_EQ(edge.edge_last_coincident, (SplitSide{split_plane,
+                                                        pos_side}));
+      } else {
+        EXPECT_EQ(edge.edge_first_coincident, SplitSide{});
+        EXPECT_EQ(edge.edge_last_coincident, SplitSide{});
+      }
+      if (split_plane->IsCoincident(edge.vertex())) {
+        EXPECT_EQ(edge.vertex_last_coincident, (SplitSide{split_plane,
+                                                          pos_side}));
+      } else {
+        EXPECT_EQ(edge.vertex_last_coincident, SplitSide{});
+      }
+    }
+  }
+}
+
 TEST(PolygonEventPointPartition, ApplyPrimaryNoOverlap) {
   std::vector<BSPPolygon<AABBConvexPolygon<>>> polygons;
   for (size_t i = 0; i < 10; ++i) {
@@ -338,6 +366,8 @@ TEST(PolygonEventPointPartition, ApplyPrimaryNoOverlap) {
                          polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
                          pos_border_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, false, neg_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, true, pos_polygons);
 
   EXPECT_THAT(polygons, IsEmpty());
   ASSERT_THAT(neg_polygons, SizeIs(4));
@@ -392,6 +422,8 @@ TEST(PolygonEventPointPartition, ApplyPrimarySingleOverlap) {
                          polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
                          pos_border_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, false, neg_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, true, pos_polygons);
 
   EXPECT_THAT(polygons, IsEmpty());
   EXPECT_THAT(neg_polygons, SizeIs(2));
@@ -449,6 +481,8 @@ TEST(PolygonEventPointPartition, ApplyPrimaryTwoOverlaps) {
                          polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
                          pos_border_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, false, neg_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, true, pos_polygons);
 
   EXPECT_THAT(polygons, IsEmpty());
   EXPECT_THAT(neg_polygons, SizeIs(3));
@@ -494,6 +528,8 @@ TEST(PolygonEventPointPartition, ApplyPrimaryGapAtSplit) {
                          polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
                          pos_border_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, false, neg_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, true, pos_polygons);
 
   EXPECT_THAT(polygons, IsEmpty());
   EXPECT_THAT(neg_polygons, SizeIs(1));
@@ -561,6 +597,8 @@ TEST(PolygonEventPointPartition, ApplyBorderPolygons) {
                          polygons, polygon_index_map.data(),
                          primary_neg_event_points, neg_polygons, pos_polygons,
                          neg_border_polygons, pos_border_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, false, neg_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, true, pos_polygons);
 
   EXPECT_THAT(neg_polygons, SizeIs(1));
   EXPECT_THAT(pos_polygons, SizeIs(1));
@@ -574,10 +612,26 @@ TEST(PolygonEventPointPartition, ApplyBorderPolygons) {
   }
   for (const BSPPolygon<AABBConvexPolygon<>>& polygon : neg_border_polygons) {
     EXPECT_EQ(polygon.plane(), split_plane);
+    EXPECT_EQ(polygon.on_node_plane.split, &split_plane);
+    EXPECT_EQ(polygon.on_node_plane.pos_side, false);
+    for (const auto& edge : polygon.edges()) {
+      EXPECT_EQ(edge.edge_first_coincident, (SplitSide{&split_plane, false}));
+      EXPECT_EQ(edge.edge_last_coincident, (SplitSide{&split_plane, false}));
+      EXPECT_EQ(edge.vertex_last_coincident, (SplitSide{&split_plane, false}));
+    }
   }
   for (const BSPPolygon<AABBConvexPolygon<>>& polygon : pos_border_polygons) {
     EXPECT_EQ(polygon.plane(), -split_plane);
+    EXPECT_EQ(polygon.on_node_plane.split, &split_plane);
+    EXPECT_EQ(polygon.on_node_plane.pos_side, true);
+    for (const auto& edge : polygon.edges()) {
+      EXPECT_EQ(edge.edge_first_coincident, (SplitSide{&split_plane, true}));
+      EXPECT_EQ(edge.edge_last_coincident, (SplitSide{&split_plane, true}));
+      EXPECT_EQ(edge.vertex_last_coincident, (SplitSide{&split_plane, true}));
+    }
   }
+  CheckCoincidentVerticesAndEdges(&split_plane, false, neg_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, true, pos_polygons);
   CheckSorted(/*dimension=*/1, neg_polygons, primary_neg_event_points);
   CheckSorted(/*dimension=*/1, pos_polygons, primary_event_points);
 
@@ -625,6 +679,8 @@ TEST(PolygonEventPointPartition, ApplySecondaryNoOverlap) {
                          polygons, polygon_index_map.data(),
                          primary_neg_event_points, neg_polygons, pos_polygons,
                          neg_border_polygons, pos_border_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, false, neg_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, true, pos_polygons);
 
   PolygonEventPoint secondary_neg_event_points[8];
   PolygonEventPoint secondary_pos_event_points[12];
@@ -671,6 +727,8 @@ TEST(PolygonEventPointPartition, ApplySecondaryReverseNoOverlap) {
                          polygons, polygon_index_map.data(),
                          primary_neg_event_points, neg_polygons, pos_polygons,
                          neg_border_polygons, pos_border_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, false, neg_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, true, pos_polygons);
 
   PolygonEventPoint secondary_neg_event_points[8];
   PolygonEventPoint secondary_pos_event_points[12];
@@ -726,6 +784,8 @@ TEST(PolygonEventPointPartition, ApplySecondaryTwoOverlaps) {
                          polygons, polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
                          pos_border_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, false, neg_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, true, pos_polygons);
 
   EXPECT_THAT(neg_polygons, SizeIs(3));
   EXPECT_THAT(pos_polygons, SizeIs(2));
@@ -785,6 +845,8 @@ TEST(PolygonEventPointPartition, ApplySecondaryTwoOverlapsRightAngleDown) {
                          polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
                          pos_border_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, false, neg_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, true, pos_polygons);
 
   EXPECT_THAT(neg_polygons, SizeIs(3));
   EXPECT_THAT(pos_polygons, SizeIs(2));
@@ -861,6 +923,8 @@ TEST(PolygonEventPointPartition, ApplySecondaryTwoOverlapsSkewedDown) {
                          polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
                          pos_border_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, false, neg_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, true, pos_polygons);
 
   EXPECT_THAT(neg_polygons, SizeIs(3));
   EXPECT_THAT(pos_polygons, SizeIs(2));
@@ -927,6 +991,8 @@ TEST(PolygonEventPointPartition, ApplySecondaryTwoOverlapsHorzFlipped) {
                          polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
                          pos_border_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, false, neg_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, true, pos_polygons);
 
   EXPECT_THAT(neg_polygons, SizeIs(3));
   EXPECT_THAT(pos_polygons, SizeIs(2));
@@ -993,6 +1059,8 @@ TEST(PolygonEventPointPartition, ApplySecondaryTwoOverlapsSkewedDownMore) {
                          polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
                          pos_border_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, false, neg_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, true, pos_polygons);
 
   EXPECT_THAT(neg_polygons, SizeIs(3));
   EXPECT_THAT(pos_polygons, SizeIs(2));
@@ -1054,6 +1122,8 @@ TEST(PolygonEventPartition, ApplySecondaryOneOverlap) {
                          polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
                          pos_border_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, false, neg_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, true, pos_polygons);
 
   EXPECT_THAT(neg_polygons, SizeIs(4));
   EXPECT_THAT(pos_polygons, SizeIs(3));
@@ -1124,6 +1194,8 @@ TEST(PolygonEventPointPartition, ApplySecondaryEmptyInterval) {
                          polygon_index_map.data(), neg_event_points,
                          neg_polygons, pos_polygons, neg_border_polygons,
                          pos_border_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, false, neg_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, true, pos_polygons);
 
   EXPECT_THAT(neg_polygons, SizeIs(3));
   EXPECT_THAT(pos_polygons, SizeIs(1));

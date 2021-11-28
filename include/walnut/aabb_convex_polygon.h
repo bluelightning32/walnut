@@ -110,6 +110,14 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
     return aabb_tracker_.aabb();
   }
 
+  // Returns the index of the vertex of this polygon that is furthest in the
+  // positive direction along the `dimension` axis. Technically the vertex is
+  // not necessarily on the axis, but just coincident with the furthest plane
+  // perpendicular to the axis.
+  size_t max_vertex_index(int dimension) const {
+    return aabb_tracker_.max_indices()[dimension];
+  }
+
   // Returns the vertex of this polygon that is furthest in the positive
   // direction along the `dimension` axis. Technically the vertex is not
   // necessarily on the axis, but just coincident with the furthest plane
@@ -118,7 +126,15 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
   // The caller must ensure that the polygon has at least 1 vertex.
   const HomoPoint3& max_vertex(int dimension) const {
     assert(vertex_count() > 0);
-    return vertex(aabb_tracker_.max_indices()[dimension]);
+    return vertex(max_vertex_index(dimension));
+  }
+
+  // Returns the index of the vertex of this polygon that is furthest in the
+  // negative direction along the `dimension` axis. Technically the vertex is
+  // not necessarily on the axis, but just coincident with the furthest plane
+  // perpendicular to the axis.
+  size_t min_vertex_index(int dimension) const {
+    return aabb_tracker_.min_indices()[dimension];
   }
 
   // Returns the vertex of this polygon that is furthest in the negative
@@ -129,7 +145,7 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
   // The caller must ensure that the polygon has at least 1 vertex.
   const HomoPoint3& min_vertex(int dimension) const {
     assert(vertex_count() > 0);
-    return vertex(aabb_tracker_.min_indices()[dimension]);
+    return vertex(min_vertex_index(dimension));
   }
 
   // Overrides the non-virtual function from ConvexPolygon.
