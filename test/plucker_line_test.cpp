@@ -77,6 +77,17 @@ TEST(PluckerLine, IsCoincidentOffsetParallelHalfSpace3) {
   EXPECT_FALSE(line.IsCoincident(y_perp));
 }
 
+TEST(PluckerLine, IsCoincidentHalfSpace3ThroughOrigin) {
+  const Point3 p1(2, 2, 2);
+  const Point3 p2(0, 0, 0);
+  PluckerLine line(p1, p2);
+
+  HalfSpace3 yz = HalfSpace3::GetAxisAligned(/*dimension=*/0,
+                                             /*numerator=*/BigInt(0),
+                                             /*denominator=*/BigInt(1));
+  EXPECT_FALSE(line.IsCoincident(yz));
+}
+
 TEST(PluckerLine, EqualSameDir) {
   const Point3 p1(1, 2, 3);
   const Vector3 d(5, 7, 11);
