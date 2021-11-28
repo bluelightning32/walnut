@@ -635,6 +635,7 @@ void PolygonEventPointPartition::ApplyPrimary(
           neg_end_event.index.content = used_extra;
 
           // Add the negative start event.
+          assert(neg_used < neg_poly_count*2 - extra_count);
           PolygonEventPoint& neg_start_event = neg_event_points[neg_used];
           ++neg_used;
           neg_start_event.start = true;
@@ -644,7 +645,7 @@ void PolygonEventPointPartition::ApplyPrimary(
 
           // Add the positive start event.
           event_points[event.index.partner].index.partner =
-            pos_used + neg_polygons.size()*2;
+            pos_used + neg_poly_count*2;
           PolygonEventPoint& pos_start_event = event_points[pos_used];
           ++pos_used;
           pos_start_event.start = true;
@@ -680,6 +681,8 @@ void PolygonEventPointPartition::ApplyPrimary(
       } else if (start_event_index < neg_polygons.size()*2) {
         // The start event belongs to a negative polygon.
         assert(start_event_index < neg_used);
+        assert(neg_event_points[start_event_index].start);
+        assert(neg_used < neg_poly_count*2 - extra_count);
         PolygonEventPoint& child_event = neg_event_points[neg_used];
 
         child_event.start = false;
@@ -706,6 +709,9 @@ void PolygonEventPointPartition::ApplyPrimary(
     }
   }
   polygons.clear();
+
+  assert(neg_used + used_extra == neg_polygons.size()*2);
+  assert(pos_used == pos_polygons.size()*2);
 }
 
 template <typename ParentPolygon>
