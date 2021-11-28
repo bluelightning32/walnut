@@ -567,7 +567,7 @@ void PolygonEventPointPartition::ApplyPrimary(
       neg_new_location = true;
       if (i == split_location_begin) {
         pos_new_location = used_extra == 0;
-        if (neg_used + used_extra == neg_poly_count*2) {
+        if (neg_used + used_extra == neg_poly_count*2 && used_extra > 0) {
           // All of the negative child event points have written before
           // processing any event points on the split plane. This means that
           // split_index points to a border polygon that doesn't have any event
@@ -575,7 +575,6 @@ void PolygonEventPointPartition::ApplyPrimary(
           // split_index would indicate the last new location. However since it
           // was excluded as part of a border polygon, the first negative child
           // extra polygon end event has to be marked as a new location.
-          assert(used_extra > 0);
           neg_event_points[neg_poly_count*2 - used_extra].new_location = true;
         }
       } else {

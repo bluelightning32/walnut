@@ -315,7 +315,9 @@ void CheckCoincidentVerticesAndEdges(
     for (const auto& edge : polygon.edges()) {
       if (edge.line().IsCoincident(*split_plane)) {
         EXPECT_TRUE(split_plane->IsCoincident(edge.vertex()))
-          << " split_plane=" << split_plane << std::endl;
+          << " vertex=" << edge.vertex()
+          << " line=" << edge.line()
+          << " split_plane=" << *split_plane << std::endl;
         EXPECT_EQ(edge.edge_first_coincident, (SplitSide{split_plane,
                                                          pos_side}));
         EXPECT_EQ(edge.edge_last_coincident, (SplitSide{split_plane,
@@ -581,6 +583,53 @@ TEST(PolygonEventPointPartition, ApplyPrimaryBorderPolygonAtSplit) {
   EXPECT_THAT(polygons, IsEmpty());
   EXPECT_THAT(neg_polygons, SizeIs(1));
   EXPECT_THAT(pos_polygons, SizeIs(1));
+
+  CheckSorted(/*dimension=*/0, neg_polygons, neg_event_points);
+  CheckSorted(/*dimension=*/0, pos_polygons, event_points);
+}
+
+TEST(PolygonEventPointPartition, ApplyPrimaryAllNegPolygonsAreBorder) {
+  /*  0 1 2
+   *  |---|
+   *  |
+   *
+   *  ^
+   *  |
+   */
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> polygons;
+  polygons.push_back(MakeTriangleForInterval(0, Point3(0, 0, 0),
+                                             Point3(0, 1, 1)));
+  polygons.push_back(MakeTriangleForInterval(0, Point3(0, 0, 0),
+                                             Point3(2, 2, 2)));
+  PolygonEventPoint event_points[4];
+  MakeEventPoints(/*dimension=*/0, polygons, event_points);
+  CheckSorted(/*dimension=*/0, polygons, event_points);
+
+  PolygonEventPointPartition partition;
+  partition.split_index = 1;
+  partition.neg_poly_count = 1;
+  partition.pos_poly_count = 1;
+  partition.DiscountBorderPolygons(event_points, polygons.size());
+  ASSERT_EQ(partition.neg_poly_count, 0);
+  ASSERT_EQ(partition.pos_poly_count, 1);
+
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_border_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
+  std::vector<size_t> polygon_index_map(2);
+  PolygonEventPoint neg_event_points[0];
+  HalfSpace3 split_plane;
+  partition.ApplyPrimary(/*dimension=*/0, event_points, &split_plane, polygons,
+                         polygon_index_map.data(), neg_event_points,
+                         neg_polygons, pos_polygons, neg_border_polygons,
+                         pos_border_polygons);
+  EXPECT_THAT(polygons, IsEmpty());
+  EXPECT_THAT(neg_polygons, SizeIs(0));
+  EXPECT_THAT(pos_polygons, SizeIs(1));
+
+  CheckCoincidentVerticesAndEdges(&split_plane, false, neg_polygons);
+  CheckCoincidentVerticesAndEdges(&split_plane, true, pos_polygons);
 
   CheckSorted(/*dimension=*/0, neg_polygons, neg_event_points);
   CheckSorted(/*dimension=*/0, pos_polygons, event_points);
