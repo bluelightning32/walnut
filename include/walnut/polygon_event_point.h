@@ -479,9 +479,14 @@ inline void PolygonEventPointPartition::DiscountBorderPolygons(
          !event_points[split_location_end].new_location) {
     if (!event_points[split_location_end].start) {
       --pos_poly_count;
-      ++border_poly_count;
     }
     ++split_location_end;
+  }
+  for (size_t i = split_index; i < split_location_end; ++i) {
+    if (event_points[i].start &&
+        event_points[i].index.partner < split_location_end) {
+      ++border_poly_count;
+    }
   }
 }
 

@@ -635,6 +635,83 @@ TEST(PolygonEventPointPartition, ApplyPrimaryAllNegPolygonsAreBorder) {
   CheckSorted(/*dimension=*/0, pos_polygons, event_points);
 }
 
+TEST(PolygonEventPointPartition, ApplyPrimaryBorderStartsBeforeEnds) {
+  /*  0 1 2 3 4
+   *  |-----|
+   *        |
+   *    |---|
+   *        |
+   *      |-|
+   *        |
+   *        |-|
+   *        |
+   *
+   *        ^
+   *        |
+   */
+  for (int exclude_id = 0; exclude_id < 2; ++exclude_id) {
+    std::vector<BSPPolygon<AABBConvexPolygon<>>> polygons;
+    polygons.push_back(MakeTriangleForInterval(0, Point3(0, 0, 0),
+                                               Point3(3, 3, 3)));
+
+    polygons.push_back(MakeTriangleForInterval(1, Point3(3, 2, 2),
+                                               Point3(3, 3, 3)));
+
+    polygons.push_back(MakeTriangleForInterval(0, Point3(1, 1, 1),
+                                               Point3(3, 3, 3)));
+
+    polygons.push_back(MakeTriangleForInterval(1, Point3(3, 2, 2),
+                                               Point3(3, 3, 3)));
+
+    polygons.push_back(MakeTriangleForInterval(0, Point3(2, 2, 2),
+                                               Point3(3, 3, 3)));
+
+    polygons.push_back(MakeTriangleForInterval(1, Point3(3, 2, 2),
+                                               Point3(3, 3, 3)));
+
+    polygons.push_back(MakeTriangleForInterval(0, Point3(3, 3, 3),
+                                               Point3(4, 4, 4)));
+
+    polygons.push_back(MakeTriangleForInterval(1, Point3(3, 2, 2),
+                                               Point3(3, 3, 3)));
+
+    PolygonEventPoint event_points[16];
+    MakeEventPoints(/*dimension=*/0, polygons, event_points);
+    CheckSorted(/*dimension=*/0, polygons, event_points);
+
+    PolygonEventPointPartition best = GetLowestCost(exclude_id,
+                                                    /*exclude_count=*/4,
+                                                    polygons,
+                                                    event_points);
+
+    best.DiscountBorderPolygons(event_points, polygons.size());
+    EXPECT_GT(best.border_poly_count, 0);
+
+    std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_polygons;
+    std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_polygons;
+    std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_border_polygons;
+    std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
+    std::vector<size_t> polygon_index_map(8);
+    std::vector<PolygonEventPoint> neg_event_points;
+    neg_event_points.resize(best.GetNegEventPointCount());
+    HalfSpace3 split_plane;
+    best.ApplyPrimary(/*dimension=*/0, event_points, &split_plane, polygons,
+                      polygon_index_map.data(), neg_event_points.data(),
+                      neg_polygons, pos_polygons, neg_border_polygons,
+                      pos_border_polygons);
+    EXPECT_THAT(polygons, IsEmpty());
+    EXPECT_EQ(neg_polygons.size() + pos_polygons.size() +
+              neg_border_polygons.size() + pos_border_polygons.size(), 8);
+
+    CheckCoincidentVerticesAndEdges(&split_plane, false, neg_polygons);
+    CheckCoincidentVerticesAndEdges(&split_plane, true, pos_polygons);
+
+    CheckSorted(/*dimension=*/0, neg_polygons, neg_event_points.data());
+    CheckSorted(/*dimension=*/0, pos_polygons, event_points);
+  }
+}
+
+
 TEST(PolygonEventPointPartition, ApplyBorderPolygons) {
   /*  x-view:
    *
