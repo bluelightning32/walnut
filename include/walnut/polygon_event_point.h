@@ -738,6 +738,8 @@ int PolygonEventPointPartition::CompareHeapLocationToMain(
     } else if (mapped_index < neg_polygons.size()) {
       main_location = &neg_polygons[mapped_index].min_vertex(dimension);
     } else {
+      mapped_index -= neg_polygons.size();
+      assert(mapped_index < pos_polygons.size());
       main_location = &pos_polygons[mapped_index].min_vertex(dimension);
     }
   } else {
