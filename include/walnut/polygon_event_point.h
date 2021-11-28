@@ -870,8 +870,14 @@ void PolygonEventPointPartition::ApplySecondary(
         }
       }
       // Process the main end events at the location.
-      while (process_main_events && !event_points_pos->start) {
+      //
+      // The -1 check is there to skip processing main end events if the next
+      // one requires a heap start event to be processed first (which would
+      // change the partner index).
+      while (process_main_events && !event_points_pos->start &&
+             event_points_pos->index.partner != static_cast<size_t>(-1)) {
         size_t child_start_event_index = event_points_pos->index.partner;
+        assert(child_start_event_index != static_cast<size_t>(-1));
         if (child_start_event_index == static_cast<size_t>(-2)) {
           // Skip end events from border polygons
         } else if (child_start_event_index < neg_polygons.size()*2) {

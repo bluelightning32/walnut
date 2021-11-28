@@ -1273,4 +1273,61 @@ TEST(PolygonEventPointPartition, ApplySecondaryOverlapGapAtSplit) {
   CheckSorted(/*dimension=*/1, pos_polygons, secondary_pos_event_points);
 }
 
+TEST(PolygonEventPointPartition, ApplySecondarySplitEmptyInterval) {
+  /*  x-view
+   *  0 1 2
+   *  |---|
+   *  |-|
+   *    ^
+   *    |
+   *
+   *
+   *  y-view (both intervals are empty):
+   *  0 - - <-
+   */
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> polygons;
+  polygons.push_back(MakeTriangleForInterval(0, Point3(0, 0, 0),
+                                             Point3(2, 0, 2)));
+  polygons.push_back(MakeTriangleForInterval(0, Point3(0, 0, 0),
+                                             Point3(1, 0, 1)));
+  PolygonEventPoint event_points[4];
+  MakeEventPoints(/*dimension=*/0, polygons, event_points);
+  CheckSorted(/*dimension=*/0, polygons, event_points);
+  PolygonEventPoint secondary_event_points[4];
+  MakeEventPoints(/*dimension=*/1, polygons, secondary_event_points);
+  CheckSorted(/*dimension=*/1, polygons, secondary_event_points);
+
+  PolygonEventPointPartition partition;
+  partition.split_index = 2;
+  partition.neg_poly_count = 2;
+  partition.pos_poly_count = 1;
+  partition.DiscountBorderPolygons(event_points, polygons.size());
+
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> neg_border_polygons;
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> pos_border_polygons;
+  std::vector<size_t> polygon_index_map(2);
+  PolygonEventPoint neg_event_points[4];
+  HalfSpace3 split_plane;
+  partition.ApplyPrimary(/*dimension=*/0, event_points, &split_plane, polygons,
+                         polygon_index_map.data(), neg_event_points,
+                         neg_polygons, pos_polygons, neg_border_polygons,
+                         pos_border_polygons);
+
+  PolygonEventPoint secondary_neg_event_points[4];
+  PolygonEventPoint secondary_pos_event_points[2];
+  std::vector<PolygonMergeEvent> merge_heap;
+  partition.ApplySecondary(/*dimension=*/1, polygon_index_map.size(),
+                           neg_polygons, pos_polygons,
+                           polygon_index_map.data(), secondary_event_points,
+                           secondary_neg_event_points,
+                           secondary_pos_event_points, merge_heap);
+  ASSERT_TRUE(secondary_neg_event_points[0].start);
+  ASSERT_TRUE(secondary_pos_event_points[0].start);
+
+  CheckSorted(/*dimension=*/1, neg_polygons, secondary_neg_event_points);
+  CheckSorted(/*dimension=*/1, pos_polygons, secondary_pos_event_points);
+}
+
 }  // walnut
