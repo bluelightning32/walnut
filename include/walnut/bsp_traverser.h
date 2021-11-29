@@ -44,6 +44,7 @@ class BSPTraverser {
       }
 
       std::pair<BSPContentId, size_t> exclude = node.GetCostExclude();
+      assert(exclude.second <= node.contents().size());
       PolygonEventPointPartition best =
         GetLowestCost(exclude.first, exclude.second, node.contents(),
                       event_points_[0].data());
@@ -58,9 +59,24 @@ class BSPTraverser {
         }
       }
       MLogNEstimator estimator;
-      if (best.cost >= estimator.Estimate(node.contents().size(),
-                                          1 + node.contents().size() -
-                                          exclude.second)) {
+      // Reject the axis aligned split if the cost is worse than the parent
+      // cost, taking into account the excluded count. Also reject the axis
+      // aligned split if it is more expensive than splitting at the 15/16
+      // point.
+      //
+      // Unless the axis aligned split is coincident with content polygons,
+      // because then it needs to be split in that plane eventually anyway.
+      size_t cutoff_minority_side = node.contents().size() / 16;
+      size_t cutoff_majority_side = node.contents().size() - cutoff_minority_side;
+      size_t cost_cutoff = std::min(
+          estimator.Estimate(node.contents().size(),
+                             1 + node.contents().size() - exclude.second),
+          estimator.Estimate(cutoff_majority_side, 1 + cutoff_majority_side) +
+            estimator.Estimate(cutoff_minority_side,
+                               1 + cutoff_minority_side));
+      best.DiscountBorderPolygons(event_points_[best_dimension].data(),
+                                  node.contents().size());
+      if (best.cost >= cost_cutoff && best.border_poly_count == 0) {
         node.Split();
         result.first.FreeEventLists();
         result.second.FreeEventLists();
@@ -70,8 +86,6 @@ class BSPTraverser {
       }
       result.first.event_points_[best_dimension] =
         parent_.AllocateEventPoints();
-      best.DiscountBorderPolygons(event_points_[best_dimension].data(),
-                                  node.contents().size());
       node.Split(best, best_dimension, event_points_[best_dimension],
                  parent_.polygon_index_map_,
                  result.first.event_points_[best_dimension]);
