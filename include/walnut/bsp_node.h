@@ -194,12 +194,12 @@ class BSPNode {
     std::pair<BSPContentId, size_t> best(-1, 0);
     size_t count = 0;
     for (size_t id = 0; id < content_info_by_id_.size(); ++id) {
-      if (content_info_by_id_[id].has_polygons) {
+      if (content_info_by_id_[id].has_interior_polygons) {
         ++count;
 
-        if (content_info_by_id_[id].has_polygons > best.second) {
+        if (content_info_by_id_[id].has_interior_polygons > best.second) {
           best.first = id;
-          best.second = content_info_by_id_[id].has_polygons;
+          best.second = content_info_by_id_[id].has_interior_polygons;
         }
       }
     }
@@ -250,7 +250,7 @@ class BSPNode {
     if (id >= content_info_by_id_.size()) {
       content_info_by_id_.resize(id + 1);
     }
-    content_info_by_id_[id].has_polygons++;
+    content_info_by_id_[id].has_interior_polygons++;
   }
 
  private:
@@ -258,21 +258,22 @@ class BSPNode {
   friend class BSPTree;
 
   // Copies only the `pwn` field from `content_info_by_id`, and clears
-  // `has_polygons`.
+  // `has_interior_polygons` and `has_border_polygons`.
   void SetPWN(const std::vector<BSPContentInfo>& content_info_by_id) {
     content_info_by_id_.resize(content_info_by_id.size());
     for (size_t i = 0; i < content_info_by_id.size(); ++i) {
-      content_info_by_id_[i].has_polygons = 0;
+      content_info_by_id_[i].has_interior_polygons = 0;
+      content_info_by_id_[i].has_border_polygons = 0;
       content_info_by_id_[i].pwn = content_info_by_id[i].pwn;
     }
   }
 
   void SetPolygonCountFromContents() {
     for (PolygonRep& polygon : contents_) {
-      content_info_by_id_[polygon.id].has_polygons++;
+      content_info_by_id_[polygon.id].has_interior_polygons++;
     }
     for (PolygonRep& polygon : border_contents_) {
-      content_info_by_id_[polygon.id].has_polygons++;
+      content_info_by_id_[polygon.id].has_border_polygons++;
     }
   }
 
@@ -329,8 +330,8 @@ HalfSpace3 BSPNode<OutputPolygonParent>::PickSplitPlane() const {
   }
   size_t offset = 1;
   auto consider_split = [this, &split](const PolygonRep &polygon) {
-    if (content_info_by_id_[polygon.id].has_polygons <
-        content_info_by_id_[split->id].has_polygons) {
+    if (content_info_by_id_[polygon.id].has_interior_polygons <
+        content_info_by_id_[split->id].has_interior_polygons) {
       split = &polygon;
     }
   };
@@ -342,7 +343,7 @@ HalfSpace3 BSPNode<OutputPolygonParent>::PickSplitPlane() const {
   if (contents_.size() & 1) {
     consider_split(contents_[mid + offset]);
   }
-  if (content_info_by_id_[split->id].has_polygons > 40) {
+  if (content_info_by_id_[split->id].has_interior_polygons > 40) {
     // There are enough polygons remaining that it is worth trying to more
     // evenly divide them, at the cost of creating more split polygons.
     return PickQuarterTurnSplitPlane(split - contents_.data());
@@ -549,21 +550,21 @@ void BSPNode<OutputPolygonParent>::PushBorderContentsToChildren() {
         std::pair<PolygonRep, PolygonRep> children =
           std::move(polygon).CreateSplitChildren(std::move(info));
         PolygonRep::SetChildBoundaryAngles(children, split_);
-        negative_child_->content_info_by_id_[polygon.id].has_polygons++;
+        negative_child_->content_info_by_id_[polygon.id].has_border_polygons++;
         negative_child_->border_contents_.push_back(std::move(children.first));
-        positive_child_->content_info_by_id_[polygon.id].has_polygons++;
+        positive_child_->content_info_by_id_[polygon.id].has_border_polygons++;
         positive_child_->border_contents_.push_back(
             std::move(children.second));
       } else {
         polygon.SetBoundaryAngles(SplitSide{&split_, /*pos_child=*/false},
                                   /*exclude_range=*/info.neg_range());
-        negative_child_->content_info_by_id_[polygon.id].has_polygons++;
+        negative_child_->content_info_by_id_[polygon.id].has_border_polygons++;
         negative_child_->border_contents_.push_back(std::move(polygon));
       }
     } else if (info.ShouldEmitPositiveChild()) {
       polygon.SetBoundaryAngles(SplitSide{&split_, /*pos_child=*/true},
                                 /*exclude_range=*/info.pos_range());
-      positive_child_->content_info_by_id_[polygon.id].has_polygons++;
+      positive_child_->content_info_by_id_[polygon.id].has_border_polygons++;
       positive_child_->border_contents_.push_back(std::move(polygon));
     } else {
       assert(info.ShouldEmitOnPlane());
@@ -582,10 +583,10 @@ void BSPNode<OutputPolygonParent>::PushBorderContentsToChildren() {
       polygon.on_node_plane.split = &split_;
       polygon.on_node_plane.pos_side = pos_child;
       if (pos_child) {
-        positive_child_->content_info_by_id_[polygon.id].has_polygons++;
+        positive_child_->content_info_by_id_[polygon.id].has_border_polygons++;
         positive_child_->border_contents_.push_back(std::move(polygon));
       } else {
-        negative_child_->content_info_by_id_[polygon.id].has_polygons++;
+        negative_child_->content_info_by_id_[polygon.id].has_border_polygons++;
         negative_child_->border_contents_.push_back(std::move(polygon));
       }
     }
@@ -612,20 +613,23 @@ void BSPNode<OutputPolygonParent>::PushContentsToChildren() {
           std::move(polygon).CreateSplitChildren(std::move(info));
         PolygonRep::SetChildBoundaryAngles(children, split_);
 
-        negative_child_->content_info_by_id_[polygon.id].has_polygons++;
+        negative_child_->content_info_by_id_[polygon.id].
+          has_interior_polygons++;
         negative_child_->contents_.push_back(std::move(children.first));
-        positive_child_->content_info_by_id_[polygon.id].has_polygons++;
+        positive_child_->content_info_by_id_[polygon.id].
+          has_interior_polygons++;
         positive_child_->contents_.push_back(std::move(children.second));
       } else {
         polygon.SetBoundaryAngles(SplitSide{&split_, /*pos_child=*/false},
                                   /*exclude_range=*/info.neg_range());
-        negative_child_->content_info_by_id_[polygon.id].has_polygons++;
+        negative_child_->content_info_by_id_[polygon.id].
+          has_interior_polygons++;
         negative_child_->contents_.push_back(std::move(polygon));
       }
     } else if (info.ShouldEmitPositiveChild()) {
       polygon.SetBoundaryAngles(SplitSide{&split_, /*pos_child=*/true},
                                 /*exclude_range=*/info.pos_range());
-      positive_child_->content_info_by_id_[polygon.id].has_polygons++;
+      positive_child_->content_info_by_id_[polygon.id].has_interior_polygons++;
       positive_child_->contents_.push_back(std::move(polygon));
     } else {
       assert(info.ShouldEmitOnPlane());
@@ -639,12 +643,12 @@ void BSPNode<OutputPolygonParent>::PushContentsToChildren() {
                                 /*coincident_begin=*/0,
                                 /*coincident_end=*/polygon.vertex_count() + 1);
       if (pos_child) {
-        positive_child_->content_info_by_id_[polygon.id].has_polygons++;
+        positive_child_->content_info_by_id_[polygon.id].has_border_polygons++;
         positive_child_->border_contents_.emplace_back(&split_,
                                                        /*pos_side=*/true,
                                                        std::move(polygon));
       } else {
-        negative_child_->content_info_by_id_[polygon.id].has_polygons++;
+        negative_child_->content_info_by_id_[polygon.id].has_border_polygons++;
         negative_child_->border_contents_.emplace_back(&split_,
                                                        /*pos_side=*/false,
                                                        std::move(polygon));

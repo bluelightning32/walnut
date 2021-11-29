@@ -45,7 +45,7 @@ class PlanePartitioner {
   // function incrementally calculates the PWN of the outside of the cell, in
   // order to determine which input polygons should be sent to the visitor.
   //
-  // The caller must also ensure that the `has_polygons` field of
+  // The caller must also ensure that the `has_border_polygons` field of
   // `initial_content_info` is true of any polygon id in the input range.
   //
   // At leaf nodes, `visitor` is given any polygon where one side is inside of
@@ -103,14 +103,14 @@ class PlanePartitioner {
     visitor.LeaveInteriorNode(/*from_partitioner=*/true, split_plane);
   }
 
-  // Returns true if `has_polygons` is true in the content_info for every
-  // polygon in the given range.
+  // Returns true if `has_border_polygons` is true in the content_info for
+  // every polygon in the given range.
   template <typename Iterator>
   static bool ContentInfoMatches(Iterator begin, Iterator end,
                                  const ContentInfo& content_info) {
     while (begin != end) {
       if (begin->id >= content_info.size()) return false;
-      if (!content_info[begin->id].has_polygons) return false;
+      if (!content_info[begin->id].has_border_polygons) return false;
       ++begin;
     }
     return true;
@@ -237,7 +237,7 @@ class PlanePartitioner {
   }
 
   // Copies the `pwn` field from `initial_content_info` into
-  // `current_content_info_`, but leaves the `has_polygons` field alone.
+  // `current_content_info_`, but leaves the `has_border_polygons` field alone.
   void RestoreCurrentContentInfoPWN(const ContentInfo& initial_content_info) {
     assert(current_content_info_.size() == initial_content_info.size());
     for (size_t i = 0; i < current_content_info_.size(); ++i) {
@@ -245,14 +245,15 @@ class PlanePartitioner {
     }
   }
 
-  // Sets the `has_polygons` field to true iff. `polygons` contains one or more
-  // entries with that id.
+  // Sets the `has_border_polygons` field to true iff. `polygons` contains one
+  // or more entries with that id.
   void SetCurrentContentInfoPolygons(const PolygonVector& polygons) {
     for (size_t i = 0; i < current_content_info_.size(); ++i) {
-      current_content_info_[i].has_polygons = false;
+      assert(!current_content_info_[i].has_interior_polygons);
+      current_content_info_[i].has_border_polygons = false;
     }
     for (const Polygon& polygon : polygons) {
-      current_content_info_[polygon.id].has_polygons = true;
+      current_content_info_[polygon.id].has_border_polygons = true;
     }
   }
 

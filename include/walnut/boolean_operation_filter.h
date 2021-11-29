@@ -40,7 +40,7 @@ class UnionIdsFilter : public BooleanOperationFilter {
         id_result = std::make_pair(false, false);
       } else {
         id_result =  std::make_pair(content_info_by_id[id].pwn > 0,
-                                    content_info_by_id[id].has_polygons);
+                                    content_info_by_id[id].has_polygons());
       }
 
       total.second = (!total.first || total.second) &&
@@ -80,7 +80,7 @@ class IntersectIdsFilter : public BooleanOperationFilter {
         id_result = std::make_pair(false, false);
       } else {
         id_result =  std::make_pair(content_info_by_id[id].pwn > 0,
-                                    content_info_by_id[id].has_polygons);
+                                    content_info_by_id[id].has_polygons());
       }
 
       total.second = (total.first || total.second) &&
@@ -119,7 +119,7 @@ class SubtractIdsFilter : public BooleanOperationFilter {
     } 
 
     std::pair<bool, bool> total(content_info_by_id[0].pwn > 0,
-                                content_info_by_id[0].has_polygons);
+                                content_info_by_id[0].has_polygons());
 
     for (size_t i = 1; i < ids_.size(); ++i) {
       BSPContentId id = ids_[i];
@@ -130,7 +130,7 @@ class SubtractIdsFilter : public BooleanOperationFilter {
         id_result = std::make_pair(false, false);
       } else {
         id_result =  std::make_pair(content_info_by_id[id].pwn >= 0,
-                                    content_info_by_id[id].has_polygons);
+                                    content_info_by_id[id].has_polygons());
       }
 
       total.second = (total.first || total.second) &&

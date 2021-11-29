@@ -50,7 +50,8 @@ TEST(PlanePartitioner, AcceptSinglePolygon) {
   CollectorVisitor<BSPPolygon<>, PolygonFilter> visitor(PolygonFilter(0));
 
   std::vector<BSPContentInfo> content_info{
-    BSPContentInfo{/*has_polygons=*/true, /*pwn=*/0}
+    BSPContentInfo{/*has_interior_polygons=*/false,
+                   /*has_border_polygons=*/true, /*pwn=*/0},
   };
   partitioner.Run(input.begin(), input.end(), /*drop_dimension=*/2,
                   /*pos_normal=*/true, content_info, visitor);
@@ -100,7 +101,8 @@ TEST(PlanePartitioner, SplitAlongAllPolygons) {
   CollectorVisitor<BSPPolygon<>, PolygonFilter> visitor(PolygonFilter(0));
 
   std::vector<BSPContentInfo> content_info{
-    BSPContentInfo{/*has_polygons=*/true, /*pwn=*/0}
+    BSPContentInfo{/*has_interior_polygons=*/false,
+                   /*has_border_polygons=*/true, /*pwn=*/0},
   };
   partitioner.Run(input.begin(), input.end(), /*drop_dimension=*/2,
                   /*pos_normal=*/true, content_info, visitor);
@@ -135,7 +137,8 @@ TEST(PlanePartitioner, SplitOnlyFromSecondPolygon) {
   CollectorVisitor<BSPPolygon<>, PolygonFilter> visitor1(PolygonFilter(0));
 
   std::vector<BSPContentInfo> content_info{
-    BSPContentInfo{/*has_polygons=*/true, /*pwn=*/0}
+    BSPContentInfo{/*has_interior_polygons=*/false,
+                   /*has_border_polygons=*/true, /*pwn=*/0},
   };
   partitioner.Run(input.begin(), input.end(), /*drop_dimension=*/2,
                   /*pos_normal=*/true, content_info, visitor1);
@@ -149,8 +152,10 @@ TEST(PlanePartitioner, SplitOnlyFromSecondPolygon) {
   };
 
   std::vector<BSPContentInfo> content_info2{
-    BSPContentInfo{/*has_polygons=*/true, /*pwn=*/0},
-    BSPContentInfo{/*has_polygons=*/true, /*pwn=*/0},
+    BSPContentInfo{/*has_interior_polygons=*/false,
+                   /*has_border_polygons=*/true, /*pwn=*/0},
+    BSPContentInfo{/*has_interior_polygons=*/false,
+                   /*has_border_polygons=*/true, /*pwn=*/0},
   };
   CollectorVisitor<BSPPolygon<>, PolygonFilter> visitor2(PolygonFilter(1));
   partitioner.Run(input2.begin(), input2.end(), /*drop_dimension=*/2,
@@ -175,7 +180,8 @@ TEST(PlanePartitioner, NoResplit) {
   CollectorVisitor<BSPPolygon<>, PolygonFilter> visitor1(PolygonFilter(0));
 
   std::vector<BSPContentInfo> content_info{
-    BSPContentInfo{/*has_polygons=*/true, /*pwn=*/0}
+    BSPContentInfo{/*has_interior_polygons=*/false,
+                   /*has_border_polygons=*/true, /*pwn=*/0},
   };
   partitioner.Run(input.begin(), input.end(), /*drop_dimension=*/2,
                   /*pos_normal=*/true, content_info, visitor1);
@@ -219,8 +225,10 @@ TEST(PlanePartitioner, IntersectionFilter) {
   CollectorVisitor<BSPPolygon<>, decltype(filter)> visitor(filter);
 
   std::vector<BSPContentInfo> content_info{
-    BSPContentInfo{/*has_polygons=*/true, /*pwn=*/0},
-    BSPContentInfo{/*has_polygons=*/true, /*pwn=*/0},
+    BSPContentInfo{/*has_interior_polygons=*/false,
+                   /*has_border_polygons=*/true, /*pwn=*/0},
+    BSPContentInfo{/*has_interior_polygons=*/false,
+                   /*has_border_polygons=*/true, /*pwn=*/0},
   };
   partitioner.Run(input.begin(), input.end(), /*drop_dimension=*/2,
                   /*pos_normal=*/true, content_info, visitor);
@@ -256,8 +264,10 @@ TEST(PlanePartitioner, UnionFilter) {
   CollectorVisitor<BSPPolygon<>, decltype(filter)> visitor(filter);
 
   std::vector<BSPContentInfo> content_info{
-    BSPContentInfo{/*has_polygons=*/true, /*pwn=*/0},
-    BSPContentInfo{/*has_polygons=*/true, /*pwn=*/0},
+    BSPContentInfo{/*has_interior_polygons=*/false,
+                   /*has_border_polygons=*/true, /*pwn=*/0},
+    BSPContentInfo{/*has_interior_polygons=*/false,
+                   /*has_border_polygons=*/true, /*pwn=*/0},
   };
   partitioner.Run(input.begin(), input.end(), /*drop_dimension=*/2,
                   /*pos_normal=*/true, content_info, visitor);

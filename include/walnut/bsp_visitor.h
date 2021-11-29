@@ -27,7 +27,7 @@ class PolygonFilter {
       return std::make_pair(false, false);
     } else {
       return std::make_pair(content_info_by_id[accept_id_].pwn > 0,
-                            content_info_by_id[accept_id_].has_polygons);
+                            content_info_by_id[accept_id_].has_polygons());
     }
   }
 
@@ -56,7 +56,7 @@ class InvertedPolygonFilter {
       return std::make_pair(false, false);
     } else {
       return std::make_pair(content_info_by_id[accept_id_].pwn >= 0,
-                            content_info_by_id[accept_id_].has_polygons);
+                            content_info_by_id[accept_id_].has_polygons());
     }
   }
 
@@ -83,7 +83,7 @@ class OddPolygonFilter {
       return std::make_pair(false, false);
     } else {
       return std::make_pair(content_info_by_id[accept_id_].pwn & 1,
-                            content_info_by_id[accept_id_].has_polygons);
+                            content_info_by_id[accept_id_].has_polygons());
     }
   }
 

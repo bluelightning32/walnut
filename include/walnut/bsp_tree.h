@@ -183,7 +183,8 @@ BSPTree<ConvexPolygonTemplate>::GetNodeBorder(Iterator node_path_begin,
 
   BSPContentInfo node_bounding_box_info =
     mapped_nodes.back()->GetContentInfoForId(bounding_box_id);
-  if (node_bounding_box_info.pwn < 1 && !node_bounding_box_info.has_polygons) {
+  if (node_bounding_box_info.pwn < 1 &&
+      !node_bounding_box_info.has_polygons()) {
     // The cell is outside of or adjacent to the bounding box. Return an empty
     // vector to avoid trying to run the traverser when the bounding box is
     // adjacent to the cell.
