@@ -164,6 +164,38 @@ TEST(MakeEventPoints, DifferentDimensionSort) {
   }
 }
 
+TEST(GetLowestCost, OnlyOnePolygon) {
+  /*  0 1
+   *  |-|
+   *    ^
+   *    |
+   */
+
+  std::vector<BSPPolygon<AABBConvexPolygon<>>> polygons;
+  polygons.push_back(MakeTriangleForInterval(0, Point3(0, 0, 0),
+                                             Point3(1, 1, 1)));
+  PolygonEventPoint event_points[2];
+  MakeEventPoints(/*dimension=*/0, polygons, event_points);
+  CheckSorted(/*dimension=*/0, polygons, event_points);
+
+  PolygonEventPointPartition best = GetLowestCost(/*exclude_id=*/-1,
+                                                  /*exclude_count=*/0,
+                                                  polygons,
+                                                  event_points);
+  ASSERT_LT(best.split_index, polygons.size() * 2);
+  EXPECT_EQ(best.split_index, 1);
+  EXPECT_EQ(event_points[best.split_index].GetLocation(/*dimension=*/0,
+                                                       event_points,
+                                                       polygons),
+            Point3(1, 1, 1));
+  EXPECT_FALSE(event_points[best.split_index].start);
+  EXPECT_EQ(best.neg_poly_count, 1);
+  EXPECT_EQ(best.pos_poly_count, 0);
+
+  EXPECT_EQ(best.cost, GetSplitCost(/*neg_total=*/1, /*neg_exclude=*/0,
+                                    /*pos_total=*/0, /*pos_exclude=*/0));
+}
+
 TEST(GetLowestCost, SplitMiddleNoExclude) {
   std::vector<BSPPolygon<AABBConvexPolygon<>>> polygons;
   for (size_t i = 0; i < 10; ++i) {

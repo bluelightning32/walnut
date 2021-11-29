@@ -452,7 +452,7 @@ PolygonEventPointPartition GetLowestCost(
       best.cost = cost;
       best.neg_cost = neg_cost;
       best.pos_cost = pos_cost;
-      best.split_index = i;
+      best.split_index = i - 1;
       best.neg_poly_count = neg_total;
       best.pos_poly_count = pos_total;
     }
