@@ -250,7 +250,8 @@ inline bool Vector2::IsRotationLessThan(const Vector2& other) const {
   if (packed_sign != other_packed_sign) {
     // `this` and `other` are in different quadrants. So properly order the
     // quadrants, then compare the quadrant numbers.
-    return (packed_sign ^ y_sign) < (other_packed_sign ^ other_y_sign);
+    return (packed_sign ^ char(y_sign)) <
+           (other_packed_sign ^ char(other_y_sign));
   }
   // `this` and `other` are in the same quadrant. Compare their x/y ratios.
   return y() * other.x() < other.y() * x();

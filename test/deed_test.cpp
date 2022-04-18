@@ -8,7 +8,7 @@
 namespace walnut {
 
 struct TestObject : public DeedTarget {
-  TestObject(int value) : value(value) { }
+  TestObject(size_t value) : value(value) { }
 
   TestObject(const TestObject& other) = default;
 
@@ -18,11 +18,11 @@ struct TestObject : public DeedTarget {
 
   TestObject& operator=(TestObject&&) = default;
 
-  int value = 0;
+  size_t value = 0;
 };
 
 struct NoCopy : public DeedTarget {
-  NoCopy(int value) : value(value) { }
+  NoCopy(size_t value) : value(value) { }
 
   NoCopy(NoCopy&& other) : DeedTarget(std::move(other)), value(other.value) { }
 
@@ -32,7 +32,7 @@ struct NoCopy : public DeedTarget {
     return *this;
   }
 
-  int value = 0;
+  size_t value = 0;
 };
 
 TEST(Deed, CreateDeed) {

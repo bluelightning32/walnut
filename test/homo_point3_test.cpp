@@ -148,14 +148,38 @@ TEST(HomoPoint3, FromDoublesExactZero) {
   EXPECT_EQ(p.w(), 1);
 }
 
+TEST(HomoPoint3, FromDoublesExactNextAfterf0) {
+  if (std::numeric_limits<long double>::min_exponent ==
+      std::numeric_limits<float>::min_exponent) {
+    GTEST_SKIP();
+  }
+  double d = std::nextafterf(0.0, 1.0);
+  HomoPoint3 p = HomoPoint3::FromDoublesExact(/*x=*/d, /*y=*/d, /*z=*/d);
+
+  EXPECT_EQ(p.x(), 1);
+  EXPECT_EQ(p.y(), 1);
+  EXPECT_EQ(p.z(), 1);
+  EXPECT_EQ((long double)p.x() / (long double)p.w(), d)
+      << "p.x()=" << p.x() << " p.w()=" << p.w();
+  EXPECT_EQ((long double)p.y() / (long double)p.w(), d);
+  EXPECT_EQ((long double)p.z() / (long double)p.w(), d);
+
+  EXPECT_EQ(p.GetDoublePoint3(), DoublePoint3(d, d, d));
+}
+
 TEST(HomoPoint3, FromDoublesExactNextAfter0) {
+  if (std::numeric_limits<long double>::min_exponent ==
+      std::numeric_limits<double>::min_exponent) {
+    GTEST_SKIP();
+  }
   double d = std::nextafter(0.0, 1.0);
   HomoPoint3 p = HomoPoint3::FromDoublesExact(/*x=*/d, /*y=*/d, /*z=*/d);
 
   EXPECT_EQ(p.x(), 1);
   EXPECT_EQ(p.y(), 1);
   EXPECT_EQ(p.z(), 1);
-  EXPECT_EQ((long double)p.x() / (long double)p.w(), d);
+  EXPECT_EQ((long double)p.x() / (long double)p.w(), d)
+      << "p.x()=" << p.x() << " p.w()=" << p.w();
   EXPECT_EQ((long double)p.y() / (long double)p.w(), d);
   EXPECT_EQ((long double)p.z() / (long double)p.w(), d);
 
@@ -307,7 +331,7 @@ TEST(ReducedHomoPoint3Hasher, UseInUnorderedMap) {
     HomoPoint3(/*x=*/1, /*y=*/1, /*z=*/1, /*w=*/3),
     HomoPoint3(/*x=*/1, /*y=*/1, /*z=*/1, /*w=*/4),
   };
-  for (size_t i = 1; i < 5; ++i) {
+  for (long i = 1; i < 5; ++i) {
     points.emplace_back(/*x=*/i, /*y=*/0, /*z=*/0, /*w=*/1);
     points.emplace_back(/*x=*/0, /*y=*/i, /*z=*/0, /*w=*/1);
     points.emplace_back(/*x=*/0, /*y=*/0, /*z=*/i, /*w=*/1);

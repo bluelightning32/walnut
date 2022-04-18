@@ -114,13 +114,13 @@ HalfSpace3 MeshPlaneRepairerBase::GetNextPlanarRange(
       // This vertex was rejected, which means the plane is set. Try adding as
       // many vertices from the end of the range as possible.
       for (; ; --last) {
-        VertexInfo& vertex = **(last - 1);
-        if (vertex.CanAddAdjacent()) {
+        VertexInfo& end_vertex = **(last - 1);
+        if (end_vertex.CanAddAdjacent()) {
           if (plane_builder.HasLargePlane()) {
             break;
           }
-          plane_builder.AddUnconstrained(&vertex.point);
-        } else if (!plane_builder.TryAddConstrained(&vertex.point)) {
+          plane_builder.AddUnconstrained(&end_vertex.point);
+        } else if (!plane_builder.TryAddConstrained(&end_vertex.point)) {
           break;
         }
       }

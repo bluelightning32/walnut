@@ -58,8 +58,8 @@ using BigIntWord = int64_t;
 class BigUIntWord {
  public:
   static constexpr bool has_overloads = true;
-  static constexpr size_t bytes_per_word = sizeof(uint64_t);
-  static constexpr size_t bits_per_word = 8 * bytes_per_word;
+  static constexpr unsigned bytes_per_word = sizeof(uint64_t);
+  static constexpr unsigned bits_per_word = 8 * bytes_per_word;
 
   constexpr BigUIntWord() : i_(0) { }
 
@@ -108,7 +108,7 @@ class BigUIntWord {
   }
 
   constexpr uint32_t low_uint32() const {
-    return i_;
+    return static_cast<uint32_t>(i_);
   }
 
   constexpr int ToInt() const {
@@ -269,7 +269,7 @@ class BigUIntWord {
   constexpr BigUIntWord Subtract(const BigUIntWord& other, bool carry_in,
                                  bool* carry_out) const {
     uint64_t result1 = i_ - other.i_;
-    *carry_out = result1 > i_ || result1 < carry_in;
+    *carry_out = result1 > i_ || result1 < static_cast<uint64_t>(carry_in);
     uint64_t result2 = result1 - carry_in;
     return BigUIntWord(result2);
   }
@@ -550,13 +550,18 @@ class BigUIntWord {
     return BigUIntWord{BigIntWord(i_) >> 63};
   }
 
-  constexpr BigUIntWord SignedAbs() const {
-    if (sizeof(long long int) >= sizeof(BigIntWord)) {
-      return BigUIntWord{uint64_t(llabs(BigIntWord(i_)))};
-    } else {
-      return BigUIntWord{BigIntWord(i_) >= 0 ? BigIntWord(i_) :
-                                               -BigIntWord(i_)};
-    }
+  template <typename X = BigUIntWord>
+  constexpr
+  typename std::enable_if_t<sizeof(long long int) >= sizeof(BigIntWord), X>
+  SignedAbs() const {
+    return BigUIntWord{uint64_t(llabs(BigIntWord(i_)))};
+  }
+
+  template <typename X = BigUIntWord>
+  constexpr
+  typename std::enable_if_t<sizeof(long long int) < sizeof(BigIntWord), X>
+  SignedAbs() const {
+    return BigUIntWord{BigIntWord(i_) >= 0 ? BigIntWord(i_) : -BigIntWord(i_)};
   }
 
   double ToDoubleWithShift(int shift) const {

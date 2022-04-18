@@ -28,8 +28,9 @@ ConnectedPolygon<> MakeTriangle(int start, int end, int extra, double angle) {
     // calculating the edge direction. The last vertex in the list becomes the
     // first in the polygon. So start with the second vertex to compensate.
     HomoPoint3(end, -end, 0, 1),
-    HomoPoint3(10 * (extra + std::cos(angle)), 10 * (-extra + std::cos(angle)),
-               10 * std::sin(angle), 10),
+    HomoPoint3(static_cast<long>(10 * (extra + std::cos(angle))),
+               static_cast<long>(10 * (-extra + std::cos(angle))),
+               static_cast<long>(10 * std::sin(angle)), 10),
     HomoPoint3(start, -start, 0, 1),
   };
   HalfSpace3 plane(p[0], p[1], p[2]);

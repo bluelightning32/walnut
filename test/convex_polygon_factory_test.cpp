@@ -64,7 +64,7 @@ class ResultCollector : public Factory {
     }
   }
 
-  int CountVertexAppearances(const Point3& v) {
+  size_t CountVertexAppearances(const Point3& v) {
     size_t matching = 0;
     for (const ConvexPolygonRep& polygon : result_) {
       for (size_t i = 0; i < polygon.vertex_count(); ++i) {

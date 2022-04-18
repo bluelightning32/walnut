@@ -22,7 +22,7 @@ class Vector3 {
   Vector3(BigInt&& x, BigInt&& y, BigInt&& z) :
     components_{std::move(x), std::move(y), std::move(z)} { }
 
-  Vector3(long x, long y, long z) :
+  Vector3(int64_t x, int64_t y, int64_t z) :
     components_{BigInt(x), BigInt(y), BigInt(z)} { }
 
   Vector3& operator=(const Vector3&) = default;

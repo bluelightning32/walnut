@@ -436,10 +436,12 @@ class EdgeLineConnector {
 
     // Look at all the entries in end_events_ at or after heap_end, and remove
     // them from active_events and end_events_.
-    while (end_events_.end() != heap_end) {
+    size_t clean_count = end_events_.end() - heap_end;
+    while (clean_count) {
       assert(end_events_.back()->second.partner == end_events_.back());
       active_edges.erase(end_events_.back());
       end_events_.pop_back();
+      --clean_count;
     }
   }
 

@@ -1,6 +1,7 @@
 #include "walnut/big_int.h"
 
 #include <cmath>
+#include <limits>
 #include <vector>
 
 namespace walnut {
@@ -12,9 +13,9 @@ BigInt BigInt::max_value(size_t set_bits) {
     result.words_[i] = BigUIntWord::max_value();
   }
   BigUIntWord last_word;
-  const size_t set_last_word_bits =
-    set_bits - (result.words_.size() - 1) * bits_per_word;
-  for (size_t i = 0; i < set_last_word_bits; ++i) {
+  const unsigned set_last_word_bits = static_cast<unsigned>(
+          set_bits - (result.words_.size() - 1) * bits_per_word);
+  for (unsigned i = 0; i < set_last_word_bits; ++i) {
     last_word |= BigUIntWord{1} << i;
   }
   result.words_[result.words_.size() - 1] = last_word;
@@ -28,10 +29,10 @@ BigInt BigInt::min_value(size_t clear_bits) {
   for (size_t i = 0; i < result.words_.size() - 1; ++i) {
     result.words_[i] = BigUIntWord{0};
   }
-  const size_t clear_last_word_bits =
-    clear_bits - (result.words_.size() - 1) * bits_per_word;
+  const unsigned clear_last_word_bits = static_cast<unsigned>(
+    clear_bits - (result.words_.size() - 1) * bits_per_word);
   BigUIntWord last_word = BigUIntWord{-1};
-  for (size_t i = 0; i < clear_last_word_bits; ++i) {
+  for (unsigned i = 0; i < clear_last_word_bits; ++i) {
     last_word &= ~(BigUIntWord{1} << i);
   }
   result.words_[result.words_.size() - 1] = last_word;
@@ -47,9 +48,15 @@ BigInt::operator double() const {
     return (double)BigIntWord{words_[0]};
   } else {
     size_t used = used_words();
+    size_t first_shift = bits_per_word * (used - 1);
+    if (first_shift > std::numeric_limits<int>::max()) {
+      return std::numeric_limits<double>::infinity() *
+             BigIntWord{words_[used - 1]};
+    }
     return std::ldexp(BigIntWord{words_[used - 1]},
-                      bits_per_word * (used - 1)) +
-           words_[used - 2].ToDoubleWithShift(bits_per_word * (used - 2));
+                      static_cast<int>(first_shift)) +
+           words_[used - 2].ToDoubleWithShift(
+               static_cast<int>(bits_per_word * (used - 2)));
   }
 }
 
@@ -64,10 +71,17 @@ BigInt::operator long double() const {
            words_[0].ToLongDoubleWithShift(0);
   } else {
     size_t used = used_words();
+    size_t first_shift = bits_per_word * (used - 1);
+    if (first_shift > std::numeric_limits<int>::max()) {
+      return std::numeric_limits<long double>::infinity() *
+             BigIntWord{words_[used - 1]};
+    }
     return std::ldexp((long double)BigIntWord{words_[used - 1]},
-                      bits_per_word * (used - 1)) +
-           words_[used - 2].ToLongDoubleWithShift(bits_per_word * (used - 2)) +
-           words_[used - 3].ToLongDoubleWithShift(bits_per_word * (used - 3));
+                      static_cast<int>(bits_per_word * (used - 1))) +
+           words_[used - 2].ToLongDoubleWithShift(
+               static_cast<int>(bits_per_word * (used - 2))) +
+           words_[used - 3].ToLongDoubleWithShift(
+               static_cast<int>(bits_per_word * (used - 3)));
   }
 }
 
@@ -114,7 +128,8 @@ std::ostream& operator<<(std::ostream& out, const BigInt& bigint) {
   BigInt digit;
   do {
     remaining = remaining.DivideRemainder(BigInt(10), &digit);
-    *digits_pos-- = digit.word(0).SignedAbs().low_uint32() + '0';
+    *digits_pos-- = static_cast<char>(digit.word(0).SignedAbs().low_uint32())
+                    + '0';
   } while (remaining != 0);
 
   if (digit.GetSign() < 0) {

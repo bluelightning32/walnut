@@ -95,8 +95,8 @@ HomoPoint3 GetCentroid(const std::vector<Polygon>& mesh) {
                   [&tri_denom](size_t a, size_t b) {
                     return tri_denom[a] < tri_denom[b];
                   });
-        for (size_t i = 0; i < 3; ++i) {
-          canonicalized_tri_denom[i] = tri_denom[sorted[i]];
+        for (size_t j = 0; j < 3; ++j) {
+          canonicalized_tri_denom[j] = tri_denom[sorted[j]];
         }
         std::pair<typename DenomMap::iterator, bool> canonicalized_existing =
           denom_map.emplace(canonicalized_tri_denom, -1);

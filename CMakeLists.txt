@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(MSVC)
-    add_compile_options(/W4 /WX)
+    add_compile_options(/W3 /WX)
 else()
     add_compile_options(-Wall -Werror)
 endif()
@@ -114,8 +114,9 @@ set_target_properties(walnut PROPERTIES
 install(TARGETS walnut PUBLIC_HEADER DESTINATION "include/walnut")
 
 if(WALNUT_BUILD_TESTS)
-    enable_testing()
-    include(GoogleTest)
+  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+  enable_testing()
+  include(GoogleTest)
   macro(package_add_test TESTNAME)
       # create an exectuable in which the tests will be stored
       add_executable(${TESTNAME} ${ARGN})

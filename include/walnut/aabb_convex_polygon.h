@@ -114,7 +114,7 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
   // positive direction along the `dimension` axis. Technically the vertex is
   // not necessarily on the axis, but just coincident with the furthest plane
   // perpendicular to the axis.
-  size_t max_vertex_index(int dimension) const {
+  size_t max_vertex_index(size_t dimension) const {
     return aabb_tracker_.max_indices()[dimension];
   }
 
@@ -124,7 +124,7 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
   // perpendicular to the axis.
   //
   // The caller must ensure that the polygon has at least 1 vertex.
-  const HomoPoint3& max_vertex(int dimension) const {
+  const HomoPoint3& max_vertex(size_t dimension) const {
     assert(vertex_count() > 0);
     return vertex(max_vertex_index(dimension));
   }
@@ -133,7 +133,7 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
   // negative direction along the `dimension` axis. Technically the vertex is
   // not necessarily on the axis, but just coincident with the furthest plane
   // perpendicular to the axis.
-  size_t min_vertex_index(int dimension) const {
+  size_t min_vertex_index(size_t dimension) const {
     return aabb_tracker_.min_indices()[dimension];
   }
 
@@ -143,7 +143,7 @@ class AABBConvexPolygon : public ParentTemplate, public AABBConvexPolygonKey {
   // perpendicular to the axis.
   //
   // The caller must ensure that the polygon has at least 1 vertex.
-  const HomoPoint3& min_vertex(int dimension) const {
+  const HomoPoint3& min_vertex(size_t dimension) const {
     assert(vertex_count() > 0);
     return vertex(min_vertex_index(dimension));
   }

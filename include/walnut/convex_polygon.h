@@ -703,7 +703,7 @@ class ConvexPolygon {
                 edges_.end());
     other.edges_.clear();
     for (auto it = edges_.begin() + my_edge_index;
-         it != edges_.begin() + my_edge_index + old_other_size - 1; ++it) {
+         it != edges_.begin() + (my_edge_index + old_other_size - 1); ++it) {
       it->EdgeMoved(*this);
     }
 
@@ -876,12 +876,12 @@ ConvexPolygon<EdgeParent>::GetOppositeEdgeIndicesBisect(
   if (initial_dir_sign == 0) {
     // The 0th edge is perpendicular to `v`. Find the first non-perpendicular
     // edge before and after `v`.
-    int before = vertex_count() - 1;
+    size_t before = vertex_count() - 1;
     BigIntWord before_sign;
     while (true) {
       // A well formed ConvexPolygon with a valid drop_dimension should always
       // find a match.
-      assert(before > 0);
+      assert(static_cast<ssize_t>(before) > 0);
       before_sign = edge(before).line().d().DropDimension(drop_dimension)
                                 .Dot(v).GetSign();
       if (before_sign != 0) break;
@@ -942,7 +942,7 @@ ConvexPolygon<EdgeParent>::GetOppositeEdgeIndicesBisect(
 template <typename EdgeParent>
 size_t ConvexPolygon<EdgeParent>::GetExtremeIndexBisect(
     const Vector2& v, int drop_dimension) const {
-  if (v.IsZero()) return -1;
+  if (v.IsZero()) return static_cast<size_t>(-1);
 
   std::pair<size_t, size_t> dir_indices =
     GetOppositeEdgeIndicesBisect(v, drop_dimension);

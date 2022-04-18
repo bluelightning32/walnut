@@ -29,7 +29,8 @@ class BigIntWords {
   constexpr BigIntWords(BigIntWords&& other) :
       first_(other.first_),
       extra_size_(other.extra_size_) {
-    std::swap(extra_, other.extra_);
+    extra_ = other.extra_;
+    other.extra_ = nullptr;
   }
 
   constexpr BigIntWords(const BigIntWords& other) :

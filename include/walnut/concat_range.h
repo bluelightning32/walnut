@@ -69,7 +69,7 @@ class ConcatRange {
     // Use the end of ranges_ as temporary space and append the new entries
     // there. Later they will be rotated into their proper place at the
     // beginning.
-    int original_ranges_size = ranges_.size();
+    size_t original_ranges_size = ranges_.size();
     Append(start, end);
 
     std::rotate(/*first=*/ranges_.begin(),

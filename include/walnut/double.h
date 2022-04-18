@@ -19,7 +19,8 @@ namespace walnut {
 // If the input is 0, 0 is returned with `exp` set to 0.
 inline int64_t Decompose(double input, int* exp) {
   static_assert(FLT_RADIX == 2, "Only binary doubles are supported.");
-  int64_t result = std::scalbn(std::frexp(input, exp), DBL_MANT_DIG);
+  int64_t result = static_cast<int64_t>(std::scalbn(std::frexp(input, exp),
+                                        DBL_MANT_DIG));
   if (!result) {
     assert(*exp == 0);
     return result;

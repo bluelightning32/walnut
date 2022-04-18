@@ -11,14 +11,38 @@ template <typename EdgeParent = EdgeInfoRoot>
 class MutableConvexPolygon : public ConvexPolygon<EdgeParent> {
  public:
   using Parent = ConvexPolygon<EdgeParent>;
+  using EdgeVector = typename Parent::EdgeVector;
 
-  using Parent::Parent;
+  MutableConvexPolygon() {}
 
-  // This constructor is not automatically inherited by the above using
-  // statement, because its argument is the same as the parent type.
-  MutableConvexPolygon(const Parent& other) : Parent(other) { }
+  MutableConvexPolygon(const Parent& other) : Parent(other) {}
 
   MutableConvexPolygon(const MutableConvexPolygon&) = default;
+
+  MutableConvexPolygon(RValueKey<Parent> other)
+      : Parent(other){}
+
+  // `EdgeParent` must be constructible from `OtherEdgeParent`.
+  template <typename OtherEdgeParent>
+  explicit MutableConvexPolygon(const ConvexPolygon<OtherEdgeParent>& other)
+      : Parent(other){}
+
+  MutableConvexPolygon(const HalfSpace3& plane, int drop_dimension,
+                       EdgeVector edges)
+      : Parent(plane, drop_dimension, edges) {}
+
+  MutableConvexPolygon(const HalfSpace3& plane, int drop_dimension,
+                       const std::vector<Point3>& vertices)
+      : Parent(plane, drop_dimension, vertices) {}
+
+  MutableConvexPolygon(const HalfSpace3& plane, int drop_dimension,
+                       const std::vector<HomoPoint3>& vertices)
+      : Parent(plane, drop_dimension, vertices) {}
+
+  template <size_t n>
+  MutableConvexPolygon(HalfSpace3&& plane, int drop_dimension,
+                       HomoPoint3(&&vertices)[n])
+      : Parent(std::move(plane), drop_dimension, std::move(vertices)) {}
 
   MutableConvexPolygon(MutableConvexPolygon&& other)
     noexcept(

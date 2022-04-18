@@ -128,7 +128,7 @@ class BigInt {
   }
 
   constexpr BigInt& operator = (const BigUInt& other) {
-    int copy_words = other.used_words();
+    size_t copy_words = other.used_words();
     words_.Assign(other.words(), copy_words);
     if (BigIntWord{word(used_words() - 1)} < 0) {
       words_.push_back(BigUIntWord{0});
@@ -143,7 +143,7 @@ class BigInt {
 
   BigInt operator << (size_t shift) const {
     if (words_.extra_size() == 0 && shift < bits_per_word) {
-      BigIntWord shifted(words_.first() << shift);
+      BigIntWord shifted(words_.first() << static_cast<unsigned>(shift));
       if (shifted >> shift == BigIntWord(words_.first())) {
         return BigInt(shifted);
       }
@@ -198,7 +198,8 @@ class BigInt {
       // So return -1 if the upper word of other >= 0, or return 1 if the upper
       // word of other < 0.
       int other_sign_extension =
-        BigIntWord{other.words_[other.used_words() - 1].SignExtension()};
+        static_cast<int>(
+            BigIntWord{other.words_[other.used_words() - 1].SignExtension()});
       return ~other_sign_extension | 1;
     }
     if (used_words() > other.used_words()) {
@@ -211,7 +212,8 @@ class BigInt {
       // So return 1 if the upper word of *this >= 0, or return -1 if the upper
       // word of *this < 0.
       int sign_extension =
-        BigIntWord{words_[used_words() - 1].SignExtension()};
+        static_cast<int>(
+            BigIntWord{words_[used_words() - 1].SignExtension()});
       return sign_extension | 1;
     }
     size_t i = used_words() - 1;
@@ -481,6 +483,10 @@ class BigInt {
     return Multiply(BigInt(other));
   }
 
+  BigInt operator*(BigIntWord other) const {
+    return Multiply(BigInt(other));
+  }
+
   BigInt& operator*=(int other) {
     *this = *this * other;
     return *this;
@@ -664,13 +670,13 @@ class BigInt {
     return *this;
   }
 
-  // Divide `this` by `other`. Return the quotient and store the remainder in `remainder_out`.
+  // Divide `this` by `other`. Return the quotient and store the remainder in
+  // `remainder_out`.
   //
   // `remainder_out` may not equal `this`.
   //
   // The quotient is rounded towards 0.
-  BigInt DivideRemainder(const BigInt& other,
-                             BigInt* remainder_out) const {
+  BigInt DivideRemainder(const BigInt& other, BigInt* remainder_out) const {
     if (used_words() == 1 && other.used_words() == 1) {
       *remainder_out = BigInt(BigIntWord{words_[0]} %
                                   BigIntWord{other.words_[0]});
@@ -705,7 +711,7 @@ class BigInt {
     const BigUIntWord sign_changed =
       (old_last_word ^ words_[i - 1]) >> (bits_per_word - 1);
     // carry is true if the result is 0.
-    if (!(sign_changed.low_uint32() | carry)) {
+    if (!(sign_changed.low_uint32() | static_cast<uint32_t>(carry))) {
       // The result kept the same sign, and the result isn't 0 (because carry
       // is false). This means that *this was equal to min_value, and it just
       // overflowed back to min_value. So allocate another word.
@@ -781,7 +787,7 @@ class BigInt {
   // Returns 1 if this and other >= 0 or if both are negative.
   // Else, returns -1 if only one of this or other is negative.
   constexpr int GetAbsMult(const BigInt& other) const {
-    return (SignExtension() ^ other.SignExtension()) | 1;
+    return static_cast<int>((SignExtension() ^ other.SignExtension())) | 1;
   }
 
   constexpr bool HasSameSign(const BigInt& other) const {
@@ -836,7 +842,7 @@ class BigInt {
   }
 
   constexpr void Trim() {
-    int i = used_words() - 1;
+    size_t i = used_words() - 1;
     if (i > 0) {
       BigUIntWord check = word(i);
       BigUIntWord next;
@@ -859,7 +865,7 @@ class BigInt {
   //
   // Also note that the carry is not extended past used_words().
   constexpr void SubtractLeftShiftedMasked(const BigInt& other,
-                                           int shift_left_words,
+                                           size_t shift_left_words,
                                            BigIntWord mask) {
     bool carry = false;
     for (size_t i = 0, j = shift_left_words; i < other.used_words(); i++, j++) {

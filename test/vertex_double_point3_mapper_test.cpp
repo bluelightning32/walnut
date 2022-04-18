@@ -13,7 +13,7 @@ namespace walnut {
 //   (long double)ret/(long double)denom == (long double)num/(long double)denom
 BigInt GetCloseToBoundary(BigInt num, BigInt denom) {
   DoublePoint3 unadjusted = HomoPoint3(num, num, num, denom).GetDoublePoint3();
-  for (int i = num.used_words() * BigInt::bits_per_word; i >= 0; --i) {
+  for (ssize_t i = num.used_words() * BigInt::bits_per_word; i >= 0; --i) {
     if (unadjusted == HomoPoint3(num + (BigInt(1) << i), num, num,
                                  denom).GetDoublePoint3()) {
       num += BigInt(1) << i;

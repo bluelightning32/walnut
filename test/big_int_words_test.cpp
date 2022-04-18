@@ -102,10 +102,12 @@ TEST(BigIntWords, PushBack) {
   BigIntWords a(1);
   a[0] = 1;
 
-  size_t i = 1;
-  while (a.size() < 32) {
-    ++i;
-    a.push_back(BigUIntWord{i});
+  {
+    size_t i = 1;
+    while (a.size() < 32) {
+      ++i;
+      a.push_back(BigUIntWord{i});
+    }
   }
 
   for (size_t i = 0; i < 32; ++i) {

@@ -6,6 +6,12 @@
 // For assert
 #include <cassert>
 
+#if defined(_MSC_VER) && !defined(SSIZE_T_DECLARED)
+#include <BaseTsd.h>
+using ssize_t = SSIZE_T;
+#define SSIZE_T_DECLARED 1
+#endif
+
 #include "walnut/big_int_words.h"
 #include "walnut/big_uint_word.h"
 
@@ -155,7 +161,7 @@ class BigUInt {
   }
 
   // Adds (add << shift) to this.
-  constexpr BigUInt& AddLeftShifted(BigUIntWord add, unsigned shift) {
+  constexpr BigUInt& AddLeftShifted(BigUIntWord add, size_t shift) {
     bool carry = false;
     size_t pos = shift / bits_per_word;
     unsigned shift_mod = shift % bits_per_word;
@@ -182,7 +188,7 @@ class BigUInt {
   }
 
   // Subtracts (other << shift) from this.
-  constexpr BigUInt& SubtractLeftShifted(const BigUInt& other, unsigned shift) {
+  constexpr BigUInt& SubtractLeftShifted(const BigUInt& other, size_t shift) {
     size_t in = 0;
     size_t out = shift / bits_per_word;
     const int word_left_shift = shift % bits_per_word;
@@ -190,7 +196,7 @@ class BigUInt {
     // The if statement is necessary to avoid shifting by bits_per_word.
     if (word_left_shift > 0) {
       BigUIntWord prev(0);
-      const size_t prev_right_shift = bits_per_word - word_left_shift;
+      const unsigned int prev_right_shift = bits_per_word - word_left_shift;
       for (; in < other.used_words(); in++, out++) {
         BigUIntWord subtract = other.words_[in] << word_left_shift |
                                            prev >> prev_right_shift;
@@ -219,7 +225,7 @@ class BigUInt {
 
   constexpr BigUInt& ShiftRightWord() {
     BigUIntWord prev_word{0};
-    for (int i = used_words() - 1; i >= 0; i--) {
+    for (ssize_t i = used_extra_words(); i >= 0; i--) {
       std::swap(words_[i], prev_word);
     }
     Trim();
@@ -227,7 +233,7 @@ class BigUInt {
   }
 
  protected:
-  static constexpr bool CanTrim(BigUIntWord low, BigUIntWord high) {
+  static constexpr bool CanTrim(BigUIntWord /*low*/, BigUIntWord high) {
     return high == 0;
   }
 
@@ -236,7 +242,7 @@ class BigUInt {
   }
 
   constexpr void Trim() {
-    int i = used_words() - 1;
+    size_t i = used_extra_words();
     if (i > 0) {
       BigUIntWord check = words_[i];
       BigUIntWord next;
@@ -256,9 +262,9 @@ class BigUInt {
   //
   // The caller must ensure:
   // `shift` is greater than or equal to 0.
-  BigUIntWord GetAtBitOffset(unsigned shift) const {
+  BigUIntWord GetAtBitOffset(size_t shift) const {
     size_t word_index = shift / bits_per_word;
-    size_t word_offset = shift % bits_per_word;
+    unsigned word_offset = shift % bits_per_word;
     BigUIntWord next{0};
     if (word_index + 1 < words_.size()) {
       next = words_[word_index+1];
@@ -292,9 +298,9 @@ class BigUInt {
     // progress of the algorithm. Unfortunately it progresses at about 30 bits
     // on each round.
 
-    int other_highest_word_index = other.used_words() - 1;
+    size_t other_highest_word_index = other.used_extra_words();
     BigUIntWord other_highest_word = other.words_[other_highest_word_index];
-    const size_t other_highest_bit = other_highest_word.GetHighestSetBit();
+    const unsigned other_highest_bit = other_highest_word.GetHighestSetBit();
     // `other_shifted` is `other` either shifted to the left or the right:
     //   other_shifted = other * 2^x
     //
@@ -310,7 +316,7 @@ class BigUInt {
     } else {
       other_shifted = other_highest_word >> other_word_shift_right;
     }
-    int other_shift_right = other_highest_word_index * bits_per_word + other_word_shift_right;
+    ssize_t other_shift_right = other_highest_word_index * bits_per_word + other_word_shift_right;
     if (other_shifted.low_half_word() == static_cast<BigUIntHalfWord>(-1)) {
       other_shifted = BigUIntWord{1} << (bits_per_word/2 - 1);
       other_shift_right++;
@@ -323,13 +329,13 @@ class BigUInt {
     BigUInt remainder = operator<< (bits_per_word);
     // Number of bits to shift (*this) to the right, such that:
     // 0 < (*this >> this_shift_right_bits) < 2^bits_per_word
-    int this_shift_right_bits = (used_words() - 1) * bits_per_word;
+    ssize_t this_shift_right_bits = used_extra_words() * bits_per_word;
     for (;
           this_shift_right_bits >= other_shift_right;
           this_shift_right_bits -= bits_per_word/2 - 2) {
       BigUIntWord this_shifted = remainder.GetAtBitOffset(this_shift_right_bits + bits_per_word);
 
-      int shift_result_left = this_shift_right_bits - other_shift_right;
+      size_t shift_result_left = this_shift_right_bits - other_shift_right;
       BigUIntWord result = this_shifted / other_shifted;
       quotient.AddLeftShifted(result, shift_result_left);
       remainder.SubtractLeftShifted(other.Multiply(result), shift_result_left + bits_per_word);
@@ -345,7 +351,8 @@ class BigUInt {
           this_shift_right_bits -= bits_per_word/2 - 2) {
       BigUIntWord this_shifted = remainder.GetAtBitOffset(this_shift_right_bits + bits_per_word);
 
-      int shift_result_right = other_shift_right - this_shift_right_bits;
+      unsigned shift_result_right = static_cast<unsigned>(other_shift_right -
+                                                          this_shift_right_bits);
       BigUIntWord result = this_shifted / other_shifted;
       quotient.AddLeftShifted(result >> shift_result_right, 0);
       remainder = remainder.SubtractLeftShifted(other.Multiply(result >> shift_result_right), bits_per_word);
@@ -358,6 +365,10 @@ class BigUInt {
     }
     *remainder_out = remainder;
     return quotient;
+  }
+
+  constexpr size_t used_extra_words() const {
+    return words_.extra_size();
   }
 
   BigIntWords words_;

@@ -502,7 +502,7 @@ TEST(BigInt, Divide33bitOverflow) {
   // remainder will be larger than 2^33. So the test verifies that the
   // algorithm is expecting that large of a remainder.
   BigInt a = (BigInt{1} << 128) - BigInt{1};
-  BigInt divisor{(1l<<31) + 23169};
+  BigInt divisor{(static_cast<int64_t>(1)<<31) + 23169};
   BigInt remainder;
   BigInt result = a.DivideRemainder(divisor, &remainder);
 

@@ -48,7 +48,7 @@ TEST(BigUIntWordTest, AddCompleteWrapAround) {
 TEST(BigUIntWordTest, ShiftRightAllOnes) {
   BigUIntWord low{-1};
   BigUIntWord high{-1};
-  for (size_t i = 0; i < BigUIntWord::bits_per_word; ++i) {
+  for (unsigned i = 0; i < BigUIntWord::bits_per_word; ++i) {
     EXPECT_EQ(low.ShiftRight(high, i), low);
   }
 }
@@ -56,7 +56,7 @@ TEST(BigUIntWordTest, ShiftRightAllOnes) {
 TEST(BigUIntWordTest, ShiftRightLowAllOnes) {
   BigUIntWord low{-1};
   BigUIntWord high{0};
-  for (size_t i = 0; i < BigUIntWord::bits_per_word; ++i) {
+  for (unsigned i = 0; i < BigUIntWord::bits_per_word; ++i) {
     EXPECT_EQ(low.ShiftRight(high, i), low >> i);
   }
 }
@@ -65,7 +65,7 @@ TEST(BigUIntWordTest, ShiftRightHighAllOnes) {
   BigUIntWord low{0};
   BigUIntWord high{-1};
   EXPECT_EQ(low.ShiftRight(high, 0), low);
-  for (size_t i = 1; i < BigUIntWord::bits_per_word; ++i) {
+  for (unsigned i = 1; i < BigUIntWord::bits_per_word; ++i) {
     EXPECT_EQ(low.ShiftRight(high, i), high << (BigUIntWord::bits_per_word - i));
   }
 }

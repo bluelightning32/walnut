@@ -162,8 +162,8 @@ TEST(Vector2, HalfRotationCompareStoreInMap) {
   for (int i = 0; i < 32; i += 2) {
     const double angle = pi * i / 32;
     const double magnitude = gen() % 5 + 10;
-    to_add.emplace_back(Vector2(cos(angle) * magnitude,
-                                  sin(angle) * magnitude), i);
+    to_add.emplace_back(Vector2(static_cast<int>(cos(angle) * magnitude),
+                                static_cast<int>(sin(angle) * magnitude)), i);
     const int extra_mult = gen() % 3 + 1;
     to_add.emplace_back(Vector2(-to_add.back().first.x() * extra_mult,
                                   -to_add.back().first.y() * extra_mult), i+1);
@@ -214,8 +214,8 @@ TEST(Vector2, RotationCompareStoreInMap) {
   for (int i = 0; i < add_count; ++i) {
     const double angle = 2 * pi * i / add_count;
     const double magnitude = gen() % 5 + 10;
-    to_add.emplace_back(Vector2(cos(angle) * magnitude,
-                                  sin(angle) * magnitude), i);
+    to_add.emplace_back(Vector2(static_cast<int>(cos(angle) * magnitude),
+                                static_cast<int>(sin(angle) * magnitude)), i);
   }
 
   using Map = std::map<Vector2, int, Vector2::RotationCompare>;

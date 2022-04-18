@@ -407,10 +407,10 @@ PolygonEventPointPartition GetLowestCost(
   size_t neg_log_count = 1;
   size_t pos_log_count = polygons.size() - exclude_count + 1;
   PolygonEventPointPartition best;
-  best.neg_cost = -1;
-  best.pos_cost = -1;
-  best.cost = -1;
-  best.split_index = -1;
+  best.neg_cost = std::numeric_limits<size_t>::max();
+  best.pos_cost = std::numeric_limits<size_t>::max();
+  best.cost = std::numeric_limits<size_t>::max();
+  best.split_index = static_cast<size_t>(-1);
   MLogNEstimator neg_estimator, pos_estimator;
   bool last_event_was_end = false;
   size_t i;
@@ -828,7 +828,8 @@ void PolygonEventPointPartition::ApplySecondary(
         const size_t mapped_index =
           polygon_index_map[event_points[end_event_index].index.content];
         if (mapped_index == static_cast<size_t>(-1)) {
-          event_points[end_event_index].index.partner = -2;
+          event_points[end_event_index].index.partner =
+              static_cast<size_t>(-2);
           ++event_points_pos;
         } else {
           break;
@@ -993,7 +994,8 @@ void PolygonEventPointPartition::ApplySecondary(
           polygon_index_map[event_points[end_event_index].index.content];
         if (mapped_index == static_cast<size_t>(-1)) {
           // Skip start events from border polygons
-          event_points[end_event_index].index.partner = -2;
+          event_points[end_event_index].index.partner =
+              static_cast<size_t>(-2);
         } else if (mapped_index < extra_poly_count) {
           // This polygon was split into both children.
           const BSPPolygon<AABBConvexPolygon<ParentPolygon>>& neg_polygon =
@@ -1008,7 +1010,7 @@ void PolygonEventPointPartition::ApplySecondary(
           heap_end->pos_child = false;
           heap_end->polygon_index = mapped_index;
           if (end_comparison <= 0) {
-            heap_end->partner_index = -1;
+            heap_end->partner_index = static_cast<size_t>(-1);
           } else {
             heap_end->partner_index = end_event_index;
           }
@@ -1019,13 +1021,13 @@ void PolygonEventPointPartition::ApplySecondary(
           heap_end->pos_child = true;
           heap_end->polygon_index = mapped_index;
           if (end_comparison > 0) {
-            heap_end->partner_index = -1;
+            heap_end->partner_index = static_cast<size_t>(-1);
           } else {
             heap_end->partner_index = end_event_index;
           }
           ++heap_end;
           std::push_heap(heap_start, heap_end, heap_compare);
-          event_points[end_event_index].index.partner = -1;
+          event_points[end_event_index].index.partner = static_cast<size_t>(-1);
           assert(static_cast<size_t>(heap_end - heap_start) <=
                  2*extra_poly_count);
           process_heap_events = true;

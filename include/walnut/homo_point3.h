@@ -28,7 +28,7 @@ class HomoPoint3 {
     vector_from_origin_(std::move(x), std::move(y), std::move(z)),
     dist_denom_(std::move(w)) { }
 
-  HomoPoint3(long x, long y, long z, long w) :
+  HomoPoint3(int64_t x, int64_t y, int64_t z, int64_t w) :
     vector_from_origin_(x, y, z), dist_denom_(w) { }
 
   HomoPoint3(const Point3& other) :
@@ -294,7 +294,7 @@ inline int HomoPoint3::CompareComponent(size_t component,
 }
 
 inline bool HomoPoint3::IsLessThanComponent(size_t component,
-                                     const HomoPoint3& other) const {
+                                            const HomoPoint3& other) const {
   return rational::IsLessThan(
       /*num1=*/vector_from_origin().components()[component], /*denom1=*/w(),
       /*num2=*/other.vector_from_origin().components()[component],

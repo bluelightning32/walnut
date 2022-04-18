@@ -162,9 +162,9 @@ class ConnectingVisitor
   void LeaveInteriorNode(bool from_partitioner,
                          const HalfSpace3& split) override {
     assert(IsValidState());
-    NodeMapIterator it = interior_nodes_.find(&split);
-    assert(it != interior_nodes_.end());
-    NodeInfo& node_info = it->second;
+    NodeMapIterator split_it = interior_nodes_.find(&split);
+    assert(split_it != interior_nodes_.end());
+    NodeInfo& node_info = split_it->second;
     struct {
       Deed<EdgeRep>& operator()(EdgeInfo& entry) const {
         return entry.edge;
@@ -175,7 +175,7 @@ class ConnectingVisitor
     // Some edges edges in node_info.first_coincident_edges could be nullptr.
     // So calculate `drop_dimension` from the split plane, instead of copying
     // it from one of the edge's polygons.
-    int drop_dimension = it->first->normal().GetFirstNonzeroDimension();
+    int drop_dimension = split_it->first->normal().GetFirstNonzeroDimension();
 
     typename EdgeLineConnector<EdgeRep>::EdgeCompare connector_edge_compare(
         drop_dimension);
@@ -214,7 +214,7 @@ class ConnectingVisitor
     }
     node_info.first_coincident_edges.clear();
     edge_vector_freelist_.push(std::move(node_info.first_coincident_edges));
-    interior_nodes_.erase(it);
+    interior_nodes_.erase(split_it);
     node_depth_.erase(&split);
     assert(IsValidState());
   }
