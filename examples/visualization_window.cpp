@@ -1,5 +1,7 @@
 #include "visualization_window.h"
 
+#include <sstream>
+
 #include <vtkArrowSource.h>
 #include <vtkApplyColors.h>
 #include <vtkCamera.h>
