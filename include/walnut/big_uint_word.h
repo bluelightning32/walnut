@@ -204,8 +204,9 @@ class BigUIntWord {
   constexpr BigUIntWord Add(const BigUIntWord& other, bool carry_in,
                             bool* carry_out) const {
     uint64_t result = 0;
-    *carry_out = __builtin_add_overflow(i_, other.i_, &result) |
-      __builtin_add_overflow(result, carry_in, &result);
+    *carry_out =
+      static_cast<int>(__builtin_add_overflow(i_, other.i_, &result)) |
+      static_cast<int>(__builtin_add_overflow(result, carry_in, &result));
     return BigUIntWord(result);
   }
 
@@ -227,7 +228,8 @@ class BigUIntWord {
                             bool* carry_out) const {
     uint64_t result1 = i_ + other.i_;
     uint64_t result2 = result1 + carry_in;
-    *carry_out = result1 < i_ || result2 < result1;
+    *carry_out = static_cast<int>(result1 < i_) |
+                 static_cast<int>(result2 < result1);
     return BigUIntWord(result2);
   }
 
@@ -246,8 +248,9 @@ class BigUIntWord {
   constexpr BigUIntWord Subtract(const BigUIntWord& other, bool carry_in,
                                  bool* carry_out) const {
     uint64_t result = 0;
-    *carry_out = __builtin_sub_overflow(i_, other.i_, &result) |
-      __builtin_sub_overflow(result, carry_in, &result);
+    *carry_out =
+      static_cast<int>(__builtin_sub_overflow(i_, other.i_, &result)) |
+      static_cast<int>(__builtin_sub_overflow(result, carry_in, &result));
     return BigUIntWord(result);
   }
 
@@ -269,7 +272,8 @@ class BigUIntWord {
   constexpr BigUIntWord Subtract(const BigUIntWord& other, bool carry_in,
                                  bool* carry_out) const {
     uint64_t result1 = i_ - other.i_;
-    *carry_out = result1 > i_ || result1 < static_cast<uint64_t>(carry_in);
+    *carry_out = static_cast<int>(result1 > i_) |
+                 static_cast<int>(result1 < static_cast<uint64_t>(carry_in));
     uint64_t result2 = result1 - carry_in;
     return BigUIntWord(result2);
   }
